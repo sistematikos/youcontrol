@@ -3,101 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>You Control | Sistematikos</title>
+    <title>Sistematikos Core | You Control</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
     <style>
-        :root { --navy: #1A1A2E; --electric: #007BFF; --vinotinto: #800020; }
+        :root {
+            --navy: #0F172A;
+            --electric: #3B82F6;
+            --vinotinto: #800020;
+            --emerald: #10B981;
+            --amber: #F59E0B;
+            --slate: #1E293B;
+        }
+
         body { 
-            font-family: 'Poppins', sans-serif; 
-            background: var(--navy); 
+            font-family: 'Urbanist', 'Poppins', sans-serif; 
+            background-color: var(--navy); 
             color: white; 
             margin: 0; 
             display: flex; 
             flex-direction: column; 
             min-height: 100vh;
+            overflow-x: hidden;
         }
+
         .hero { 
             flex: 1; 
             display: flex; 
             flex-direction: column; 
             justify-content: center; 
             align-items: center; 
-            padding: 20px; 
-            text-align: center;
+            padding: 40px 20px;
         }
+
+        .logo-container {
+            background: linear-gradient(135deg, var(--vinotinto), #4a0012);
+            padding: 25px;
+            border-radius: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 0 50px rgba(128,0,32,0.4);
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+
+        h1 { font-size: 2.5rem; margin: 0; letter-spacing: -1px; font-weight: 900; }
+        .subtitle { opacity: 0.6; font-size: 1rem; margin-top: 5px; }
+
         .menu-grid { 
             display: grid; 
             grid-template-columns: repeat(2, 1fr); 
-            gap: 15px; 
+            gap: 20px; 
             width: 100%; 
-            max-width: 500px; 
-            margin-top: 30px;
+            max-width: 600px; 
+            margin-top: 40px;
         }
+
         .btn-nav { 
-            background: rgba(255,255,255,0.05); 
-            border: 1px solid rgba(255,255,255,0.1); 
-            padding: 25px 15px; 
-            border-radius: 20px; 
+            background: var(--slate); 
+            border: 1px solid rgba(255,255,255,0.05); 
+            padding: 30px 15px; 
+            border-radius: 24px; 
             color: white; 
             text-decoration: none; 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
-            gap: 10px; 
-            transition: 0.3s;
-            backdrop-filter: blur(10px);
+            gap: 15px; 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
         }
-        .btn-nav:hover { background: var(--electric); transform: translateY(-5px); }
-        .btn-nav i { font-size: 2rem; }
-        .footer { padding: 20px; font-size: 0.8rem; opacity: 0.6; text-align: center; }
+
+        /* Colores específicos para que se entienda cada módulo */
+        .btn-nav.almacen i { color: var(--electric); }
+        .btn-nav.caja i { color: var(--emerald); }
+        .btn-nav.catalogo i { color: var(--amber); }
+        .btn-nav.sistema i { color: #A855F7; }
+
+        .btn-nav:hover {
+            transform: translateY(-10px);
+            background: #2D3748;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .btn-nav i { font-size: 2.8rem; transition: 0.3s; }
+        .btn-nav span { font-weight: 800; font-size: 1.1rem; letter-spacing: 0.5px; }
+        .btn-nav small { font-size: 0.7rem; opacity: 0.5; text-transform: uppercase; }
+
+        .footer { 
+            padding: 30px; 
+            font-size: 0.8rem; 
+            opacity: 0.4; 
+            text-align: center; 
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* Efecto de brillo al pasar el mouse */
+        .btn-nav::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: 0.5s;
+        }
+        .btn-nav:hover::after { opacity: 1; }
     </style>
 </head>
-<body oncontextmenu="return false" onkeydown="return (event.keyCode != 123)">
+<body oncontextmenu="return false">
 
     <main class="hero">
-        <div style="background: var(--vinotinto); padding: 15px; border-radius: 50%; margin-bottom: 20px; box-shadow: 0 0 30px rgba(128,0,32,0.5);">
-            <i class="fas fa-shield-alt" style="font-size: 3rem;"></i>
+        <div class="logo-container">
+            <i class="fas fa-shield-halved" style="font-size: 3.5rem;"></i>
         </div>
-        <h1 style="margin:0; font-weight: 800; letter-spacing: -1px;">YOU CONTROL</h1>
-        <p style="opacity: 0.8;">Gestión de Inventario y Ventas Rápidas</p>
+        <h1>YOU CONTROL</h1>
+        <p class="subtitle">SISTEMATIKOS CORE ENGINE v3.0</p>
 
         <div class="menu-grid">
-            <a href="sys_v1_101.html" class="btn-nav">
+            <a href="sys_v1_101.html" class="btn-nav almacen">
                 <i class="fas fa-boxes-stacked"></i>
                 <span>ALMACÉN</span>
+                <small>Inventario & Stock</small>
             </a>
 
-            <a href="sys_v1_202.html" class="btn-nav">
+            <a href="sys_v1_202.html" class="btn-nav caja">
                 <i class="fas fa-cash-register"></i>
                 <span>CAJA</span>
+                <small>Ventas Rápidas</small>
             </a>
 
-            <a href="node_v2_505.html" class="btn-nav">
-                <i class="fas fa-shopping-bag"></i>
+            <a href="node_v2_505.html" class="btn-nav catalogo">
+                <i class="fas fa-store"></i>
                 <span>CATÁLOGO</span>
+                <small>Vista de Clientes</small>
             </a>
 
-            <a href="node_v2_808.html" class="btn-nav">
-                <i class="fas fa-users-gear"></i>
+            <a href="node_v2_808.html" class="btn-nav sistema">
+                <i class="fas fa-microchip"></i>
                 <span>SISTEMA</span>
+                <small>Atletas & Datos</small>
             </a>
         </div>
     </main>
 
     <footer class="footer">
         &copy; 2026 Sistematikos - Frank Hernandez <br>
-        v3.0.1 - Control Voley Edition
+        Desarrollo de Software Deportivo & Empresarial
     </footer>
 
-    <script>
-        document.onkeydown = function(e) {
-            if(event.keyCode == 123) return false;
-            if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
-            if(e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) return false;
-            if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
-            if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
-        }
-    </script>
 </body>
 </html>
