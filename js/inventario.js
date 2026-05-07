@@ -1,127 +1,109 @@
 import { db } from './firebase-config.js';
 import { 
-    collection, 
-    getDocs, 
-    doc, 
-    getDoc, 
-    onSnapshot, 
-    deleteDoc 
+    collection, getDocs, doc, getDoc, onSnapshot, deleteDoc, updateDoc, addDoc 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Datos de configuración de Sistematikos
 const UID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
 let tasaActual = 1;
 
-/**
- * Inicializa el monitor de tasa en tiempo real
- */
+// 1. MONITOR DE TASA EN TIEMPO REAL
 function inicializarMonitorTasa() {
     const tasaRef = doc(db, "usuarios", UID, "configuracion", "tasa");
-    
-    // onSnapshot permite que la tabla se actualice sola si cambias la tasa
     onSnapshot(tasaRef, (snapshot) => {
         if (snapshot.exists()) {
             tasaActual = snapshot.data().valor;
-            const tasaDisplay = document.getElementById('tasa-actual');
-            if (tasaDisplay) {
-                tasaDisplay.innerText = tasaActual.toLocaleString('es-VE', { 
-                    minimumFractionDigits: 2, 
-                    maximumFractionDigits: 2 
-                });
-            }
-            // Cada vez que la tasa cambie, refrescamos los cálculos de la tabla
+            const display = document.getElementById('tasa-actual');
+            if (display) display.innerText = tasaActual.toLocaleString('es-VE');
             cargarProductos();
-        } else {
-            console.warn("No se encontró el documento de tasa.");
         }
     });
 }
 
-/**
- * Carga y renderiza la lista de productos en la tabla
- */
+// 2. CARGAR LISTA DE PRODUCTOS
 async function cargarProductos() {
     const tabla = document.getElementById('tabla-productos');
     if (!tabla) return;
 
     try {
-        const productosRef = collection(db, "usuarios", UID, "productos");
-        // Consulta simple para evitar el error "The query requires an index"
-        const querySnapshot = await getDocs(productosRef);
-        
-        tabla.innerHTML = ""; // Limpiar tabla antes de cargar
+        const snap = await getDocs(collection(db, "usuarios", UID, "productos"));
+        tabla.innerHTML = "";
 
-        if (querySnapshot.empty) {
-            tabla.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px;">No hay productos registrados.</td></tr>`;
-            return;
-        }
-
-        querySnapshot.forEach((docSnap) => {
+        snap.forEach((docSnap) => {
             const p = docSnap.data();
             const id = docSnap.id;
-            
-            // Cálculos financieros
-            const precioRef = p.precio || 0;
-            const totalBs = (precioRef * tasaActual).toLocaleString('es-VE', { 
-                minimumFractionDigits: 2, 
-                maximumFractionDigits: 2 
-            });
-
-            // Definir color del stock para visibilidad rápida
-            const stockClass = p.stock <= 5 ? 'stock-low' : 'stock-ok';
+            const totalBs = (p.precio * tasaActual).toLocaleString('es-VE');
 
             tabla.innerHTML += `
                 <tr>
+                    <td><b>${p.nombre}</b></td>
+                    <td><span class="badge-stock ${p.stock <= 5 ? 'stock-low' : 'stock-ok'}">${p.stock}</span></td>
+                    <td>$${p.precio.toFixed(2)}</td>
+                    <td style="color: #15803D; font-weight: 800;">Bs. ${totalBs}</td>
                     <td>
-                        <div style="font-weight: 700; color: #1A1A2E;">${p.nombre}</div>
-                        <small style="color: #64748b;">ID: ${id.substring(0,6)}...</small>
+                        <button class="btn-accion btn-edit" onclick="prepararEdicion('${id}')"><i class="fas fa-edit"></i></button>
+                        <button class="btn-accion btn-delete" onclick="confirmarEliminacion('${id}', '${p.nombre}')"><i class="fas fa-trash"></i></button>
                     </td>
-                    <td>
-                        <span class="badge-stock ${stockClass}" style="padding: 5px 12px; border-radius: 20px; font-weight: bold;">
-                            ${p.stock} unid.
-                        </span>
-                    </td>
-                    <td style="font-weight: 600;">$${precioRef.toFixed(2)}</td>
-                    <td style="color: #15803D; font-weight: 800; font-size: 1.1rem;">Bs. ${totalBs}</td>
-                    <td>
-                        <div style="display: flex; gap: 8px;">
-                            <button class="btn-accion btn-edit" onclick="prepararEdicion('${id}')" title="Editar">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn-accion btn-delete" onclick="confirmarEliminacion('${id}', '${p.nombre}')" title="Eliminar">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `;
+                </tr>`;
         });
-    } catch (error) {
-        console.error("Error al cargar productos:", error);
-        tabla.innerHTML = `<tr><td colspan="5" style="color:red; text-align:center;">Error de conexión: ${error.message}</td></tr>`;
-    }
+    } catch (e) { console.error(e); }
 }
 
-/**
- * Funciones Globales para botones de la tabla
- */
-window.confirmarEliminacion = async (id, nombre) => {
-    if (confirm(`¿Estás seguro de eliminar "${nombre}"? Esta acción no se puede deshacer.`)) {
-        try {
-            await deleteDoc(doc(db, "usuarios", UID, "productos", id));
-            alert("Producto eliminado correctamente.");
-            cargarProductos(); // Refrescar lista
-        } catch (e) {
-            alert("Error al eliminar: " + e.message);
+// 3. FUNCIONES DE MODIFICACIÓN (AGREGADAS NUEVAMENTE)
+
+window.abrirModalProducto = async () => {
+    const nombre = prompt("Nombre del nuevo producto:");
+    if (!nombre) return;
+    const precio = parseFloat(prompt("Precio en Dólares ($):", "0"));
+    const stock = parseInt(prompt("Stock inicial:", "0"));
+
+    try {
+        await addDoc(collection(db, "usuarios", UID, "productos"), {
+            nombre: nombre,
+            precio: precio,
+            stock: stock
+        });
+        alert("Producto agregado con éxito");
+    } catch (e) { alert("Error: " + e.message); }
+};
+
+window.prepararEdicion = async (id) => {
+    const docRef = doc(db, "usuarios", UID, "productos", id);
+    const docSnap = await getDoc(docRef);
+    
+    if (docSnap.exists()) {
+        const p = docSnap.data();
+        const nuevoNombre = prompt("Editar nombre:", p.nombre);
+        const nuevoPrecio = parseFloat(prompt("Editar precio ($):", p.precio));
+        const nuevoStock = parseInt(prompt("Editar stock:", p.stock));
+
+        if (nuevoNombre) {
+            await updateDoc(docRef, {
+                nombre: nuevoNombre,
+                precio: nuevoPrecio,
+                stock: nuevoStock
+            });
+            alert("Producto actualizado");
         }
     }
 };
 
-window.prepararEdicion = (id) => {
-    // Aquí podrías disparar tu modal de edición
-    console.log("Editando producto:", id);
-    alert("Función de edición para ID: " + id);
+window.abrirModalTasa = async () => {
+    const nuevaTasa = parseFloat(prompt("Ingrese la nueva tasa del día (Bs.):", tasaActual));
+    if (nuevaTasa) {
+        try {
+            await updateDoc(doc(db, "usuarios", UID, "configuracion", "tasa"), {
+                valor: nuevaTasa
+            });
+            alert("Tasa actualizada correctamente");
+        } catch (e) { alert("Error al actualizar tasa"); }
+    }
 };
 
-// Iniciar la ejecución
+window.confirmarEliminacion = async (id, nombre) => {
+    if (confirm(`¿Eliminar ${nombre}?`)) {
+        await deleteDoc(doc(db, "usuarios", UID, "productos", id));
+        cargarProductos();
+    }
+};
+
 inicializarMonitorTasa();
