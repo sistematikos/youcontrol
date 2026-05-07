@@ -1,78 +1,66 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>You Control - Gestión Premium</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-</head>
-<body oncontextmenu="return false">
+import { auth, getUserRef, db } from './firebase-config.js';
+import { addDoc, getDocs, query, orderBy, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    <header class="header-app">
-        <h1><i class="fas fa-bolt"></i> YOU CONTROL</h1>
-        <div style="display: flex; align-items: center; gap: 20px;">
-            <span style="font-weight: 600;"><i class="fas fa-user-circle"></i> Admin</span>
-            <button id="btn-logout" class="btn-primary" style="padding: 8px 15px; background: #B91C1C; box-shadow: none;">
-                <i class="fas fa-power-off"></i>
-            </button>
-        </div>
-    </header>
+let tasaDia = 0;
 
-    <main class="container">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <div class="input-group" style="width: 400px; margin-bottom: 0;">
-                <i class="fas fa-search" style="color: var(--electric);"></i>
-                <input type="text" id="busqueda" placeholder="Buscar en inventario...">
-            </div>
-            
-            <button class="btn-primary" onclick="document.getElementById('modal-prod').style.display='flex'">
-                <i class="fas fa-plus-circle"></i> NUEVO PRODUCTO
-            </button>
-        </div>
+// 1. Función para obtener la tasa de la base de datos
+async function obtenerTasa() {
+    const user = auth.currentUser;
+    const tasaRef = doc(db, "usuarios", user.uid, "configuracion", "tasa");
+    const docSnap = await getDoc(tasaRef);
 
-        <div class="table-card">
-            <table>
-                <thead>
-                    <tr>
-                        <th>PRODUCTO</th>
-                        <th>STOCK</th>
-                        <th>PRECIO (REF)</th>
-                        <th>ACCIONES</th>
-                    </tr>
-                </thead>
-                <tbody id="lista-productos">
-                    </tbody>
-            </table>
-        </div>
-    </main>
+    if (docSnap.exists()) {
+        tasaDia = docSnap.data().valor;
+    } else {
+        tasaDia = 1; // Valor por defecto si no existe
+    }
+    document.getElementById('tasa-actual').innerText = tasaDia.toLocaleString('es-VE', {minimumFractionDigits: 2});
+    cargarInventario(); // Recargamos el inventario para que aplique la conversión
+}
 
-    <div id="modal-prod" class="modal-overlay">
-        <div class="form-card">
-            <h2 style="font-family: 'Poppins'; margin-top: 0; color: var(--navy);">Nuevo Artículo</h2>
-            <form id="form-nuevo-producto">
-                <div class="input-group">
-                    <i class="fas fa-tag"></i>
-                    <input type="text" id="p-nombre" placeholder="Nombre del producto" required>
-                </div>
-                <div class="input-group">
-                    <i class="fas fa-layer-group"></i>
-                    <input type="number" id="p-stock" placeholder="Cantidad Inicial" required>
-                </div>
-                <div class="input-group">
-                    <i class="fas fa-dollar-sign"></i>
-                    <input type="number" step="0.01" id="p-precio" placeholder="Precio de Venta" required>
-                </div>
-                
-                <div style="display: flex; gap: 15px; margin-top: 25px;">
-                    <button type="submit" class="btn-primary" style="flex: 2;">GUARDAR EN NUBE</button>
-                    <button type="button" class="btn-primary" style="flex: 1; background: var(--text); box-shadow: none;" 
-                            onclick="document.getElementById('modal-prod').style.display='none'">CANCELAR</button>
-                </div>
-            </form>
-        </div>
-    </div>
+// 2. Función para que el usuario cambie la tasa
+window.cambiarTasa = async () => {
+    const nuevaTasa = prompt("Ingrese la tasa oficial de hoy (Bs.):", tasaDia);
+    if (nuevaTasa && !isNaN(nuevaTasa)) {
+        const user = auth.currentUser;
+        const tasaRef = doc(db, "usuarios", user.uid, "configuracion", "tasa");
+        
+        await setDoc(tasaRef, { valor: Number(nuevaTasa), fecha: new Date() });
+        obtenerTasa(); // Refrescar pantalla
+    }
+};
 
-    <script type="module" src="js/inventario.js"></script>
-</body>
-</html>
+// 3. Modificamos el cargarInventario para incluir el cálculo
+async function cargarInventario() {
+    const ref = getUserRef("productos");
+    if (!ref) return;
+
+    const snap = await getDocs(query(ref, orderBy("nombre", "asc")));
+    const listaContainer = document.getElementById('lista-productos');
+    listaContainer.innerHTML = "";
+
+    snap.forEach((doc) => {
+        const p = doc.data();
+        const stockClase = p.stock > 5 ? 'ok' : 'low';
+        const precioBs = (p.precio * tasaDia).toLocaleString('es-VE', {minimumFractionDigits: 2});
+        
+        listaContainer.innerHTML += `
+            <tr>
+                <td style="font-weight: 700; color: var(--navy);">${p.nombre}</td>
+                <td><span class="badge ${stockClase}">${p.stock}</span></td>
+                <td style="font-weight: 700; color: var(--text);">$${p.precio}</td>
+                <td style="font-weight: 800; color: #15803D;">Bs. ${precioBs}</td>
+                <td>
+                    <button class="btn-primary" style="padding: 6px 10px; font-size: 11px;">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+// Actualizamos el disparador inicial
+auth.onAuthStateChanged(user => { 
+    if(user) obtenerTasa(); 
+});
