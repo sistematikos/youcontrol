@@ -1,33 +1,59 @@
 import { auth, getUserRef } from './firebase-config.js';
-import { addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-const tabla = document.getElementById('tabla-body');
-const form = document.getElementById('form-inv');
+const listaContainer = document.getElementById('lista-productos');
+const formProducto = document.getElementById('form-nuevo-producto');
 
-async function cargar() {
+// Cargar y Renderizar
+async function cargarInventario() {
     const ref = getUserRef("productos");
-    if(!ref) return;
-    const snap = await getDocs(ref);
-    tabla.innerHTML = "";
-    snap.forEach(doc => {
+    if (!ref) return;
+
+    const snap = await getDocs(query(ref, orderBy("nombre", "asc")));
+    listaContainer.innerHTML = "";
+
+    snap.forEach((doc) => {
         const p = doc.data();
-        tabla.innerHTML += `<tr><td>${p.nombre}</td><td>${p.stock}</td><td>$${p.precio}</td></tr>`;
+        const stockClase = p.stock > 5 ? 'ok' : 'low';
+        
+        listaContainer.innerHTML += `
+            <tr>
+                <td style="font-weight: 700; color: var(--navy);">${p.nombre}</td>
+                <td><span class="badge ${stockClase}">${p.stock} Unidades</span></td>
+                <td style="font-weight: 700; color: var(--electric);">$${p.precio}</td>
+                <td>
+                    <button class="btn-primary" style="padding: 6px 12px; font-size: 12px; box-shadow: none;">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
     });
 }
 
-if(form){
-    form.addEventListener('submit', async (e) => {
+// Evento Guardar
+if (formProducto) {
+    formProducto.addEventListener('submit', async (e) => {
         e.preventDefault();
-        await addDoc(getUserRef("productos"), {
-            nombre: document.getElementById('nom').value,
-            stock: document.getElementById('cant').value,
-            precio: document.getElementById('pre').value
-        });
-        document.getElementById('modal').style.display='none';
-        cargar();
+        try {
+            await addDoc(getUserRef("productos"), {
+                nombre: document.getElementById('p-nombre').value,
+                stock: Number(document.getElementById('p-stock').value),
+                precio: Number(document.getElementById('p-precio').value),
+                fecha: new Date()
+            });
+            document.getElementById('modal-prod').style.display = 'none';
+            formProducto.reset();
+            cargarInventario();
+        } catch (error) {
+            alert("Error al guardar: " + error.message);
+        }
     });
 }
 
+// Logout
 document.getElementById('btn-logout').onclick = () => signOut(auth);
-auth.onAuthStateChanged(user => { if(user) cargar(); });
+
+// Monitoreo de sesión
+auth.onAuthStateChanged(user => { if(user) cargarInventario(); });
