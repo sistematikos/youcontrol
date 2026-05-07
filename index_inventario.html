@@ -3,84 +3,206 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>You Control - Inventario Premium</title>
+    <title>Inventario | You Control</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
     <style>
-        /* Refuerzo visual de integridad */
-        .btn-primary[onclick*="prepararEdicion"] { transition: 0.2s; }
-        .btn-primary[onclick*="prepararEdicion"]:hover { background-color: #000 !important; }
+        :root {
+            --navy: #1A1A2E;
+            --electric: #007BFF;
+            --success: #15803D;
+            --bg: #F4F7F6;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            color: var(--navy);
+        }
+
+        .header-app {
+            background-color: var(--navy);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .monitor-tasa {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+
+        .monitor-tasa h2 { margin: 0; font-size: 1.2rem; color: #64748b; }
+        .monitor-tasa .valor { font-size: 2.5rem; font-weight: 800; color: var(--navy); margin: 10px 0; }
+
+        .acciones-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+
+        .search-box {
+            flex: 1;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 40px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+        }
+
+        .table-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background-color: #f8fafc;
+            padding: 15px;
+            text-align: left;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            color: #64748b;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .btn-accion {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .btn-edit { background: #e0f2fe; color: #0369a1; margin-right: 5px; }
+        .btn-delete { background: #fee2e2; color: #b91c1c; }
+
+        .btn-primary {
+            background-color: var(--electric);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .badge-stock {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        .stock-ok { background: #dcfce7; color: #15803d; }
+        .stock-low { background: #fef9c3; color: #854d0e; }
     </style>
 </head>
 <body oncontextmenu="return false">
 
     <header class="header-app">
-        <h1><i class="fas fa-bolt" style="color: #007BFF;"></i> YOU CONTROL</h1>
-        <div style="display: flex; align-items: center; gap: 20px;">
-            <span style="font-weight: 600;"><i class="fas fa-user-shield"></i> Admin</span>
-            <button id="btn-logout" class="btn-primary" style="background: #B91C1C; box-shadow: none; padding: 8px 15px;">
-                <i class="fas fa-sign-out-alt"></i>
-            </button>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <i class="fas fa-boxes-stacked" style="font-size: 1.5rem;"></i>
+            <h1 style="margin: 0; font-size: 1.4rem;">YOU CONTROL - INVENTARIO</h1>
         </div>
+        <button onclick="cerrarSesion()" class="btn-primary" style="background: rgba(255,255,255,0.1); font-size: 0.9rem;">
+            <i class="fas fa-sign-out-alt"></i> SALIR
+        </button>
     </header>
 
     <main class="container">
-        <div class="table-card" style="display: flex; align-items: center; justify-content: space-between; border-left: 8px solid #007BFF;">
-            <div>
-                <p style="margin: 0; font-size: 13px; color: #64748b; font-weight: 700; text-transform: uppercase;">Tasa Cambiaria</p>
-                <div style="display: flex; align-items: baseline; gap: 10px;">
-                    <span style="font-size: 24px; font-weight: 800; color: #1A1A2E;">1.00 $ = </span>
-                    <span id="tasa-actual" style="font-size: 32px; font-weight: 800; color: #007BFF;">0.00</span>
-                    <span style="font-size: 18px; font-weight: 700; color: #64748b;">Bs.</span>
-                </div>
-            </div>
-            <button class="btn-primary" onclick="cambiarTasa()">
+        
+        <section class="monitor-tasa">
+            <h2>MONITOR DE DIVISAS</h2>
+            <div class="valor">1.00 $ = <span id="tasa-actual">0.00</span> Bs.</div>
+            <button class="btn-primary" onclick="abrirModalTasa()">
                 <i class="fas fa-sync-alt"></i> ACTUALIZAR TASA
             </button>
-        </div>
+        </section>
 
-        <div style="display: flex; justify-content: space-between; margin-bottom: 25px;">
-            <div class="input-group" style="width: 400px; margin-bottom: 0;">
+        <div class="acciones-bar">
+            <div class="search-box">
                 <i class="fas fa-search"></i>
-                <input type="text" id="busqueda" placeholder="Buscar producto...">
+                <input type="text" id="busqueda" placeholder="Filtrar productos..." onkeyup="filtrarTabla()">
             </div>
-            <button class="btn-primary" onclick="document.getElementById('modal-prod').style.display='flex'">
-                <i class="fas fa-plus-circle"></i> AGREGAR PRODUCTO
+            <button class="btn-primary" onclick="abrirModalProducto()">
+                <i class="fas fa-plus"></i> NUEVO PRODUCTO
             </button>
         </div>
 
-        <div class="table-card" style="padding: 0; overflow: hidden;">
+        <div class="table-card">
             <table>
                 <thead>
                     <tr>
-                        <th>PRODUCTO</th>
-                        <th>STOCK</th>
-                        <th>PRECIO ($)</th>
-                        <th style="color: #15803D;">PRECIO (BS.)</th>
-                        <th>ACCIONES</th>
+                        <th>Producto</th>
+                        <th>Stock</th>
+                        <th>Precio ($)</th>
+                        <th>Precio (Bs.)</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
-                <tbody id="lista-productos"></tbody>
+                <tbody id="tabla-productos">
+                    </tbody>
             </table>
         </div>
     </main>
 
-    <div id="modal-prod" class="modal-overlay">
-        <div class="form-card">
-            <h2 style="font-family: 'Poppins'; margin-bottom: 25px; color: #1A1A2E;">Nuevo Artículo</h2>
-            <form id="form-nuevo-producto">
-                <div class="input-group"><i class="fas fa-tag"></i><input type="text" id="p-nombre" placeholder="Nombre" required></div>
-                <div class="input-group"><i class="fas fa-boxes"></i><input type="number" id="p-stock" placeholder="Stock" required></div>
-                <div class="input-group"><i class="fas fa-dollar-sign"></i><input type="number" step="0.01" id="p-precio" placeholder="Precio ($)" required></div>
-                
-                <div style="display: flex; gap: 15px; margin-top: 20px;">
-                    <button type="submit" class="btn-primary" style="flex: 2;">GUARDAR EN NUBE</button>
-                    <button type="button" class="btn-primary" style="flex: 1; background: #64748b; box-shadow: none;" onclick="cerrarModal()">CANCELAR</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <script type="module" src="js/inventario.js"></script>
+
+    <script>
+        // Función simple para filtrar la tabla visualmente
+        function filtrarTabla() {
+            let input = document.getElementById("busqueda").value.toLowerCase();
+            let rows = document.getElementById("tabla-productos").getElementsByTagName("tr");
+            
+            for (let row of rows) {
+                let texto = row.textContent.toLowerCase();
+                row.style.display = texto.includes(input) ? "" : "none";
+            }
+        }
+    </script>
 </body>
 </html>
