@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistematikos | Engine 202</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .pos-grid { display: grid; grid-template-columns: 1fr 350px; gap: 20px; }
+        .cart-panel { background: #1A1A2E; color: white; border-radius: 15px; padding: 20px; height: fit-content; position: sticky; top: 20px; }
+        .prod-item { display: flex; justify-content: space-between; padding: 12px; background: white; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .btn-add { background: #007BFF; color: white; border: none; padding: 5px 12px; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body oncontextmenu="return false">
+    <header class="header-app" style="background:#1A1A2E; color:white; padding:15px;">
+        <h2><i class="fas fa-cash-register"></i> SYS_ENGINE_202</h2>
+    </header>
+    <main class="container" style="padding:20px;">
+        <div class="pos-grid">
+            <div id="lista-ventas">
+                <input type="text" id="busqueda" placeholder="Buscar producto..." style="width:100%; padding:12px; border-radius:10px; border:1px solid #ddd; margin-bottom:20px;">
+                <div id="contenedor-items"></div>
+            </div>
+            <div class="cart-panel">
+                <h3>CARRITO</h3>
+                <div id="items-carrito" style="min-height:200px; border-bottom:1px solid rgba(255,255,255,0.1); margin-bottom:15px;"></div>
+                <div style="font-size:1.5rem; font-weight:bold; display:flex; justify-content:space-between;">
+                    <span>TOTAL $</span> <span id="total-usd">0.00</span>
+                </div>
+                <button onclick="procesarVenta()" id="btn-venta" style="width:100%; background:#10B981; color:white; border:none; padding:15px; border-radius:10px; margin-top:20px; font-weight:bold; cursor:pointer;">
+                    FINALIZAR VENTA
+                </button>
+            </div>
+        </div>
+    </main>
+    <script type="module" src="js/ventas.js"></script>
+</body>
+</html>

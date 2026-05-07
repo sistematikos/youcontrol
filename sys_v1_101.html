@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistematikos | Engine 101</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        :root { --navy: #1A1A2E; --electric: #007BFF; }
+        body { font-family: 'Poppins', sans-serif; background: #F4F7F6; margin: 0; }
+        .header-app { background: var(--navy); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .container { max-width: 1100px; margin: auto; padding: 20px; }
+        .table-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8fafc; padding: 15px; text-align: left; color: #64748b; font-size: 0.8rem; }
+        td { padding: 15px; border-bottom: 1px solid #f1f5f9; }
+        .btn-primary { background: var(--electric); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body oncontextmenu="return false" onkeydown="return (event.keyCode != 123)">
+    <header class="header-app">
+        <h2><i class="fas fa-database"></i> SYS_ENGINE_101</h2>
+        <div style="background: rgba(255,255,255,0.1); padding: 5px 15px; border-radius: 20px;">
+            Tasa: <span id="tasa-actual">0.00</span> Bs.
+        </div>
+    </header>
+    <main class="container">
+        <div style="margin-bottom: 20px; display: flex; gap: 10px;">
+            <button class="btn-primary" onclick="abrirModalTasa()">ACTUALIZAR TASA</button>
+            <button class="btn-primary" style="background:#10B981" onclick="abrirModalProducto()">+ NUEVO ITEM</button>
+        </div>
+        <div class="table-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>PRODUCTO</th>
+                        <th>STOCK</th>
+                        <th>REF $</th>
+                        <th>TOTAL BS</th>
+                        <th>ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-productos"></tbody>
+            </table>
+        </div>
+    </main>
+    <script type="module" src="js/inventario.js"></script>
+</body>
+</html>

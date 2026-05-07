@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Panel | Sistematikos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        :root { --navy: #1A1A2E; --electric: #007BFF; --vinotinto: #800020; }
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background: #F4F7F6; 
+            margin: 0; 
+            color: var(--navy);
+        }
+        .header-sys {
+            background: var(--navy);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 5px solid var(--vinotinto);
+        }
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .card-link {
+            background: white;
+            border-radius: 20px;
+            padding: 30px 20px;
+            text-align: center;
+            text-decoration: none;
+            color: var(--navy);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            border: 1px solid #eee;
+        }
+        .card-link:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 35px rgba(0,123,255,0.2);
+            border-color: var(--electric);
+        }
+        .card-link i {
+            font-size: 2.5rem;
+            color: var(--electric);
+        }
+        .card-link span {
+            font-weight: 700;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+        }
+        .card-link small {
+            color: #64748b;
+            font-size: 0.75rem;
+        }
+        .status-bar {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body oncontextmenu="return false" onkeydown="return (event.keyCode != 123)">
+
+    <header class="header-sys">
+        <h2 style="margin:0; font-weight: 800;">SISTEMATIKOS CORE</h2>
+        <small style="opacity: 0.7;">Terminal de Gestión v3.0</small>
+    </header>
+
+    <main class="container">
+        <div class="menu-grid">
+            
+            <a href="sys_v1_101.html" class="card-link">
+                <i class="fas fa-layer-group"></i>
+                <span>ALMACÉN</span>
+                <small>ID: SYS_101_INV</small>
+            </a>
+
+            <a href="sys_v1_202.html" class="card-link">
+                <i class="fas fa-cash-register"></i>
+                <span>CAJA RÁPIDA</span>
+                <small>ID: SYS_202_POS</small>
+            </a>
+
+            <a href="node_v2_505.html" class="card-link">
+                <i class="fas fa-globe"></i>
+                <span>CATÁLOGO</span>
+                <small>ID: NODE_505_PUB</small>
+            </a>
+
+            <a href="node_v2_808.html" class="card-link">
+                <i class="fas fa-user-shield"></i>
+                <span>DATOS CORE</span>
+                <small>ID: NODE_808_SEC</small>
+            </a>
+
+        </div>
+
+        <div class="status-bar">
+            <p><i class="fas fa-lock"></i> Entorno Seguro Activado para Frank Hernandez</p>
+            <button onclick="location.href='index.html'" style="background:none; border:1px solid #ccc; padding:5px 15px; border-radius:15px; cursor:pointer; color:#64748b;">
+                Volver al Inicio
+            </button>
+        </div>
+    </main>
+
+    <script>
+        // Bloqueo de inspección adicional
+        document.onkeydown = function(e) {
+            if(event.keyCode == 123) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>You Control | Sistematikos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        :root { --navy: #1A1A2E; --electric: #007BFF; --vinotinto: #800020; }
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background: var(--navy); 
+            color: white; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            min-height: 100vh;
+        }
+        .hero { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            padding: 20px; 
+            text-align: center;
+        }
+        .menu-grid { 
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 15px; 
+            width: 100%; 
+            max-width: 500px; 
+            margin-top: 30px;
+        }
+        .btn-nav { 
+            background: rgba(255,255,255,0.05); 
+            border: 1px solid rgba(255,255,255,0.1); 
+            padding: 25px 15px; 
+            border-radius: 20px; 
+            color: white; 
+            text-decoration: none; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 10px; 
+            transition: 0.3s;
+            backdrop-filter: blur(10px);
+        }
+        .btn-nav:hover { background: var(--electric); transform: translateY(-5px); }
+        .btn-nav i { font-size: 2rem; }
+        .footer { padding: 20px; font-size: 0.8rem; opacity: 0.6; text-align: center; }
+    </style>
+</head>
+<body oncontextmenu="return false" onkeydown="return (event.keyCode != 123)">
+
+    <main class="hero">
+        <div style="background: var(--vinotinto); padding: 15px; border-radius: 50%; margin-bottom: 20px; box-shadow: 0 0 30px rgba(128,0,32,0.5);">
+            <i class="fas fa-shield-alt" style="font-size: 3rem;"></i>
+        </div>
+        <h1 style="margin:0; font-weight: 800; letter-spacing: -1px;">YOU CONTROL</h1>
+        <p style="opacity: 0.8;">Gestión de Inventario y Ventas Rápidas</p>
+
+        <div class="menu-grid">
+            <a href="sys_v1_101.html" class="btn-nav">
+                <i class="fas fa-boxes-stacked"></i>
+                <span>ALMACÉN</span>
+            </a>
+
+            <a href="sys_v1_202.html" class="btn-nav">
+                <i class="fas fa-cash-register"></i>
+                <span>CAJA</span>
+            </a>
+
+            <a href="node_v2_505.html" class="btn-nav">
+                <i class="fas fa-shopping-bag"></i>
+                <span>CATÁLOGO</span>
+            </a>
+
+            <a href="node_v2_808.html" class="btn-nav">
+                <i class="fas fa-users-gear"></i>
+                <span>SISTEMA</span>
+            </a>
+        </div>
+    </main>
+
+    <footer class="footer">
+        &copy; 2026 Sistematikos - Frank Hernandez <br>
+        v3.0.1 - Control Voley Edition
+    </footer>
+
+    <script>
+        document.onkeydown = function(e) {
+            if(event.keyCode == 123) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+        }
+    </script>
+</body>
+</html>
