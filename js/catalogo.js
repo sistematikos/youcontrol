@@ -1,14 +1,13 @@
 import { db } from './firebase-config.js';
 import { collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const MI_ID_USUARIO = "sUhfZI9Fy3M9UlInTYw2wFWZmB12"; // Tu UID
-const WHATSAPP_NUM = "584245484324"; // Tu número
+const MI_ID_USUARIO = "sUhfZI9Fy3M9UlInTYw2wFWZmB12"; 
+const WHATSAPP_NUM = "584245484324"; 
 
 let tasaDia = 1;
 let carrito = [];
 
 async function inicializarCatalogo() {
-    // 1. Cargar Tasa primero
     try {
         const tasaRef = doc(db, "usuarios", MI_ID_USUARIO, "configuracion", "tasa"); 
         const tasaSnap = await getDoc(tasaRef);
@@ -18,7 +17,6 @@ async function inicializarCatalogo() {
         }
     } catch (e) { console.error("Error tasa:", e); }
     
-    // 2. Cargar Productos
     cargarProductos();
 }
 
@@ -43,22 +41,22 @@ window.seleccionarProducto = (id, nombre, precio) => {
 
 async function cargarProductos() {
     try {
-        // RUTA EXACTA: usuarios > UID > productos
         const productosRef = collection(db, "usuarios", MI_ID_USUARIO, "productos");
-        const snap = await getDocs(productosRef); // Consulta simple sin filtros para evitar errores de Index
+        // Traemos todos los productos sin filtros para evitar el error de INDEX de la consola
+        const snap = await getDocs(productosRef);
         
         const grid = document.getElementById('catalogo-productos');
         grid.innerHTML = "";
 
         if (snap.empty) {
-            grid.innerHTML = "<p style='text-align:center; padding:20px;'>No se encontraron productos en la base de datos.</p>";
+            grid.innerHTML = "<p style='text-align:center; padding:20px;'>No hay productos registrados.</p>";
             return;
         }
 
         snap.forEach((doc) => {
             const p = doc.data();
             
-            // Filtro manual de stock para evitar errores de Firebase
+            // Filtramos el stock aquí manualmente en el código
             if (p.stock > 0) {
                 const precioBs = (p.precio * tasaDia).toLocaleString('es-VE', { minimumFractionDigits: 2 });
                 const id = doc.id;
@@ -73,8 +71,8 @@ async function cargarProductos() {
             }
         });
     } catch (e) {
-        console.error("Error crítico en JS:", e);
-        document.getElementById('catalogo-productos').innerHTML = `<p style='color:red; text-align:center;'>Error de carga: ${e.message}</p>`;
+        console.error("Error detallado:", e);
+        document.getElementById('catalogo-productos').innerHTML = `<p style='color:red; text-align:center;'>Error: ${e.message}</p>`;
     }
 }
 
