@@ -1,112 +1,127 @@
-import { auth, getUserRef, db } from './firebase-config.js';
-import { addDoc, getDocs, query, orderBy, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { db } from './firebase-config.js';
+import { 
+    collection, 
+    getDocs, 
+    doc, 
+    getDoc, 
+    onSnapshot, 
+    deleteDoc 
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-let tasaDia = 1;
-let editandoID = null; // Variable clave para la integridad
+// Datos de configuración de Sistematikos
+const UID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
+let tasaActual = 1;
 
-// 1. OBTENER TASA Y REFRESCAR
-async function obtenerTasa() {
-    const user = auth.currentUser;
-    if (!user) return;
-    const tasaRef = doc(db, "usuarios", user.uid, "configuracion", "tasa");
-    const docSnap = await getDoc(tasaRef);
-    if (docSnap.exists()) { tasaDia = docSnap.data().valor; }
-    document.getElementById('tasa-actual').innerText = tasaDia.toFixed(2);
-    cargarInventario();
-}
-
-// 2. CAMBIAR TASA DIARIA
-window.cambiarTasa = async () => {
-    const nueva = prompt("Ingrese la tasa de hoy (Bs.):", tasaDia);
-    if (nueva && !isNaN(nueva)) {
-        await setDoc(doc(db, "usuarios", auth.currentUser.uid, "configuracion", "tasa"), { 
-            valor: Number(nueva), 
-            fecha: new Date() 
-        });
-        obtenerTasa();
-    }
-};
-
-// 3. PREPARAR EDICIÓN (Cargar datos en el modal)
-window.prepararEdicion = async (id) => {
-    editandoID = id;
-    const docRef = doc(db, "usuarios", auth.currentUser.uid, "productos", id);
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-        const p = docSnap.data();
-        document.getElementById('p-nombre').value = p.nombre;
-        document.getElementById('p-stock').value = p.stock;
-        document.getElementById('p-precio').value = p.precio;
-        
-        // Cambios visuales para modo edición
-        document.querySelector('#modal-prod h2').innerText = "Editar Producto";
-        document.querySelector('#form-nuevo-producto button[type="submit"]').innerText = "ACTUALIZAR ARTÍCULO";
-        document.getElementById('modal-prod').style.display = 'flex';
-    }
-};
-
-// 4. CARGAR INVENTARIO (Renderizado de Tabla)
-async function cargarInventario() {
-    const ref = getUserRef("productos");
-    if (!ref) return;
-    const snap = await getDocs(query(ref, orderBy("nombre", "asc")));
-    const listaContainer = document.getElementById('lista-productos');
-    listaContainer.innerHTML = "";
-
-    snap.forEach((doc) => {
-        const p = doc.data();
-        const stockClase = p.stock > 5 ? 'ok' : 'low';
-        const precioBs = (p.precio * tasaDia).toLocaleString('es-VE', { minimumFractionDigits: 2 });
-
-        listaContainer.innerHTML += `
-            <tr>
-                <td style="font-weight: 700; color: var(--navy);">${p.nombre}</td>
-                <td><span class="badge ${stockClase}">${p.stock}</span></td>
-                <td style="font-weight: 700; color: var(--text);">$${p.precio}</td>
-                <td style="font-weight: 800; color: #15803D; background: rgba(21,128,61,0.05);">Bs. ${precioBs}</td>
-                <td>
-                    <button class="btn-primary" style="padding: 6px 12px; font-size: 11px; background: var(--navy); box-shadow: none;" 
-                            onclick="prepararEdicion('${doc.id}')">
-                        <i class="fas fa-edit"></i> EDITAR
-                    </button>
-                </td>
-            </tr>
-        `;
+/**
+ * Inicializa el monitor de tasa en tiempo real
+ */
+function inicializarMonitorTasa() {
+    const tasaRef = doc(db, "usuarios", UID, "configuracion", "tasa");
+    
+    // onSnapshot permite que la tabla se actualice sola si cambias la tasa
+    onSnapshot(tasaRef, (snapshot) => {
+        if (snapshot.exists()) {
+            tasaActual = snapshot.data().valor;
+            const tasaDisplay = document.getElementById('tasa-actual');
+            if (tasaDisplay) {
+                tasaDisplay.innerText = tasaActual.toLocaleString('es-VE', { 
+                    minimumFractionDigits: 2, 
+                    maximumFractionDigits: 2 
+                });
+            }
+            // Cada vez que la tasa cambie, refrescamos los cálculos de la tabla
+            cargarProductos();
+        } else {
+            console.warn("No se encontró el documento de tasa.");
+        }
     });
 }
 
-// 5. CERRAR MODAL Y LIMPIAR
-window.cerrarModal = () => {
-    editandoID = null;
-    document.getElementById('modal-prod').style.display = 'none';
-    document.getElementById('form-nuevo-producto').reset();
-    document.querySelector('#modal-prod h2').innerText = "Nuevo Artículo";
-    document.querySelector('#form-nuevo-producto button[type="submit"]').innerText = "GUARDAR EN NUBE";
-};
-
-// 6. GUARDAR / ACTUALIZAR
-document.getElementById('form-nuevo-producto').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const datos = {
-        nombre: document.getElementById('p-nombre').value,
-        stock: Number(document.getElementById('p-stock').value),
-        precio: Number(document.getElementById('p-precio').value),
-        actualizado: new Date()
-    };
+/**
+ * Carga y renderiza la lista de productos en la tabla
+ */
+async function cargarProductos() {
+    const tabla = document.getElementById('tabla-productos');
+    if (!tabla) return;
 
     try {
-        if (editandoID) {
-            await updateDoc(doc(db, "usuarios", auth.currentUser.uid, "productos", editandoID), datos);
-        } else {
-            await addDoc(getUserRef("productos"), { ...datos, creado: new Date() });
-        }
-        cerrarModal();
-        cargarInventario();
-    } catch (err) { alert("Error al procesar: " + err.message); }
-});
+        const productosRef = collection(db, "usuarios", UID, "productos");
+        // Consulta simple para evitar el error "The query requires an index"
+        const querySnapshot = await getDocs(productosRef);
+        
+        tabla.innerHTML = ""; // Limpiar tabla antes de cargar
 
-// SESIÓN Y LOGOUT
-auth.onAuthStateChanged(user => { if (user) obtenerTasa(); else window.location.assign("index.html"); });
-document.getElementById('btn-logout').onclick = () => signOut(auth);
+        if (querySnapshot.empty) {
+            tabla.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px;">No hay productos registrados.</td></tr>`;
+            return;
+        }
+
+        querySnapshot.forEach((docSnap) => {
+            const p = docSnap.data();
+            const id = docSnap.id;
+            
+            // Cálculos financieros
+            const precioRef = p.precio || 0;
+            const totalBs = (precioRef * tasaActual).toLocaleString('es-VE', { 
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 2 
+            });
+
+            // Definir color del stock para visibilidad rápida
+            const stockClass = p.stock <= 5 ? 'stock-low' : 'stock-ok';
+
+            tabla.innerHTML += `
+                <tr>
+                    <td>
+                        <div style="font-weight: 700; color: #1A1A2E;">${p.nombre}</div>
+                        <small style="color: #64748b;">ID: ${id.substring(0,6)}...</small>
+                    </td>
+                    <td>
+                        <span class="badge-stock ${stockClass}" style="padding: 5px 12px; border-radius: 20px; font-weight: bold;">
+                            ${p.stock} unid.
+                        </span>
+                    </td>
+                    <td style="font-weight: 600;">$${precioRef.toFixed(2)}</td>
+                    <td style="color: #15803D; font-weight: 800; font-size: 1.1rem;">Bs. ${totalBs}</td>
+                    <td>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn-accion btn-edit" onclick="prepararEdicion('${id}')" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-accion btn-delete" onclick="confirmarEliminacion('${id}', '${p.nombre}')" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+    } catch (error) {
+        console.error("Error al cargar productos:", error);
+        tabla.innerHTML = `<tr><td colspan="5" style="color:red; text-align:center;">Error de conexión: ${error.message}</td></tr>`;
+    }
+}
+
+/**
+ * Funciones Globales para botones de la tabla
+ */
+window.confirmarEliminacion = async (id, nombre) => {
+    if (confirm(`¿Estás seguro de eliminar "${nombre}"? Esta acción no se puede deshacer.`)) {
+        try {
+            await deleteDoc(doc(db, "usuarios", UID, "productos", id));
+            alert("Producto eliminado correctamente.");
+            cargarProductos(); // Refrescar lista
+        } catch (e) {
+            alert("Error al eliminar: " + e.message);
+        }
+    }
+};
+
+window.prepararEdicion = (id) => {
+    // Aquí podrías disparar tu modal de edición
+    console.log("Editando producto:", id);
+    alert("Función de edición para ID: " + id);
+};
+
+// Iniciar la ejecución
+inicializarMonitorTasa();
