@@ -1,12 +1,11 @@
 import { db } from './firebase-config.js';
 import { 
-    collection, getDocs, doc, getDoc, onSnapshot, deleteDoc, updateDoc, addDoc 
+    collection, getDocs, doc, getDoc, onSnapshot, updateDoc, addDoc 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const UID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
 let tasaActual = 1;
 
-// --- MONITOR DE TASA ---
 function iniciarMonitor() {
     const tasaRef = doc(db, "usuarios", UID, "configuracion", "tasa");
     onSnapshot(tasaRef, (docSnap) => {
@@ -18,7 +17,6 @@ function iniciarMonitor() {
     });
 }
 
-// --- CARGAR TABLA ---
 async function cargarProductos() {
     const tabla = document.getElementById('tabla-productos');
     if (!tabla) return;
@@ -40,18 +38,16 @@ async function cargarProductos() {
                     <td style="color:#15803D; font-weight:800">Bs. ${precioBs}</td>
                     <td>
                         <button class="btn-accion btn-edit" onclick="prepararEdicion('${id}')">
-                            <i class="fas fa-edit"></i>
+                            <i class="fas fa-edit"></i> EDITAR
                         </button>
-                        <button class="btn-accion btn-delete" onclick="confirmarEliminacion('${id}', '${p.nombre}')">
-                            <i class="fas fa-trash"></i>
+                        <button class="btn-accion btn-disable" onclick="inhabilitarProducto('${id}', '${p.nombre}')">
+                            <i class="fas fa-ban"></i> INHABILITAR
                         </button>
                     </td>
                 </tr>`;
         });
     } catch (e) { console.error("Error:", e); }
 }
-
-// --- FUNCIONES GLOBALES (VINCULADAS A WINDOW) ---
 
 window.abrirModalTasa = async () => {
     const nueva = prompt("Ingrese la nueva tasa (Bs.):", tasaActual);
@@ -97,12 +93,13 @@ window.prepararEdicion = async (id) => {
     }
 };
 
-window.confirmarEliminacion = async (id, nombre) => {
-    if (confirm(`¿Seguro que desea eliminar ${nombre}?`)) {
-        await deleteDoc(doc(db, "usuarios", UID, "productos", id));
+window.inhabilitarProducto = async (id, nombre) => {
+    if (confirm(`¿Desea inhabilitar el producto "${nombre}"? (Se pondrá el stock en 0)`)) {
+        const docRef = doc(db, "usuarios", UID, "productos", id);
+        await updateDoc(docRef, { stock: 0 }); // Inhabilitar bajando stock a 0
+        alert("Producto inhabilitado.");
         cargarProductos();
     }
 };
 
-// Iniciar sistema
 iniciarMonitor();
