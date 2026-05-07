@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistematikos | Engine 101</title>
+    <title>Sistematikos | Control de Inventarios</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
     <style>
@@ -12,12 +12,11 @@
         .header-app { background: var(--navy); color: white; padding: 20px; border-bottom: 4px solid var(--vinotinto); }
         .container { max-width: 1100px; margin: auto; padding: 20px; }
         
-        /* Estilos de botones de acción */
-        .btn-accion { border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: 0.3s; margin-right: 5px; color: white; }
+        .btn-accion { border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: 0.3s; margin-right: 5px; color: white; display: inline-flex; align-items: center; gap: 5px; font-size: 0.8rem; }
         .btn-edit { background: #3B82F6; }
         .btn-edit:hover { background: #2563EB; }
-        .btn-delete { background: #EF4444; }
-        .btn-delete:hover { background: #DC2626; }
+        .btn-disable { background: #64748b; } /* Color gris para inhabilitar */
+        .btn-disable:hover { background: #475569; }
         
         .table-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; }
@@ -33,7 +32,7 @@
 
     <header class="header-app">
         <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1100px; margin: auto;">
-            <h2 style="margin:0;"><i class="fas fa-database"></i> SYS_ENGINE_101</h2>
+            <h2 style="margin:0;"><i class="fas fa-boxes-stacked"></i> CONTROL DE INVENTARIOS</h2>
             <div style="background: rgba(255,255,255,0.1); padding: 8px 15px; border-radius: 12px; font-weight: bold;">
                 Tasa: <span id="tasa-actual">0.00</span> Bs.
             </div>
@@ -58,11 +57,10 @@
                         <th>Stock</th>
                         <th>Ref. $</th>
                         <th>Precio Bs.</th>
-                        <th>Acciones</th>
+                        <th>Gestión</th>
                     </tr>
                 </thead>
-                <tbody id="tabla-productos">
-                    </tbody>
+                <tbody id="tabla-productos"></tbody>
             </table>
         </div>
     </main>
