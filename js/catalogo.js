@@ -1,16 +1,16 @@
 import { db } from './firebase-config.js';
 import { collection, getDocs, query, orderBy, doc, getDoc, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// --- CONFIGURACIÓN CRÍTICA ---
-const MI_ID_USUARIO = "sUhfZI9Fy3M9UlInTYw2wFWZmB12"; // <--- SIN ESTO NO FUNCIONA
-const WHATSAPP_NUM = "14845532789"; 
-// -----------------------------
+// --- DATOS REALES DE FRANK HERNANDEZ ---
+const MI_ID_USUARIO = "sUhfZI9Fy3M9UlInTYw2wFWZmB12"; 
+const WHATSAPP_NUM = "584245484324"; // Formato internacional para Vzla
+// ---------------------------------------
 
 let tasaDia = 1;
 let carrito = [];
 
 async function inicializarCatalogo() {
-    // Intentar obtener la tasa
+    // Intentar obtener la tasa configurada por Frank en el inventario
     try {
         const tasaRef = doc(db, "usuarios", MI_ID_USUARIO, "configuracion", "tasa"); 
         const tasaSnap = await getDoc(tasaRef);
@@ -38,14 +38,15 @@ window.seleccionarProducto = (id, nombre, precio) => {
         checkbox.checked = true;
     }
     
+    // Actualizar contador y visibilidad del botón flotante
+    const btn = document.getElementById('btn-flotante-pedido');
     document.getElementById('cuenta-productos').innerText = carrito.length;
-    document.getElementById('btn-flotante-pedido').style.display = carrito.length > 0 ? 'block' : 'none';
+    btn.style.display = carrito.length > 0 ? 'block' : 'none';
 };
 
 async function cargarProductos() {
     try {
         const productosRef = collection(db, "usuarios", MI_ID_USUARIO, "productos");
-        // Traemos todos los productos con stock > 0
         const q = query(productosRef, where("stock", ">", 0), orderBy("nombre", "asc"));
         const snap = await getDocs(q);
         
@@ -53,7 +54,7 @@ async function cargarProductos() {
         grid.innerHTML = "";
 
         if (snap.empty) {
-            grid.innerHTML = "<p style='text-align:center; color:#64748b;'>No hay productos disponibles por ahora.</p>";
+            grid.innerHTML = "<p style='text-align:center; color:#64748b; padding:20px;'>No hay productos con stock disponible.</p>";
             return;
         }
 
@@ -65,26 +66,30 @@ async function cargarProductos() {
             grid.innerHTML += `
                 <div class="producto-card" id="card-${id}" onclick="seleccionarProducto('${id}', '${p.nombre}', ${p.precio})">
                     <div class="check-container"><input type="checkbox" id="check-${id}" onclick="event.stopPropagation()"></div>
-                    <h3 style="color: #1A1A2E; margin-bottom: 10px; padding-right: 30px;">${p.nombre}</h3>
+                    <h3 style="color: #1A1A2E; margin-bottom: 8px; font-family: 'Poppins'; padding-right:30px;">${p.nombre}</h3>
                     <div style="font-size: 22px; font-weight: 800; color: #15803D;">Bs. ${precioBs}</div>
-                    <div style="color: #64748b; font-weight: 600;">$${p.precio.toFixed(2)}</div>
+                    <div style="color: #64748b; font-weight: 600; font-size: 14px;">Ref: $${p.precio.toFixed(2)}</div>
                 </div>`;
         });
     } catch (e) {
-        console.error("Error al cargar productos:", e);
-        document.getElementById('catalogo-productos').innerHTML = "<p style='color:red;'>Error de conexión con la base de datos.</p>";
+        console.error("Error Firestore:", e);
+        document.getElementById('catalogo-productos').innerHTML = "<p style='color:red; text-align:center;'>Error al conectar con la base de datos. Verifica las reglas de Firestore.</p>";
     }
 }
 
 window.enviarPedidoWhatsApp = () => {
-    let mensaje = "*PEDIDO DESDE EL CATÁLOGO*%0A%0A";
+    let mensaje = "*NUEVO PEDIDO - YOU CONTROL*%0A------------------------------%0A";
     let totalUsd = 0;
-    carrito.forEach((item, i) => {
-        mensaje += `${i + 1}. *${item.nombre}* ($${item.precio})%0A`;
+
+    carrito.forEach((item, index) => {
+        mensaje += `${index + 1}. *${item.nombre}* ($${item.precio.toFixed(2)})%0A`;
         totalUsd += item.precio;
     });
+
     const totalBs = (totalUsd * tasaDia).toLocaleString('es-VE', { minimumFractionDigits: 2 });
-    mensaje += `%0A*TOTAL ESTIMADO:* $${totalUsd.toFixed(2)} / *Bs. ${totalBs}*`;
+    mensaje += "------------------------------%0A";
+    mensaje += `*TOTAL ESTIMADO:*%0A$${totalUsd.toFixed(2)} / *Bs. ${totalBs}*%0A%0A_Por favor, confírmeme disponibilidad._`;
+
     window.open(`https://wa.me/${WHATSAPP_NUM}?text=${mensaje}`, '_blank');
 };
 
