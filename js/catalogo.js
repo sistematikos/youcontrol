@@ -2,7 +2,7 @@ import { db } from './firebase-config.js';
 import { collection, getDocs, query, orderBy, doc, getDoc, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // --- CONFIGURACIÓN CRÍTICA ---
-const MI_ID_USUARIO = "COPIA_AQUÍ_TU_UID_DE_FIREBASE"; // Lo sacas de Firebase > Authentication
+const MI_ID_USUARIO = "sUhfZI9Fy3M9UlInTYw2wFWZmB12"; // Lo sacas de Firebase > Authentication
 const WHATSAPP_NUM = "5804245484324"; // Tu número ya configurado
 // -----------------------------
 
