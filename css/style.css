@@ -1,3 +1,7 @@
+/* YOU CONTROL - SISTEMA DE DISEÑO PREMIUM 
+   Desarrollado por Sistematikos - Frank Hernandez
+*/
+
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Urbanist:wght@400;500;700&display=swap');
 
 :root {
@@ -12,93 +16,98 @@
     --shadow-blue: 0 8px 20px rgba(0, 123, 255, 0.3);
 }
 
-/* Reset y Base */
-* { box-sizing: border-box; }
-
-body {
-    font-family: 'Urbanist', sans-serif;
-    background-color: var(--bg-gray);
-    color: var(--text);
+/* 1. RESET TOTAL */
+* {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
 }
 
-/* Header Estilo Premium */
+body {
+    font-family: 'Urbanist', sans-serif;
+    background-color: var(--bg-gray) !important;
+    color: var(--text);
+    line-height: 1.6;
+}
+
+/* 2. HEADER (AZUL MARINO) */
 .header-app {
     background-color: var(--navy) !important;
     padding: 15px 40px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    color: white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    color: white !important;
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
 .header-app h1 {
     font-family: 'Poppins', sans-serif;
     font-size: 22px;
-    margin: 0;
-    color: var(--electric);
+    color: var(--electric) !important;
+    text-transform: uppercase;
     letter-spacing: 1px;
 }
 
-/* Contenedor Principal */
+/* 3. CONTENEDORES */
 .container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 30px 20px;
 }
 
-/* Tarjetas y Contenedores con Sombra */
 .table-card {
-    background: var(--white);
+    background: var(--white) !important;
     border-radius: 18px;
     box-shadow: var(--shadow);
-    padding: 20px;
+    padding: 25px;
     margin-bottom: 25px;
     border: 1px solid rgba(0,0,0,0.05);
 }
 
-/* Botones Atractivos y Persuasivos */
+/* 4. BOTONES (AZUL ELÉCTRICO CON SOMBRA) */
 .btn-primary {
-    background: var(--electric) !important;
+    background-color: var(--electric) !important;
     color: white !important;
     border: none;
     padding: 12px 25px;
-    border-radius: 10px;
+    border-radius: 12px;
     font-weight: 700;
     font-family: 'Poppins', sans-serif;
     cursor: pointer;
-    box-shadow: var(--shadow-blue);
+    box-shadow: var(--shadow-blue) !important;
     transition: all 0.3s ease;
     text-transform: uppercase;
-    font-size: 14px;
-    display: flex;
+    font-size: 13px;
+    display: inline-flex;
     align-items: center;
     gap: 8px;
+    text-decoration: none;
 }
 
 .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 25px rgba(0, 123, 255, 0.5);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 25px rgba(0, 123, 255, 0.5) !important;
     filter: brightness(1.1);
 }
 
-/* Inputs con Iconos */
+/* 5. INPUTS Y BUSCADOR */
 .input-group {
     background: #FFFFFF;
     border: 2px solid #E2E8F0;
     border-radius: 12px;
-    padding: 10px 15px;
+    padding: 12px 18px;
     display: flex;
     align-items: center;
     gap: 12px;
-    transition: border-color 0.3s;
+    margin-bottom: 15px;
 }
 
-.input-group:focus-within {
-    border-color: var(--electric);
-    box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.1);
+.input-group i {
+    color: var(--electric);
 }
 
 .input-group input {
@@ -106,30 +115,28 @@ body {
     outline: none;
     width: 100%;
     font-size: 16px;
-    color: var(--navy);
     font-family: 'Urbanist', sans-serif;
+    color: var(--navy);
 }
 
-/* Tabla de Inventario */
+/* 6. TABLA DE DATOS */
 table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 10px;
 }
 
 th {
     background: #F8FAFC;
-    padding: 15px;
+    padding: 18px;
     text-align: left;
     color: var(--navy);
     font-weight: 700;
-    text-transform: uppercase;
     font-size: 13px;
     border-bottom: 2px solid #EDF2F7;
 }
 
 td {
-    padding: 15px;
+    padding: 18px;
     border-bottom: 1px solid #F1F5F9;
     font-size: 15px;
 }
@@ -138,49 +145,38 @@ tr:hover td {
     background-color: #F8FAFC;
 }
 
-/* Badges de Stock */
+/* 7. ELEMENTOS DE VALOR (BS. Y $) */
+#tasa-actual {
+    color: var(--electric) !important;
+    font-family: 'Poppins', sans-serif;
+}
+
 .badge {
-    padding: 5px 12px;
-    border-radius: 20px;
+    padding: 6px 14px;
+    border-radius: 10px;
     font-weight: 700;
     font-size: 12px;
-    display: inline-block;
 }
 
-.badge.ok { 
-    background: #DCFCE7; 
-    color: var(--success); 
-}
+.badge.ok { background: #DCFCE7; color: var(--success); }
+.badge.low { background: #FEE2E2; color: var(--danger); }
 
-.badge.low { 
-    background: #FEE2E2; 
-    color: var(--danger); 
-}
-
-/* Columna de Bolívares (Resaltada) */
-.col-bs {
-    background-color: rgba(21, 128, 61, 0.05);
-    color: var(--success) !important;
-    font-weight: 800 !important;
-}
-
-/* Modales */
+/* 8. MODAL */
 .modal-overlay {
     display: none;
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(26, 26, 46, 0.85);
-    backdrop-filter: blur(4px);
+    background: rgba(26, 26, 46, 0.9);
+    backdrop-filter: blur(8px);
     justify-content: center;
     align-items: center;
-    z-index: 9999;
+    z-index: 1000;
 }
 
 .form-card {
     background: white;
-    padding: 30px;
-    border-radius: 20px;
-    width: 90%;
-    max-width: 450px;
-    box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+    padding: 40px;
+    border-radius: 24px;
+    width: 450px;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.5);
 }
