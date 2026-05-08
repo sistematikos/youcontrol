@@ -1,81 +1,109 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catálogo Digital | You Control</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
-    <style>
-        /* Estilos específicos para el Catálogo */
-        .catalogo-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 25px;
-            margin-top: 30px;
+import { db } from './firebase-config.js';
+import { collection, getDocs, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const UID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12"; //
+let tasa = 1;
+let carrito = {}; // Estructura: { id_producto: { nombre, precio, cantidad } }
+
+// 1. Cargar Tasa y Productos
+function iniciarCatalogo() {
+    const tasaRef = doc(db, "usuarios", UID, "configuracion", "tasa");
+    onSnapshot(tasaRef, (snap) => {
+        if (snap.exists()) {
+            tasa = snap.data().valor;
+            document.getElementById('tasa-cliente').innerText = tasa.toLocaleString('es-VE');
+            renderizarCatalogo();
         }
+    });
+}
 
-        .producto-card {
-            background: white;
-            border-radius: 20px;
-            padding: 25px;
-            box-shadow: var(--shadow);
-            border: 1px solid rgba(0, 123, 255, 0.1);
-            transition: transform 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+async function renderizarCatalogo() {
+    const contenedor = document.getElementById('contenedor-catalogo');
+    const snap = await getDocs(collection(db, "usuarios", UID, "productos"));
+    contenedor.innerHTML = "";
+
+    snap.forEach(docSnap => {
+        const p = docSnap.data();
+        const id = docSnap.id;
+        const precioBs = (p.precio * tasa).toLocaleString('es-VE');
+
+        // Solo mostrar si tiene stock
+        if (p.stock > 0) {
+            contenedor.innerHTML += `
+                <div class="card-prod">
+                    <h3 style="margin:0;">${p.nombre}</h3>
+                    <div class="price-tag">$${p.precio.toFixed(2)}</div>
+                    <div class="price-bs">≈ ${precioBs} Bs.</div>
+                    <small style="color:#94a3b8">Disponible: ${p.stock} unid.</small>
+                    
+                    <div class="qty-control">
+                        <button class="btn-qty" onclick="cambiarCant('${id}', -1, '${p.nombre}', ${p.precio}, ${p.stock})">-</button>
+                        <span class="qty-val" id="qty-${id}">0</span>
+                        <button class="btn-qty" onclick="cambiarCant('${id}', 1, '${p.nombre}', ${p.precio}, ${p.stock})">+</button>
+                    </div>
+                </div>`;
         }
+    });
+}
 
-        .producto-card:hover {
-            transform: translateY(-10px);
-            border-color: var(--electric);
+// 2. Lógica de Cantidades
+window.cambiarCant = (id, cambio, nombre, precio, stockMax) => {
+    if (!carrito[id]) {
+        carrito[id] = { nombre: nombre, precio: precio, cantidad: 0 };
+    }
+
+    let nuevaCant = carrito[id].cantidad + cambio;
+
+    // Validaciones
+    if (nuevaCant < 0) nuevaCant = 0;
+    if (nuevaCant > stockMax) {
+        alert("Lo sentimos, solo quedan " + stockMax + " unidades.");
+        nuevaCant = stockMax;
+    }
+
+    carrito[id].cantidad = nuevaCant;
+    document.getElementById(`qty-${id}`).innerText = nuevaCant;
+
+    actualizarFooter();
+};
+
+function actualizarFooter() {
+    const footer = document.getElementById('cart-footer');
+    let total = 0;
+    let items = 0;
+
+    for (let id in carrito) {
+        total += carrito[id].precio * carrito[id].cantidad;
+        items += carrito[id].cantidad;
+    }
+
+    if (items > 0) {
+        footer.style.display = 'flex';
+        document.getElementById('cart-total').innerText = total.toFixed(2);
+        document.getElementById('cart-count').innerText = items;
+    } else {
+        footer.style.display = 'none';
+    }
+}
+
+// 3. Enviar a WhatsApp
+window.enviarPedido = () => {
+    let mensaje = "¡Hola! Quisiera realizar el siguiente pedido:\n\n";
+    let totalGral = 0;
+
+    for (let id in carrito) {
+        if (carrito[id].cantidad > 0) {
+            const subtotal = carrito[id].precio * carrito[id].cantidad;
+            mensaje += `✅ ${carrito[id].cantidad}x ${carrito[id].nombre} - $${subtotal.toFixed(2)}\n`;
+            totalGral += subtotal;
         }
+    }
 
-        .precio-bs {
-            font-size: 24px;
-            font-weight: 800;
-            color: var(--success);
-            margin: 10px 0;
-        }
+    mensaje += `\n*TOTAL A PAGAR: $${totalGral.toFixed(2)}*`;
+    mensaje += `\n(Tasa del día: ${tasa} Bs.)`;
 
-        .precio-usd {
-            font-size: 18px;
-            color: var(--text);
-            font-weight: 600;
-        }
+    const url = `https://wa.me/14845532789?text=${encodeURIComponent(mensaje)}`; //
+    window.open(url, '_blank');
+};
 
-        .btn-whatsapp {
-            background-color: #25D366 !important;
-            color: white !important;
-            margin-top: 15px;
-            box-shadow: 0 8px 20px rgba(37, 211, 102, 0.3) !important;
-        }
-    </style>
-</head>
-<body>
-
-    <header class="header-app">
-        <h1><i class="fas fa-shopping-bag"></i> NUESTRO CATÁLOGO</h1>
-        <div id="tasa-badge" style="background: rgba(255,255,255,0.1); padding: 5px 15px; border-radius: 30px; font-size: 14px;">
-            Tasa: <span id="tasa-cliente">0.00</span> Bs.
-        </div>
-    </header>
-
-    <main class="container">
-        <div class="input-group">
-            <i class="fas fa-search"></i>
-            <input type="text" id="busqueda-cliente" placeholder="¿Qué estás buscando hoy?">
-        </div>
-
-        <div class="catalogo-grid" id="catalogo-productos">
-            </div>
-    </main>
-
-    <footer style="text-align: center; padding: 40px; color: var(--text); font-size: 14px;">
-        <p>Desarrollado por <strong>Sistematikos - Frank Hernandez</strong></p>
-    </footer>
-
-    <script type="module" src="js/catalogo.js"></script>
-</body>
-</html>
+iniciarCatalogo();
