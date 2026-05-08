@@ -5,7 +5,6 @@ const UID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
 let tasa = 1;
 let carrito = {};
 
-// Iniciar monitoreo de Tasa y Productos
 function iniciarCatalogo() {
     const tasaRef = doc(db, "usuarios", UID, "configuracion", "tasa");
     onSnapshot(tasaRef, (snap) => {
@@ -35,7 +34,7 @@ async function renderizarCatalogo() {
                         <h3>${p.nombre}</h3>
                     </div>
                     <div class="line-2">
-                        <span class="price-usd">$${p.precio.toFixed(2)}</span>
+                        <span class="price-usd">Ref. $${p.precio.toFixed(2)}</span>
                         <span class="price-bs">${precioBs} Bs</span>
                     </div>
                     <div class="line-3">
@@ -58,18 +57,19 @@ window.cambiarCant = (id, cambio, nombre, precio, stockMax) => {
     carrito[id].cantidad = nuevaCant;
     document.getElementById(`qty-${id}`).innerText = nuevaCant;
 
-    // Efectos visuales de selección
     const check = document.getElementById(`check-${id}`);
     const card = document.getElementById(`card-${id}`);
     
     if (nuevaCant > 0) {
         check.style.display = 'block';
-        card.style.borderColor = 'var(--emerald)';
-        card.style.background = '#24324d'; // Un poco más claro para resaltar
+        card.style.borderColor = 'var(--electric)';
+        card.style.transform = 'scale(1.02)';
+        card.style.boxShadow = '0 10px 20px rgba(0,0,0,0.08)';
     } else {
         check.style.display = 'none';
-        card.style.borderColor = 'rgba(255,255,255,0.1)';
-        card.style.background = 'var(--dark-slate)';
+        card.style.borderColor = 'var(--border)';
+        card.style.transform = 'scale(1)';
+        card.style.boxShadow = '0 4px 6px rgba(0,0,0,0.05)';
     }
 
     actualizarFooter();
@@ -77,40 +77,29 @@ window.cambiarCant = (id, cambio, nombre, precio, stockMax) => {
 
 function actualizarFooter() {
     const footer = document.getElementById('cart-footer');
-    let total = 0; 
-    let items = 0;
-
+    let total = 0; let items = 0;
     for (let id in carrito) {
         total += carrito[id].precio * carrito[id].cantidad;
         items += carrito[id].cantidad;
     }
-
-    if (items > 0) {
-        footer.style.display = 'flex';
-        document.getElementById('cart-total').innerText = total.toFixed(2);
-        document.getElementById('cart-count').innerText = items;
-    } else {
-        footer.style.display = 'none';
-    }
+    footer.style.display = items > 0 ? 'flex' : 'none';
+    document.getElementById('cart-total').innerText = total.toFixed(2);
+    document.getElementById('cart-count').innerText = items;
 }
 
 window.enviarPedido = () => {
-    let m = "¡Hola! Quisiera realizar el siguiente pedido:\n\n";
+    let m = "¡Hola! Mi pedido en Sistematikos:\n\n";
     let tGral = 0;
-
     for (let id in carrito) {
         if (carrito[id].cantidad > 0) {
             let sub = carrito[id].precio * carrito[id].cantidad;
-            m += `✅ *${carrito[id].cantidad}x* ${carrito[id].nombre} ($${sub.toFixed(2)})\n`;
+            m += `⭐ *${carrito[id].cantidad}x* ${carrito[id].nombre} - $${sub.toFixed(2)}\n`;
             tGral += sub;
         }
     }
-
-    m += `\n*TOTAL A PAGAR: $${tGral.toFixed(2)}*`;
-    m += `\n(Tasa del día: ${tasa} Bs.)`;
-
-    const url = `https://wa.me/14845532789?text=${encodeURIComponent(m)}`;
-    window.open(url, '_blank');
+    m += `\n*TOTAL FINAL: $${tGral.toFixed(2)}*`;
+    m += `\n(Calculado a tasa: ${tasa} Bs.)`;
+    window.open(`https://wa.me/14845532789?text=${encodeURIComponent(m)}`, '_blank');
 };
 
 iniciarCatalogo();
