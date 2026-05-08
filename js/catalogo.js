@@ -1,91 +1,101 @@
 import { db } from './firebase-config.js';
-import { collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, getDocs, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const MI_ID_USUARIO = "sUhfZI9Fy3M9UlInTYw2wFWZmB12"; 
-const WHATSAPP_NUM = "584245484324"; 
+const UID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
+let tasa = 1;
+let carrito = {};
 
-let tasaDia = 1;
-let carrito = [];
-
-async function inicializarCatalogo() {
-    try {
-        const tasaRef = doc(db, "usuarios", MI_ID_USUARIO, "configuracion", "tasa"); 
-        const tasaSnap = await getDoc(tasaRef);
-        if (tasaSnap.exists()) {
-            tasaDia = tasaSnap.data().valor;
-            document.getElementById('tasa-cliente').innerText = tasaDia.toLocaleString('es-VE', {minimumFractionDigits: 2});
+function iniciarCatalogo() {
+    const tasaRef = doc(db, "usuarios", UID, "configuracion", "tasa");
+    onSnapshot(tasaRef, (snap) => {
+        if (snap.exists()) {
+            tasa = snap.data().valor;
+            document.getElementById('tasa-cliente').innerText = tasa.toLocaleString('es-VE');
+            renderizarCatalogo();
         }
-    } catch (e) { console.error("Error tasa:", e); }
-    
-    cargarProductos();
-}
-
-window.seleccionarProducto = (id, nombre, precio) => {
-    const card = document.getElementById(`card-${id}`);
-    const checkbox = document.getElementById(`check-${id}`);
-    const index = carrito.findIndex(item => item.id === id);
-
-    if (index > -1) {
-        carrito.splice(index, 1);
-        card.classList.remove('seleccionado');
-        if(checkbox) checkbox.checked = false;
-    } else {
-        carrito.push({ id, nombre, precio });
-        card.classList.add('seleccionado');
-        if(checkbox) checkbox.checked = true;
-    }
-    
-    document.getElementById('cuenta-productos').innerText = carrito.length;
-    document.getElementById('btn-flotante-pedido').style.display = carrito.length > 0 ? 'block' : 'none';
-};
-
-async function cargarProductos() {
-    try {
-        const productosRef = collection(db, "usuarios", MI_ID_USUARIO, "productos");
-        // Traemos todos los productos sin filtros para evitar el error de INDEX de la consola
-        const snap = await getDocs(productosRef);
-        
-        const grid = document.getElementById('catalogo-productos');
-        grid.innerHTML = "";
-
-        if (snap.empty) {
-            grid.innerHTML = "<p style='text-align:center; padding:20px;'>No hay productos registrados.</p>";
-            return;
-        }
-
-        snap.forEach((doc) => {
-            const p = doc.data();
-            
-            // Filtramos el stock aquí manualmente en el código
-            if (p.stock > 0) {
-                const precioBs = (p.precio * tasaDia).toLocaleString('es-VE', { minimumFractionDigits: 2 });
-                const id = doc.id;
-
-                grid.innerHTML += `
-                    <div class="producto-card" id="card-${id}" onclick="seleccionarProducto('${id}', '${p.nombre}', ${p.precio})">
-                        <div class="check-container"><input type="checkbox" id="check-${id}" onclick="event.stopPropagation()"></div>
-                        <h3 style="color: #1A1A2E; margin-bottom: 8px; font-family: 'Poppins';">${p.nombre}</h3>
-                        <div style="font-size: 22px; font-weight: 800; color: #15803D;">Bs. ${precioBs}</div>
-                        <div style="color: #64748b; font-weight: 600; font-size: 14px;">Ref: $${p.precio.toFixed(2)}</div>
-                    </div>`;
-            }
-        });
-    } catch (e) {
-        console.error("Error detallado:", e);
-        document.getElementById('catalogo-productos').innerHTML = `<p style='color:red; text-align:center;'>Error: ${e.message}</p>`;
-    }
-}
-
-window.enviarPedidoWhatsApp = () => {
-    let mensaje = "*NUEVO PEDIDO*%0A";
-    let totalUsd = 0;
-    carrito.forEach((item, i) => {
-        mensaje += `${i + 1}. *${item.nombre}* ($${item.precio.toFixed(2)})%0A`;
-        totalUsd += item.precio;
     });
-    const totalBs = (totalUsd * tasaDia).toLocaleString('es-VE', { minimumFractionDigits: 2 });
-    mensaje += `%0A*TOTAL:* $${totalUsd.toFixed(2)} / *Bs. ${totalBs}*`;
-    window.open(`https://wa.me/${WHATSAPP_NUM}?text=${mensaje}`, '_blank');
+}
+
+async function renderizarCatalogo() {
+    const contenedor = document.getElementById('contenedor-catalogo');
+    const snap = await getDocs(collection(db, "usuarios", UID, "productos"));
+    contenedor.innerHTML = "";
+
+    snap.forEach(docSnap => {
+        const p = docSnap.data();
+        const id = docSnap.id;
+        const precioBs = (p.precio * tasa).toLocaleString('es-VE', {maximumFractionDigits:0});
+
+        if (p.stock > 0) {
+            contenedor.innerHTML += `
+                <div class="card-prod" id="card-${id}">
+                    <div class="title-row">
+                        <h3>${p.nombre}</h3>
+                        <i class="fas fa-check-circle check-icon" id="check-${id}"></i>
+                    </div>
+                    
+                    <div class="price-row">
+                        <span class="price-usd">$${p.precio.toFixed(2)}</span>
+                        <span class="price-bs">${precioBs} Bs.</span>
+                    </div>
+                    
+                    <div class="qty-control">
+                        <button class="btn-qty" onclick="cambiarCant('${id}', -1, '${p.nombre}', ${p.precio}, ${p.stock})">-</button>
+                        <span class="qty-val" id="qty-${id}">0</span>
+                        <button class="btn-qty" onclick="cambiarCant('${id}', 1, '${p.nombre}', ${p.precio}, ${p.stock})">+</button>
+                    </div>
+                </div>`;
+        }
+    });
+}
+
+window.cambiarCant = (id, cambio, nombre, precio, stockMax) => {
+    if (!carrito[id]) carrito[id] = { nombre, precio, cantidad: 0 };
+    
+    let nuevaCant = carrito[id].cantidad + cambio;
+    if (nuevaCant < 0) nuevaCant = 0;
+    if (nuevaCant > stockMax) nuevaCant = stockMax;
+
+    carrito[id].cantidad = nuevaCant;
+    document.getElementById(`qty-${id}`).innerText = nuevaCant;
+
+    // Lógica del Tilde al lado del nombre
+    const check = document.getElementById(`check-${id}`);
+    if (nuevaCant > 0) {
+        check.style.display = 'block';
+        document.getElementById(`card-${id}`).style.borderColor = 'var(--electric)';
+    } else {
+        check.style.display = 'none';
+        document.getElementById(`card-${id}`).style.borderColor = '#e2e8f0';
+    }
+
+    actualizarFooter();
 };
 
-inicializarCatalogo();
+function actualizarFooter() {
+    const footer = document.getElementById('cart-footer');
+    let total = 0; let items = 0;
+    for (let id in carrito) {
+        total += carrito[id].precio * carrito[id].cantidad;
+        items += carrito[id].cantidad;
+    }
+    footer.style.display = items > 0 ? 'flex' : 'none';
+    document.getElementById('cart-total').innerText = total.toFixed(2);
+    document.getElementById('cart-count').innerText = items;
+}
+
+window.enviarPedido = () => {
+    let m = "¡Hola! Mi pedido:\n\n";
+    let t = 0;
+    for (let id in carrito) {
+        if (carrito[id].cantidad > 0) {
+            let sub = carrito[id].precio * carrito[id].cantidad;
+            m += `*${carrito[id].cantidad}* x ${carrito[id].nombre} ($${sub.toFixed(2)})\n`;
+            t += sub;
+        }
+    }
+    m += `\n*TOTAL: $${t.toFixed(2)}*`;
+    window.open(`https://wa.me/14845532789?text=${encodeURIComponent(m)}`, '_blank');
+};
+
+iniciarCatalogo();
