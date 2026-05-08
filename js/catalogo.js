@@ -62,9 +62,11 @@ window.cambiarCant = (id, cambio, nombre, precio, stockMax) => {
     if (nuevaCant > 0) {
         check.style.display = 'block';
         card.style.borderColor = 'var(--electric)';
+        card.style.boxShadow = '0 8px 15px rgba(59, 130, 246, 0.1)';
     } else {
         check.style.display = 'none';
         card.style.borderColor = 'var(--border)';
+        card.style.boxShadow = '0 4px 6px rgba(0,0,0,0.05)';
     }
     actualizarFooter();
 };
@@ -82,7 +84,6 @@ function actualizarFooter() {
     if (items > 0) {
         footer.style.display = 'flex';
         const totalBs = totalUsd * tasa;
-        
         document.getElementById('cart-total-usd').innerText = totalUsd.toFixed(2);
         document.getElementById('cart-total-bs').innerText = totalBs.toLocaleString('es-VE', { minimumFractionDigits: 2 });
         document.getElementById('cart-count').innerText = items;
@@ -92,7 +93,7 @@ function actualizarFooter() {
 }
 
 window.enviarPedido = () => {
-    let m = "¡Hola! Mi pedido:\n\n";
+    let m = "¡Hola! Mi pedido en Sistematikos:\n\n";
     let tUsd = 0;
     for (let id in carrito) {
         if (carrito[id].cantidad > 0) {
@@ -104,7 +105,6 @@ window.enviarPedido = () => {
     const tBs = tUsd * tasa;
     m += `\n*TOTAL USD: $${tUsd.toFixed(2)}*`;
     m += `\n*TOTAL BS: ${tBs.toLocaleString('es-VE')} Bs.*`;
-    m += `\n(Tasa: ${tasa} Bs.)`;
     window.open(`https://wa.me/14845532789?text=${encodeURIComponent(m)}`, '_blank');
 };
 
