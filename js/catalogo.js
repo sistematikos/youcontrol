@@ -49,7 +49,6 @@ async function renderizarCatalogo() {
 
 window.cambiarCant = (id, cambio, nombre, precio, stockMax) => {
     if (!carrito[id]) carrito[id] = { nombre, precio, cantidad: 0 };
-    
     let nuevaCant = carrito[id].cantidad + cambio;
     if (nuevaCant < 0) nuevaCant = 0;
     if (nuevaCant > stockMax) nuevaCant = stockMax;
@@ -63,42 +62,49 @@ window.cambiarCant = (id, cambio, nombre, precio, stockMax) => {
     if (nuevaCant > 0) {
         check.style.display = 'block';
         card.style.borderColor = 'var(--electric)';
-        card.style.transform = 'scale(1.02)';
-        card.style.boxShadow = '0 10px 20px rgba(0,0,0,0.08)';
     } else {
         check.style.display = 'none';
         card.style.borderColor = 'var(--border)';
-        card.style.transform = 'scale(1)';
-        card.style.boxShadow = '0 4px 6px rgba(0,0,0,0.05)';
     }
-
     actualizarFooter();
 };
 
 function actualizarFooter() {
     const footer = document.getElementById('cart-footer');
-    let total = 0; let items = 0;
+    let totalUsd = 0; 
+    let items = 0;
+
     for (let id in carrito) {
-        total += carrito[id].precio * carrito[id].cantidad;
+        totalUsd += carrito[id].precio * carrito[id].cantidad;
         items += carrito[id].cantidad;
     }
-    footer.style.display = items > 0 ? 'flex' : 'none';
-    document.getElementById('cart-total').innerText = total.toFixed(2);
-    document.getElementById('cart-count').innerText = items;
+
+    if (items > 0) {
+        footer.style.display = 'flex';
+        const totalBs = totalUsd * tasa;
+        
+        document.getElementById('cart-total-usd').innerText = totalUsd.toFixed(2);
+        document.getElementById('cart-total-bs').innerText = totalBs.toLocaleString('es-VE', { minimumFractionDigits: 2 });
+        document.getElementById('cart-count').innerText = items;
+    } else {
+        footer.style.display = 'none';
+    }
 }
 
 window.enviarPedido = () => {
-    let m = "¡Hola! Mi pedido en Sistematikos:\n\n";
-    let tGral = 0;
+    let m = "¡Hola! Mi pedido:\n\n";
+    let tUsd = 0;
     for (let id in carrito) {
         if (carrito[id].cantidad > 0) {
             let sub = carrito[id].precio * carrito[id].cantidad;
             m += `⭐ *${carrito[id].cantidad}x* ${carrito[id].nombre} - $${sub.toFixed(2)}\n`;
-            tGral += sub;
+            tUsd += sub;
         }
     }
-    m += `\n*TOTAL FINAL: $${tGral.toFixed(2)}*`;
-    m += `\n(Calculado a tasa: ${tasa} Bs.)`;
+    const tBs = tUsd * tasa;
+    m += `\n*TOTAL USD: $${tUsd.toFixed(2)}*`;
+    m += `\n*TOTAL BS: ${tBs.toLocaleString('es-VE')} Bs.*`;
+    m += `\n(Tasa: ${tasa} Bs.)`;
     window.open(`https://wa.me/14845532789?text=${encodeURIComponent(m)}`, '_blank');
 };
 
