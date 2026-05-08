@@ -24,18 +24,18 @@ async function renderizarCatalogo() {
     snap.forEach(docSnap => {
         const p = docSnap.data();
         const id = docSnap.id;
-        const precioBs = (p.precio * tasa).toLocaleString('es-VE', {maximumFractionDigits:0});
+        const precioBs = (p.precio * tasa).toLocaleString('es-VE', {minimumFractionDigits: 2});
 
         if (p.stock > 0) {
             contenedor.innerHTML += `
                 <div class="card-prod" id="card-${id}">
                     <div class="line-1">
-                        <h3>${p.nombre}</h3>
                         <i class="fas fa-check-circle check-icon" id="check-${id}"></i>
+                        <h3>${p.nombre}</h3>
                     </div>
                     <div class="line-2">
                         <span class="price-usd">$${p.precio.toFixed(2)}</span>
-                        <span class="price-bs">≈ ${precioBs} Bs</span>
+                        <span class="price-bs">${precioBs} Bs</span>
                     </div>
                     <div class="line-3">
                         <button class="btn-qty" onclick="cambiarCant('${id}', -1, '${p.nombre}', ${p.precio}, ${p.stock})">-</button>
@@ -56,17 +56,17 @@ window.cambiarCant = (id, cambio, nombre, precio, stockMax) => {
     carrito[id].cantidad = nuevaCant;
     document.getElementById(`qty-${id}`).innerText = nuevaCant;
 
-    // Efecto visual de selección
     const check = document.getElementById(`check-${id}`);
     const card = document.getElementById(`card-${id}`);
+    
     if (nuevaCant > 0) {
         check.style.display = 'block';
         card.style.borderColor = 'var(--electric)';
-        card.style.background = '#2D3748';
+        card.style.boxShadow = '0 0 15px rgba(59, 130, 246, 0.2)';
     } else {
         check.style.display = 'none';
-        card.style.borderColor = 'rgba(255,255,255,0.05)';
-        card.style.background = 'var(--dark-slate)';
+        card.style.borderColor = 'rgba(255,255,255,0.1)';
+        card.style.boxShadow = 'none';
     }
     actualizarFooter();
 };
@@ -84,7 +84,7 @@ function actualizarFooter() {
 }
 
 window.enviarPedido = () => {
-    let m = "¡Hola! Mi pedido:\n\n";
+    let m = "¡Hola Sistematikos! Mi pedido:\n\n";
     let t = 0;
     for (let id in carrito) {
         if (carrito[id].cantidad > 0) {
