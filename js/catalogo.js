@@ -29,17 +29,15 @@ async function renderizarCatalogo() {
         if (p.stock > 0) {
             contenedor.innerHTML += `
                 <div class="card-prod" id="card-${id}">
-                    <div class="title-row">
+                    <div class="line-1">
                         <h3>${p.nombre}</h3>
                         <i class="fas fa-check-circle check-icon" id="check-${id}"></i>
                     </div>
-                    
-                    <div class="price-row">
+                    <div class="line-2">
                         <span class="price-usd">$${p.precio.toFixed(2)}</span>
-                        <span class="price-bs">${precioBs} Bs.</span>
+                        <span class="price-bs">≈ ${precioBs} Bs</span>
                     </div>
-                    
-                    <div class="qty-control">
+                    <div class="line-3">
                         <button class="btn-qty" onclick="cambiarCant('${id}', -1, '${p.nombre}', ${p.precio}, ${p.stock})">-</button>
                         <span class="qty-val" id="qty-${id}">0</span>
                         <button class="btn-qty" onclick="cambiarCant('${id}', 1, '${p.nombre}', ${p.precio}, ${p.stock})">+</button>
@@ -51,7 +49,6 @@ async function renderizarCatalogo() {
 
 window.cambiarCant = (id, cambio, nombre, precio, stockMax) => {
     if (!carrito[id]) carrito[id] = { nombre, precio, cantidad: 0 };
-    
     let nuevaCant = carrito[id].cantidad + cambio;
     if (nuevaCant < 0) nuevaCant = 0;
     if (nuevaCant > stockMax) nuevaCant = stockMax;
@@ -59,16 +56,18 @@ window.cambiarCant = (id, cambio, nombre, precio, stockMax) => {
     carrito[id].cantidad = nuevaCant;
     document.getElementById(`qty-${id}`).innerText = nuevaCant;
 
-    // Lógica del Tilde al lado del nombre
+    // Efecto visual de selección
     const check = document.getElementById(`check-${id}`);
+    const card = document.getElementById(`card-${id}`);
     if (nuevaCant > 0) {
         check.style.display = 'block';
-        document.getElementById(`card-${id}`).style.borderColor = 'var(--electric)';
+        card.style.borderColor = 'var(--electric)';
+        card.style.background = '#2D3748';
     } else {
         check.style.display = 'none';
-        document.getElementById(`card-${id}`).style.borderColor = '#e2e8f0';
+        card.style.borderColor = 'rgba(255,255,255,0.05)';
+        card.style.background = 'var(--dark-slate)';
     }
-
     actualizarFooter();
 };
 
