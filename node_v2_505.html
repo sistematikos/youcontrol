@@ -6,133 +6,135 @@
     <title>Catálogo Digital | Sistematikos</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        :root { --navy: #0F172A; --electric: #3B82F6; --emerald: #10B981; --dark-slate: #1E293B; }
+        :root { 
+            --bg-light: #F8FAFC; 
+            --card-bg: #FFFFFF;
+            --text-main: #1E293B;
+            --electric: #3B82F6; 
+            --emerald: #10B981; 
+            --border: #E2E8F0;
+        }
         
         body { 
             font-family: 'Poppins', sans-serif; 
-            background: var(--navy); 
+            background: var(--bg-light); 
             margin: 0; 
-            padding-bottom: 120px; 
-            color: white; 
+            padding-bottom: 140px; 
+            color: var(--text-main); 
         }
         
         .header-mini { 
-            padding: 15px; 
+            padding: 20px; 
             text-align: center; 
-            background: rgba(0,0,0,0.2); 
-            border-bottom: 2px solid var(--electric); 
+            background: white; 
+            border-bottom: 3px solid var(--electric);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
         }
 
         .container { padding: 12px; max-width: 800px; margin: auto; }
 
-        /* Grid de 2 columnas para móviles */
         .grid-catalog { 
             display: grid; 
             grid-template-columns: repeat(2, 1fr); 
-            gap: 12px; 
+            gap: 15px; 
         }
 
-        /* Tarjeta de 3 niveles centrada */
+        /* Tarjeta Blanca y Limpia */
         .card-prod { 
-            background: var(--dark-slate); 
-            border-radius: 18px; 
+            background: var(--card-bg); 
+            border-radius: 20px; 
             padding: 15px 10px; 
             display: flex; 
             flex-direction: column;
             gap: 12px;
             text-align: center;
-            border: 1px solid rgba(255,255,255,0.1);
-            transition: 0.3s;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
             position: relative;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
         }
 
-        /* LÍNEA 1: Nombre */
         .line-1 h3 { 
             margin: 0; 
             font-size: 0.85rem; 
             text-transform: uppercase; 
-            line-height: 1.2; 
-            font-weight: 600;
+            color: var(--text-main);
+            font-weight: 700;
         }
+        
         .check-icon { 
             color: var(--emerald); 
-            font-size: 0.9rem; 
+            font-size: 1rem; 
             position: absolute; 
-            top: 8px; 
-            right: 8px; 
+            top: 10px; 
+            right: 10px; 
             display: none; 
         }
 
-        /* LÍNEA 2: Precios (Bs Resaltado) */
+        /* Precios en diseño claro */
         .line-2 { 
             display: flex; 
             flex-direction: column; 
             gap: 2px;
+            background: #F1F5F9;
+            border-radius: 12px;
+            padding: 8px 0;
         }
-        .price-usd { font-size: 0.85rem; opacity: 0.6; font-weight: 400; }
-        .price-bs { font-size: 1.2rem; color: var(--emerald); font-weight: 800; }
+        .price-usd { font-size: 0.8rem; color: #64748B; font-weight: 500; }
+        .price-bs { font-size: 1.25rem; color: var(--text-main); font-weight: 900; }
 
-        /* LÍNEA 3: Controles +/- */
+        /* Controles +/- Estilo Apple */
         .line-3 { 
             display: flex; 
             align-items: center; 
             justify-content: space-between; 
-            padding: 0 10px;
+            padding: 0 5px;
         }
         .btn-qty { 
-            background: #334155; 
-            border: none; 
-            color: white;
-            width: 34px; 
-            height: 34px; 
-            border-radius: 10px; 
+            background: white; 
+            border: 1px solid var(--border); 
+            color: var(--text-main);
+            width: 36px; 
+            height: 36px; 
+            border-radius: 12px; 
             cursor: pointer;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            font-size: 1.3rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
-        .qty-val { font-weight: 800; font-size: 1.1rem; min-width: 25px; }
+        .qty-val { font-weight: 800; font-size: 1.1rem; color: var(--electric); }
 
-        /* Carrito con Total Arriba */
+        /* Carrito Flotante Claro */
         #cart-footer { 
             position: fixed; 
             bottom: 20px; 
             left: 50%; 
             transform: translateX(-50%); 
-            width: 85%; 
-            max-width: 350px; 
-            background: #1e293be6; 
-            backdrop-filter: blur(10px);
-            color: white; 
+            width: 90%; 
+            max-width: 380px; 
+            background: white; 
+            color: var(--text-main); 
             padding: 20px; 
-            border-radius: 25px; 
+            border-radius: 30px; 
             display: none; 
             flex-direction: column;
             align-items: center; 
             gap: 15px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5); 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15); 
             z-index: 1000; 
-            border: 2px solid var(--emerald);
-            animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        @keyframes slideUp {
-            from { bottom: -150px; opacity: 0; }
-            to { bottom: 20px; opacity: 1; }
+            border: 1px solid var(--border);
         }
 
         .cart-info { text-align: center; }
-        .cart-info small { font-size: 0.7rem; opacity: 0.6; letter-spacing: 1px; }
-        .cart-total-big { font-size: 2rem; font-weight: 900; margin-top: -5px; }
+        .cart-info small { font-size: 0.75rem; color: #64748B; font-weight: 600; }
+        .cart-total-big { font-size: 2.2rem; font-weight: 900; color: var(--electric); }
 
         .btn-whatsapp { 
             background: var(--emerald); 
             color: white; 
             border: none; 
             width: 100%; 
-            padding: 15px; 
-            border-radius: 15px; 
+            padding: 16px; 
+            border-radius: 18px; 
             font-weight: 800; 
             font-size: 1rem;
             cursor: pointer; 
@@ -140,30 +142,30 @@
             justify-content: center; 
             align-items: center; 
             gap: 10px;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
         }
     </style>
 </head>
 <body oncontextmenu="return false">
 
     <header class="header-mini">
-        <h2 style="margin:0; font-size: 1rem; letter-spacing: 1px;">CATÁLOGO DE PRODUCTOS</h2>
-        <div style="font-size: 0.8rem; color: var(--emerald); font-weight: bold; margin-top: 4px;">
-            TASA: <span id="tasa-cliente">0.00</span> Bs.
+        <h2 style="margin:0; font-size: 1.1rem; color: var(--text-main);">CATÁLOGO DIGITAL</h2>
+        <div style="font-size: 0.85rem; color: var(--electric); font-weight: 700; margin-top: 5px;">
+            TASA DEL DÍA: <span id="tasa-cliente">0.00</span> Bs.
         </div>
     </header>
 
     <main class="container">
-        <div class="grid-catalog" id="contenedor-catalogo">
-            </div>
+        <div class="grid-catalog" id="contenedor-catalogo"></div>
     </main>
 
     <div id="cart-footer">
         <div class="cart-info">
-            <small>TOTAL A PAGAR</small>
+            <small>TOTAL DE TU PEDIDO</small>
             <div class="cart-total-big">$ <span id="cart-total">0.00</span></div>
         </div>
         <button class="btn-whatsapp" onclick="enviarPedido()">
-            <i class="fab fa-whatsapp"></i> ENVIAR PEDIDO (<span id="cart-count">0</span>)
+            <i class="fab fa-whatsapp"></i> CONFIRMAR PEDIDO (<span id="cart-count">0</span>)
         </button>
     </div>
 
