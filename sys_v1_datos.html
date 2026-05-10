@@ -3,30 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistematikos | Carga de Inventario</title>
+    <title>Sistematikos | Carga con Inteligencia de Precios</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         :root { --bg: #F8FAFC; --primary: #3B82F6; --text: #1E293B; --border: #E2E8F0; --emerald: #10B981; }
         body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding-bottom: 50px; }
-        .container { padding: 15px; max-width: 1200px; margin: auto; }
+        .container { padding: 15px; max-width: 1300px; margin: auto; }
         .header-sys { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-left: 5px solid var(--primary); padding-left: 15px; }
         .table-responsive { overflow-x: auto; background: white; border-radius: 15px; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
-        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        table { width: 100%; border-collapse: collapse; min-width: 1100px; }
         th { background: #F1F5F9; padding: 15px; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: #64748B; }
         td { padding: 8px; border-bottom: 1px solid var(--border); }
-        .input-table { width: 100%; border: 1px solid transparent; padding: 12px; border-radius: 8px; font-size: 0.9rem; box-sizing: border-box; background: #F1F5F9; }
+        .input-table { width: 100%; border: 1px solid transparent; padding: 12px; border-radius: 8px; font-size: 0.9rem; box-sizing: border-box; background: #F1F5F9; transition: 0.3s; }
         .input-table:focus { outline: none; border-color: var(--primary); background: #FFFFFF; }
+        /* Estilo especial para el auto-cálculo */
+        .p-precio { background: #E0F2FE; font-weight: 700; color: var(--primary); }
         .btn-add { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 10px; cursor: pointer; font-weight: 700; }
         .btn-save { background: var(--emerald); color: white; border: none; padding: 18px; border-radius: 15px; cursor: pointer; font-weight: 800; width: 100%; margin-top: 25px; font-size: 1.1rem; }
         .btn-remove { color: #EF4444; background: #FEE2E2; border: none; cursor: pointer; width: 35px; height: 35px; border-radius: 8px; }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false">
     <div class="container">
         <div class="header-sys">
             <div>
                 <h2 style="margin:0; font-size: 1.3rem;">YOU CONTROL CORE</h2>
-                <small style="color: var(--primary); font-weight: 600;">Ingreso de Mercancía con Costos</small>
+                <small style="color: var(--primary); font-weight: 600;">Carga Inteligente: Costo + Margen %</small>
             </div>
             <button class="btn-add" onclick="agregarFila()"><i class="fas fa-plus"></i> NUEVA FILA</button>
         </div>
@@ -35,12 +37,13 @@
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 20%;">Código</th>
-                        <th style="width: 30%;">Producto</th>
-                        <th style="width: 15%;">Costo ($)</th>
-                        <th style="width: 15%;">Venta ($)</th>
+                        <th style="width: 15%;">Código</th>
+                        <th style="width: 25%;">Producto</th>
+                        <th style="width: 12%;">Costo ($)</th>
+                        <th style="width: 12%;">Ganancia %</th>
+                        <th style="width: 15%;">P. Venta ($)</th>
                         <th style="width: 10%;">Stock</th>
-                        <th style="width: 10%;"></th>
+                        <th style="width: 11%;"></th>
                     </tr>
                 </thead>
                 <tbody id="cuerpo-tabla"></tbody>
@@ -48,7 +51,7 @@
         </div>
 
         <button class="btn-save" id="btnGuardarTodo" onclick="guardarInventario()">
-            <i class="fas fa-save"></i> REGISTRAR CARGA MASIVA
+            <i class="fas fa-cloud-upload-alt"></i> REGISTRAR PRODUCTOS EN LA NUBE
         </button>
     </div>
 
@@ -65,8 +68,9 @@
             tr.innerHTML = `
                 <td><input type="text" class="input-table p-barcode" placeholder="Scanner"></td>
                 <td><input type="text" class="input-table p-nombre" placeholder="Nombre"></td>
-                <td><input type="number" class="input-table p-costo" placeholder="0.00" step="0.01"></td>
-                <td><input type="number" class="input-table p-precio" placeholder="0.00" step="0.01"></td>
+                <td><input type="number" class="input-table p-costo" placeholder="0.00" step="0.01" oninput="calcularPrecio(this)"></td>
+                <td><input type="number" class="input-table p-margen" placeholder="%" oninput="calcularPrecio(this)"></td>
+                <td><input type="number" class="input-table p-precio" placeholder="Manual" step="0.01"></td>
                 <td><input type="number" class="input-table p-stock" placeholder="0"></td>
                 <td style="text-align: center;">
                     <button class="btn-remove" onclick="this.parentElement.parentElement.remove()"><i class="fas fa-trash"></i></button>
@@ -76,12 +80,26 @@
             tr.querySelector('.p-barcode').focus();
         };
 
+        // Lógica de cálculo automático
+        window.calcularPrecio = (input) => {
+            const fila = input.closest('tr');
+            const costo = parseFloat(fila.querySelector('.p-costo').value) || 0;
+            const margen = parseFloat(fila.querySelector('.p-margen').value) || 0;
+            const inputPrecio = fila.querySelector('.p-precio');
+
+            if (costo > 0 && margen > 0) {
+                const precioCalculado = costo + (costo * (margen / 100));
+                inputPrecio.value = precioCalculado.toFixed(2);
+            }
+        };
+
         window.guardarInventario = async () => {
             const filas = document.querySelectorAll('.fila-producto');
             const btn = document.getElementById('btnGuardarTodo');
             if (filas.length === 0) return alert("Tabla vacía");
+            
             btn.disabled = true;
-            btn.innerHTML = 'GUARDANDO...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROCESANDO...';
 
             try {
                 const productosRef = collection(db, "usuarios", UID, "productos");
@@ -104,11 +122,16 @@
                         });
                     }
                 }
-                alert("Éxito al guardar");
+                alert("Inventario cargado exitosamente en You Control");
                 tabla.innerHTML = ""; agregarFila();
-            } catch (e) { alert("Error al guardar"); }
-            finally { btn.disabled = false; btn.innerHTML = 'REGISTRAR CARGA MASIVA'; }
+            } catch (e) { 
+                alert("Error de conexión con Firebase"); 
+            } finally { 
+                btn.disabled = false; 
+                btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> REGISTRAR PRODUCTOS EN LA NUBE'; 
+            }
         };
+
         agregarFila();
     </script>
 </body>
