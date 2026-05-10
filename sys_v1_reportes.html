@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes | You Control</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background: #F4F7F9; margin: 0; padding: 20px; }
+        .card-report { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); margin-bottom: 20px; text-align: center; }
+        .val { font-size: 2rem; font-weight: 900; color: #3B82F6; }
+        .label { color: #64748B; font-weight: 600; text-transform: uppercase; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+    <button onclick="history.back()" style="border:none; background:none; font-size:1.2rem; cursor:pointer; margin-bottom:20px;">
+        <i class="fas fa-arrow-left"></i> Volver
+    </button>
+    
+    <h2><i class="fas fa-chart-pie"></i> Reportes de Ganancia</h2>
+
+    <div class="card-report">
+        <div class="label">Inversión Total (Costo)</div>
+        <div id="total-inversion" class="val">$ 0.00</div>
+    </div>
+
+    <div class="card-report">
+        <div class="label">Ganancia Potencial (Venta total - Costos)</div>
+        <div id="total-ganancia" class="val" style="color:#10B981;">$ 0.00</div>
+    </div>
+
+    <script type="module">
+        import { db } from './js/firebase-config.js';
+        import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const UID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
+
+        onSnapshot(collection(db, "usuarios", UID, "productos"), (snap) => {
+            let inversion = 0;
+            let gananciaTotal = 0;
+
+            snap.forEach(doc => {
+                const p = doc.data();
+                const stock = p.stock || 0;
+                inversion += (p.costo || 0) * stock;
+                gananciaTotal += (p.precio - (p.costo || 0)) * stock;
+            });
+
+            document.getElementById('total-inversion').innerText = "$ " + inversion.toFixed(2);
+            document.getElementById('total-ganancia').innerText = "$ " + gananciaTotal.toFixed(2);
+        });
+    </script>
+</body>
+</html>
