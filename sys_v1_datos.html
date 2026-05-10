@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistematikos | Carga de Inventario sys_v1</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root { 
+            --bg: #F8FAFC; 
+            --primary: #3B82F6; 
+            --text: #1E293B; 
+            --border: #E2E8F0; 
+            --emerald: #10B981; 
+        }
+        
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background: var(--bg); 
+            margin: 0; 
+            padding-bottom: 50px; 
+            color: var(--text);
+        }
+        
+        .container { padding: 15px; max-width: 1150px; margin: auto; }
+        
+        .header-sys { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 20px;
+            border-left: 5px solid var(--primary);
+            padding-left: 15px;
+        }
+        
+        .table-responsive { 
+            overflow-x: auto; 
+            background: white; 
+            border-radius: 15px; 
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+
+        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        
+        th { 
+            background: #F1F5F9; 
+            padding: 15px; 
+            text-align: left; 
+            font-size: 0.75rem; 
+            text-transform: uppercase; 
+            color: #64748B; 
+        }
+
+        td { padding: 8px; border-bottom: 1px solid var(--border); }
+
+        .input-table {
+            width: 100%; 
+            border: 1px solid transparent; 
+            padding: 12px;
+            border-radius: 8px; 
+            font-size: 0.9rem; 
+            transition: 0.2s;
+            box-sizing: border-box;
+            background: #F1F5F9;
+        }
+
+        .input-table:focus { 
+            outline: none; 
+            border-color: var(--primary); 
+            background: #FFFFFF;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .p-barcode { font-family: 'Courier New', monospace; font-weight: bold; color: var(--primary); }
+
+        .btn-add { 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 12px 20px; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-weight: 700;
+        }
+
+        .btn-save { 
+            background: var(--emerald); 
+            color: white; 
+            border: none; 
+            padding: 18px; 
+            border-radius: 15px; 
+            cursor: pointer; 
+            font-weight: 800; 
+            width: 100%; 
+            margin-top: 25px; 
+            font-size: 1.1rem;
+        }
+
+        .btn-remove { color: #EF4444; background: #FEE2E2; border: none; cursor: pointer; width: 35px; height: 35px; border-radius: 8px; }
+    </style>
+</head>
+<body oncontextmenu="return false">
+
+    <div class="container">
+        <div class="header-sys">
+            <div>
+                <h2 style="margin:0; font-size: 1.3rem;">SISTEMATIKOS CORE</h2>
+                <small style="color: var(--primary); font-weight: 600;">Módulo: sys_v1_datos</small>
+            </div>
+            <button class="btn-add" onclick="agregarFila()">
+                <i class="fas fa-plus"></i> NUEVA FILA
+            </button>
+        </div>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Código Barras</th>
+                        <th style="width: 40%;">Nombre / Descripción</th>
+                        <th style="width: 15%;">Precio ($)</th>
+                        <th style="width: 10%;">Stock</th>
+                        <th style="width: 10%;"></th>
+                    </tr>
+                </thead>
+                <tbody id="cuerpo-tabla"></tbody>
+            </table>
+        </div>
+
+        <button class="btn-save" id="btnGuardarTodo" onclick="guardarInventario()">
+            <i class="fas fa-save"></i> PROCESAR CARGA MASIVA (FIREBASE)
+        </button>
+    </div>
+
+    <script type="module" src="js/sys_v1_inventario.js"></script>
+</body>
+</html>
