@@ -8,17 +8,37 @@
     <style>
         :root { --dark: #1E1E2D; --vinotinto: #800020; --blue: #3B82F6; --emerald: #10B981; }
         body { font-family: 'Poppins', sans-serif; background: #F4F7F9; margin: 0; }
+        
         .header-main { background: var(--dark); color: white; padding: 20px; display: flex; justify-content: center; align-items: center; border-bottom: 5px solid var(--vinotinto); }
         .tasa-badge { background: #2B2B40; padding: 8px 15px; border-radius: 12px; font-weight: 700; margin-left: 20px; border: 1px solid #3f3f5a; }
         .tasa-badge span { color: var(--blue); }
-        .btn-group { padding: 20px; display: flex; gap: 10px; max-width: 1200px; margin: auto; }
-        .table-wrapper { background: white; border-radius: 20px; margin: 0 20px; overflow-x: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+
+        /* Estilos del Buscador */
+        .search-container { padding: 20px; max-width: 1200px; margin: auto; }
+        .search-box { 
+            position: relative; background: white; border-radius: 15px; 
+            padding: 5px 15px; display: flex; align-items: center; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 2px solid transparent; transition: 0.3s;
+        }
+        .search-box:focus-within { border-color: var(--blue); }
+        .search-box i { color: #94A3B8; font-size: 1.2rem; margin-right: 15px; }
+        .search-box input { 
+            border: none; width: 100%; padding: 12px 0; font-size: 1rem; 
+            font-family: 'Poppins', sans-serif; outline: none; color: #1E293B;
+        }
+
+        .btn-group { padding: 0 20px 20px 20px; display: flex; gap: 10px; max-width: 1200px; margin: auto; }
+        .table-wrapper { background: white; border-radius: 20px; margin: 0 20px 40px 20px; overflow-x: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; min-width: 1000px; }
         th { background: #F8FAFC; padding: 18px; text-align: left; color: #64748B; font-size: 0.75rem; text-transform: uppercase; }
         td { padding: 15px 18px; border-bottom: 1px solid #F1F5F9; }
+        
         .price-bs { color: var(--blue); font-weight: 900; font-size: 1.1rem; }
         .badge-stock { background: #F1F5F9; padding: 5px 12px; border-radius: 8px; font-weight: 800; }
         .utilidad-pill { background: #DCFCE7; color: #166534; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; }
+        
+        /* Resaltado de coincidencia */
+        .highlight { background-color: #fef08a; padding: 0 2px; }
     </style>
 </head>
 <body oncontextmenu="return false">
@@ -27,6 +47,13 @@
         <h2 style="margin:0; font-size: 1.4rem;">YOU CONTROL</h2>
         <div class="tasa-badge">Tasa: <span id="tasa-valor">0.00 Bs.</span></div>
     </header>
+
+    <div class="search-container">
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="inputBusqueda" placeholder="Buscar por Nombre o Código de Barras..." onkeyup="filtrarProductos()">
+        </div>
+    </div>
 
     <div class="btn-group">
         <button onclick="actualizarTasa()" style="background:var(--blue); color:white; border:none; padding:12px 18px; border-radius:12px; font-weight:700; cursor:pointer;">
@@ -59,8 +86,9 @@
 
         const UID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
         let tasaActual = 0;
+        let todosLosProductos = []; // Guardamos los datos para filtrar localmente
 
-        // Escuchar Tasa en tiempo real
+        // Escuchar Tasa
         onSnapshot(doc(db, "usuarios", UID, "configuracion", "tasa"), (snap) => {
             if (snap.exists()) {
                 tasaActual = snap.data().valor;
@@ -78,31 +106,55 @@
 
         function cargarProductos() {
             onSnapshot(collection(db, "usuarios", UID, "productos"), (snap) => {
-                const tbody = document.getElementById('tabla-inventario');
-                tbody.innerHTML = "";
+                todosLosProductos = [];
                 snap.forEach(docSnap => {
-                    const p = docSnap.data();
-                    const costo = p.costo || 0;
-                    const precioVenta = p.precio || 0;
-                    const ganancia = precioVenta - costo;
-                    
-                    tbody.innerHTML += `
-                        <tr>
-                            <td><b>${p.nombre}</b><br><small style="color:#94A3B8;">${p.codigo || 'S/C'}</small></td>
-                            <td><span class="badge-stock">${p.stock || 0}</span></td>
-                            <td style="color:#64748B;">$ ${costo.toFixed(2)}</td>
-                            <td>
-                                <b>$ ${precioVenta.toFixed(2)}</b><br>
-                                <span class="utilidad-pill">Ganancia: $ ${ganancia.toFixed(2)}</span>
-                            </td>
-                            <td class="price-bs">${(precioVenta * tasaActual).toLocaleString('es-VE')} Bs.</td>
-                            <td style="text-align:center;">
-                                <button style="color:var(--blue); background:none; border:none; font-size:1.1rem; cursor:pointer;"><i class="fas fa-edit"></i></button>
-                                <button style="color:#EF4444; background:none; border:none; font-size:1.1rem; cursor:pointer; margin-left:10px;"><i class="fas fa-eye-slash"></i></button>
-                            </td>
-                        </tr>
-                    `;
+                    todosLosProductos.push({ id: docSnap.id, ...docSnap.data() });
                 });
+                renderizarTabla(todosLosProductos);
+            });
+        }
+
+        // FUNCIÓN DE BÚSQUEDA / FILTRO
+        window.filtrarProductos = () => {
+            const busqueda = document.getElementById('inputBusqueda').value.toLowerCase();
+            const productosFiltrados = todosLosProductos.filter(p => {
+                const nombre = (p.nombre || "").toLowerCase();
+                const codigo = (p.codigo || "").toLowerCase();
+                return nombre.includes(busqueda) || codigo.includes(busqueda);
+            });
+            renderizarTabla(productosFiltrados);
+        };
+
+        function renderizarTabla(lista) {
+            const tbody = document.getElementById('tabla-inventario');
+            tbody.innerHTML = "";
+            
+            if(lista.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:#94A3B8;">No se encontraron productos coincidentes</td></tr>';
+                return;
+            }
+
+            lista.forEach(p => {
+                const costo = p.costo || 0;
+                const precioVenta = p.precio || 0;
+                const ganancia = precioVenta - costo;
+                
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${p.nombre}</b><br><small style="color:#94A3B8;">${p.codigo || 'S/C'}</small></td>
+                        <td><span class="badge-stock">${p.stock || 0}</span></td>
+                        <td style="color:#64748B;">$ ${costo.toFixed(2)}</td>
+                        <td>
+                            <b>$ ${precioVenta.toFixed(2)}</b><br>
+                            <span class="utilidad-pill">Ganancia: $ ${ganancia.toFixed(2)}</span>
+                        </td>
+                        <td class="price-bs">${(precioVenta * tasaActual).toLocaleString('es-VE')} Bs.</td>
+                        <td style="text-align:center;">
+                            <button style="color:var(--blue); background:none; border:none; font-size:1.1rem; cursor:pointer;"><i class="fas fa-edit"></i></button>
+                            <button style="color:#EF4444; background:none; border:none; font-size:1.1rem; cursor:pointer; margin-left:10px;"><i class="fas fa-eye-slash"></i></button>
+                        </td>
+                    </tr>
+                `;
             });
         }
     </script>
