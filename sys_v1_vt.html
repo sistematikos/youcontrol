@@ -5,87 +5,92 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ventas | You Control</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { --dark: #1E1E2D; --vinotinto: #800020; --blue: #3B82F6; --emerald: #10B981; --bg: #F4F7F9; }
         body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* Header Sistematikos */
-        .header-sales { background: var(--dark); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--vinotinto); }
-        .tasa-badge { background: #2B2B40; padding: 6px 15px; border-radius: 10px; font-weight: 700; border: 1px solid #3f3f5a; }
-        .tasa-badge span { color: var(--blue); }
+        /* Header */
+        .header-sales { background: var(--dark); color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--vinotinto); }
+        .tasa-badge { background: #2B2B40; padding: 5px 12px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; }
 
-        /* Contenedor Principal */
-        .pos-container { display: flex; flex: 1; gap: 15px; padding: 15px; overflow: hidden; }
+        .pos-container { display: flex; flex: 1; gap: 10px; padding: 10px; overflow: hidden; }
 
-        /* Panel Izquierdo: Buscador */
-        .panel-search { flex: 1.4; background: white; border-radius: 20px; display: flex; flex-direction: column; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-        .search-box { position: relative; margin-bottom: 20px; }
-        .search-box i { position: absolute; left: 15px; top: 15px; color: #94A3B8; }
-        .search-box input { width: 100%; padding: 12px 12px 12px 45px; border: 2px solid #F1F5F9; border-radius: 12px; outline: none; font-family: 'Poppins'; box-sizing: border-box; transition: 0.3s; }
-        .search-box input:focus { border-color: var(--blue); background: #F8FAFC; }
+        /* Panel Izquierdo: Lista Compacta */
+        .panel-search { flex: 1.3; background: white; border-radius: 15px; display: flex; flex-direction: column; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .search-box input { width: 100%; padding: 10px; border: 2px solid #F1F5F9; border-radius: 10px; outline: none; margin-bottom: 10px; box-sizing: border-box; }
 
-        .product-grid { flex: 1; overflow-y: auto; padding-right: 5px; }
-        .product-card { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-radius: 12px; border: 1px solid #F1F5F9; margin-bottom: 10px; cursor: pointer; transition: 0.2s; }
-        .product-card:hover { border-color: var(--blue); background: #F0F7FF; }
-        .stock-tag { background: #F1F5F9; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; color: #64748B; }
-
-        /* Panel Derecho: Carrito */
-        .panel-cart { flex: 1; background: white; border-radius: 20px; display: flex; flex-direction: column; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border-top: 5px solid var(--blue); }
-        .cart-list { flex: 1; overflow-y: auto; margin-bottom: 20px; }
-        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #F8FAFC; border-radius: 12px; margin-bottom: 10px; font-size: 0.9rem; }
-        
-        /* Totales */
-        .total-box { border-top: 2px dashed #E2E8F0; padding-top: 15px; }
-        .row-total { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .grand-total { font-size: 1.6rem; font-weight: 800; color: var(--dark); }
-        .bs-total { font-size: 1.1rem; font-weight: 700; color: var(--blue); }
-
-        .btn-pay { width: 100%; padding: 18px; border: none; border-radius: 15px; background: var(--emerald); color: white; font-weight: 800; font-size: 1.1rem; cursor: pointer; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.2); transition: 0.3s; }
-        .btn-pay:hover { transform: translateY(-3px); box-shadow: 0 12px 25px rgba(16, 185, 129, 0.3); }
-        .btn-pay:disabled { background: #CBD5E1; box-shadow: none; cursor: not-allowed; }
-
-        @media (max-width: 800px) {
-            .pos-container { flex-direction: column; overflow-y: auto; }
-            .panel-cart { height: 400px; flex: none; }
+        .product-grid { flex: 1; overflow-y: auto; }
+        /* PRODUCTO EN UNA SOLA LINEA */
+        .product-card { 
+            display: grid; 
+            grid-template-columns: 1fr 80px 80px 40px; 
+            align-items: center; 
+            padding: 8px 12px; 
+            border-bottom: 1px solid #F1F5F9; 
+            cursor: pointer; 
+            font-size: 0.85rem;
         }
+        .product-card:hover { background: #F0F7FF; }
+        .p-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .p-stock { color: #94A3B8; text-align: center; font-size: 0.75rem; }
+        .p-price { font-weight: 800; color: var(--emerald); text-align: right; }
+
+        /* Panel Derecho: Carrito y Gran Total */
+        .panel-cart { flex: 1; background: white; border-radius: 15px; display: flex; flex-direction: column; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .cart-list { flex: 1; overflow-y: auto; border-bottom: 2px solid #F1F5F9; }
+        .cart-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #E2E8F0; font-size: 0.85rem; }
+
+        /* SECCIÓN TOTALIZADORA GRANDE */
+        .checkout-area { padding-top: 15px; background: #fff; }
+        .big-total-card { 
+            background: var(--dark); 
+            color: white; 
+            padding: 20px; 
+            border-radius: 15px; 
+            text-align: center; 
+            margin-bottom: 10px;
+            border-bottom: 5px solid var(--blue);
+        }
+        .label-total { font-size: 0.8rem; text-transform: uppercase; color: #94A3B8; letter-spacing: 1px; }
+        .val-usd { font-size: 2.8rem; font-weight: 800; display: block; line-height: 1; margin: 5px 0; color: var(--white); }
+        .val-bs { font-size: 1.3rem; font-weight: 600; color: var(--blue); }
+
+        .btn-pay { 
+            width: 100%; padding: 20px; border: none; border-radius: 15px; 
+            background: var(--emerald); color: white; font-weight: 800; 
+            font-size: 1.2rem; cursor: pointer; transition: 0.3s; 
+        }
+        .btn-pay:disabled { background: #CBD5E1; cursor: not-allowed; }
+
+        @media (max-width: 800px) { .pos-container { flex-direction: column; overflow-y: auto; } }
     </style>
 </head>
 <body oncontextmenu="return false">
 
     <header class="header-sales">
-        <div onclick="location.href='index.html'" style="cursor:pointer; font-weight: 800;">
-            <i class="fas fa-chevron-left"></i> YOU CONTROL
-        </div>
+        <div onclick="location.href='index.html'" style="cursor:pointer;"><b><i class="fas fa-chevron-left"></i> VENTAS</b></div>
         <div class="tasa-badge">Tasa: <span id="txt-tasa">0.00</span> Bs.</div>
     </header>
 
     <div class="pos-container">
         <div class="panel-search">
-            <div class="search-box">
-                <i class="fas fa-barcode"></i>
-                <input type="text" id="inputBusqueda" placeholder="Nombre o Código de Barras..." onkeyup="filtrarVenta()">
-            </div>
-            <div id="grid-productos" class="product-grid">
-                </div>
+            <input type="text" id="inputBusqueda" placeholder="Buscar producto o código..." onkeyup="filtrarVenta()" autofocus>
+            <div id="grid-productos" class="product-grid"></div>
         </div>
 
         <div class="panel-cart">
-            <h3 style="margin-top:0"><i class="fas fa-shopping-basket" style="color:var(--blue)"></i> Detalle de Venta</h3>
-            <div id="lista-carrito" class="cart-list">
-                </div>
+            <h4 style="margin:0 0 10px 0; color:var(--blue)">CARRITO</h4>
+            <div id="lista-carrito" class="cart-list"></div>
 
-            <div class="total-box">
-                <div class="row-total">
-                    <span style="color:#64748B; font-weight:600">TOTAL USD</span>
-                    <span id="total-usd" class="grand-total">$ 0.00</span>
-                </div>
-                <div class="row-total">
-                    <span style="color:#64748B; font-weight:600">TOTAL BS</span>
-                    <span id="total-bs" class="bs-total">0.00 Bs.</span>
+            <div class="checkout-area">
+                <div class="big-total-card">
+                    <span class="label-total">Total a Cobrar</span>
+                    <span id="total-usd" class="val-usd">$ 0.00</span>
+                    <span id="total-bs" class="val-bs">0.00 Bs.</span>
                 </div>
                 <button id="btnVender" class="btn-pay" onclick="procesarVenta()" disabled>
-                    <i class="fas fa-check-circle"></i> FINALIZAR VENTA
+                    <i class="fas fa-cash-register"></i> COBRAR AHORA
                 </button>
             </div>
         </div>
@@ -100,7 +105,6 @@
         let masterStock = [];
         let carrito = [];
 
-        // 1. Obtener Tasa y luego Inventario
         onSnapshot(doc(db, "usuarios", UID, "configuracion", "tasa"), (snap) => {
             if (snap.exists()) {
                 tasaActual = snap.data().valor;
@@ -123,14 +127,10 @@
             lista.filter(p => p.stock > 0).forEach(p => {
                 contenedor.innerHTML += `
                     <div class="product-card" onclick="sumarAlCarrito('${p.id}')">
-                        <div>
-                            <b style="font-size:1rem">${p.nombre}</b><br>
-                            <span class="stock-tag">DISP: ${p.stock}</span>
-                        </div>
-                        <div style="text-align:right">
-                            <b style="color:var(--emerald); font-size:1.1rem">$${p.precio.toFixed(2)}</b><br>
-                            <small style="color:#94A3B8">${(p.precio * tasaActual).toLocaleString('es-VE')} Bs.</small>
-                        </div>
+                        <div class="p-name">${p.nombre}</div>
+                        <div class="p-stock">Stk: ${p.stock}</div>
+                        <div class="p-price">$${p.precio.toFixed(2)}</div>
+                        <div style="text-align:right; color:var(--blue)"><i class="fas fa-plus-circle"></i></div>
                     </div>
                 `;
             });
@@ -145,15 +145,13 @@
         window.sumarAlCarrito = (id) => {
             const p = masterStock.find(item => item.id === id);
             const existe = carrito.find(c => c.id === id);
-
             if (existe) {
                 if (existe.cantidad < p.stock) existe.cantidad++;
-                else alert("No hay más stock disponible");
+                else alert("Sin stock");
             } else {
                 carrito.push({ id: p.id, nombre: p.nombre, precio: p.precio, costo: p.costo, cantidad: 1 });
             }
-            
-            document.getElementById('inputBusqueda').value = ""; // Limpiar para el siguiente escaneo
+            document.getElementById('inputBusqueda').value = "";
             actualizarUI();
         };
 
@@ -166,22 +164,16 @@
             const box = document.getElementById('lista-carrito');
             box.innerHTML = "";
             let subtotal = 0;
-
             carrito.forEach(c => {
-                const filaPrecio = c.precio * c.cantidad;
-                subtotal += filaPrecio;
+                subtotal += (c.precio * c.cantidad);
                 box.innerHTML += `
                     <div class="cart-item">
-                        <div style="flex:1">
-                            <b>${c.nombre}</b><br>
-                            <small>${c.cantidad} x $${c.precio.toFixed(2)}</small>
-                        </div>
-                        <div style="font-weight:700; margin-right:15px">$${filaPrecio.toFixed(2)}</div>
-                        <button onclick="quitarItem('${c.id}')" style="background:none; border:none; color:#EF4444; cursor:pointer"><i class="fas fa-trash"></i></button>
+                        <div style="flex:1"><b>${c.nombre}</b> (x${c.cantidad})</div>
+                        <div style="font-weight:700; margin:0 10px">$${(c.precio * c.cantidad).toFixed(2)}</div>
+                        <i class="fas fa-times" onclick="quitarItem('${c.id}')" style="color:#EF4444; cursor:pointer"></i>
                     </div>
                 `;
             });
-
             document.getElementById('total-usd').innerText = `$ ${subtotal.toFixed(2)}`;
             document.getElementById('total-bs').innerText = `${(subtotal * tasaActual).toLocaleString('es-VE')} Bs.`;
             document.getElementById('btnVender').disabled = carrito.length === 0;
@@ -190,12 +182,8 @@
         window.procesarVenta = async () => {
             const btn = document.getElementById('btnVender');
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> REGISTRANDO...';
-
             try {
                 const totalUSD = carrito.reduce((s, i) => s + (i.precio * i.cantidad), 0);
-                
-                // 1. Guardar Venta
                 await addDoc(collection(db, "usuarios", UID, "ventas"), {
                     fecha: new Date().toLocaleString(),
                     timestamp: Date.now(),
@@ -204,23 +192,14 @@
                     totalBS: totalUSD * tasaActual,
                     tasa: tasaActual
                 });
-
-                // 2. Descontar Inventario
                 for (let item of carrito) {
-                    await updateDoc(doc(db, "usuarios", UID, "productos", item.id), {
-                        stock: increment(-item.cantidad)
-                    });
+                    await updateDoc(doc(db, "usuarios", UID, "productos", item.id), { stock: increment(-item.cantidad) });
                 }
-
-                alert("¡Venta completada!");
+                alert("Cobro Exitoso");
                 carrito = [];
                 actualizarUI();
-            } catch (e) {
-                alert("Error al procesar la venta.");
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-check-circle"></i> FINALIZAR VENTA';
-            }
+            } catch (e) { alert("Error"); }
+            finally { btn.disabled = false; }
         };
     </script>
 </body>
