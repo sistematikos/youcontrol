@@ -1,105 +1,69 @@
 import { db } from './firebase-config.js';
-import { 
-    collection, getDocs, doc, getDoc, onSnapshot, updateDoc, addDoc 
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const UID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
-let tasaActual = 1;
+const tabla = document.getElementById('cuerpo-tabla');
 
-function iniciarMonitor() {
-    const tasaRef = doc(db, "usuarios", UID, "configuracion", "tasa");
-    onSnapshot(tasaRef, (docSnap) => {
-        if (docSnap.exists()) {
-            tasaActual = docSnap.data().valor;
-            document.getElementById('tasa-actual').innerText = tasaActual.toLocaleString('es-VE');
-            cargarProductos();
-        }
-    });
-}
+window.agregarFila = () => {
+    const tr = document.createElement('tr');
+    tr.className = "fila-producto";
+    tr.innerHTML = `
+        <td><input type="text" class="input-table p-barcode" placeholder="Scanner"></td>
+        <td><input type="text" class="input-table p-nombre" placeholder="Producto"></td>
+        <td><input type="number" class="input-table p-precio" placeholder="0.00" step="0.01"></td>
+        <td><input type="number" class="input-table p-stock" placeholder="0"></td>
+        <td style="text-align: center;">
+            <button class="btn-remove" onclick="this.parentElement.parentElement.remove()">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>
+    `;
+    tabla.appendChild(tr);
+    tr.querySelector('.p-barcode').focus();
+};
 
-async function cargarProductos() {
-    const tabla = document.getElementById('tabla-productos');
-    if (!tabla) return;
+window.guardarInventario = async () => {
+    const filas = document.querySelectorAll('.fila-producto');
+    const btn = document.getElementById('btnGuardarTodo');
+    
+    if (filas.length === 0) return alert("Tabla vacía");
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ESCRIBIENDO EN FIREBASE...';
 
     try {
-        const snap = await getDocs(collection(db, "usuarios", UID, "productos"));
-        tabla.innerHTML = "";
+        const productosRef = collection(db, "usuarios", UID, "productos");
 
-        snap.forEach((docSnap) => {
-            const p = docSnap.data();
-            const id = docSnap.id;
-            const precioBs = (p.precio * tasaActual).toLocaleString('es-VE');
+        for (let fila of filas) {
+            const barcode = fila.querySelector('.p-barcode').value.trim();
+            const nombre = fila.querySelector('.p-nombre').value.trim();
+            const precio = parseFloat(fila.querySelector('.p-precio').value);
+            const stock = parseInt(fila.querySelector('.p-stock').value);
 
-            tabla.innerHTML += `
-                <tr>
-                    <td><b style="color:var(--navy)">${p.nombre}</b></td>
-                    <td><span class="badge-stock ${p.stock <= 5 ? 'stock-low' : 'stock-ok'}">${p.stock}</span></td>
-                    <td style="font-weight:600">$${p.precio.toFixed(2)}</td>
-                    <td style="color:#15803D; font-weight:800">Bs. ${precioBs}</td>
-                    <td>
-                        <button class="btn-accion btn-edit" onclick="prepararEdicion('${id}')">
-                            <i class="fas fa-edit"></i> EDITAR
-                        </button>
-                        <button class="btn-accion btn-disable" onclick="inhabilitarProducto('${id}', '${p.nombre}')">
-                            <i class="fas fa-ban"></i> INHABILITAR
-                        </button>
-                    </td>
-                </tr>`;
-        });
-    } catch (e) { console.error("Error:", e); }
-}
+            if (nombre && !isNaN(precio)) {
+                await addDoc(productosRef, {
+                    codigo: barcode || "N/A",
+                    nombre: nombre,
+                    precio: precio,
+                    stock: stock || 0,
+                    estado: "activo",
+                    version: "sys_v1",
+                    fecha: new Date().toLocaleString()
+                });
+            }
+        }
 
-window.abrirModalTasa = async () => {
-    const nueva = prompt("Ingrese la nueva tasa (Bs.):", tasaActual);
-    if (nueva && !isNaN(nueva)) {
-        await updateDoc(doc(db, "usuarios", UID, "configuracion", "tasa"), { valor: parseFloat(nueva) });
-        alert("Tasa actualizada.");
+        alert("Carga exitosa en sys_v1");
+        tabla.innerHTML = ""; 
+        agregarFila();
+
+    } catch (error) {
+        console.error("Error Core:", error);
+        alert("Error de sistema");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save"></i> PROCESAR CARGA MASIVA (FIREBASE)';
     }
 };
 
-window.abrirModalProducto = async () => {
-    const nombre = prompt("Nombre del producto:");
-    if (!nombre) return;
-    const precio = parseFloat(prompt("Precio ($):", "0"));
-    const stock = parseInt(prompt("Stock inicial:", "0"));
-
-    await addDoc(collection(db, "usuarios", UID, "productos"), {
-        nombre: nombre,
-        precio: precio,
-        stock: stock
-    });
-    alert("Producto creado.");
-    cargarProductos();
-};
-
-window.prepararEdicion = async (id) => {
-    const docRef = doc(db, "usuarios", UID, "productos", id);
-    const snap = await getDoc(docRef);
-    
-    if (snap.exists()) {
-        const p = snap.data();
-        const nNombre = prompt("Nuevo nombre:", p.nombre);
-        if (nNombre === null) return;
-        const nPrecio = parseFloat(prompt("Nuevo precio ($):", p.precio));
-        const nStock = parseInt(prompt("Nuevo stock:", p.stock));
-
-        await updateDoc(docRef, {
-            nombre: nNombre,
-            precio: nPrecio,
-            stock: nStock
-        });
-        alert("Producto modificado.");
-        cargarProductos();
-    }
-};
-
-window.inhabilitarProducto = async (id, nombre) => {
-    if (confirm(`¿Desea inhabilitar el producto "${nombre}"? (Se pondrá el stock en 0)`)) {
-        const docRef = doc(db, "usuarios", UID, "productos", id);
-        await updateDoc(docRef, { stock: 0 }); // Inhabilitar bajando stock a 0
-        alert("Producto inhabilitado.");
-        cargarProductos();
-    }
-};
-
-iniciarMonitor();
+agregarFila();
