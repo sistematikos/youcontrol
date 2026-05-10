@@ -6,69 +6,50 @@
     <title>Sistematikos | Control de Inventarios</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        :root { --dark-blue: #1E1E2D; --vinotinto: #800020; --blue-electric: #3B82F6; --emerald: #10B981; }
+        :root { --dark: #1E1E2D; --vinotinto: #800020; --blue: #3B82F6; --green: #10B981; }
         body { font-family: 'Poppins', sans-serif; background: #F4F7F9; margin: 0; }
 
-        /* Header Estilo Imagen */
         .header-main { 
-            background: var(--dark-blue); 
-            color: white; 
-            padding: 20px; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            position: relative;
+            background: var(--dark); color: white; padding: 20px; 
+            display: flex; justify-content: center; align-items: center; 
             border-bottom: 5px solid var(--vinotinto);
         }
         .tasa-badge { 
-            background: #2B2B40; 
-            padding: 8px 15px; 
-            border-radius: 12px; 
-            font-weight: 700; 
-            margin-left: 20px;
+            background: #2B2B40; padding: 8px 15px; border-radius: 12px; 
+            font-weight: 700; margin-left: 20px; border: 1px solid #3f3f5a;
         }
-        .tasa-badge span { color: var(--blue-electric); }
+        .tasa-badge span { color: var(--blue); }
 
-        .btn-group { padding: 20px; display: flex; gap: 15px; justify-content: flex-start; }
+        .btn-group { padding: 20px; display: flex; gap: 15px; }
         .btn-action { 
             border: none; padding: 12px 25px; border-radius: 12px; 
             color: white; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
-        .btn-blue { background: var(--blue-electric); }
-        .btn-green { background: var(--emerald); }
-
-        /* Tabla de Inventario */
+        
         .content-table { padding: 0 20px; }
-        .table-wrapper { 
-            background: white; border-radius: 20px; overflow: hidden; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05); 
-        }
+        .table-wrapper { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; }
-        th { background: #F8FAFC; padding: 18px; text-align: left; color: #64748B; font-size: 0.85rem; letter-spacing: 1px; }
+        th { background: #F8FAFC; padding: 18px; text-align: left; color: #64748B; font-size: 0.85rem; }
         td { padding: 15px 18px; border-bottom: 1px solid #F1F5F9; }
 
         .prod-name { font-weight: 700; color: #1E293B; display: block; }
         .prod-code { font-size: 0.75rem; color: #94A3B8; font-family: monospace; }
         .badge-stock { background: #F1F5F9; padding: 5px 12px; border-radius: 8px; font-weight: 800; }
-        .price-bs { color: var(--blue-electric); font-weight: 900; }
-
-        .btn-edit { color: var(--blue-electric); background: none; border: none; font-size: 1.1rem; cursor: pointer; margin-right: 10px; }
-        .btn-disable { color: #EF4444; background: none; border: none; font-size: 1.1rem; cursor: pointer; }
+        .price-bs { color: var(--blue); font-weight: 900; }
     </style>
 </head>
 <body oncontextmenu="return false">
 
     <header class="header-main">
         <h2 style="margin:0; font-size: 1.4rem;"><i class="fas fa-boxes"></i> CONTROL DE INVENTARIOS</h2>
-        <div class="tasa-badge">Tasa: <span id="tasa-valor">0.00 Bs.</span></div>
+        <div class="tasa-badge">Tasa: <span id="tasa-valor">Cargando...</span></div>
     </header>
 
     <div class="btn-group">
-        <button class="btn-action btn-blue" onclick="window.location.reload()">
+        <button class="btn-action" style="background: var(--blue);" onclick="location.reload()">
             <i class="fas fa-sync-alt"></i> ACTUALIZAR TASA
         </button>
-        <button class="btn-action btn-green" onclick="location.href='sys_v1_datos.html'">
+        <button class="btn-action" style="background: var(--green);" onclick="location.href='sys_v1_datos.html'">
             <i class="fas fa-plus-circle"></i> NUEVO ITEM
         </button>
     </div>
@@ -85,8 +66,7 @@
                         <th style="width: 20%; text-align: center;">GESTIÓN</th>
                     </tr>
                 </thead>
-                <tbody id="tabla-inventario">
-                    </tbody>
+                <tbody id="tabla-inventario"></tbody>
             </table>
         </div>
     </div>
