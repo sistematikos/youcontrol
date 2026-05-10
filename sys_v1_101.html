@@ -5,66 +5,92 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistematikos | Control de Inventarios</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
     <style>
-        :root { --navy: #1A1A2E; --electric: #3B82F6; --vinotinto: #800020; }
-        body { font-family: 'Poppins', sans-serif; background: #f4f7f6; margin: 0; }
-        .header-app { background: var(--navy); color: white; padding: 20px; border-bottom: 4px solid var(--vinotinto); }
-        .container { max-width: 1100px; margin: auto; padding: 20px; }
-        
-        .btn-accion { border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: 0.3s; margin-right: 5px; color: white; display: inline-flex; align-items: center; gap: 5px; font-size: 0.8rem; }
-        .btn-edit { background: #3B82F6; }
-        .btn-edit:hover { background: #2563EB; }
-        .btn-disable { background: #64748b; } /* Color gris para inhabilitar */
-        .btn-disable:hover { background: #475569; }
-        
-        .table-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        :root { --dark-blue: #1E1E2D; --vinotinto: #800020; --blue-electric: #3B82F6; --emerald: #10B981; }
+        body { font-family: 'Poppins', sans-serif; background: #F4F7F9; margin: 0; }
+
+        /* Header Estilo Imagen */
+        .header-main { 
+            background: var(--dark-blue); 
+            color: white; 
+            padding: 20px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            position: relative;
+            border-bottom: 5px solid var(--vinotinto);
+        }
+        .tasa-badge { 
+            background: #2B2B40; 
+            padding: 8px 15px; 
+            border-radius: 12px; 
+            font-weight: 700; 
+            margin-left: 20px;
+        }
+        .tasa-badge span { color: var(--blue-electric); }
+
+        .btn-group { padding: 20px; display: flex; gap: 15px; justify-content: flex-start; }
+        .btn-action { 
+            border: none; padding: 12px 25px; border-radius: 12px; 
+            color: white; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .btn-blue { background: var(--blue-electric); }
+        .btn-green { background: var(--emerald); }
+
+        /* Tabla de Inventario */
+        .content-table { padding: 0 20px; }
+        .table-wrapper { 
+            background: white; border-radius: 20px; overflow: hidden; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); 
+        }
         table { width: 100%; border-collapse: collapse; }
-        th { background: #f8fafc; padding: 15px; text-align: left; color: #64748b; font-size: 0.85rem; text-transform: uppercase; }
-        td { padding: 15px; border-bottom: 1px solid #f1f5f9; }
-        
-        .badge-stock { padding: 4px 10px; border-radius: 20px; font-weight: bold; font-size: 0.8rem; }
-        .stock-ok { background: #DCFCE7; color: #166534; }
-        .stock-low { background: #FEE2E2; color: #991B1B; }
+        th { background: #F8FAFC; padding: 18px; text-align: left; color: #64748B; font-size: 0.85rem; letter-spacing: 1px; }
+        td { padding: 15px 18px; border-bottom: 1px solid #F1F5F9; }
+
+        .prod-name { font-weight: 700; color: #1E293B; display: block; }
+        .prod-code { font-size: 0.75rem; color: #94A3B8; font-family: monospace; }
+        .badge-stock { background: #F1F5F9; padding: 5px 12px; border-radius: 8px; font-weight: 800; }
+        .price-bs { color: var(--blue-electric); font-weight: 900; }
+
+        .btn-edit { color: var(--blue-electric); background: none; border: none; font-size: 1.1rem; cursor: pointer; margin-right: 10px; }
+        .btn-disable { color: #EF4444; background: none; border: none; font-size: 1.1rem; cursor: pointer; }
     </style>
 </head>
-<body oncontextmenu="return false" onkeydown="return (event.keyCode != 123)">
+<body oncontextmenu="return false">
 
-    <header class="header-app">
-        <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1100px; margin: auto;">
-            <h2 style="margin:0;"><i class="fas fa-boxes-stacked"></i> CONTROL DE INVENTARIOS</h2>
-            <div style="background: rgba(255,255,255,0.1); padding: 8px 15px; border-radius: 12px; font-weight: bold;">
-                Tasa: <span id="tasa-actual">0.00</span> Bs.
-            </div>
-        </div>
+    <header class="header-main">
+        <h2 style="margin:0; font-size: 1.4rem;"><i class="fas fa-boxes"></i> CONTROL DE INVENTARIOS</h2>
+        <div class="tasa-badge">Tasa: <span id="tasa-valor">0.00 Bs.</span></div>
     </header>
 
-    <main class="container">
-        <div style="margin-bottom: 25px; display: flex; gap: 12px; flex-wrap: wrap;">
-            <button class="btn-primary" onclick="abrirModalTasa()">
-                <i class="fas fa-sync-alt"></i> ACTUALIZAR TASA
-            </button>
-            <button class="btn-primary" style="background:#10B981 !important" onclick="abrirModalProducto()">
-                <i class="fas fa-plus-circle"></i> NUEVO ITEM
-            </button>
-        </div>
+    <div class="btn-group">
+        <button class="btn-action btn-blue" onclick="window.location.reload()">
+            <i class="fas fa-sync-alt"></i> ACTUALIZAR TASA
+        </button>
+        <button class="btn-action btn-green" onclick="location.href='sys_v1_datos.html'">
+            <i class="fas fa-plus-circle"></i> NUEVO ITEM
+        </button>
+    </div>
 
-        <div class="table-card">
+    <div class="content-table">
+        <div class="table-wrapper">
             <table>
                 <thead>
                     <tr>
-                        <th>Producto</th>
-                        <th>Stock</th>
-                        <th>Ref. $</th>
-                        <th>Precio Bs.</th>
-                        <th>Gestión</th>
+                        <th style="width: 35%;">PRODUCTO</th>
+                        <th style="width: 15%;">STOCK</th>
+                        <th style="width: 15%;">REF. $</th>
+                        <th style="width: 15%;">PRECIO BS.</th>
+                        <th style="width: 20%; text-align: center;">GESTIÓN</th>
                     </tr>
                 </thead>
-                <tbody id="tabla-productos"></tbody>
+                <tbody id="tabla-inventario">
+                    </tbody>
             </table>
         </div>
-    </main>
+    </div>
 
-    <script type="module" src="js/inventario.js"></script>
+    <script type="module" src="js/sys_v1_101.js"></script>
 </body>
 </html>
