@@ -5,6 +5,12 @@ const UID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
 let tasa = 1;
 let carrito = {};
 
+// Asegurar reproducción del video al cargar
+window.addEventListener('load', () => {
+    const video = document.getElementById('banner-video');
+    if (video) video.play().catch(e => console.log("Auto-play prevenido"));
+});
+
 function iniciarCatalogo() {
     const tasaRef = doc(db, "usuarios", UID, "configuracion", "tasa");
     onSnapshot(tasaRef, (snap) => {
@@ -62,11 +68,9 @@ window.cambiarCant = (id, cambio, nombre, precio, stockMax) => {
     if (nuevaCant > 0) {
         check.style.display = 'block';
         card.style.borderColor = 'var(--electric)';
-        card.style.boxShadow = '0 8px 15px rgba(59, 130, 246, 0.1)';
     } else {
         check.style.display = 'none';
         card.style.borderColor = 'var(--border)';
-        card.style.boxShadow = '0 4px 6px rgba(0,0,0,0.05)';
     }
     actualizarFooter();
 };
