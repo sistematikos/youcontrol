@@ -1,61 +1,109 @@
-<style>
-    /* Estilos para el Modal de Edición */
-    .modal {
-        display: none; position: fixed; z-index: 1000; left: 0; top: 0;
-        width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);
-        backdrop-filter: blur(5px);
-    }
-    .modal-content {
-        background-color: white; margin: 5% auto; padding: 25px;
-        border-radius: 20px; width: 90%; max-width: 500px;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-    }
-    .modal-header { border-bottom: 2px solid #F1F5F9; padding-bottom: 15px; margin-bottom: 20px; }
-    .form-group { margin-bottom: 15px; }
-    .form-group label { display: block; font-size: 0.8rem; font-weight: 700; color: #64748B; margin-bottom: 5px; }
-    .form-input { 
-        width: 100%; padding: 12px; border: 2px solid #E2E8F0; border-radius: 10px; 
-        font-family: 'Poppins'; box-sizing: border-box;
-    }
-    .form-input:focus { border-color: var(--blue); outline: none; }
-    .modal-footer { display: flex; gap: 10px; margin-top: 25px; }
-    .btn-save-edit { background: var(--emerald); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 700; flex: 1; cursor: pointer; }
-    .btn-cancel { background: #F1F5F9; color: #64748B; border: none; padding: 12px; border-radius: 10px; font-weight: 700; flex: 1; cursor: pointer; }
-</style>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario | You Control</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --dark: #1E1E2D; --vinotinto: #800020; --blue: #3B82F6; --emerald: #10B981; }
+        body { font-family: 'Poppins', sans-serif; background: #F4F7F9; margin: 0; }
+        
+        .header-main { background: var(--dark); color: white; padding: 20px; display: flex; justify-content: center; align-items: center; border-bottom: 5px solid var(--vinotinto); }
+        .tasa-badge { background: #2B2B40; padding: 8px 15px; border-radius: 12px; font-weight: 700; margin-left: 20px; border: 1px solid #3f3f5a; }
+        .tasa-badge span { color: var(--blue); }
 
+        .search-container { padding: 20px; max-width: 1200px; margin: auto; }
+        .search-box { 
+            background: white; border-radius: 15px; padding: 5px 15px; display: flex; 
+            align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .search-box input { border: none; width: 100%; padding: 12px; outline: none; font-family: 'Poppins'; }
+
+        .btn-group { padding: 0 20px 20px 20px; display: flex; gap: 10px; max-width: 1200px; margin: auto; }
+        .table-wrapper { background: white; border-radius: 20px; margin: 0 20px 40px 20px; overflow-x: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        th { background: #F8FAFC; padding: 18px; text-align: left; color: #64748B; font-size: 0.75rem; text-transform: uppercase; }
+        td { padding: 15px 18px; border-bottom: 1px solid #F1F5F9; }
+        
+        .price-bs { color: var(--blue); font-weight: 900; font-size: 1.1rem; }
+        .badge-stock { background: #F1F5F9; padding: 5px 12px; border-radius: 8px; font-weight: 800; }
+        .utilidad-pill { background: #DCFCE7; color: #166534; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; }
+
+        /* MODAL */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+        .modal-content { background: white; margin: 5% auto; padding: 25px; border-radius: 20px; width: 90%; max-width: 450px; }
+        .form-input { width: 100%; padding: 12px; border: 2px solid #E2E8F0; border-radius: 10px; margin-top: 5px; box-sizing: border-box; font-family: 'Poppins'; }
+        .modal-footer { display: flex; gap: 10px; margin-top: 20px; }
+    </style>
+</head>
 <body oncontextmenu="return false">
+
+    <header class="header-main">
+        <h2 style="margin:0;">YOU CONTROL</h2>
+        <div class="tasa-badge">Tasa: <span id="tasa-valor">0.00 Bs.</span></div>
+    </header>
+
+    <div class="search-container">
+        <div class="search-box">
+            <i class="fas fa-search" style="color:#94A3B8"></i>
+            <input type="text" id="inputBusqueda" placeholder="Buscar por Nombre o Código..." onkeyup="filtrarProductos()">
+        </div>
+    </div>
+
+    <div class="btn-group">
+        <button onclick="actualizarTasa()" style="background:var(--blue); color:white; border:none; padding:12px 20px; border-radius:12px; cursor:pointer; font-weight:700;"><i class="fas fa-sync"></i> TASA</button>
+        <button onclick="location.href='sys_v1_datos.html'" style="background:var(--emerald); color:white; border:none; padding:12px 20px; border-radius:12px; cursor:pointer; font-weight:700;"><i class="fas fa-plus"></i> CARGAR</button>
+    </div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Stock</th>
+                    <th>Costo $</th>
+                    <th>Venta $</th>
+                    <th>Precio Bs.</th>
+                    <th style="text-align:center;">Gestión</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-inventario"></tbody>
+        </table>
+    </div>
 
     <div id="modalEditar" class="modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h3 style="margin:0;"><i class="fas fa-edit" style="color:var(--blue);"></i> Editar Producto</h3>
+            <h3>Editar Producto</h3>
+            <input type="hidden" id="edit-id">
+            <div style="margin-bottom:15px">
+                <label style="font-size:0.8rem; font-weight:700; color:#64748B">Nombre</label>
+                <input type="text" id="edit-nombre" class="form-input">
             </div>
-            <div id="formEditar">
-                <input type="hidden" id="edit-id">
-                <div class="form-group">
-                    <label>Nombre del Producto</label>
-                    <input type="text" id="edit-nombre" class="form-input">
+            <div style="display:flex; gap:10px; margin-bottom:15px">
+                <div style="flex:1">
+                    <label style="font-size:0.8rem; font-weight:700; color:#64748B">Costo $</label>
+                    <input type="number" id="edit-costo" class="form-input" step="0.01" oninput="recalcularEdit('margen')">
                 </div>
-                <div class="form-group">
-                    <label>Costo ($)</label>
-                    <input type="number" id="edit-costo" class="form-input" step="0.01" oninput="recalcularEdit()">
-                </div>
-                <div class="form-group">
-                    <label>Precio Venta ($)</label>
-                    <input type="number" id="edit-precio" class="form-input" step="0.01" oninput="recalcularEdit('precio')">
-                </div>
-                <div class="form-group">
-                    <label>Ganancia (%)</label>
-                    <input type="number" id="edit-margen" class="form-input" step="0.1" oninput="recalcularEdit('margen')">
-                </div>
-                <div class="form-group">
-                    <label>Stock Actual</label>
+                <div style="flex:1">
+                    <label style="font-size:0.8rem; font-weight:700; color:#64748B">Stock</label>
                     <input type="number" id="edit-stock" class="form-input">
                 </div>
-                <div class="modal-footer">
-                    <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
-                    <button class="btn-save-edit" onclick="guardarCambios()">Actualizar</button>
+            </div>
+            <div style="display:flex; gap:10px; margin-bottom:15px">
+                <div style="flex:1">
+                    <label style="font-size:0.8rem; font-weight:700; color:#64748B">Venta $</label>
+                    <input type="number" id="edit-precio" class="form-input" step="0.01" oninput="recalcularEdit('precio')">
                 </div>
+                <div style="flex:1">
+                    <label style="font-size:0.8rem; font-weight:700; color:#64748B">Margen %</label>
+                    <input type="number" id="edit-margen" class="form-input" oninput="recalcularEdit('margen')">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="cerrarModal()" style="flex:1; padding:12px; border:none; border-radius:10px; cursor:pointer;">Cancelar</button>
+                <button id="btnActualizar" onclick="guardarCambios()" style="flex:1; padding:12px; border:none; border-radius:10px; cursor:pointer; background:var(--blue); color:white; font-weight:700;">Actualizar</button>
             </div>
         </div>
     </div>
@@ -64,74 +112,98 @@
         import { db } from './js/firebase-config.js';
         import { collection, onSnapshot, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // ... (Código de Tasa e Inventario se mantiene igual) ...
+        const UID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
+        let tasaActual = 0;
+        let todosLosProductos = [];
 
-        // FUNCIÓN PARA ABRIR EL MODAL Y CARGAR DATOS
+        // 1. Escuchar Tasa
+        onSnapshot(doc(db, "usuarios", UID, "configuracion", "tasa"), (snap) => {
+            if (snap.exists()) {
+                tasaActual = snap.data().valor;
+                document.getElementById('tasa-valor').innerText = tasaActual.toLocaleString('es-VE') + " Bs.";
+                cargarProductos();
+            }
+        });
+
+        // 2. Cargar Productos
+        function cargarProductos() {
+            onSnapshot(collection(db, "usuarios", UID, "productos"), (snap) => {
+                todosLosProductos = [];
+                snap.forEach(d => todosLosProductos.push({ id: d.id, ...d.data() }));
+                renderizarTabla(todosLosProductos);
+            });
+        }
+
+        // 3. Renderizar Tabla
+        window.renderizarTabla = (lista) => {
+            const tbody = document.getElementById('tabla-inventario');
+            tbody.innerHTML = "";
+            lista.forEach(p => {
+                const costo = p.costo || 0;
+                const precio = p.precio || 0;
+                const utilidad = precio - costo;
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${p.nombre}</b><br><small style="color:#94A3B8">${p.codigo}</small></td>
+                        <td><span class="badge-stock">${p.stock}</span></td>
+                        <td style="color:#64748B">$${costo.toFixed(2)}</td>
+                        <td><b>$${precio.toFixed(2)}</b><br><span class="utilidad-pill">+$${utilidad.toFixed(2)}</span></td>
+                        <td class="price-bs">${(precio * tasaActual).toLocaleString('es-VE')} Bs.</td>
+                        <td style="text-align:center">
+                            <button onclick="prepararEdicion('${p.id}')" style="color:var(--blue); background:none; border:none; font-size:1.2rem; cursor:pointer;"><i class="fas fa-edit"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        };
+
+        // 4. Funciones de Edición
         window.prepararEdicion = async (id) => {
-            const docRef = doc(db, "usuarios", UID, "productos", id);
-            const docSnap = await getDoc(docRef);
-
-            if (docSnap.exists()) {
-                const p = docSnap.data();
+            const snap = await getDoc(doc(db, "usuarios", UID, "productos", id));
+            if (snap.exists()) {
+                const p = snap.data();
                 document.getElementById('edit-id').value = id;
                 document.getElementById('edit-nombre').value = p.nombre;
                 document.getElementById('edit-costo').value = p.costo;
                 document.getElementById('edit-precio').value = p.precio;
                 document.getElementById('edit-stock').value = p.stock;
-                
-                // Calcular margen inicial
-                const margen = ((p.precio - p.costo) / p.costo) * 100;
-                document.getElementById('edit-margen').value = margen.toFixed(0);
-
+                const m = (((p.precio - p.costo) / p.costo) * 100).toFixed(0);
+                document.getElementById('edit-margen').value = isFinite(m) ? m : 0;
                 document.getElementById('modalEditar').style.display = 'block';
             }
         };
 
-        // Lógica bidireccional dentro del modal
-        window.recalcularEdit = (origen) => {
-            const costo = parseFloat(document.getElementById('edit-costo').value) || 0;
-            const margenInput = document.getElementById('edit-margen');
-            const precioInput = document.getElementById('edit-precio');
-
-            if (costo <= 0) return;
-
-            if (origen === 'margen') {
-                const m = parseFloat(margenInput.value) || 0;
-                precioInput.value = (costo + (costo * (m / 100))).toFixed(2);
-            } else {
-                const p = parseFloat(precioInput.value) || 0;
-                margenInput.value = (((p - costo) / costo) * 100).toFixed(0);
-            }
-        };
-
-        window.cerrarModal = () => {
-            document.getElementById('modalEditar').style.display = 'none';
+        window.recalcularEdit = (tipo) => {
+            const c = parseFloat(document.getElementById('edit-costo').value) || 0;
+            const m = document.getElementById('edit-margen');
+            const p = document.getElementById('edit-precio');
+            if(tipo === 'margen') p.value = (c + (c * (parseFloat(m.value || 0) / 100))).toFixed(2);
+            else m.value = (((parseFloat(p.value || 0) - c) / c) * 100).toFixed(0);
         };
 
         window.guardarCambios = async () => {
             const id = document.getElementById('edit-id').value;
-            const btn = document.querySelector('.btn-save-edit');
+            const btn = document.getElementById('btnActualizar');
             btn.disabled = true;
-            btn.innerText = "Guardando...";
-
-            try {
-                const docRef = doc(db, "usuarios", UID, "productos", id);
-                await updateDoc(docRef, {
-                    nombre: document.getElementById('edit-nombre').value,
-                    costo: parseFloat(document.getElementById('edit-costo').value) || 0,
-                    precio: parseFloat(document.getElementById('edit-precio').value) || 0,
-                    stock: parseInt(document.getElementById('edit-stock').value) || 0
-                });
-                cerrarModal();
-            } catch (e) {
-                alert("Error al actualizar");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "Actualizar";
-            }
+            await updateDoc(doc(db, "usuarios", UID, "productos", id), {
+                nombre: document.getElementById('edit-nombre').value,
+                costo: parseFloat(document.getElementById('edit-costo').value) || 0,
+                precio: parseFloat(document.getElementById('edit-precio').value) || 0,
+                stock: parseInt(document.getElementById('edit-stock').value) || 0
+            });
+            btn.disabled = false;
+            cerrarModal();
         };
-        
-        // No olvides actualizar el botón en el renderizado de la tabla:
-        // El botón ahora debe ser: <button onclick="prepararEdicion('${p.id}')" ...>
+
+        window.cerrarModal = () => document.getElementById('modalEditar').style.display = 'none';
+        window.actualizarTasa = async () => {
+            const v = prompt("Tasa Bs:", tasaActual);
+            if(v) await updateDoc(doc(db, "usuarios", UID, "configuracion", "tasa"), { valor: parseFloat(v) });
+        };
+        window.filtrarProductos = () => {
+            const b = document.getElementById('inputBusqueda').value.toLowerCase();
+            renderizarTabla(todosLosProductos.filter(p => p.nombre.toLowerCase().includes(b) || p.codigo.toLowerCase().includes(b)));
+        };
     </script>
 </body>
+</html>
