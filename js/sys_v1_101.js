@@ -4,55 +4,64 @@ import { collection, onSnapshot, doc } from "https://www.gstatic.com/firebasejs/
 const UID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
 let tasaActual = 0;
 
-// Función para iniciar la escucha de datos
-function iniciarEscucha() {
-    // 1. Obtener la tasa desde la sub-colección 'configuracion'
-    // Nota: Según tu imagen, 'configuracion' es una sub-colección. 
-    // Si dentro de 'configuracion' tienes un documento llamado 'tasa', usamos esta ruta:
+// 1. ESCUCHAR LA TASA (Ruta exacta según tu imagen)
+function iniciarSistema() {
+    // Apuntamos al documento 'tasa' dentro de la sub-colección 'configuracion'
     const tasaRef = doc(db, "usuarios", UID, "configuracion", "tasa");
 
-    onSnapshot(tasaRef, (docSnap) => {
-        if (docSnap.exists()) {
-            tasaActual = docSnap.data().valor || 0;
-            document.getElementById('tasa-valor').innerText = tasaActual.toLocaleString('es-VE', { minimumFractionDigits: 2 }) + " Bs.";
-            renderizarProductos(); // Refrescar productos con la nueva tasa
+    onSnapshot(tasaRef, (snap) => {
+        if (snap.exists()) {
+            const datos = snap.data();
+            tasaActual = datos.valor; // Extrae el campo 'valor' (496.84)
+            
+            // Actualizar el header
+            const tasaElemento = document.getElementById('tasa-valor');
+            if (tasaElemento) {
+                tasaElemento.innerText = tasaActual.toLocaleString('es-VE', { minimumFractionDigits: 2 }) + " Bs.";
+            }
+            
+            // Refrescar la tabla de productos con la nueva tasa
+            cargarProductos();
         } else {
-            document.getElementById('tasa-valor').innerText = "0.00 Bs.";
-            renderizarProductos();
+            console.warn("No se encontró el documento de tasa");
         }
     });
 }
 
-// Función para renderizar la tabla de productos
-function renderizarProductos() {
+// 2. CARGAR PRODUCTOS (Sub-colección 'productos')
+function cargarProductos() {
     const productosRef = collection(db, "usuarios", UID, "productos");
-    const tbody = document.getElementById('tabla-inventario');
+    const tabla = document.getElementById('tabla-inventario');
 
     onSnapshot(productosRef, (snapshot) => {
-        tbody.innerHTML = "";
+        tabla.innerHTML = "";
 
         if (snapshot.empty) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">No hay productos registrados</td></tr>';
+            tabla.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">No hay productos registrados</td></tr>';
             return;
         }
 
         snapshot.forEach((docSnap) => {
-            const item = docSnap.data();
+            const p = docSnap.data();
             const id = docSnap.id;
-            const precioBs = (item.precio * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 });
+            
+            // Cálculo del precio en Bolívares
+            const precioBs = (p.precio * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 });
 
-            tbody.innerHTML += `
+            tabla.innerHTML += `
                 <tr>
                     <td>
-                        <span class="prod-name">${item.nombre || 'Sin nombre'}</span>
-                        <span class="prod-code"><i class="fas fa-barcode"></i> ${item.codigo || 'S/C'}</span>
+                        <span class="prod-name" style="font-weight:700; display:block;">${p.nombre || 'Sin nombre'}</span>
+                        <span class="prod-code" style="font-size:0.75rem; color:#94A3B8; font-family:monospace;">
+                            <i class="fas fa-barcode"></i> ${p.codigo || 'S/C'}
+                        </span>
                     </td>
-                    <td><span class="badge-stock">${item.stock || 0}</span></td>
-                    <td><span style="font-weight:600;">$${parseFloat(item.precio || 0).toFixed(2)}</span></td>
-                    <td><span class="price-bs">${precioBs} Bs.</span></td>
+                    <td><span class="badge-stock" style="background:#F1F5F9; padding:5px 12px; border-radius:8px; font-weight:800;">${p.stock || 0}</span></td>
+                    <td style="font-weight:600;">$${parseFloat(p.precio || 0).toFixed(2)}</td>
+                    <td style="color:#3B82F6; font-weight:900;">${precioBs} Bs.</td>
                     <td style="text-align: center;">
-                        <button style="color:var(--blue); border:none; background:none; cursor:pointer; font-size:1.1rem;"><i class="fas fa-edit"></i></button>
-                        <button style="color:#EF4444; border:none; background:none; cursor:pointer; font-size:1.1rem; margin-left:10px;"><i class="fas fa-eye-slash"></i></button>
+                        <button onclick="editar('${id}')" style="color:#3B82F6; border:none; background:none; cursor:pointer; font-size:1.1rem;"><i class="fas fa-edit"></i></button>
+                        <button onclick="desactivar('${id}')" style="color:#EF4444; border:none; background:none; cursor:pointer; font-size:1.1rem; margin-left:10px;"><i class="fas fa-eye-slash"></i></button>
                     </td>
                 </tr>
             `;
@@ -60,5 +69,5 @@ function renderizarProductos() {
     });
 }
 
-// Iniciar el sistema
-iniciarEscucha();
+// Iniciar proceso al cargar
+iniciarSistema();
