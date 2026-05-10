@@ -6,50 +6,144 @@
     <title>Sistematikos | Control de Inventarios</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        :root { --dark: #1E1E2D; --vinotinto: #800020; --blue: #3B82F6; --green: #10B981; }
-        body { font-family: 'Poppins', sans-serif; background: #F4F7F9; margin: 0; }
-
-        .header-main { 
-            background: var(--dark); color: white; padding: 20px; 
-            display: flex; justify-content: center; align-items: center; 
-            border-bottom: 5px solid var(--vinotinto);
-        }
-        .tasa-badge { 
-            background: #2B2B40; padding: 8px 15px; border-radius: 12px; 
-            font-weight: 700; margin-left: 20px; border: 1px solid #3f3f5a;
-        }
-        .tasa-badge span { color: var(--blue); }
-
-        .btn-group { padding: 20px; display: flex; gap: 15px; }
-        .btn-action { 
-            border: none; padding: 12px 25px; border-radius: 12px; 
-            color: white; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px;
+        :root { 
+            --dark-blue: #1E1E2D; 
+            --vinotinto: #800020; 
+            --blue-electric: #3B82F6; 
+            --emerald: #10B981; 
+            --text-gray: #64748B;
         }
         
-        .content-table { padding: 0 20px; }
-        .table-wrapper { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #F8FAFC; padding: 18px; text-align: left; color: #64748B; font-size: 0.85rem; }
-        td { padding: 15px 18px; border-bottom: 1px solid #F1F5F9; }
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background: #F4F7F9; 
+            margin: 0; 
+            color: #1E293B;
+        }
 
-        .prod-name { font-weight: 700; color: #1E293B; display: block; }
-        .prod-code { font-size: 0.75rem; color: #94A3B8; font-family: monospace; }
-        .badge-stock { background: #F1F5F9; padding: 5px 12px; border-radius: 8px; font-weight: 800; }
-        .price-bs { color: var(--blue); font-weight: 900; }
+        /* Header con Tasa Dinámica */
+        .header-main { 
+            background: var(--dark-blue); 
+            color: white; 
+            padding: 20px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            border-bottom: 5px solid var(--vinotinto);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .tasa-badge { 
+            background: #2B2B40; 
+            padding: 10px 20px; 
+            border-radius: 12px; 
+            font-weight: 700; 
+            margin-left: 20px;
+            border: 1px solid #3f3f5a;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .tasa-badge span { color: var(--blue-electric); }
+
+        /* Botonera Principal */
+        .btn-group { 
+            padding: 25px 20px; 
+            display: flex; 
+            gap: 15px; 
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        .btn-action { 
+            border: none; 
+            padding: 14px 28px; 
+            border-radius: 14px; 
+            color: white; 
+            font-weight: 700; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .btn-action:hover { transform: translateY(-2px); opacity: 0.9; }
+        .btn-blue { background: var(--blue-electric); }
+        .btn-green { background: var(--emerald); }
+
+        /* Contenedor de Tabla */
+        .content-table { 
+            padding: 0 20px 40px 20px; 
+            max-width: 1150px;
+            margin: auto;
+        }
+
+        .table-wrapper { 
+            background: white; 
+            border-radius: 25px; 
+            overflow: hidden; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.06); 
+            border: 1px solid #E2E8F0;
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+        
+        th { 
+            background: #F8FAFC; 
+            padding: 20px; 
+            text-align: left; 
+            color: var(--text-gray); 
+            font-size: 0.75rem; 
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            border-bottom: 2px solid #F1F5F9;
+        }
+
+        td { padding: 18px 20px; border-bottom: 1px solid #F1F5F9; }
+
+        .prod-name { font-weight: 700; color: #0F172A; font-size: 1rem; }
+        .prod-code { font-size: 0.75rem; color: var(--text-gray); font-family: 'Courier New', monospace; margin-top: 4px; display: block; }
+        
+        .badge-stock { 
+            background: #F1F5F9; 
+            padding: 6px 14px; 
+            border-radius: 10px; 
+            font-weight: 800; 
+            color: var(--dark-blue);
+        }
+
+        .price-bs { color: var(--blue-electric); font-weight: 900; font-size: 1.1rem; }
+
+        .btn-edit-row { color: var(--blue-electric); background: none; border: none; font-size: 1.2rem; cursor: pointer; }
+        .btn-disable-row { color: #EF4444; background: none; border: none; font-size: 1.2rem; cursor: pointer; margin-left: 15px; }
+
+        @media (max-width: 768px) {
+            .header-main { flex-direction: column; gap: 10px; }
+            .tasa-badge { margin-left: 0; }
+            .btn-group { flex-direction: column; }
+            th:nth-child(3), td:nth-child(3) { display: none; } /* Oculta Ref $ en móvil */
+        }
     </style>
 </head>
 <body oncontextmenu="return false">
 
     <header class="header-main">
-        <h2 style="margin:0; font-size: 1.4rem;"><i class="fas fa-boxes"></i> CONTROL DE INVENTARIOS</h2>
-        <div class="tasa-badge">Tasa: <span id="tasa-valor">Cargando...</span></div>
+        <h2 style="margin:0; font-size: 1.5rem;">
+            <i class="fas fa-cubes" style="margin-right: 10px;"></i>CONTROL DE INVENTARIOS
+        </h2>
+        <div class="tasa-badge">
+            TASA: <span id="tasa-valor">Cargando...</span>
+        </div>
     </header>
 
     <div class="btn-group">
-        <button class="btn-action" style="background: var(--blue);" onclick="location.reload()">
+        <button class="btn-action btn-blue" onclick="actualizarTasaManualmente()">
             <i class="fas fa-sync-alt"></i> ACTUALIZAR TASA
         </button>
-        <button class="btn-action" style="background: var(--green);" onclick="location.href='sys_v1_datos.html'">
+        <button class="btn-action btn-green" onclick="location.href='sys_v1_datos.html'">
             <i class="fas fa-plus-circle"></i> NUEVO ITEM
         </button>
     </div>
@@ -59,14 +153,15 @@
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 35%;">PRODUCTO</th>
-                        <th style="width: 15%;">STOCK</th>
+                        <th style="width: 40%;">PRODUCTO / CÓDIGO</th>
+                        <th style="width: 10%;">STOCK</th>
                         <th style="width: 15%;">REF. $</th>
-                        <th style="width: 15%;">PRECIO BS.</th>
-                        <th style="width: 20%; text-align: center;">GESTIÓN</th>
+                        <th style="width: 20%;">PRECIO BS.</th>
+                        <th style="width: 15%; text-align: center;">GESTIÓN</th>
                     </tr>
                 </thead>
-                <tbody id="tabla-inventario"></tbody>
+                <tbody id="tabla-inventario">
+                    </tbody>
             </table>
         </div>
     </div>
