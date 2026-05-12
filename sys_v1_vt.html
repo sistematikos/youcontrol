@@ -16,12 +16,11 @@
             --bg-body: #F1F5F9; 
             --white: #FFFFFF;
             --border-color: #E2E8F0;
-            --success-green: #10B981;
         }
         
         body { font-family: 'Poppins', sans-serif; background: var(--bg-body); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: #1E293B; }
         
-        /* Header */
+        /* Header Midnight Gradient */
         .header-sales { 
             background: var(--midnight-gradient); 
             color: white; padding: 15px 30px; 
@@ -35,47 +34,38 @@
 
         .pos-container { display: flex; flex: 1; gap: 20px; padding: 20px; overflow: hidden; }
 
-        /* Panel Izquierdo */
-        .panel-left { flex: 1.4; background: var(--white); border-radius: 25px; display: flex; flex-direction: column; padding: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.04); min-width: 0; }
+        /* Paneles */
+        .panel-left, .panel-cart { background: var(--white); border-radius: 25px; display: flex; flex-direction: column; padding: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.04); }
+        .panel-left { flex: 1.4; min-width: 0; }
+        .panel-cart { flex: 1; border-top: 8px solid var(--midnight-dark); }
+
+        /* Buscador */
         .search-container { position: relative; width: 100%; margin-bottom: 5px; }
-        .search-input { width: 100%; padding: 14px 20px 14px 55px; border: 2px solid var(--border-color); border-radius: 50px; outline: none; font-size: 1rem; transition: 0.3s; background: #F8FAFC; box-sizing: border-box; display: block; }
-        .search-input:focus { border-color: var(--electric-blue); background: white; box-shadow: 0 0 15px rgba(0,82,212,0.1); }
-        .search-container i { position: absolute; left: 22px; top: 50%; transform: translateY(-50%); color: var(--action-grey); font-size: 1.1rem; pointer-events: none; }
-        
+        .search-input { width: 100%; padding: 14px 20px 14px 55px; border: 2px solid var(--border-color); border-radius: 50px; outline: none; font-size: 1rem; background: #F8FAFC; box-sizing: border-box; }
+        .search-input:focus { border-color: var(--electric-blue); background: white; }
+        .search-container i { position: absolute; left: 22px; top: 50%; transform: translateY(-50%); color: var(--action-grey); }
+
+        /* Lista de Productos */
         .product-grid { flex: 1; overflow-y: auto; margin-top: 20px; }
-        
-        /* Ajuste de la tarjeta para mostrar doble precio */
-        .product-card { 
-            display: grid; 
-            grid-template-columns: 1fr 120px 90px 40px; 
-            align-items: center; 
-            padding: 14px; 
-            border-bottom: 1px solid #F1F5F9; 
-            cursor: pointer; 
-            transition: 0.2s; 
-        }
+        .product-card { display: grid; grid-template-columns: 1fr 120px 90px 40px; align-items: center; padding: 14px; border-bottom: 1px solid #F1F5F9; cursor: pointer; }
         .product-card:hover { background: #F8FAFC; border-radius: 12px; }
-        .price-stack { text-align: right; display: flex; flex-direction: column; }
-        .price-usd { font-weight: 700; color: var(--midnight-dark); font-size: 1rem; }
-        .price-bs { font-weight: 600; color: var(--action-grey); font-size: 0.75rem; }
+
+        /* Carrito */
+        .cart-list { flex: 1; overflow-y: auto; margin-bottom: 20px; }
+        .cart-item { padding: 15px; border: 1px solid #F1F5F9; border-radius: 15px; margin-bottom: 10px; }
+        .cart-item.selected { background: #F1F5F9; border-left: 5px solid var(--midnight-dark); }
 
         /* Botones Acción */
         .action-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding-top: 20px; border-top: 2px solid #F8FAFC; margin-top: 15px; }
-        .btn-action { border: 1px solid var(--border-color); background: #F8FAFC; padding: 15px; border-radius: 15px; color: var(--action-grey); font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; font-size: 0.75rem; transition: 0.3s; }
-        .btn-action:hover { background: var(--action-grey); color: white; transform: translateY(-2px); }
-        .btn-action i { margin-bottom: 6px; font-size: 1.1rem; }
-
-        /* Panel Derecho */
-        .panel-cart { flex: 1; background: var(--white); border-radius: 25px; display: flex; flex-direction: column; padding: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.04); border-top: 8px solid var(--midnight-dark); }
-        .cart-list { flex: 1; overflow-y: auto; margin-bottom: 20px; }
-        .cart-item { padding: 15px; border: 1px solid #F1F5F9; border-radius: 15px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; }
-        .cart-item.selected { background: #F1F5F9; border-left: 5px solid var(--midnight-dark); border-color: var(--border-color); }
+        .btn-action { border: 1px solid var(--border-color); background: #F8FAFC; padding: 12px; border-radius: 15px; color: var(--action-grey); font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; font-size: 0.75rem; }
         
-        .checkout-footer { display: grid; grid-template-columns: 1.1fr 1fr; gap: 12px; }
-        .total-box { background: #F8FAFC; color: var(--midnight-dark); padding: 15px; border-radius: 20px; text-align: center; border: 2px solid var(--border-color); }
-        .btn-pay { border: none; border-radius: 20px; background: var(--midnight-gradient); color: white; font-weight: 800; font-size: 1.1rem; cursor: pointer; transition: 0.4s; box-shadow: 0 6px 15px rgba(0, 26, 61, 0.2); }
-        .btn-pay:hover:not(:disabled) { transform: translateY(-3px); }
-        .btn-pay small { display: block; font-size: 0.65rem; font-weight: 400; text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; opacity: 0.8; }
+        /* Botón Cobrar F9 */
+        .btn-pay { border: none; border-radius: 20px; background: var(--midnight-gradient); color: white; font-weight: 800; font-size: 1.1rem; cursor: pointer; transition: 0.4s; padding: 15px; }
+        .btn-pay:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0, 45, 114, 0.3); }
+
+        /* Modal de Pago */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,13,26,0.8); backdrop-filter: blur(8px); }
+        .modal-content { background: white; margin: 8% auto; padding: 40px; border-radius: 30px; width: 90%; max-width: 420px; text-align: center; }
     </style>
 </head>
 <body oncontextmenu="return false">
@@ -83,9 +73,7 @@
     <audio id="beepSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" preload="auto"></audio>
 
     <header class="header-sales">
-        <div class="header-brand">
-            YOU CONTROL <small>PUNTO DE VENTAS</small>
-        </div>
+        <div class="header-brand">YOU CONTROL <small>PUNTO DE VENTAS</small></div>
         <div class="tasa-badge">TASA: <span id="txt-tasa">0.00</span> Bs.</div>
     </header>
 
@@ -93,98 +81,41 @@
         <div class="panel-left">
             <div class="search-container">
                 <i class="fas fa-barcode"></i>
-                <input type="text" id="inputBusqueda" class="search-input" placeholder="Escanear o buscar producto..." onkeyup="filtrarVenta()" autofocus>
+                <input type="text" id="inputBusqueda" class="search-input" placeholder="Escanear o buscar..." autofocus>
             </div>
             <div id="grid-productos" class="product-grid"></div>
             <div class="action-bar">
-                <button class="btn-action" onclick="ejecutarAccion('cantidad')"><i class="fas fa-calculator"></i> CANTIDAD <small>[F5]</small></button>
-                <button class="btn-action" onclick="ejecutarAccion('precio')"><i class="fas fa-tag"></i> PRECIO <small>[F4]</small></button>
-                <button class="btn-action" onclick="ejecutarAccion('eliminar')"><i class="fas fa-trash-alt"></i> ELIMINAR <small>[F6]</small></button>
+                <button class="btn-action" id="btn-f5"><i class="fas fa-calculator"></i> CANTIDAD <small>[F5]</small></button>
+                <button class="btn-action" id="btn-f4"><i class="fas fa-tag"></i> PRECIO <small>[F4]</small></button>
+                <button class="btn-action" id="btn-f6"><i class="fas fa-trash-alt"></i> ELIMINAR <small>[F6]</small></button>
             </div>
         </div>
 
         <div class="panel-cart">
-            <h3 style="margin:0 0 15px 0; color: var(--midnight-dark); font-size: 0.85rem; text-transform: uppercase;">Carrito de Ventas</h3>
+            <h3 style="margin:0 0 15px 0; color: var(--midnight-dark); font-size: 0.85rem; text-transform: uppercase;">Resumen de Venta</h3>
             <div id="lista-carrito" class="cart-list"></div>
-            <div class="checkout-footer">
-                <div class="total-box">
-                    <span id="total-usd" style="font-size:1.8rem; font-weight:800; display:block;">$ 0.00</span>
-                    <span id="total-bs" style="font-size:0.9rem; opacity:0.7; font-weight:600;">0.00 Bs.</span>
-                </div>
-                <button id="btnCobrar" class="btn-pay" onclick="gestionarF9()">COBRAR <small>[F9]</small></button>
+            <div style="background:#F8FAFC; padding:15px; border-radius:20px; text-align:center; border:2px solid var(--border-color); margin-bottom:15px;">
+                <span id="total-usd" style="font-size:1.8rem; font-weight:800; display:block;">$ 0.00</span>
+                <span id="total-bs" style="font-size:0.9rem; opacity:0.7; font-weight:600;">0.00 Bs.</span>
             </div>
+            <button id="btnCobrar" class="btn-pay">COBRAR <small style="display:block; font-size:0.6rem; opacity:0.8;">[F9]</small></button>
         </div>
     </div>
 
-    <script type="module">
-        import { db } from './js/firebase-config.js';
-        import { collection, onSnapshot, doc, addDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    <div id="modalPago" class="modal">
+        <div class="modal-content">
+            <h2>Confirmar Pago</h2>
+            <div id="totalModal" style="font-size: 2.5rem; font-weight: 800; margin: 20px 0;">$0.00</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:25px;">
+                <button id="pay-div" class="btn-action" style="padding:15px;">DIVISAS</button>
+                <button id="pay-bs" class="btn-action" style="padding:15px;">BOLÍVARES</button>
+            </div>
+            <button id="btnConfirmarVenta" class="btn-pay" style="width:100%;">REGISTRAR VENTA</button>
+            <p id="btnCerrarModal" style="margin-top:20px; cursor:pointer; color:#94A3B8;">Regresar</p>
+        </div>
+    </div>
 
-        const UID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
-        let tasaActual = 0, masterStock = [], carrito = [], idSeleccionado = null;
-
-        // Escuchar Tasa
-        onSnapshot(doc(db, "usuarios", UID, "configuracion", "tasa"), (s) => {
-            if (s.exists()) { 
-                tasaActual = s.data().valor; 
-                document.getElementById('txt-tasa').innerText = tasaActual.toLocaleString('es-VE');
-                renderizarVenta(masterStock); // Re-renderizar para actualizar precios en Bs
-            }
-        });
-
-        // Escuchar Productos
-        onSnapshot(collection(db, "usuarios", UID, "productos"), (s) => {
-            masterStock = []; s.forEach(d => masterStock.push({id: d.id, ...d.data()}));
-            renderizarVenta(masterStock);
-        });
-
-        window.renderizarVenta = (l) => {
-            const g = document.getElementById('grid-productos'); 
-            g.innerHTML = "";
-            l.forEach(p => {
-                const precioBs = (p.precio * tasaActual).toLocaleString('es-VE', {minimumFractionDigits: 2});
-                g.innerHTML += `
-                <div class="product-card" onclick="sumarAlCarrito('${p.id}')">
-                    <b style="font-size:0.95rem;">${p.nombre}</b>
-                    <div class="price-stack">
-                        <span class="price-usd">$${p.precio.toFixed(2)}</span>
-                        <span class="price-bs">${precioBs} Bs.</span>
-                    </div>
-                    <span style="text-align:right; color:#94A3B8; font-size:0.8rem;">Stock: ${p.stock}</span>
-                    <i class="fas fa-plus-circle" style="text-align:right; color:var(--electric-blue)"></i>
-                </div>`;
-            });
-        };
-
-        window.sumarAlCarrito = (id) => {
-            const p = masterStock.find(item => item.id === id);
-            if (!p || p.stock <= 0) return;
-            const existe = carrito.find(c => c.id === id);
-            if (existe) existe.cantidad++;
-            else carrito.push({ ...p, cantidad: 1, costoBase: p.costo || 0 });
-            idSeleccionado = id;
-            actualizarUI();
-        };
-
-        function actualizarUI() {
-            const box = document.getElementById('lista-carrito');
-            box.innerHTML = ""; let sub = 0;
-            carrito.forEach(c => {
-                const total = c.precio * c.cantidad; sub += total;
-                const sel = idSeleccionado === c.id;
-                box.innerHTML += `
-                    <div class="cart-item ${sel ? 'selected' : ''}" onclick="idSeleccionado='${c.id}'; actualizarUI();">
-                        <div style="display:flex; justify-content:space-between;">
-                            <span><b style="color:var(--electric-blue);">${c.cantidad}x</b> ${c.nombre}</span>
-                            <b>$${total.toFixed(2)}</b>
-                        </div>
-                    </div>`;
-            });
-            document.getElementById('total-usd').innerText = `$ ${sub.toFixed(2)}`;
-            document.getElementById('total-bs').innerText = `${(sub * tasaActual).toLocaleString('es-VE')} Bs.`;
-        }
-
-        // ... Resto de funciones (gestionarF9, filtrarVenta, etc) se mantienen igual ...
-    </script>
+    <script type="module" src="./js/pos-db-motor.js"></script>
+    <script type="module" src="./js/pos-core.js"></script>
 </body>
 </html>
