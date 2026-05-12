@@ -1,157 +1,89 @@
-<audio id="beepSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" preload="auto"></audio>
+<style>
+    .btn-pay {
+        border: none;
+        border-radius: 18px;
+        background: var(--emerald);
+        color: white;
+        font-weight: 800;
+        font-size: 1.1rem;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: 0.3s;
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
 
-<script type="module">
-    import { db } from './js/firebase-config.js';
-    import { collection, onSnapshot, doc, addDoc, updateDoc, increment, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    .btn-pay:hover:not(:disabled) {
+        background: #059669;
+        transform: translateY(-2px);
+    }
 
-    const UID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
-    let tasaActual = 0, masterStock = [], carrito = [], metodoPago = "Divisas", idSeleccionado = null;
+    .btn-pay:disabled {
+        background: #94A3B8;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
 
-    // --- LÓGICA DE ESCÁNER Y BÚSQUEDA ---
-    window.filtrarVenta = () => {
-        const input = document.getElementById('inputBusqueda');
-        const query = input.value.trim();
+    .btn-pay small {
+        font-size: 0.7rem;
+        font-weight: 400;
+        opacity: 0.9;
+        margin-top: 2px;
+    }
+</style>
 
-        if (!query) {
-            renderizarVenta(masterStock);
-            return;
-        }
+<div class="checkout-footer">
+    <div class="total-box">
+        <span id="total-usd" style="font-size:1.8rem; font-weight:800; display:block;">$ 0.00</span>
+        <span id="total-bs" style="font-size:0.9rem; opacity:0.9;">0.00 Bs.</span>
+    </div>
+    <button id="btnCobrar" class="btn-pay" onclick="abrirModalPago()" disabled>
+        COBRAR
+        <small>[F9]</small>
+    </button>
+</div>
 
-        // 1. Intentar encontrar coincidencia exacta (Código de Barras)
-        const coincidenciaExacta = masterStock.find(p => p.codigo === query || p.id === query);
-
-        if (coincidenciaExacta) {
-            // Suena el BEEP
-            document.getElementById('beepSound').play();
-            
-            // Agregar al carrito
-            sumarAlCarrito(coincidenciaExacta.id);
-            
-            // Limpiar buscador y mantener el foco para el siguiente escaneo
-            input.value = "";
-            input.focus();
-        } else {
-            // 2. Si no es código de barras, filtrar por nombre (Búsqueda manual)
-            const filtrados = masterStock.filter(p => 
-                p.nombre.toLowerCase().includes(query.toLowerCase())
-            );
-            renderizarVenta(filtrados);
-        }
-    };
-
-    // --- ACCESO RÁPIDO POR TECLADO ---
+<script>
     window.addEventListener('keydown', function(e) {
-        // Bloqueamos funciones nativas del navegador
-        if (["F4", "F5", "F6"].includes(e.key)) {
+        // Bloqueamos F4, F5, F6 y ahora F9
+        if (["F4", "F5", "F6", "F9"].includes(e.key)) {
             e.preventDefault();
         }
 
-        // Si el carrito está vacío, no hacemos nada
-        if (carrito.length === 0 && ["F4", "F5", "F6"].includes(e.key)) return;
-
-        // F4: Cambiar Precio
-        if (e.key === "F4") cambiarPrecio(idSeleccionado);
-        
-        // F5: Cambiar Cantidad
-        if (e.key === "F5") cambiarCantidad(idSeleccionado);
-        
-        // F6: Eliminar Item
-        if (e.key === "F6") eliminarItem(idSeleccionado);
-
-        // ENTER: Cobrar
-        if (e.key === "Enter" && carrito.length > 0) {
-            const modal = document.getElementById('modalPago');
-            if (window.getComputedStyle(modal).display === 'none') {
+        // F9: Acción Principal (Cobrar / Guardar)
+        if (e.key === "F9") {
+            const btn = document.getElementById('btnCobrar');
+            const modalPago = document.getElementById('modalPago');
+            
+            // Si el modal de pago está abierto, F9 actúa como "Registrar Venta"
+            if (window.getComputedStyle(modalPago).display === 'block') {
+                procesarVenta();
+            } 
+            // Si el modal está cerrado y hay productos, abre el modal de pago
+            else if (carrito.length > 0) {
                 abrirModalPago();
             }
         }
+
+        // Mantener las otras teclas F4, F5, F6...
+        if (carrito.length > 0) {
+            if (e.key === "F4") ejecutarAccion('precio');
+            if (e.key === "F5") ejecutarAccion('cantidad');
+            if (e.key === "F6") ejecutarAccion('eliminar');
+        }
     });
 
-    // --- GESTIÓN DEL CARRITO ---
-    window.sumarAlCarrito = (id) => {
-        const p = masterStock.find(item => item.id === id);
-        if (!p || p.stock <= 0) return;
-
-        const existe = carrito.find(c => c.id === id);
-        if (existe) {
-            existe.cantidad++;
-        } else {
-            // Insertamos al principio o manejamos como el más reciente
-            carrito.push({ ...p, cantidad: 1, costoBase: p.costo || 0 });
-        }
-        
-        // El último producto ingresado es el seleccionado por defecto para F4, F5, F6
-        idSeleccionado = id;
-        actualizarUI();
-    };
-
-    window.seleccionarParaEditar = (id) => {
-        idSeleccionado = id;
-        actualizarUI();
-    };
-
-    function actualizarUI() {
-        const box = document.getElementById('lista-carrito');
-        box.innerHTML = ""; 
-        let subtotal = 0;
-
-        // Renderizamos de forma que el último aparezca resaltado si es el idSeleccionado
-        carrito.forEach(c => {
-            const totalItem = c.precio * c.cantidad;
-            subtotal += totalItem;
-            const esSeleccionado = idSeleccionado === c.id;
-
-            box.innerHTML += `
-                <div class="cart-item ${esSeleccionado ? 'selected' : ''}" 
-                     onclick="seleccionarParaEditar('${c.id}')"
-                     style="border: 1px solid #EEE; padding: 10px; border-radius: 10px; margin-bottom: 5px; cursor: pointer; transition: 0.2s; ${esSeleccionado ? 'background: #EBF4FF; border-color: #0052D4;' : ''}">
-                    <div class="item-row" style="display: flex; justify-content: space-between;">
-                        <span><b style="color: #0052D4;">${c.cantidad}x</b> ${c.nombre}</span>
-                        <span style="font-weight: 800;">$${totalItem.toFixed(2)}</span>
-                    </div>
-                </div>`;
-        });
-
-        document.getElementById('total-usd').innerText = `$ ${subtotal.toFixed(2)}`;
-        document.getElementById('total-bs').innerText = `${(subtotal * tasaActual).toLocaleString('es-VE')} Bs.`;
-        document.getElementById('btnCobrar').disabled = carrito.length === 0;
-        
-        // Hacer scroll automático al último producto agregado
-        box.scrollTop = box.scrollHeight;
-    }
-
-    // --- ACCIONES DE EDICIÓN ---
-    window.cambiarCantidad = (id) => {
-        const item = carrito.find(c => c.id === id);
-        if(!item) return;
-        const n = prompt(`Nueva cantidad para: ${item.nombre}`, item.cantidad);
-        if (n && !isNaN(n) && n > 0) {
-            item.cantidad = parseFloat(n);
-            actualizarUI();
+    // También actualizamos el botón de "REGISTRAR" dentro del modal de pago
+    // para que el usuario vea que F9 también funciona allí.
+    window.abrirModalPago = () => {
+        const modal = document.getElementById('modalPago');
+        modal.style.display = 'block';
+        // Actualizamos el texto del botón dentro del modal
+        const btnRegistrar = modal.querySelector('.btn-pay');
+        if (btnRegistrar) {
+            btnRegistrar.innerHTML = `REGISTRAR VENTA <small>[F9]</small>`;
         }
     };
-
-    window.cambiarPrecio = (id) => {
-        const item = carrito.find(c => c.id === id);
-        if(!item) return;
-        const p = prompt(`Nuevo precio para: ${item.nombre} (Costo: $${item.costoBase})`, item.precio);
-        if (p && !isNaN(p)) {
-            const nuevoPrc = parseFloat(p);
-            if (nuevoPrc < item.costoBase) {
-                alert("¡Error! El precio no puede ser menor al costo de adquisición.");
-            } else {
-                item.precio = nuevoPrc;
-                actualizarUI();
-            }
-        }
-    };
-
-    window.eliminarItem = (id) => {
-        if(!id) return;
-        carrito = carrito.filter(c => c.id !== id);
-        idSeleccionado = carrito.length > 0 ? carrito[carrito.length - 1].id : null;
-        actualizarUI();
-    };
-
-    // ... Resto de tus funciones de Firebase y Cobro ...
 </script>
