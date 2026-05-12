@@ -8,59 +8,67 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { 
-            --primary-blue: #002D72; 
+            --primary-dark: #001A3D; 
             --electric-blue: #0052D4;
             --vinotinto: #800020; 
-            --emerald: #10B981; 
-            --bg: #F0F4F8; 
+            --action-grey: #475569;
+            --bg-body: #F1F5F9; 
             --white: #FFFFFF;
+            --border-color: #E2E8F0;
         }
         
-        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-body); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: #1E293B; }
         
-        /* Bloqueo de Licencia */
-        #capaBloqueo { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: #001432; align-items: center; justify-content: center; }
-        .licencia-card { background: white; padding: 40px; border-radius: 30px; width: 90%; max-width: 450px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        /* Capa de Licencia */
+        #capaBloqueo { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: #000D1A; align-items: center; justify-content: center; }
+        .licencia-card { background: white; padding: 40px; border-radius: 30px; width: 90%; max-width: 450px; text-align: center; box-shadow: 0 25px 60px rgba(0,0,0,0.6); }
 
-        /* Header */
+        /* Header Profesional */
         .header-sales { 
-            background: var(--primary-blue); color: white; padding: 12px 25px; 
+            background: var(--primary-dark); color: white; padding: 15px 30px; 
             display: flex; justify-content: space-between; align-items: center; 
-            border-bottom: 4px solid var(--vinotinto);
+            border-bottom: 4px solid var(--vinotinto); box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
         
-        .tasa-badge { background: rgba(255, 255, 255, 0.1); padding: 6px 15px; border-radius: 12px; font-weight: 800; border: 1px solid rgba(255,255,255,0.2); }
+        .tasa-badge { background: rgba(255, 255, 255, 0.05); padding: 8px 18px; border-radius: 10px; font-weight: 800; border: 1px solid rgba(255,255,255,0.1); font-size: 0.9rem; }
 
-        .pos-container { display: flex; flex: 1; gap: 15px; padding: 15px; overflow: hidden; }
+        .pos-container { display: flex; flex: 1; gap: 20px; padding: 20px; overflow: hidden; }
 
-        /* Panel Izquierdo */
-        .panel-left { flex: 1.4; background: var(--white); border-radius: 25px; display: flex; flex-direction: column; padding: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); }
-        .search-input { width: 100%; padding: 16px 20px 16px 55px; border: 2px solid #E2E8F0; border-radius: 50px; outline: none; font-size: 1.1rem; box-sizing: border-box; transition: 0.3s; }
-        .search-input:focus { border-color: var(--electric-blue); box-shadow: 0 0 10px rgba(0,82,212,0.1); }
+        /* Panel de Búsqueda */
+        .panel-left { flex: 1.4; background: var(--white); border-radius: 25px; display: flex; flex-direction: column; padding: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.04); }
+        .search-input { width: 100%; padding: 18px 20px 18px 60px; border: 2px solid var(--border-color); border-radius: 50px; outline: none; font-size: 1.1rem; transition: 0.3s; background: #F8FAFC; }
+        .search-input:focus { border-color: var(--electric-blue); background: white; box-shadow: 0 0 15px rgba(0,82,212,0.1); }
         
-        .product-grid { flex: 1; overflow-y: auto; margin-top: 15px; padding-right: 5px; }
-        .product-card { display: grid; grid-template-columns: 1fr 100px 90px 40px; align-items: center; padding: 12px; border-bottom: 1px solid #F1F5F9; cursor: pointer; transition: 0.2s; }
-        .product-card:hover { background: #F8FAFC; }
+        .product-grid { flex: 1; overflow-y: auto; margin-top: 20px; }
+        .product-card { display: grid; grid-template-columns: 1fr 100px 90px 40px; align-items: center; padding: 14px; border-bottom: 1px solid #F1F5F9; cursor: pointer; transition: 0.2s; }
+        .product-card:hover { background: #F8FAFC; border-radius: 12px; }
 
-        /* Barra de Acciones F4, F5, F6 */
-        .action-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding-top: 15px; border-top: 2px solid #F1F5F9; margin-top: 10px; }
-        .btn-action { border: none; padding: 12px; border-radius: 15px; color: white; font-weight: 800; cursor: pointer; display: flex; flex-direction: column; align-items: center; font-size: 0.8rem; }
-        .btn-action small { font-weight: 400; font-size: 0.65rem; opacity: 0.8; }
+        /* Botones de Acción (Estilo Gris Profesional) */
+        .action-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding-top: 20px; border-top: 2px solid #F8FAFC; margin-top: 15px; }
+        .btn-action { border: 1px solid var(--border-color); background: #F8FAFC; padding: 15px; border-radius: 15px; color: var(--action-grey); font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; font-size: 0.75rem; transition: 0.3s; }
+        .btn-action:hover { background: var(--action-grey); color: white; transform: translateY(-2px); }
+        .btn-action i { margin-bottom: 6px; font-size: 1.1rem; }
+        .btn-action small { font-weight: 400; font-size: 0.6rem; opacity: 0.7; margin-top: 2px; }
 
-        /* Panel Derecho (Carrito) */
-        .panel-cart { flex: 1; background: var(--white); border-radius: 25px; display: flex; flex-direction: column; padding: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); border-top: 6px solid var(--electric-blue); }
-        .cart-list { flex: 1; overflow-y: auto; margin-bottom: 15px; }
-        .cart-item { padding: 12px; border: 1px solid #F1F5F9; border-radius: 12px; margin-bottom: 8px; cursor: pointer; transition: 0.2s; }
-        .cart-item.selected { background: #EBF4FF; border-color: var(--electric-blue); transform: scale(1.02); }
+        /* Panel de Carrito */
+        .panel-cart { flex: 1; background: var(--white); border-radius: 25px; display: flex; flex-direction: column; padding: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.04); border-top: 8px solid var(--primary-dark); }
+        .cart-list { flex: 1; overflow-y: auto; margin-bottom: 20px; }
+        .cart-item { padding: 15px; border: 1px solid #F1F5F9; border-radius: 15px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; position: relative; }
+        .cart-item.selected { background: #F1F5F9; border-left: 5px solid var(--primary-dark); border-color: var(--border-color); }
         
-        .checkout-footer { display: grid; grid-template-columns: 1.2fr 1fr; gap: 10px; }
-        .total-box { background: var(--primary-blue); color: white; padding: 15px; border-radius: 18px; text-align: center; }
+        /* Footer de Pago */
+        .checkout-footer { display: grid; grid-template-columns: 1.1fr 1fr; gap: 12px; }
+        .total-box { background: #F8FAFC; color: var(--primary-dark); padding: 15px; border-radius: 20px; text-align: center; border: 2px solid var(--border-color); }
         
-        .btn-pay { border: none; border-radius: 18px; background: var(--emerald); color: white; font-weight: 800; font-size: 1.1rem; cursor: pointer; transition: 0.3s; }
-        .btn-pay:disabled { background: #CBD5E1; cursor: not-allowed; }
+        /* Botón F9 Persuasivo */
+        .btn-pay { border: none; border-radius: 20px; background: linear-gradient(135deg, #002D72 0%, #001A3D 100%); color: white; font-weight: 800; font-size: 1.1rem; cursor: pointer; transition: 0.4s; box-shadow: 0 6px 15px rgba(0, 26, 61, 0.2); }
+        .btn-pay:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0, 45, 114, 0.3); }
+        .btn-pay:disabled { background: #CBD5E1; cursor: not-allowed; box-shadow: none; }
+        .btn-pay small { display: block; font-size: 0.65rem; font-weight: 400; text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; opacity: 0.8; }
 
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,20,50,0.7); backdrop-filter: blur(5px); }
-        .modal-content { background: white; margin: 10% auto; padding: 30px; border-radius: 25px; width: 90%; max-width: 400px; text-align: center; }
+        /* Modales */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,13,26,0.8); backdrop-filter: blur(8px); }
+        .modal-content { background: white; margin: 8% auto; padding: 40px; border-radius: 30px; width: 90%; max-width: 420px; text-align: center; }
     </style>
 </head>
 <body oncontextmenu="return false">
@@ -69,56 +77,72 @@
 
     <div id="capaBloqueo">
         <div class="licencia-card">
-            <h2 style="color: var(--primary-blue);">Activar You Control</h2>
-            <textarea id="inputToken" placeholder="Pegue su licencia aquí..."></textarea>
-            <button class="btn-pay" style="width:100%; margin-top:15px; padding:15px;" onclick="validarYActivar()">ACTIVAR [F9]</button>
+            <h2 style="color: var(--primary-dark); margin-bottom: 10px;">Activar Licencia</h2>
+            <p style="font-size: 0.9rem; color: var(--action-grey); margin-bottom: 20px;">Sistematikos - Frank Hernandez</p>
+            <textarea id="inputToken" placeholder="Pegue el código de activación aquí..." style="width:100%; height:120px; border-radius:15px; padding:15px; border:2px solid #E2E8F0; resize:none; font-family:monospace; font-size:0.8rem;"></textarea>
+            <button class="btn-pay" style="width:100%; margin-top:20px; padding:18px;" onclick="validarYActivar()">ACTIVAR SISTEMA <small>[F9]</small></button>
         </div>
     </div>
 
     <header class="header-sales">
-        <div id="nombreEmpresa" style="font-weight: 800;">YOU CONTROL</div>
-        <div class="tasa-badge">Tasa: <span id="txt-tasa">0.00</span> Bs.</div>
+        <div id="nombreEmpresa" style="font-weight: 800; font-size: 1.2rem; letter-spacing: 1px;">YOU CONTROL</div>
+        <div class="tasa-badge">TASA OFICIAL: <span id="txt-tasa">0.00</span> Bs.</div>
     </header>
 
     <div class="pos-container">
         <div class="panel-left">
             <div style="position:relative">
-                <i class="fas fa-search" style="position:absolute; left:20px; top:18px; color:var(--electric-blue)"></i>
-                <input type="text" id="inputBusqueda" class="search-input" placeholder="Escanee o busque producto..." onkeyup="filtrarVenta()" autofocus>
+                <i class="fas fa-barcode" style="position:absolute; left:22px; top:20px; color:var(--action-grey); font-size: 1.2rem;"></i>
+                <input type="text" id="inputBusqueda" class="search-input" placeholder="Escanear código de barras..." onkeyup="filtrarVenta()" autofocus>
             </div>
             
             <div id="grid-productos" class="product-grid"></div>
 
             <div class="action-bar">
-                <button class="btn-action" style="background:#3B82F6" onclick="ejecutarAccion('cantidad')">CANTIDAD <small>[F5]</small></button>
-                <button class="btn-action" style="background:#F59E0B" onclick="ejecutarAccion('precio')">PRECIO <small>[F4]</small></button>
-                <button class="btn-action" style="background:#EF4444" onclick="ejecutarAccion('eliminar')">ELIMINAR <small>[F6]</small></button>
+                <button class="btn-action" onclick="ejecutarAccion('cantidad')">
+                    <i class="fas fa-calculator"></i> CANTIDAD <small>[F5]</small>
+                </button>
+                <button class="btn-action" onclick="ejecutarAccion('precio')">
+                    <i class="fas fa-tag"></i> PRECIO <small>[F4]</small>
+                </button>
+                <button class="btn-action" onclick="ejecutarAccion('eliminar')">
+                    <i class="fas fa-trash-alt"></i> ELIMINAR <small>[F6]</small>
+                </button>
             </div>
         </div>
 
         <div class="panel-cart">
-            <h3 style="margin:0 0 10px 0; color: var(--primary-blue); font-size: 0.9rem;">RESUMEN DE VENTA</h3>
+            <h3 style="margin:0 0 15px 0; color: var(--primary-dark); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Resumen de Venta</h3>
             <div id="lista-carrito" class="cart-list"></div>
             
             <div class="checkout-footer">
                 <div class="total-box">
-                    <span id="total-usd" style="font-size:1.6rem; font-weight:800; display:block;">$ 0.00</span>
-                    <span id="total-bs" style="font-size:0.8rem; opacity:0.8;">0.00 Bs.</span>
+                    <span id="total-usd" style="font-size:1.8rem; font-weight:800; display:block;">$ 0.00</span>
+                    <span id="total-bs" style="font-size:0.9rem; opacity:0.7; font-weight:600;">0.00 Bs.</span>
                 </div>
-                <button id="btnCobrar" class="btn-pay" onclick="gestionarF9()">COBRAR <small>[F9]</small></button>
+                <button id="btnCobrar" class="btn-pay" onclick="gestionarF9()">
+                    COBRAR
+                    <small>[F9]</small>
+                </button>
             </div>
         </div>
     </div>
 
     <div id="modalPago" class="modal">
         <div class="modal-content">
-            <h2 style="color: var(--primary-blue);">Total: <span id="totalModal">$0.00</span></h2>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:20px 0;">
-                <button onclick="metodoPago='Divisas'" style="padding:15px; border-radius:12px; border:1px solid #DDD;">Divisas</button>
-                <button onclick="metodoPago='Bolivares'" style="padding:15px; border-radius:12px; border:1px solid #DDD;">Bolívares</button>
+            <h2 style="color: var(--primary-dark); margin:0;">Confirmar Pago</h2>
+            <div id="totalModal" style="font-size: 2.5rem; font-weight: 800; margin: 20px 0;">$0.00</div>
+            
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:25px;">
+                <button id="pay-div" class="btn-action" onclick="setMetodo('Divisas')" style="padding:20px; background:#F1F5F9;">DIVISAS</button>
+                <button id="pay-bs" class="btn-action" onclick="setMetodo('Bolivares')" style="padding:20px; background:#F1F5F9;">BOLÍVARES</button>
             </div>
-            <button class="btn-pay" style="width:100%; padding:15px;" onclick="procesarVenta()">REGISTRAR VENTA <small>[F9]</small></button>
-            <p onclick="cerrarModal()" style="margin-top:15px; cursor:pointer; color:#64748B;">Cancelar</p>
+            
+            <button class="btn-pay" style="width:100%; padding:20px;" onclick="procesarVenta()">
+                REGISTRAR VENTA
+                <small>[F9]</small>
+            </button>
+            <p onclick="cerrarModal()" style="margin-top:20px; cursor:pointer; color:#94A3B8; font-weight:600;">Regresar</p>
         </div>
     </div>
 
@@ -129,7 +153,7 @@
         const UID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
         let tasaActual = 0, masterStock = [], carrito = [], metodoPago = "Divisas", idSeleccionado = null;
 
-        // --- TECLAS DE ACCESO RÁPIDO ---
+        // --- MANEJO DE TECLAS ---
         window.addEventListener('keydown', (e) => {
             if (["F4", "F5", "F6", "F9"].includes(e.key)) e.preventDefault();
             
@@ -161,10 +185,10 @@
             const query = input.value.trim();
             if (!query) { renderizarVenta(masterStock); return; }
 
-            const coincidencia = masterStock.find(p => p.codigo === query);
-            if (coincidencia) {
+            const p = masterStock.find(p => p.codigo === query);
+            if (p) {
                 document.getElementById('beepSound').play();
-                sumarAlCarrito(coincidencia.id);
+                sumarAlCarrito(p.id);
                 input.value = "";
             } else {
                 const filtrados = masterStock.filter(p => p.nombre.toLowerCase().includes(query.toLowerCase()));
@@ -192,9 +216,9 @@
                 const sel = idSeleccionado === c.id;
                 box.innerHTML += `
                     <div class="cart-item ${sel ? 'selected' : ''}" onclick="idSeleccionado='${c.id}'; actualizarUI();">
-                        <div style="display:flex; justify-content:space-between">
-                            <span><b>${c.cantidad}x</b> ${c.nombre}</span>
-                            <b>$${total.toFixed(2)}</b>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span><b style="color:var(--electric-blue);">${c.cantidad}x</b> ${c.nombre}</span>
+                            <b style="font-size:1.1rem;">$${total.toFixed(2)}</b>
                         </div>
                     </div>`;
             });
@@ -204,17 +228,27 @@
             box.scrollTop = box.scrollHeight;
         }
 
+        window.setMetodo = (m) => {
+            metodoPago = m;
+            document.getElementById('pay-div').style.background = m === 'Divisas' ? '#001A3D' : '#F1F5F9';
+            document.getElementById('pay-div').style.color = m === 'Divisas' ? 'white' : '#475569';
+            document.getElementById('pay-bs').style.background = m === 'Bolivares' ? '#001A3D' : '#F1F5F9';
+            document.getElementById('pay-bs').style.color = m === 'Bolivares' ? 'white' : '#475569';
+        };
+
         window.cambiarCantidad = (id) => {
             const item = carrito.find(c => c.id === id);
-            const n = prompt("Cantidad:", item.cantidad);
+            const n = prompt(`Cantidad para ${item.nombre}:`, item.cantidad);
             if (n && !isNaN(n) && n > 0) { item.cantidad = parseFloat(n); actualizarUI(); }
         };
 
         window.cambiarPrecio = (id) => {
             const item = carrito.find(c => c.id === id);
-            const p = prompt("Precio:", item.precio);
-            if (p && !isNaN(p) && parseFloat(p) >= item.costoBase) { item.precio = parseFloat(p); actualizarUI(); }
-            else { alert("Precio no permitido"); }
+            const p = prompt(`Precio para ${item.nombre} (Costo: $${item.costoBase}):`, item.precio);
+            if (p && !isNaN(p)) {
+                if (parseFloat(p) < item.costoBase) alert("Precio por debajo del costo.");
+                else { item.precio = parseFloat(p); actualizarUI(); }
+            }
         };
 
         window.eliminarItem = (id) => {
@@ -226,6 +260,7 @@
         window.abrirModalPago = () => {
             document.getElementById('totalModal').innerText = document.getElementById('total-usd').innerText;
             document.getElementById('modalPago').style.display = 'block';
+            setMetodo('Divisas');
         };
 
         window.cerrarModal = () => document.getElementById('modalPago').style.display = 'none';
@@ -233,28 +268,32 @@
         window.procesarVenta = async () => {
             try {
                 const btn = document.querySelector('#modalPago .btn-pay');
-                btn.disabled = true; btn.innerText = "PROCESANDO...";
+                btn.disabled = true; btn.innerText = "REGISTRANDO...";
                 
                 await addDoc(collection(db, "usuarios", UID, "ventas"), {
                     fecha: new Date().toLocaleString(),
                     items: carrito,
                     total: carrito.reduce((s,i) => s+(i.precio*i.cantidad), 0),
-                    metodo: metodoPago
+                    metodo: metodoPago,
+                    tasa: tasaActual
                 });
 
                 for (let i of carrito) {
                     await updateDoc(doc(db, "usuarios", UID, "productos", i.id), { stock: increment(-i.cantidad) });
                 }
 
-                alert("Venta registrada");
+                alert("Venta Completada");
                 carrito = []; idSeleccionado = null; actualizarUI(); cerrarModal();
                 btn.disabled = false; btn.innerHTML = `REGISTRAR VENTA <small>[F9]</small>`;
-            } catch (e) { alert("Error al registrar"); }
+            } catch (e) { alert("Error de conexión"); btn.disabled = false; }
         };
 
-        // --- INICIO ---
+        // --- FIREBASE DATA ---
         onSnapshot(doc(db, "usuarios", UID, "configuracion", "tasa"), (s) => {
-            if (s.exists()) { tasaActual = s.data().valor; document.getElementById('txt-tasa').innerText = tasaActual; }
+            if (s.exists()) { 
+                tasaActual = s.data().valor; 
+                document.getElementById('txt-tasa').innerText = tasaActual.toLocaleString('es-VE'); 
+            }
         });
 
         onSnapshot(collection(db, "usuarios", UID, "productos"), (s) => {
@@ -267,8 +306,8 @@
             l.forEach(p => {
                 g.innerHTML += `<div class="product-card" onclick="sumarAlCarrito('${p.id}')">
                     <b>${p.nombre}</b>
-                    <span style="text-align:right">$${p.precio.toFixed(2)}</span>
-                    <span style="text-align:right; color:#94A3B8">${p.stock}</span>
+                    <span style="text-align:right; font-weight:700;">$${p.precio.toFixed(2)}</span>
+                    <span style="text-align:right; color:#94A3B8; font-size:0.8rem;">Stock: ${p.stock}</span>
                     <i class="fas fa-plus-circle" style="text-align:right; color:var(--electric-blue)"></i>
                 </div>`;
             });
