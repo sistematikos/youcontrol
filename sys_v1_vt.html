@@ -29,7 +29,7 @@
 
         .pos-container { display: flex; flex: 1; gap: 15px; padding: 15px; overflow: hidden; }
 
-        /* Panel Izquierdo: Buscador y Productos */
+        /* Panel Izquierdo: Buscador */
         .panel-search { flex: 1.4; background: var(--white); border-radius: 25px; display: flex; flex-direction: column; padding: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); }
         .search-wrapper { position: relative; margin-bottom: 20px; }
         .search-input { width: 100%; padding: 18px 20px 18px 55px; border: 2px solid #E2E8F0; border-radius: 50px; outline: none; font-size: 1.1rem; box-sizing: border-box; transition: 0.3s; }
@@ -40,15 +40,19 @@
         .product-card { display: grid; grid-template-columns: 1fr 100px 90px 80px 40px; align-items: center; padding: 14px; border-bottom: 1px solid #F1F5F9; cursor: pointer; transition: 0.2s; }
         .product-card:hover { background: #F0F7FF; transform: scale(1.01); border-radius: 12px; }
 
-        /* Panel Derecho: Carrito Interactive */
+        /* Panel Derecho: Carrito Simplificado */
         .panel-cart { flex: 1; background: var(--white); border-radius: 25px; display: flex; flex-direction: column; padding: 25px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); border-top: 6px solid var(--primary-blue); }
         .cart-list { flex: 1; overflow-y: auto; margin-bottom: 15px; }
         
-        .cart-item { padding: 12px; border-bottom: 1px solid #F1F5F9; cursor: pointer; transition: 0.3s; border-radius: 15px; margin-bottom: 8px; }
-        .cart-item:hover { background: #F8FAFC; }
-        .cart-item.active { background: #F0F7FF; border: 1px solid var(--primary-blue); }
+        .cart-item { padding: 12px; border-bottom: 1px solid #F1F5F9; cursor: pointer; border-radius: 12px; margin-bottom: 5px; }
+        .cart-item.active { background: #F0F7FF; border-color: var(--primary-blue); }
 
-        /* Controles de Item */
+        /* Una sola línea para el producto */
+        .item-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem; }
+        .item-qty { color: var(--primary-blue); font-weight: 800; margin-right: 8px; min-width: 30px; display: inline-block; }
+        .item-name { flex: 1; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #334155; }
+        .item-total { font-weight: 800; color: #1e293b; margin-left: 10px; }
+
         .item-controls { display: none; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px dashed #CBD5E1; }
         .btn-ctrl { border: none; padding: 10px; border-radius: 10px; font-weight: 700; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
         .btn-qty { background: #DBEAFE; color: var(--primary-blue); }
@@ -177,7 +181,7 @@
             if (prc && !isNaN(prc)) {
                 const nuevoPrc = parseFloat(prc);
                 if (nuevoPrc < item.costoBase) {
-                    alert("¡ERROR! El precio no puede ser menor al costo de $" + item.costoBase);
+                    alert("¡Bloqueado! No puedes vender por debajo del costo.");
                 } else {
                     item.precio = nuevoPrc;
                     actualizarUI();
@@ -196,17 +200,14 @@
             box.innerHTML = ""; let subtotal = 0;
             carrito.forEach(c => {
                 const totalItem = c.precio * c.cantidad;
-                const ganancia = (c.precio - c.costoBase) * c.cantidad;
                 subtotal += totalItem;
                 const activo = itemEditando === c.id;
                 box.innerHTML += `
                     <div class="cart-item ${activo ? 'active' : ''}" onclick="toggleControles('${c.id}')">
-                        <div style="display:flex; justify-content:space-between">
-                            <div style="flex:1"><b>${c.nombre}</b><br><small>$${c.precio.toFixed(2)} x ${c.cantidad}</small></div>
-                            <div style="text-align:right">
-                                <b style="color:var(--primary-blue)">$${totalItem.toFixed(2)}</b><br>
-                                <small style="color:var(--emerald); font-size:0.7rem">Ganancia: +$${ganancia.toFixed(2)}</small>
-                            </div>
+                        <div class="item-row">
+                            <span class="item-qty">x${c.cantidad}</span>
+                            <span class="item-name">${c.nombre}</span>
+                            <span class="item-total">$${totalItem.toFixed(2)}</span>
                         </div>
                         <div class="item-controls" style="display: ${activo ? 'grid' : 'none'}">
                             <button class="btn-ctrl btn-qty" onclick="event.stopPropagation(); cambiarCantidad('${c.id}')">Cant</button>
@@ -245,7 +246,7 @@
                 for (let item of carrito) {
                     await updateDoc(doc(db, "usuarios", UID, "productos", item.id), { stock: increment(-item.cantidad) });
                 }
-                alert("Venta Registrada con éxito");
+                alert("Venta Registrada");
                 carrito = []; actualizarUI(); cerrarModal();
             } catch (e) { alert("Error"); }
             finally { btn.disabled = false; btn.innerText = "REGISTRAR VENTA"; }
