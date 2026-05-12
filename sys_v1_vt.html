@@ -1,291 +1,157 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ventas | You Control</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
-    <style>
-        :root { 
-            --primary-blue: #0052D4;
-            --gradient-blue: linear-gradient(135deg, #0052D4, #4364F7, #6FB1FC);
-            --vinotinto: #800020; 
-            --emerald: #10B981; 
-            --bg: #F0F4F8; 
-            --white: #FFFFFF;
-        }
-        
-        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        
-        /* Header */
-        .header-sales { 
-            background: var(--gradient-blue); color: white; padding: 12px 25px; 
-            display: flex; justify-content: space-between; align-items: center; 
-            border-bottom: 4px solid var(--vinotinto); box-shadow: 0 4px 15px rgba(0, 82, 212, 0.3);
-        }
-        
-        .tasa-badge { background: rgba(255, 255, 255, 0.2); padding: 6px 15px; border-radius: 12px; font-weight: 800; backdrop-filter: blur(5px); }
+<audio id="beepSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" preload="auto"></audio>
 
-        .pos-container { display: flex; flex: 1; gap: 15px; padding: 15px; overflow: hidden; }
+<script type="module">
+    import { db } from './js/firebase-config.js';
+    import { collection, onSnapshot, doc, addDoc, updateDoc, increment, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        /* Panel Izquierdo */
-        .panel-search { flex: 1.4; background: var(--white); border-radius: 25px; display: flex; flex-direction: column; padding: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); }
-        .search-wrapper { position: relative; margin-bottom: 20px; }
-        .search-input { width: 100%; padding: 16px 20px 16px 55px; border: 2px solid #E2E8F0; border-radius: 50px; outline: none; font-size: 1.1rem; box-sizing: border-box; }
-        .search-wrapper i { position: absolute; left: 22px; top: 18px; color: var(--primary-blue); font-size: 1.3rem; }
+    const UID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
+    let tasaActual = 0, masterStock = [], carrito = [], metodoPago = "Divisas", idSeleccionado = null;
 
-        .product-grid { flex: 1; overflow-y: auto; }
-        .product-card { display: grid; grid-template-columns: 1fr 100px 90px 80px 40px; align-items: center; padding: 12px; border-bottom: 1px solid #F1F5F9; cursor: pointer; }
-        .product-card:hover { background: #F0F7FF; border-radius: 12px; }
+    // --- LÓGICA DE ESCÁNER Y BÚSQUEDA ---
+    window.filtrarVenta = () => {
+        const input = document.getElementById('inputBusqueda');
+        const query = input.value.trim();
 
-        /* Panel Derecho */
-        .panel-cart { flex: 1; background: var(--white); border-radius: 25px; display: flex; flex-direction: column; padding: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); border-top: 6px solid var(--primary-blue); }
-        .cart-list { flex: 1; overflow-y: auto; margin-bottom: 15px; }
-        
-        .cart-item { padding: 10px; border-bottom: 1px solid #F1F5F9; cursor: pointer; border-radius: 12px; margin-bottom: 5px; }
-        .item-row { display: flex; justify-content: space-between; align-items: center; }
-        .item-qty { color: var(--primary-blue); font-weight: 800; margin-right: 8px; }
-        .item-name { flex: 1; font-weight: 600; color: #334155; }
-        .item-total { font-weight: 800; color: #1e293b; }
-
-        /* Controles */
-        .item-controls { display: none; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 10px; }
-        .btn-ctrl { border: none; padding: 8px; border-radius: 8px; font-weight: 700; font-size: 0.75rem; cursor: pointer; }
-        .btn-qty { background: #DBEAFE; color: var(--primary-blue); }
-        .btn-prc { background: #FEF3C7; color: #D97706; }
-        .btn-del { background: #FEE2E2; color: #EF4444; }
-
-        /* SECCIÓN DE BOTONES HORIZONTALES */
-        .checkout-footer {
-            display: grid;
-            grid-template-columns: 1.2fr 1fr; /* Total más ancho que el botón */
-            gap: 10px;
-            align-items: stretch;
+        if (!query) {
+            renderizarVenta(masterStock);
+            return;
         }
 
-        .total-box-compact { 
-            background: var(--gradient-blue); 
-            color: white; 
-            padding: 15px; 
-            border-radius: 18px; 
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            box-shadow: 0 5px 15px rgba(0, 82, 212, 0.2);
-        }
-        .val-usd-compact { font-size: 1.8rem; font-weight: 800; line-height: 1; }
-        .val-bs-compact { font-size: 0.9rem; opacity: 0.9; font-weight: 600; }
+        // 1. Intentar encontrar coincidencia exacta (Código de Barras)
+        const coincidenciaExacta = masterStock.find(p => p.codigo === query || p.id === query);
 
-        .btn-pay-compact { 
-            width: 100%; 
-            border: none; 
-            border-radius: 18px; 
-            background: var(--emerald); 
-            color: white; 
-            font-weight: 800; 
-            font-size: 1.1rem; 
-            cursor: pointer;
-            transition: 0.3s;
-            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.2);
-        }
-        .btn-pay-compact:disabled { background: #CBD5E1; box-shadow: none; cursor: default; }
-
-        /* Modal */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,20,50,0.7); backdrop-filter: blur(6px); }
-        .modal-content { background: white; margin: 8% auto; padding: 30px; border-radius: 25px; width: 90%; max-width: 400px; text-align: center; }
-        .payment-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
-        .pay-option { padding: 15px; border: 2px solid #F1F5F9; border-radius: 15px; cursor: pointer; font-weight: 700; color: #64748B; }
-        .pay-option.selected { border-color: var(--primary-blue); background: #F0F7FF; color: var(--primary-blue); }
-        .btn-register { width: 100%; padding: 15px; border: none; border-radius: 15px; background: var(--primary-blue); color: white; font-weight: 800; }
-
-        @media (max-width: 850px) { .pos-container { flex-direction: column; } }
-    </style>
-</head>
-<body oncontextmenu="return false">
-
-    <header class="header-sales">
-        <div onclick="location.href='index.html'" style="cursor:pointer; font-weight: 800;"><i class="fas fa-shopping-cart"></i> YOU CONTROL</div>
-        <div class="tasa-badge">Tasa: <span id="txt-tasa">0.00</span> Bs.</div>
-    </header>
-
-    <div class="pos-container">
-        <div class="panel-search">
-            <div class="search-wrapper">
-                <i class="fas fa-search"></i>
-                <input type="text" id="inputBusqueda" class="search-input" placeholder="Buscar..." onkeyup="filtrarVenta()" autofocus>
-            </div>
-            <div id="grid-productos" class="product-grid"></div>
-        </div>
-
-        <div class="panel-cart">
-            <h3 style="margin:0 0 10px 0; color: var(--primary-blue); font-size: 1.1rem;">Resumen</h3>
-            <div id="lista-carrito" class="cart-list"></div>
+        if (coincidenciaExacta) {
+            // Suena el BEEP
+            document.getElementById('beepSound').play();
             
-            <div class="checkout-footer">
-                <div class="total-box-compact">
-                    <span id="total-usd" class="val-usd-compact">$ 0.00</span>
-                    <span id="total-bs" class="val-bs-compact">0.00 Bs.</span>
-                </div>
-                <button id="btnCobrar" class="btn-pay-compact" onclick="abrirModalPago()" disabled>COBRAR</button>
-            </div>
-        </div>
-    </div>
+            // Agregar al carrito
+            sumarAlCarrito(coincidenciaExacta.id);
+            
+            // Limpiar buscador y mantener el foco para el siguiente escaneo
+            input.value = "";
+            input.focus();
+        } else {
+            // 2. Si no es código de barras, filtrar por nombre (Búsqueda manual)
+            const filtrados = masterStock.filter(p => 
+                p.nombre.toLowerCase().includes(query.toLowerCase())
+            );
+            renderizarVenta(filtrados);
+        }
+    };
 
-    <div id="modalPago" class="modal">
-        <div class="modal-content">
-            <h2 style="color: var(--primary-blue);">Método de Pago</h2>
-            <div class="payment-grid">
-                <div class="pay-option selected" onclick="seleccionarPago('Divisas', this)"><i class="fas fa-dollar-sign"></i><br>Divisas</div>
-                <div class="pay-option" onclick="seleccionarPago('Bolivares', this)"><i class="fas fa-money-bill-wave"></i><br>Bolívares</div>
-                <div class="pay-option" onclick="seleccionarPago('Punto', this)"><i class="fas fa-credit-card"></i><br>Punto</div>
-                <div class="pay-option" onclick="seleccionarPago('Pago Movil', this)"><i class="fas fa-mobile-alt"></i><br>P. Móvil</div>
-            </div>
-            <button class="btn-register" onclick="procesarVenta()">REGISTRAR VENTA</button>
-            <button onclick="cerrarModal()" style="margin-top:15px; border:none; background:none; color:#94A3B8; cursor:pointer;">Cancelar</button>
-        </div>
-    </div>
+    // --- ACCESO RÁPIDO POR TECLADO ---
+    window.addEventListener('keydown', function(e) {
+        // Bloqueamos funciones nativas del navegador
+        if (["F4", "F5", "F6"].includes(e.key)) {
+            e.preventDefault();
+        }
 
-    <script type="module">
-        import { db } from './js/firebase-config.js';
-        import { collection, onSnapshot, doc, addDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        // Si el carrito está vacío, no hacemos nada
+        if (carrito.length === 0 && ["F4", "F5", "F6"].includes(e.key)) return;
 
-        const UID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
-        let tasaActual = 0, masterStock = [], carrito = [], metodoPago = "Divisas", itemEditando = null;
+        // F4: Cambiar Precio
+        if (e.key === "F4") cambiarPrecio(idSeleccionado);
+        
+        // F5: Cambiar Cantidad
+        if (e.key === "F5") cambiarCantidad(idSeleccionado);
+        
+        // F6: Eliminar Item
+        if (e.key === "F6") eliminarItem(idSeleccionado);
 
-        onSnapshot(doc(db, "usuarios", UID, "configuracion", "tasa"), (snap) => {
-            if (snap.exists()) {
-                tasaActual = snap.data().valor;
-                document.getElementById('txt-tasa').innerText = tasaActual.toLocaleString('es-VE');
-                cargarInventario();
+        // ENTER: Cobrar
+        if (e.key === "Enter" && carrito.length > 0) {
+            const modal = document.getElementById('modalPago');
+            if (window.getComputedStyle(modal).display === 'none') {
+                abrirModalPago();
             }
+        }
+    });
+
+    // --- GESTIÓN DEL CARRITO ---
+    window.sumarAlCarrito = (id) => {
+        const p = masterStock.find(item => item.id === id);
+        if (!p || p.stock <= 0) return;
+
+        const existe = carrito.find(c => c.id === id);
+        if (existe) {
+            existe.cantidad++;
+        } else {
+            // Insertamos al principio o manejamos como el más reciente
+            carrito.push({ ...p, cantidad: 1, costoBase: p.costo || 0 });
+        }
+        
+        // El último producto ingresado es el seleccionado por defecto para F4, F5, F6
+        idSeleccionado = id;
+        actualizarUI();
+    };
+
+    window.seleccionarParaEditar = (id) => {
+        idSeleccionado = id;
+        actualizarUI();
+    };
+
+    function actualizarUI() {
+        const box = document.getElementById('lista-carrito');
+        box.innerHTML = ""; 
+        let subtotal = 0;
+
+        // Renderizamos de forma que el último aparezca resaltado si es el idSeleccionado
+        carrito.forEach(c => {
+            const totalItem = c.precio * c.cantidad;
+            subtotal += totalItem;
+            const esSeleccionado = idSeleccionado === c.id;
+
+            box.innerHTML += `
+                <div class="cart-item ${esSeleccionado ? 'selected' : ''}" 
+                     onclick="seleccionarParaEditar('${c.id}')"
+                     style="border: 1px solid #EEE; padding: 10px; border-radius: 10px; margin-bottom: 5px; cursor: pointer; transition: 0.2s; ${esSeleccionado ? 'background: #EBF4FF; border-color: #0052D4;' : ''}">
+                    <div class="item-row" style="display: flex; justify-content: space-between;">
+                        <span><b style="color: #0052D4;">${c.cantidad}x</b> ${c.nombre}</span>
+                        <span style="font-weight: 800;">$${totalItem.toFixed(2)}</span>
+                    </div>
+                </div>`;
         });
 
-        function cargarInventario() {
-            onSnapshot(collection(db, "usuarios", UID, "productos"), (snap) => {
-                masterStock = [];
-                snap.forEach(d => masterStock.push({ id: d.id, ...d.data() }));
-                renderizarVenta(masterStock);
-            });
+        document.getElementById('total-usd').innerText = `$ ${subtotal.toFixed(2)}`;
+        document.getElementById('total-bs').innerText = `${(subtotal * tasaActual).toLocaleString('es-VE')} Bs.`;
+        document.getElementById('btnCobrar').disabled = carrito.length === 0;
+        
+        // Hacer scroll automático al último producto agregado
+        box.scrollTop = box.scrollHeight;
+    }
+
+    // --- ACCIONES DE EDICIÓN ---
+    window.cambiarCantidad = (id) => {
+        const item = carrito.find(c => c.id === id);
+        if(!item) return;
+        const n = prompt(`Nueva cantidad para: ${item.nombre}`, item.cantidad);
+        if (n && !isNaN(n) && n > 0) {
+            item.cantidad = parseFloat(n);
+            actualizarUI();
         }
+    };
 
-        window.renderizarVenta = (lista) => {
-            const contenedor = document.getElementById('grid-productos');
-            contenedor.innerHTML = "";
-            lista.filter(p => p.stock > 0).forEach(p => {
-                contenedor.innerHTML += `
-                    <div class="product-card" onclick="sumarAlCarrito('${p.id}')">
-                        <div style="font-weight:600">${p.nombre}</div>
-                        <div style="color:var(--primary-blue); font-weight:700; text-align:right">${(p.precio * tasaActual).toLocaleString('es-VE')} Bs.</div>
-                        <div style="color:var(--emerald); font-weight:800; text-align:right">$${p.precio.toFixed(2)}</div>
-                        <div style="color:#94A3B8; text-align:right">${p.stock} <small>und</small></div>
-                        <div style="text-align:right; color:var(--primary-blue)"><i class="fas fa-plus-circle"></i></div>
-                    </div>`;
-            });
-        };
-
-        window.sumarAlCarrito = (id) => {
-            const p = masterStock.find(item => item.id === id);
-            const existe = carrito.find(c => c.id === id);
-            if (existe) { existe.cantidad++; }
-            else { carrito.push({ ...p, cantidad: 1, precioOriginal: p.precio, costoBase: p.costo || 0 }); }
-            actualizarUI();
-        };
-
-        window.toggleControles = (id) => {
-            itemEditando = (itemEditando === id) ? null : id;
-            actualizarUI();
-        };
-
-        window.cambiarCantidad = (id) => {
-            const qty = prompt("Cantidad:");
-            if (qty && !isNaN(qty) && qty > 0) {
-                carrito.find(c => c.id === id).cantidad = parseFloat(qty);
+    window.cambiarPrecio = (id) => {
+        const item = carrito.find(c => c.id === id);
+        if(!item) return;
+        const p = prompt(`Nuevo precio para: ${item.nombre} (Costo: $${item.costoBase})`, item.precio);
+        if (p && !isNaN(p)) {
+            const nuevoPrc = parseFloat(p);
+            if (nuevoPrc < item.costoBase) {
+                alert("¡Error! El precio no puede ser menor al costo de adquisición.");
+            } else {
+                item.precio = nuevoPrc;
                 actualizarUI();
             }
-        };
-
-        window.cambiarPrecio = (id) => {
-            const item = carrito.find(c => c.id === id);
-            const prc = prompt(`Precio Unitario (Costo: $${item.costoBase}):`);
-            if (prc && !isNaN(prc)) {
-                const nuevoPrc = parseFloat(prc);
-                if (nuevoPrc < item.costoBase) {
-                    alert("¡Bloqueado! Menor al costo.");
-                } else {
-                    item.precio = nuevoPrc;
-                    actualizarUI();
-                }
-            }
-        };
-
-        window.eliminarItem = (id) => {
-            carrito = carrito.filter(c => c.id !== id);
-            itemEditando = null;
-            actualizarUI();
-        };
-
-        function actualizarUI() {
-            const box = document.getElementById('lista-carrito');
-            box.innerHTML = ""; let subtotal = 0;
-            carrito.forEach(c => {
-                const totalItem = c.precio * c.cantidad;
-                subtotal += totalItem;
-                const activo = itemEditando === c.id;
-                box.innerHTML += `
-                    <div class="cart-item ${activo ? 'active' : ''}" onclick="toggleControles('${c.id}')">
-                        <div class="item-row">
-                            <span><b class="item-qty">x${c.cantidad}</b> <span class="item-name">${c.nombre}</span></span>
-                            <span class="item-total">$${totalItem.toFixed(2)}</span>
-                        </div>
-                        <div class="item-controls" style="display: ${activo ? 'grid' : 'none'}">
-                            <button class="btn-ctrl btn-qty" onclick="event.stopPropagation(); cambiarCantidad('${c.id}')">Cant</button>
-                            <button class="btn-ctrl btn-prc" onclick="event.stopPropagation(); cambiarPrecio('${c.id}')">Precio</button>
-                            <button class="btn-ctrl btn-del" onclick="event.stopPropagation(); eliminarItem('${c.id}')">Borrar</button>
-                        </div>
-                    </div>`;
-            });
-            document.getElementById('total-usd').innerText = `$ ${subtotal.toFixed(2)}`;
-            document.getElementById('total-bs').innerText = `${(subtotal * tasaActual).toLocaleString('es-VE')} Bs.`;
-            document.getElementById('btnCobrar').disabled = carrito.length === 0;
         }
+    };
 
-        window.abrirModalPago = () => document.getElementById('modalPago').style.display = 'block';
-        window.cerrarModal = () => document.getElementById('modalPago').style.display = 'none';
-        window.seleccionarPago = (m, el) => {
-            metodoPago = m;
-            document.querySelectorAll('.pay-option').forEach(o => o.classList.remove('selected'));
-            el.classList.add('selected');
-        };
+    window.eliminarItem = (id) => {
+        if(!id) return;
+        carrito = carrito.filter(c => c.id !== id);
+        idSeleccionado = carrito.length > 0 ? carrito[carrito.length - 1].id : null;
+        actualizarUI();
+    };
 
-        window.procesarVenta = async () => {
-            const btn = document.querySelector('.btn-register');
-            btn.disabled = true; btn.innerText = "REGISTRANDO...";
-            try {
-                const totalUSD = carrito.reduce((s, i) => s + (i.precio * i.cantidad), 0);
-                await addDoc(collection(db, "usuarios", UID, "ventas"), {
-                    fecha: new Date().toLocaleString(),
-                    timestamp: Date.now(),
-                    items: carrito,
-                    totalUSD: totalUSD,
-                    totalBS: totalUSD * tasaActual,
-                    metodoPago: metodoPago,
-                    tasa: tasaActual
-                });
-                for (let item of carrito) {
-                    await updateDoc(doc(db, "usuarios", UID, "productos", item.id), { stock: increment(-item.cantidad) });
-                }
-                alert("Venta Registrada");
-                carrito = []; actualizarUI(); cerrarModal();
-            } catch (e) { alert("Error"); }
-            finally { btn.disabled = false; btn.innerText = "REGISTRAR VENTA"; }
-        };
-
-        window.filtrarVenta = () => {
-            const q = document.getElementById('inputBusqueda').value.toLowerCase();
-            renderizarVenta(masterStock.filter(p => p.nombre.toLowerCase().includes(q) || p.codigo.toLowerCase().includes(q)));
-        };
-    </script>
-</body>
-</html>
+    // ... Resto de tus funciones de Firebase y Cobro ...
+</script>
