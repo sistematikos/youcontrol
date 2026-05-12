@@ -4,7 +4,7 @@ let carrito = [];
 let idSeleccionado = null;
 let metodoPagoSeleccionado = "Punto de Venta";
 
-// Renderizado de lista
+// Actualización de Interfaz
 document.addEventListener('productosActualizados', () => renderizar(productosMaster));
 document.addEventListener('tasaActualizada', () => renderizar(productosMaster));
 
@@ -14,7 +14,7 @@ function renderizar(lista) {
     lista.forEach(p => {
         const pBs = (p.precio * tasaActual).toLocaleString('es-VE');
         grid.innerHTML += `
-            <div class="product-card" onclick="agregar('${p.id}')">
+            <div class="product-card" onclick="agregarAlCarrito('${p.id}')">
                 <b>${p.nombre}</b>
                 <div style="text-align:right;">
                     <div style="font-weight:700; color:#001A3D;">$${p.precio.toFixed(2)}</div>
@@ -26,7 +26,7 @@ function renderizar(lista) {
     });
 }
 
-window.agregar = (id) => {
+window.agregarAlCarrito = (id) => {
     const p = productosMaster.find(x => x.id === id);
     if (!p || p.stock <= 0) return;
     const existe = carrito.find(c => c.id === id);
@@ -42,7 +42,7 @@ function actualizarUI() {
     list.innerHTML = ""; let sub = 0;
     carrito.forEach(c => {
         sub += (c.precio * c.cantidad);
-        list.innerHTML += `<div class="cart-item ${idSeleccionado===c.id?'selected':''}" onclick="seleccionar('${c.id}')">
+        list.innerHTML += `<div class="cart-item ${idSeleccionado===c.id?'selected':''}" onclick="seleccionarItem('${c.id}')">
             <span><b>${c.cantidad}x</b> ${c.nombre}</span>
             <b>$${(c.precio * c.cantidad).toFixed(2)}</b>
         </div>`;
@@ -51,40 +51,58 @@ function actualizarUI() {
     document.getElementById('total-bs').innerText = `${(sub * tasaActual).toLocaleString('es-VE')} Bs.`;
 }
 
-window.seleccionar = (id) => { idSeleccionado = id; actualizarUI(); };
+window.seleccionarItem = (id) => { idSeleccionado = id; actualizarUI(); };
 
-// Gestión de Pago
+// Métodos de Pago
 window.seleccionarMetodo = (metodo, elemento) => {
     metodoPagoSeleccionado = metodo;
     document.querySelectorAll('.btn-action-metodo').forEach(btn => btn.classList.remove('active'));
     elemento.classList.add('active');
 };
 
+// Abrir Modal de Cobro
 document.getElementById('btnCobrar').onclick = () => {
     if (carrito.length === 0) return;
+    
+    // Pasar montos al modal
     document.getElementById('totalModal').innerText = document.getElementById('total-usd').innerText;
+    document.getElementById('totalModalBs').innerText = document.getElementById('total-bs').innerText;
+    
     document.getElementById('modalPago').style.display = "block";
-    document.getElementById('btn-metodo-pv').click();
+    
+    // Activar método por defecto visualmente
+    const btnDefault = document.getElementById('btn-metodo-pv');
+    if (btnDefault) seleccionarMetodo('Punto de Venta', btnDefault);
 };
 
+// Confirmar Venta
 document.getElementById('btnConfirmarVenta').onclick = async () => {
-    const total = carrito.reduce((s, i) => s + (i.precio * i.cantidad), 0);
-    const exito = await procesarVentaFirebase(carrito, total, metodoPagoSeleccionado);
+    const totalUSD = carrito.reduce((s, i) => s + (i.precio * i.cantidad), 0);
+    const btn = document.getElementById('btnConfirmarVenta');
+    
+    btn.disabled = true;
+    btn.innerText = "PROCESANDO...";
+
+    const exito = await procesarVentaFirebase(carrito, totalUSD, metodoPagoSeleccionado);
     if (exito) {
-        alert("Venta Registrada");
-        carrito = []; actualizarUI();
+        alert("¡Venta completada con éxito!");
+        carrito = []; idSeleccionado = null; actualizarUI();
         document.getElementById('modalPago').style.display = "none";
+    } else {
+        alert("Error de conexión al procesar.");
     }
+    btn.disabled = false;
+    btn.innerText = "REGISTRAR VENTA";
 };
 
 document.getElementById('btnCerrarModal').onclick = () => document.getElementById('modalPago').style.display = "none";
 
-// Atajos F9
+// Atajos de Teclado
 window.addEventListener('keydown', (e) => {
     if (e.key === "F9") {
         e.preventDefault();
         const modal = document.getElementById('modalPago');
-        if (modal.style.display === "block") document.getElementById('btnConfirmarVenta').click();
+        if (window.getComputedStyle(modal).display === "block") document.getElementById('btnConfirmarVenta').click();
         else document.getElementById('btnCobrar').click();
     }
 });
