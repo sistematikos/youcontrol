@@ -19,11 +19,11 @@
         
         body { font-family: 'Poppins', sans-serif; background: var(--bg-body); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: #1E293B; }
         
-        /* Capa de Licencia */
+        /* Bloqueo de Licencia */
         #capaBloqueo { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: #000D1A; align-items: center; justify-content: center; }
         .licencia-card { background: white; padding: 40px; border-radius: 30px; width: 90%; max-width: 450px; text-align: center; box-shadow: 0 25px 60px rgba(0,0,0,0.6); }
 
-        /* Header Profesional */
+        /* Header */
         .header-sales { 
             background: var(--primary-dark); color: white; padding: 15px 30px; 
             display: flex; justify-content: space-between; align-items: center; 
@@ -34,10 +34,39 @@
 
         .pos-container { display: flex; flex: 1; gap: 20px; padding: 20px; overflow: hidden; }
 
-        /* Panel de Búsqueda */
-        .panel-left { flex: 1.4; background: var(--white); border-radius: 25px; display: flex; flex-direction: column; padding: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.04); }
-        .search-input { width: 100%; padding: 18px 20px 18px 60px; border: 2px solid var(--border-color); border-radius: 50px; outline: none; font-size: 1.1rem; transition: 0.3s; background: #F8FAFC; }
+        /* Panel Izquierdo */
+        .panel-left { flex: 1.4; background: var(--white); border-radius: 25px; display: flex; flex-direction: column; padding: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.04); min-width: 0; }
+        
+        /* Contenedor del buscador corregido para no sobresalir */
+        .search-container {
+            position: relative;
+            width: 100%;
+            margin-bottom: 5px;
+        }
+
+        .search-input { 
+            width: 100%; 
+            padding: 14px 20px 14px 55px; 
+            border: 2px solid var(--border-color); 
+            border-radius: 50px; 
+            outline: none; 
+            font-size: 1rem; 
+            transition: 0.3s; 
+            background: #F8FAFC; 
+            box-sizing: border-box; /* Previene que sobresalga */
+            display: block;
+        }
         .search-input:focus { border-color: var(--electric-blue); background: white; box-shadow: 0 0 15px rgba(0,82,212,0.1); }
+        
+        .search-container i {
+            position: absolute; 
+            left: 22px; 
+            top: 50%; 
+            transform: translateY(-50%); 
+            color: var(--action-grey); 
+            font-size: 1.1rem;
+            pointer-events: none;
+        }
         
         .product-grid { flex: 1; overflow-y: auto; margin-top: 20px; }
         .product-card { display: grid; grid-template-columns: 1fr 100px 90px 40px; align-items: center; padding: 14px; border-bottom: 1px solid #F1F5F9; cursor: pointer; transition: 0.2s; }
@@ -50,13 +79,12 @@
         .btn-action i { margin-bottom: 6px; font-size: 1.1rem; }
         .btn-action small { font-weight: 400; font-size: 0.6rem; opacity: 0.7; margin-top: 2px; }
 
-        /* Panel de Carrito */
+        /* Panel Derecho (Carrito) */
         .panel-cart { flex: 1; background: var(--white); border-radius: 25px; display: flex; flex-direction: column; padding: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.04); border-top: 8px solid var(--primary-dark); }
         .cart-list { flex: 1; overflow-y: auto; margin-bottom: 20px; }
-        .cart-item { padding: 15px; border: 1px solid #F1F5F9; border-radius: 15px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; position: relative; }
+        .cart-item { padding: 15px; border: 1px solid #F1F5F9; border-radius: 15px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; }
         .cart-item.selected { background: #F1F5F9; border-left: 5px solid var(--primary-dark); border-color: var(--border-color); }
         
-        /* Footer de Pago */
         .checkout-footer { display: grid; grid-template-columns: 1.1fr 1fr; gap: 12px; }
         .total-box { background: #F8FAFC; color: var(--primary-dark); padding: 15px; border-radius: 20px; text-align: center; border: 2px solid var(--border-color); }
         
@@ -66,7 +94,6 @@
         .btn-pay:disabled { background: #CBD5E1; cursor: not-allowed; box-shadow: none; }
         .btn-pay small { display: block; font-size: 0.65rem; font-weight: 400; text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; opacity: 0.8; }
 
-        /* Modales */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,13,26,0.8); backdrop-filter: blur(8px); }
         .modal-content { background: white; margin: 8% auto; padding: 40px; border-radius: 30px; width: 90%; max-width: 420px; text-align: center; }
     </style>
@@ -91,9 +118,9 @@
 
     <div class="pos-container">
         <div class="panel-left">
-            <div style="position:relative">
-                <i class="fas fa-barcode" style="position:absolute; left:22px; top:20px; color:var(--action-grey); font-size: 1.2rem;"></i>
-                <input type="text" id="inputBusqueda" class="search-input" placeholder="Escanear código de barras..." onkeyup="filtrarVenta()" autofocus>
+            <div class="search-container">
+                <i class="fas fa-barcode"></i>
+                <input type="text" id="inputBusqueda" class="search-input" placeholder="Escanear código o buscar..." onkeyup="filtrarVenta()" autofocus>
             </div>
             
             <div id="grid-productos" class="product-grid"></div>
@@ -153,10 +180,8 @@
         const UID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
         let tasaActual = 0, masterStock = [], carrito = [], metodoPago = "Divisas", idSeleccionado = null;
 
-        // --- MANEJO DE TECLAS ---
         window.addEventListener('keydown', (e) => {
             if (["F4", "F5", "F6", "F9"].includes(e.key)) e.preventDefault();
-            
             if (e.key === "F4") ejecutarAccion('precio');
             if (e.key === "F5") ejecutarAccion('cantidad');
             if (e.key === "F6") ejecutarAccion('eliminar');
@@ -179,7 +204,6 @@
             if (tipo === 'eliminar') eliminarItem(idSeleccionado);
         };
 
-        // --- ESCÁNER Y BÚSQUEDA ---
         window.filtrarVenta = () => {
             const input = document.getElementById('inputBusqueda');
             const query = input.value.trim();
@@ -288,7 +312,6 @@
             } catch (e) { alert("Error de conexión"); btn.disabled = false; }
         };
 
-        // --- FIREBASE DATA ---
         onSnapshot(doc(db, "usuarios", UID, "configuracion", "tasa"), (s) => {
             if (s.exists()) { 
                 tasaActual = s.data().valor; 
