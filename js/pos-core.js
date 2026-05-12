@@ -4,15 +4,15 @@ let carrito = [];
 let idSeleccionado = null;
 let metodoPagoSeleccionado = "Punto de Venta";
 
-// Actualización de Interfaz
 document.addEventListener('productosActualizados', () => renderizar(productosMaster));
 document.addEventListener('tasaActualizada', () => renderizar(productosMaster));
 
 function renderizar(lista) {
     const grid = document.getElementById('grid-productos');
+    if (!grid) return;
     grid.innerHTML = "";
     lista.forEach(p => {
-        const pBs = (p.precio * tasaActual).toLocaleString('es-VE');
+        const pBs = (p.precio * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 });
         grid.innerHTML += `
             <div class="product-card" onclick="agregarAlCarrito('${p.id}')">
                 <b>${p.nombre}</b>
@@ -31,7 +31,7 @@ window.agregarAlCarrito = (id) => {
     if (!p || p.stock <= 0) return;
     const existe = carrito.find(c => c.id === id);
     if (existe) existe.cantidad++;
-    else carrito.push({...p, cantidad: 1, costoBase: p.costo || 0});
+    else carrito.push({...p, cantidad: 1});
     idSeleccionado = id;
     actualizarUI();
     document.getElementById('beepSound').play();
@@ -39,57 +39,59 @@ window.agregarAlCarrito = (id) => {
 
 function actualizarUI() {
     const list = document.getElementById('lista-carrito');
-    list.innerHTML = ""; let sub = 0;
+    if (!list) return;
+    list.innerHTML = ""; 
+    let subUSD = 0;
+
     carrito.forEach(c => {
-        sub += (c.precio * c.cantidad);
+        const totalFila = c.precio * c.cantidad;
+        subUSD += totalFila;
         list.innerHTML += `<div class="cart-item ${idSeleccionado===c.id?'selected':''}" onclick="seleccionarItem('${c.id}')">
             <span><b>${c.cantidad}x</b> ${c.nombre}</span>
-            <b>$${(c.precio * c.cantidad).toFixed(2)}</b>
+            <b>$${totalFila.toFixed(2)}</b>
         </div>`;
     });
-    document.getElementById('total-usd').innerText = `$ ${sub.toFixed(2)}`;
-    document.getElementById('total-bs').innerText = `${(sub * tasaActual).toLocaleString('es-VE')} Bs.`;
+
+    const subBS = subUSD * tasaActual;
+    document.getElementById('total-usd').innerText = `$ ${subUSD.toFixed(2)}`;
+    document.getElementById('total-bs').innerText = `${subBS.toLocaleString('es-VE', { minimumFractionDigits: 2 })} Bs.`;
 }
 
 window.seleccionarItem = (id) => { idSeleccionado = id; actualizarUI(); };
 
-// Métodos de Pago
 window.seleccionarMetodo = (metodo, elemento) => {
     metodoPagoSeleccionado = metodo;
     document.querySelectorAll('.btn-action-metodo').forEach(btn => btn.classList.remove('active'));
     elemento.classList.add('active');
 };
 
-// Abrir Modal de Cobro
+// BOTÓN COBRAR - CORREGIDO PARA MOSTRAR BS
 document.getElementById('btnCobrar').onclick = () => {
     if (carrito.length === 0) return;
     
-    // Pasar montos al modal
-    document.getElementById('totalModal').innerText = document.getElementById('total-usd').innerText;
-    document.getElementById('totalModalBs').innerText = document.getElementById('total-bs').innerText;
-    
+    // Obtenemos los valores directos de la pantalla principal
+    const usdTxt = document.getElementById('total-usd').innerText;
+    const bsTxt = document.getElementById('total-bs').innerText;
+
+    // Los inyectamos en el modal
+    document.getElementById('totalModalUSD').innerText = usdTxt;
+    document.getElementById('totalModalBS').innerText = bsTxt;
+
     document.getElementById('modalPago').style.display = "block";
-    
-    // Activar método por defecto visualmente
-    const btnDefault = document.getElementById('btn-metodo-pv');
-    if (btnDefault) seleccionarMetodo('Punto de Venta', btnDefault);
+    document.getElementById('btn-metodo-pv').click(); 
 };
 
-// Confirmar Venta
 document.getElementById('btnConfirmarVenta').onclick = async () => {
     const totalUSD = carrito.reduce((s, i) => s + (i.precio * i.cantidad), 0);
     const btn = document.getElementById('btnConfirmarVenta');
-    
     btn.disabled = true;
     btn.innerText = "PROCESANDO...";
 
     const exito = await procesarVentaFirebase(carrito, totalUSD, metodoPagoSeleccionado);
     if (exito) {
-        alert("¡Venta completada con éxito!");
+        alert("Venta procesada con éxito");
         carrito = []; idSeleccionado = null; actualizarUI();
         document.getElementById('modalPago').style.display = "none";
-    } else {
-        alert("Error de conexión al procesar.");
     }
     btn.disabled = false;
     btn.innerText = "REGISTRAR VENTA";
@@ -97,12 +99,11 @@ document.getElementById('btnConfirmarVenta').onclick = async () => {
 
 document.getElementById('btnCerrarModal').onclick = () => document.getElementById('modalPago').style.display = "none";
 
-// Atajos de Teclado
 window.addEventListener('keydown', (e) => {
     if (e.key === "F9") {
         e.preventDefault();
         const modal = document.getElementById('modalPago');
-        if (window.getComputedStyle(modal).display === "block") document.getElementById('btnConfirmarVenta').click();
+        if (modal.style.display === "block") document.getElementById('btnConfirmarVenta').click();
         else document.getElementById('btnCobrar').click();
     }
 });
