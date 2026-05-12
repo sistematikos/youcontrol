@@ -20,59 +20,87 @@
         
         /* Header */
         .header-sales { 
-            background: var(--gradient-blue); color: white; padding: 15px 25px; 
+            background: var(--gradient-blue); color: white; padding: 12px 25px; 
             display: flex; justify-content: space-between; align-items: center; 
             border-bottom: 4px solid var(--vinotinto); box-shadow: 0 4px 15px rgba(0, 82, 212, 0.3);
         }
         
-        .tasa-badge { background: rgba(255, 255, 255, 0.2); padding: 6px 15px; border-radius: 12px; font-weight: 800; backdrop-filter: blur(5px); border: 1px solid rgba(255, 255, 255, 0.3); }
+        .tasa-badge { background: rgba(255, 255, 255, 0.2); padding: 6px 15px; border-radius: 12px; font-weight: 800; backdrop-filter: blur(5px); }
 
         .pos-container { display: flex; flex: 1; gap: 15px; padding: 15px; overflow: hidden; }
 
-        /* Panel Izquierdo: Buscador */
+        /* Panel Izquierdo */
         .panel-search { flex: 1.4; background: var(--white); border-radius: 25px; display: flex; flex-direction: column; padding: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); }
         .search-wrapper { position: relative; margin-bottom: 20px; }
-        .search-input { width: 100%; padding: 18px 20px 18px 55px; border: 2px solid #E2E8F0; border-radius: 50px; outline: none; font-size: 1.1rem; box-sizing: border-box; transition: 0.3s; }
-        .search-input:focus { border-color: var(--primary-blue); box-shadow: 0 0 15px rgba(0, 82, 212, 0.15); }
-        .search-wrapper i { position: absolute; left: 22px; top: 20px; color: var(--primary-blue); font-size: 1.3rem; }
+        .search-input { width: 100%; padding: 16px 20px 16px 55px; border: 2px solid #E2E8F0; border-radius: 50px; outline: none; font-size: 1.1rem; box-sizing: border-box; }
+        .search-wrapper i { position: absolute; left: 22px; top: 18px; color: var(--primary-blue); font-size: 1.3rem; }
 
         .product-grid { flex: 1; overflow-y: auto; }
-        .product-card { display: grid; grid-template-columns: 1fr 100px 90px 80px 40px; align-items: center; padding: 14px; border-bottom: 1px solid #F1F5F9; cursor: pointer; transition: 0.2s; }
-        .product-card:hover { background: #F0F7FF; transform: scale(1.01); border-radius: 12px; }
+        .product-card { display: grid; grid-template-columns: 1fr 100px 90px 80px 40px; align-items: center; padding: 12px; border-bottom: 1px solid #F1F5F9; cursor: pointer; }
+        .product-card:hover { background: #F0F7FF; border-radius: 12px; }
 
-        /* Panel Derecho: Carrito Simplificado */
-        .panel-cart { flex: 1; background: var(--white); border-radius: 25px; display: flex; flex-direction: column; padding: 25px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); border-top: 6px solid var(--primary-blue); }
+        /* Panel Derecho */
+        .panel-cart { flex: 1; background: var(--white); border-radius: 25px; display: flex; flex-direction: column; padding: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); border-top: 6px solid var(--primary-blue); }
         .cart-list { flex: 1; overflow-y: auto; margin-bottom: 15px; }
         
-        .cart-item { padding: 12px; border-bottom: 1px solid #F1F5F9; cursor: pointer; border-radius: 12px; margin-bottom: 5px; }
-        .cart-item.active { background: #F0F7FF; border-color: var(--primary-blue); }
+        .cart-item { padding: 10px; border-bottom: 1px solid #F1F5F9; cursor: pointer; border-radius: 12px; margin-bottom: 5px; }
+        .item-row { display: flex; justify-content: space-between; align-items: center; }
+        .item-qty { color: var(--primary-blue); font-weight: 800; margin-right: 8px; }
+        .item-name { flex: 1; font-weight: 600; color: #334155; }
+        .item-total { font-weight: 800; color: #1e293b; }
 
-        /* Una sola línea para el producto */
-        .item-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem; }
-        .item-qty { color: var(--primary-blue); font-weight: 800; margin-right: 8px; min-width: 30px; display: inline-block; }
-        .item-name { flex: 1; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #334155; }
-        .item-total { font-weight: 800; color: #1e293b; margin-left: 10px; }
-
-        .item-controls { display: none; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px dashed #CBD5E1; }
-        .btn-ctrl { border: none; padding: 10px; border-radius: 10px; font-weight: 700; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        /* Controles */
+        .item-controls { display: none; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 10px; }
+        .btn-ctrl { border: none; padding: 8px; border-radius: 8px; font-weight: 700; font-size: 0.75rem; cursor: pointer; }
         .btn-qty { background: #DBEAFE; color: var(--primary-blue); }
         .btn-prc { background: #FEF3C7; color: #D97706; }
         .btn-del { background: #FEE2E2; color: #EF4444; }
 
-        /* Totales */
-        .big-total-card { background: var(--gradient-blue); color: white; padding: 25px; border-radius: 25px; text-align: center; margin-bottom: 15px; box-shadow: 0 10px 25px rgba(0, 82, 212, 0.25); }
-        .val-usd { font-size: 3.2rem; font-weight: 800; display: block; line-height: 1; }
-        .btn-pay { width: 100%; padding: 22px; border: none; border-radius: 20px; background: var(--emerald); color: white; font-weight: 800; font-size: 1.4rem; cursor: pointer; transition: 0.3s; }
+        /* SECCIÓN DE BOTONES HORIZONTALES */
+        .checkout-footer {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr; /* Total más ancho que el botón */
+            gap: 10px;
+            align-items: stretch;
+        }
+
+        .total-box-compact { 
+            background: var(--gradient-blue); 
+            color: white; 
+            padding: 15px; 
+            border-radius: 18px; 
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-shadow: 0 5px 15px rgba(0, 82, 212, 0.2);
+        }
+        .val-usd-compact { font-size: 1.8rem; font-weight: 800; line-height: 1; }
+        .val-bs-compact { font-size: 0.9rem; opacity: 0.9; font-weight: 600; }
+
+        .btn-pay-compact { 
+            width: 100%; 
+            border: none; 
+            border-radius: 18px; 
+            background: var(--emerald); 
+            color: white; 
+            font-weight: 800; 
+            font-size: 1.1rem; 
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.2);
+        }
+        .btn-pay-compact:disabled { background: #CBD5E1; box-shadow: none; cursor: default; }
 
         /* Modal */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,20,50,0.7); backdrop-filter: blur(6px); }
-        .modal-content { background: white; margin: 8% auto; padding: 35px; border-radius: 30px; width: 90%; max-width: 420px; text-align: center; }
-        .payment-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 25px 0; }
-        .pay-option { padding: 20px; border: 2px solid #F1F5F9; border-radius: 20px; cursor: pointer; font-weight: 700; color: #64748B; transition: 0.2s; }
+        .modal-content { background: white; margin: 8% auto; padding: 30px; border-radius: 25px; width: 90%; max-width: 400px; text-align: center; }
+        .payment-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
+        .pay-option { padding: 15px; border: 2px solid #F1F5F9; border-radius: 15px; cursor: pointer; font-weight: 700; color: #64748B; }
         .pay-option.selected { border-color: var(--primary-blue); background: #F0F7FF; color: var(--primary-blue); }
-        .btn-register { width: 100%; padding: 18px; border: none; border-radius: 18px; background: var(--primary-blue); color: white; font-weight: 800; font-size: 1.2rem; cursor: pointer; }
+        .btn-register { width: 100%; padding: 15px; border: none; border-radius: 15px; background: var(--primary-blue); color: white; font-weight: 800; }
 
-        @media (max-width: 850px) { .pos-container { flex-direction: column; overflow-y: auto; } }
+        @media (max-width: 850px) { .pos-container { flex-direction: column; } }
     </style>
 </head>
 <body oncontextmenu="return false">
@@ -86,19 +114,22 @@
         <div class="panel-search">
             <div class="search-wrapper">
                 <i class="fas fa-search"></i>
-                <input type="text" id="inputBusqueda" class="search-input" placeholder="Buscar producto..." onkeyup="filtrarVenta()" autofocus>
+                <input type="text" id="inputBusqueda" class="search-input" placeholder="Buscar..." onkeyup="filtrarVenta()" autofocus>
             </div>
             <div id="grid-productos" class="product-grid"></div>
         </div>
 
         <div class="panel-cart">
-            <h3 style="margin:0 0 15px 0; color: var(--primary-blue);">Resumen de Venta</h3>
+            <h3 style="margin:0 0 10px 0; color: var(--primary-blue); font-size: 1.1rem;">Resumen</h3>
             <div id="lista-carrito" class="cart-list"></div>
-            <div class="big-total-card">
-                <span id="total-usd" class="val-usd">$ 0.00</span>
-                <span id="total-bs" style="font-size:1.3rem; opacity:0.9;">0.00 Bs.</span>
+            
+            <div class="checkout-footer">
+                <div class="total-box-compact">
+                    <span id="total-usd" class="val-usd-compact">$ 0.00</span>
+                    <span id="total-bs" class="val-bs-compact">0.00 Bs.</span>
+                </div>
+                <button id="btnCobrar" class="btn-pay-compact" onclick="abrirModalPago()" disabled>COBRAR</button>
             </div>
-            <button id="btnCobrar" class="btn-pay" onclick="abrirModalPago()" disabled>COBRAR</button>
         </div>
     </div>
 
@@ -181,7 +212,7 @@
             if (prc && !isNaN(prc)) {
                 const nuevoPrc = parseFloat(prc);
                 if (nuevoPrc < item.costoBase) {
-                    alert("¡Bloqueado! No puedes vender por debajo del costo.");
+                    alert("¡Bloqueado! Menor al costo.");
                 } else {
                     item.precio = nuevoPrc;
                     actualizarUI();
@@ -205,8 +236,7 @@
                 box.innerHTML += `
                     <div class="cart-item ${activo ? 'active' : ''}" onclick="toggleControles('${c.id}')">
                         <div class="item-row">
-                            <span class="item-qty">x${c.cantidad}</span>
-                            <span class="item-name">${c.nombre}</span>
+                            <span><b class="item-qty">x${c.cantidad}</b> <span class="item-name">${c.nombre}</span></span>
                             <span class="item-total">$${totalItem.toFixed(2)}</span>
                         </div>
                         <div class="item-controls" style="display: ${activo ? 'grid' : 'none'}">
