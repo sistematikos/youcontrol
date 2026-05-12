@@ -5,7 +5,6 @@ const UID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
 export let tasaActual = 0;
 export let productosMaster = [];
 
-// Escuchar Tasa
 onSnapshot(doc(db, "usuarios", UID, "configuracion", "tasa"), (s) => {
     if (s.exists()) {
         tasaActual = s.data().valor;
@@ -14,14 +13,12 @@ onSnapshot(doc(db, "usuarios", UID, "configuracion", "tasa"), (s) => {
     }
 });
 
-// Escuchar Inventario
 onSnapshot(collection(db, "usuarios", UID, "productos"), (s) => {
     productosMaster = [];
     s.forEach(d => productosMaster.push({ id: d.id, ...d.data() }));
     document.dispatchEvent(new CustomEvent('productosActualizados'));
 });
 
-// Función de Procesamiento de Pago
 export async function procesarVentaFirebase(carrito, total, metodo) {
     try {
         await addDoc(collection(db, "usuarios", UID, "ventas"), {
@@ -31,15 +28,9 @@ export async function procesarVentaFirebase(carrito, total, metodo) {
             metodo: metodo,
             tasa: tasaActual
         });
-
         for (let item of carrito) {
-            await updateDoc(doc(db, "usuarios", UID, "productos", item.id), { 
-                stock: increment(-item.cantidad) 
-            });
+            await updateDoc(doc(db, "usuarios", UID, "productos", item.id), { stock: increment(-item.cantidad) });
         }
         return true;
-    } catch (e) {
-        console.error("Error crítico:", e);
-        return false;
-    }
+    } catch (e) { return false; }
 }
