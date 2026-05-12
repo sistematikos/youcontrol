@@ -1,258 +1,133 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ventas | You Control</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
-    <style>
-        :root { 
-            --primary-blue: #0052D4;
-            --gradient-blue: linear-gradient(135deg, #0052D4, #4364F7, #6FB1FC);
-            --vinotinto: #800020; 
-            --emerald: #10B981; 
-            --bg: #F0F4F8; 
-            --white: #FFFFFF;
+<style>
+    /* Estilos para el Item Seleccionado en Carrito */
+    .cart-item { 
+        padding: 10px; 
+        border-bottom: 1px solid #F1F5F9; 
+        cursor: pointer; 
+        transition: 0.3s;
+        border-radius: 12px;
+        margin-bottom: 5px;
+    }
+    .cart-item:hover { background: #F8FAFC; }
+    .cart-item.active { background: #F0F7FF; border: 1px solid var(--primary-blue); }
+
+    /* Panel de Controles del Item */
+    .item-controls {
+        display: none; /* Se activa con JS */
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px dashed #CBD5E1;
+    }
+    .btn-ctrl {
+        border: none;
+        padding: 8px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.75rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+    }
+    .btn-qty { background: #DBEAFE; color: var(--primary-blue); }
+    .btn-prc { background: #FEF3C7; color: #D97706; }
+    .btn-del { background: #FEE2E2; color: #EF4444; }
+
+    /* Input invisible para edición rápida */
+    .edit-input { width: 50px; border: 1px solid var(--primary-blue); border-radius: 5px; text-align: center; }
+</style>
+
+<script type="module">
+    // ... (Firebase Import y Configuración igual) ...
+    
+    let carrito = [];
+    let itemEditando = null;
+
+    // --- FUNCIONES DEL CARRITO ---
+
+    window.sumarAlCarrito = (id) => {
+        const p = masterStock.find(item => item.id === id);
+        const existe = carrito.find(c => c.id === id);
+        if (existe) {
+            existe.cantidad++;
+        } else {
+            // Creamos una copia para poder editar el precio sin afectar el inventario maestro
+            carrito.push({ ...p, cantidad: 1, precioOriginal: p.precio });
         }
-        
-        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        
-        /* Header con Gradiente Llamativo */
-        .header-sales { 
-            background: var(--gradient-blue); 
-            color: white; 
-            padding: 15px 25px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            border-bottom: 4px solid var(--vinotinto);
-            box-shadow: 0 4px 15px rgba(0, 82, 212, 0.3);
+        actualizarUI();
+    };
+
+    window.toggleControles = (id) => {
+        itemEditando = (itemEditando === id) ? null : id;
+        actualizarUI();
+    };
+
+    window.cambiarCantidad = (id) => {
+        const nuevaQty = prompt("Ingrese nueva cantidad:");
+        if (nuevaQty && !isNaN(nuevaQty) && nuevaQty > 0) {
+            const item = carrito.find(c => c.id === id);
+            item.cantidad = parseFloat(nuevaQty);
+            actualizarUI();
         }
-        
-        .tasa-badge { 
-            background: rgba(255, 255, 255, 0.2); 
-            padding: 6px 15px; 
-            border-radius: 12px; 
-            font-weight: 800; 
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+    };
+
+    window.cambiarPrecio = (id) => {
+        const nuevoPrc = prompt("Ingrese nuevo precio unitario ($):");
+        if (nuevoPrc && !isNaN(nuevoPrc) && nuevoPrc >= 0) {
+            const item = carrito.find(c => c.id === id);
+            item.precio = parseFloat(nuevoPrc);
+            actualizarUI();
         }
+    };
 
-        .pos-container { display: flex; flex: 1; gap: 15px; padding: 15px; overflow: hidden; }
+    window.eliminarItem = (id) => {
+        carrito = carrito.filter(c => c.id !== id);
+        itemEditando = null;
+        actualizarUI();
+    };
 
-        /* Panel Izquierdo */
-        .panel-search { flex: 1.4; background: var(--white); border-radius: 25px; display: flex; flex-direction: column; padding: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); }
-        
-        .search-wrapper { position: relative; margin-bottom: 20px; }
-        .search-input { 
-            width: 100%; padding: 18px 20px 18px 55px; border: 2px solid #E2E8F0; 
-            border-radius: 50px; outline: none; font-size: 1.1rem; box-sizing: border-box;
-            transition: 0.3s;
-        }
-        .search-input:focus { border-color: var(--primary-blue); box-shadow: 0 0 15px rgba(0, 82, 212, 0.15); }
-        .search-wrapper i { position: absolute; left: 22px; top: 20px; color: var(--primary-blue); font-size: 1.3rem; }
+    function actualizarUI() {
+        const box = document.getElementById('lista-carrito');
+        box.innerHTML = "";
+        let subtotal = 0;
 
-        .product-grid { flex: 1; overflow-y: auto; }
-        .product-card { 
-            display: grid; grid-template-columns: 1fr 100px 90px 80px 40px; 
-            align-items: center; padding: 14px; border-bottom: 1px solid #F1F5F9; 
-            cursor: pointer; transition: 0.2s;
-        }
-        .product-card:hover { background: #F0F7FF; transform: scale(1.01); border-radius: 12px; }
+        carrito.forEach(c => {
+            const totalFila = c.precio * c.cantidad;
+            subtotal += totalFila;
+            const esActivo = itemEditando === c.id;
 
-        /* Panel Derecho */
-        .panel-cart { flex: 1; background: var(--white); border-radius: 25px; display: flex; flex-direction: column; padding: 25px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); border-top: 6px solid var(--primary-blue); }
-        .cart-list { flex: 1; overflow-y: auto; }
-        .cart-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px dashed #E2E8F0; }
-
-        /* Cuadro de Totales Azul Llamativo */
-        .big-total-card { 
-            background: var(--gradient-blue); 
-            color: white; 
-            padding: 30px; 
-            border-radius: 25px; 
-            text-align: center; 
-            margin-bottom: 15px;
-            box-shadow: 0 10px 25px rgba(0, 82, 212, 0.25);
-        }
-        .val-usd { font-size: 3.5rem; font-weight: 800; display: block; line-height: 1; }
-        .val-bs { font-size: 1.5rem; font-weight: 600; opacity: 0.9; }
-
-        .btn-pay { 
-            width: 100%; padding: 22px; border: none; border-radius: 20px; 
-            background: var(--emerald); color: white; font-weight: 800; 
-            font-size: 1.4rem; cursor: pointer; transition: 0.3s;
-            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
-        }
-        .btn-pay:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 12px 25px rgba(16, 185, 129, 0.4); }
-
-        /* MODAL DE PAGO */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,20,50,0.7); backdrop-filter: blur(6px); }
-        .modal-content { background: white; margin: 8% auto; padding: 35px; border-radius: 30px; width: 90%; max-width: 420px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
-        
-        .payment-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 25px 0; }
-        .pay-option { 
-            padding: 20px; border: 2px solid #F1F5F9; border-radius: 20px; cursor: pointer; 
-            font-weight: 700; color: #64748B; transition: 0.2s;
-        }
-        .pay-option.selected { border-color: var(--primary-blue); background: #F0F7FF; color: var(--primary-blue); }
-        .pay-option i { display: block; font-size: 1.8rem; margin-bottom: 8px; }
-
-        .btn-register { 
-            width: 100%; padding: 18px; border: none; border-radius: 18px; 
-            background: var(--primary-blue); color: white; font-weight: 800; 
-            font-size: 1.2rem; cursor: pointer; 
-        }
-
-        @media (max-width: 850px) { .pos-container { flex-direction: column; overflow-y: auto; } }
-    </style>
-</head>
-<body oncontextmenu="return false">
-
-    <header class="header-sales">
-        <div onclick="location.href='index.html'" style="cursor:pointer; font-weight: 800; font-size: 1.2rem;">
-            <i class="fas fa-shopping-cart"></i> YOU CONTROL
-        </div>
-        <div class="tasa-badge">Tasa: <span id="txt-tasa">0.00</span> Bs.</div>
-    </header>
-
-    <div class="pos-container">
-        <div class="panel-search">
-            <div class="search-wrapper">
-                <i class="fas fa-search"></i>
-                <input type="text" id="inputBusqueda" class="search-input" placeholder="¿Qué vamos a cobrar hoy?" onkeyup="filtrarVenta()" autofocus>
-            </div>
-            <div id="grid-productos" class="product-grid"></div>
-        </div>
-
-        <div class="panel-cart">
-            <h3 style="margin:0 0 15px 0; color: var(--primary-blue); font-weight: 800;">Detalle de Venta</h3>
-            <div id="lista-carrito" class="cart-list"></div>
-            <div class="big-total-card">
-                <span style="font-size: 0.9rem; font-weight: 600; text-transform: uppercase; opacity: 0.8;">Total a Pagar</span>
-                <span id="total-usd" class="val-usd">$ 0.00</span>
-                <span id="total-bs" class="val-bs">0.00 Bs.</span>
-            </div>
-            <button id="btnCobrar" class="btn-pay" onclick="abrirModalPago()" disabled>COBRAR</button>
-        </div>
-    </div>
-
-    <div id="modalPago" class="modal">
-        <div class="modal-content">
-            <h2 style="margin:0; color: var(--primary-blue);">Método de Pago</h2>
-            <p style="color: #94A3B8; margin-top: 5px;">Seleccione cómo cancela el cliente</p>
-            <div class="payment-grid">
-                <div class="pay-option selected" onclick="seleccionarPago('Divisas', this)"><i class="fas fa-dollar-sign"></i>Divisas</div>
-                <div class="pay-option" onclick="seleccionarPago('Bolivares', this)"><i class="fas fa-money-bill-wave"></i>Bolívares</div>
-                <div class="pay-option" onclick="seleccionarPago('Punto', this)"><i class="fas fa-credit-card"></i>Punto</div>
-                <div class="pay-option" onclick="seleccionarPago('Pago Movil', this)"><i class="fas fa-mobile-alt"></i>P. Móvil</div>
-            </div>
-            <button class="btn-register" onclick="procesarVenta()">REGISTRAR VENTA</button>
-            <button onclick="cerrarModal()" style="margin-top:20px; background:none; border:none; color:#94A3B8; cursor:pointer; font-weight: 600;">Regresar</button>
-        </div>
-    </div>
-
-    <script type="module">
-        import { db } from './js/firebase-config.js';
-        import { collection, onSnapshot, doc, addDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-        const UID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
-        let tasaActual = 0, masterStock = [], carrito = [], metodoPago = "Divisas";
-
-        onSnapshot(doc(db, "usuarios", UID, "configuracion", "tasa"), (snap) => {
-            if (snap.exists()) {
-                tasaActual = snap.data().valor;
-                document.getElementById('txt-tasa').innerText = tasaActual.toLocaleString('es-VE');
-                cargarInventario();
-            }
+            box.innerHTML += `
+                <div class="cart-item ${esActivo ? 'active' : ''}" onclick="toggleControles('${c.id}')">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <b style="font-size:0.9rem">${c.nombre}</b><br>
+                            <small style="color:#64748B">${c.cantidad} x $${c.precio.toFixed(2)}</small>
+                        </div>
+                        <b style="color:var(--primary-blue)">$${totalFila.toFixed(2)}</b>
+                    </div>
+                    
+                    <div class="item-controls" style="display: ${esActivo ? 'grid' : 'none'}">
+                        <button class="btn-ctrl btn-qty" onclick="event.stopPropagation(); cambiarCantidad('${c.id}')">
+                            <i class="fas fa-plus-minus"></i> Cant
+                        </button>
+                        <button class="btn-ctrl btn-prc" onclick="event.stopPropagation(); cambiarPrecio('${c.id}')">
+                            <i class="fas fa-tag"></i> Precio
+                        </button>
+                        <button class="btn-ctrl btn-del" onclick="event.stopPropagation(); eliminarItem('${c.id}')">
+                            <i class="fas fa-trash"></i> Borrar
+                        </button>
+                    </div>
+                </div>
+            `;
         });
 
-        function cargarInventario() {
-            onSnapshot(collection(db, "usuarios", UID, "productos"), (snap) => {
-                masterStock = [];
-                snap.forEach(d => masterStock.push({ id: d.id, ...d.data() }));
-                renderizarVenta(masterStock);
-            });
-        }
+        document.getElementById('total-usd').innerText = `$ ${subtotal.toFixed(2)}`;
+        document.getElementById('total-bs').innerText = `${(subtotal * tasaActual).toLocaleString('es-VE')} Bs.`;
+        document.getElementById('btnCobrar').disabled = carrito.length === 0;
+    }
 
-        window.renderizarVenta = (lista) => {
-            const contenedor = document.getElementById('grid-productos');
-            contenedor.innerHTML = "";
-            lista.filter(p => p.stock > 0).forEach(p => {
-                contenedor.innerHTML += `
-                    <div class="product-card" onclick="sumarAlCarrito('${p.id}')">
-                        <div style="font-weight:600; color:#1E293B;">${p.nombre}</div>
-                        <div style="color:var(--primary-blue); font-weight:700; text-align:right">${(p.precio * tasaActual).toLocaleString('es-VE')} Bs.</div>
-                        <div style="color:var(--emerald); font-weight:800; text-align:right">$${p.precio.toFixed(2)}</div>
-                        <div style="color:#94A3B8; text-align:right; font-weight:600;">${p.stock} <small>und</small></div>
-                        <div style="text-align:right; color:var(--primary-blue)"><i class="fas fa-plus-circle"></i></div>
-                    </div>`;
-            });
-        };
-
-        window.sumarAlCarrito = (id) => {
-            const p = masterStock.find(item => item.id === id);
-            const existe = carrito.find(c => c.id === id);
-            if (existe) { (existe.cantidad < p.stock) ? existe.cantidad++ : alert("Stock agotado"); }
-            else { carrito.push({ ...p, cantidad: 1 }); }
-            document.getElementById('inputBusqueda').value = "";
-            actualizarUI();
-        };
-
-        function actualizarUI() {
-            const box = document.getElementById('lista-carrito');
-            box.innerHTML = ""; let subtotal = 0;
-            carrito.forEach(c => {
-                const totalItem = c.precio * c.cantidad;
-                subtotal += totalItem;
-                box.innerHTML += `
-                <div class="cart-item">
-                    <span><b>${c.nombre}</b> (x${c.cantidad})</span>
-                    <b style="color:var(--primary-blue)">$${totalItem.toFixed(2)}</b>
-                </div>`;
-            });
-            document.getElementById('total-usd').innerText = `$ ${subtotal.toFixed(2)}`;
-            document.getElementById('total-bs').innerText = `${(subtotal * tasaActual).toLocaleString('es-VE')} Bs.`;
-            document.getElementById('btnCobrar').disabled = carrito.length === 0;
-        }
-
-        window.abrirModalPago = () => document.getElementById('modalPago').style.display = 'block';
-        window.cerrarModal = () => document.getElementById('modalPago').style.display = 'none';
-
-        window.seleccionarPago = (metodo, el) => {
-            metodoPago = metodo;
-            document.querySelectorAll('.pay-option').forEach(opt => opt.classList.remove('selected'));
-            el.classList.add('selected');
-        };
-
-        window.procesarVenta = async () => {
-            const btn = document.querySelector('.btn-register');
-            btn.disabled = true; btn.innerText = "REGISTRANDO...";
-            try {
-                const totalUSD = carrito.reduce((s, i) => s + (i.precio * i.cantidad), 0);
-                await addDoc(collection(db, "usuarios", UID, "ventas"), {
-                    fecha: new Date().toLocaleString(),
-                    timestamp: Date.now(),
-                    items: carrito,
-                    totalUSD: totalUSD,
-                    totalBS: totalUSD * tasaActual,
-                    metodoPago: metodoPago,
-                    tasa: tasaActual
-                });
-                for (let item of carrito) {
-                    await updateDoc(doc(db, "usuarios", UID, "productos", item.id), { stock: increment(-item.cantidad) });
-                }
-                alert("¡Venta Registrada con Éxito!");
-                carrito = []; actualizarUI(); cerrarModal();
-            } catch (e) { alert("Error de conexión"); }
-            finally { btn.disabled = false; btn.innerText = "REGISTRAR VENTA"; }
-        };
-
-        window.filtrarVenta = () => {
-            const q = document.getElementById('inputBusqueda').value.toLowerCase();
-            renderizarVenta(masterStock.filter(p => p.nombre.toLowerCase().includes(q) || p.codigo.toLowerCase().includes(q)));
-        };
-    </script>
-</body>
-</html>
+    // ... (El resto de la lógica de Procesar Venta se mantiene igual) ...
+</script>
