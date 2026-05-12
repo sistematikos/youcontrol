@@ -1,129 +1,186 @@
-<style>
-    /* Estilos para los selectores de pago */
-    .payment-methods {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-        margin-bottom: 15px;
-    }
-    .pay-method-btn {
-        background: #F1F5F9;
-        border: 2px solid transparent;
-        padding: 10px;
-        border-radius: 12px;
-        cursor: pointer;
-        font-size: 0.8rem;
-        font-weight: 700;
-        color: #64748B;
-        transition: 0.2s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 5px;
-    }
-    .pay-method-btn.active {
-        background: #EFF6FF;
-        border-color: var(--blue);
-        color: var(--blue);
-    }
-    .pay-method-btn i { font-size: 1rem; }
-</style>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ventas | You Control</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --dark: #1E1E2D; --vinotinto: #800020; --blue: #3B82F6; --emerald: #10B981; --bg: #F4F7F9; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        .header-sales { background: var(--dark); color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--vinotinto); }
+        .tasa-badge { background: #2B2B40; padding: 5px 12px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; }
 
+        .pos-container { display: flex; flex: 1; gap: 12px; padding: 12px; overflow: hidden; }
+
+        /* Panel Izquierdo */
+        .panel-search { flex: 1.4; background: white; border-radius: 20px; display: flex; flex-direction: column; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .search-wrapper { position: relative; margin-bottom: 20px; }
+        .search-input { width: 100%; padding: 16px 20px 16px 50px; border: 2px solid #E2E8F0; border-radius: 50px; outline: none; font-size: 1.1rem; box-sizing: border-box; }
+        .search-wrapper i { position: absolute; left: 20px; top: 18px; color: var(--blue); }
+
+        .product-grid { flex: 1; overflow-y: auto; }
+        .product-card { display: grid; grid-template-columns: 1fr 100px 80px 80px 40px; align-items: center; padding: 12px; border-bottom: 1px solid #F1F5F9; cursor: pointer; }
+        .product-card:hover { background: #F0F7FF; }
+
+        /* Panel Derecho */
+        .panel-cart { flex: 1; background: white; border-radius: 20px; display: flex; flex-direction: column; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .cart-list { flex: 1; overflow-y: auto; }
+        .cart-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed #E2E8F0; }
+
+        /* Totales */
+        .big-total-card { background: var(--dark); color: white; padding: 25px; border-radius: 20px; text-align: center; margin-bottom: 12px; }
+        .val-usd { font-size: 3rem; font-weight: 800; display: block; }
+        .btn-pay { width: 100%; padding: 20px; border: none; border-radius: 18px; background: var(--emerald); color: white; font-weight: 800; font-size: 1.3rem; cursor: pointer; }
+
+        /* MODAL DE PAGO */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); }
+        .modal-content { background: white; margin: 10% auto; padding: 30px; border-radius: 25px; width: 90%; max-width: 400px; text-align: center; }
+        
+        .payment-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
+        .pay-option { 
+            padding: 15px; border: 2px solid #F1F5F9; border-radius: 15px; cursor: pointer; 
+            font-weight: 700; color: #64748B; transition: 0.2s;
+        }
+        .pay-option.selected { border-color: var(--blue); background: #EFF6FF; color: var(--blue); }
+        .pay-option i { display: block; font-size: 1.5rem; margin-bottom: 5px; }
+
+        .btn-register { width: 100%; padding: 15px; border: none; border-radius: 15px; background: var(--blue); color: white; font-weight: 800; font-size: 1.1rem; cursor: pointer; }
+    </style>
+</head>
 <body oncontextmenu="return false">
+
+    <header class="header-sales">
+        <div onclick="location.href='index.html'" style="cursor:pointer; font-weight: 800;"><i class="fas fa-arrow-left"></i> YOU CONTROL</div>
+        <div class="tasa-badge">Tasa: <span id="txt-tasa">0.00</span> Bs.</div>
+    </header>
 
     <div class="pos-container">
         <div class="panel-search">
-            <div class="search-wrapper">
-                <i class="fas fa-search"></i>
-                <input type="text" id="inputBusqueda" class="search-input" placeholder="¿Qué vamos a vender hoy?" onkeyup="filtrarVenta()" autofocus>
-            </div>
+            <div class="search-wrapper"><i class="fas fa-search"></i><input type="text" id="inputBusqueda" class="search-input" placeholder="Buscar..." onkeyup="filtrarVenta()" autofocus></div>
             <div id="grid-productos" class="product-grid"></div>
         </div>
 
         <div class="panel-cart">
-            <h3 style="margin:0 0 15px 0; color:var(--dark); font-weight: 800;">RESUMEN</h3>
+            <h3 style="margin:0 0 15px 0;">RESUMEN</h3>
             <div id="lista-carrito" class="cart-list"></div>
-
-            <div class="checkout-area">
-                <div style="margin-bottom: 10px;">
-                    <span style="font-size: 0.75rem; font-weight: 800; color: #94A3B8; text-transform: uppercase;">Método de Pago:</span>
-                </div>
-                <div class="payment-methods">
-                    <div class="pay-method-btn active" onclick="setPago('Divisas', this)">
-                        <i class="fas fa-dollar-sign"></i> Divisas
-                    </div>
-                    <div class="pay-method-btn" onclick="setPago('Bolivares', this)">
-                        <i class="fas fa-money-bill-wave"></i> Bolívares
-                    </div>
-                    <div class="pay-method-btn" onclick="setPago('Punto', this)">
-                        <i class="fas fa-credit-card"></i> Punto
-                    </div>
-                    <div class="pay-method-btn" onclick="setPago('Pago Movil', this)">
-                        <i class="fas fa-mobile-alt"></i> P. Móvil
-                    </div>
-                </div>
-
-                <div class="big-total-card">
-                    <span style="color:#94A3B8; font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">Monto Total</span>
-                    <span id="total-usd" class="val-usd">$ 0.00</span>
-                    <span id="total-bs" class="val-bs">0.00 Bs.</span>
-                </div>
-                <button id="btnVender" class="btn-pay" onclick="procesarVenta()" disabled>
-                    <i class="fas fa-wallet"></i> COMPLETAR COBRO
-                </button>
+            <div class="big-total-card">
+                <span id="total-usd" class="val-usd">$ 0.00</span>
+                <span id="total-bs" style="color:var(--blue); font-weight:700;">0.00 Bs.</span>
             </div>
+            <button id="btnCobrar" class="btn-pay" onclick="abrirModalPago()" disabled>COBRAR</button>
+        </div>
+    </div>
+
+    <div id="modalPago" class="modal">
+        <div class="modal-content">
+            <h2 style="margin:0">¿Cómo paga el cliente?</h2>
+            <div class="payment-grid">
+                <div class="pay-option selected" onclick="seleccionarPago('Divisas', this)"><i class="fas fa-dollar-sign"></i>Divisas</div>
+                <div class="pay-option" onclick="seleccionarPago('Bolivares', this)"><i class="fas fa-money-bill-wave"></i>Bolívares</div>
+                <div class="pay-option" onclick="seleccionarPago('Punto', this)"><i class="fas fa-credit-card"></i>Punto</div>
+                <div class="pay-option" onclick="seleccionarPago('Pago Movil', this)"><i class="fas fa-mobile-alt"></i>P. Móvil</div>
+            </div>
+            <button class="btn-register" onclick="procesarVenta()">REGISTRAR VENTA</button>
+            <button onclick="cerrarModal()" style="margin-top:15px; background:none; border:none; color:#94A3B8; cursor:pointer;">Cancelar</button>
         </div>
     </div>
 
     <script type="module">
-        // ... (Importaciones de Firebase iguales) ...
-        
-        let metodoSeleccionado = "Divisas"; // Valor por defecto
+        import { db } from './js/firebase-config.js';
+        import { collection, onSnapshot, doc, addDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Función para cambiar visualmente el botón seleccionado
-        window.setPago = (metodo, elemento) => {
-            metodoSeleccionado = metodo;
-            document.querySelectorAll('.pay-method-btn').forEach(btn => btn.classList.remove('active'));
-            elemento.classList.add('active');
+        const UID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
+        let tasaActual = 0, masterStock = [], carrito = [], metodoPago = "Divisas";
+
+        onSnapshot(doc(db, "usuarios", UID, "configuracion", "tasa"), (snap) => {
+            if (snap.exists()) {
+                tasaActual = snap.data().valor;
+                document.getElementById('txt-tasa').innerText = tasaActual.toLocaleString('es-VE');
+                cargarInventario();
+            }
+        });
+
+        function cargarInventario() {
+            onSnapshot(collection(db, "usuarios", UID, "productos"), (snap) => {
+                masterStock = [];
+                snap.forEach(d => masterStock.push({ id: d.id, ...d.data() }));
+                renderizarVenta(masterStock);
+            });
+        }
+
+        window.renderizarVenta = (lista) => {
+            const contenedor = document.getElementById('grid-productos');
+            contenedor.innerHTML = "";
+            lista.filter(p => p.stock > 0).forEach(p => {
+                contenedor.innerHTML += `
+                    <div class="product-card" onclick="sumarAlCarrito('${p.id}')">
+                        <div style="font-weight:600">${p.nombre}</div>
+                        <div style="color:var(--blue); font-weight:700; text-align:right">${(p.precio * tasaActual).toLocaleString('es-VE')} Bs.</div>
+                        <div style="color:var(--emerald); font-weight:800; text-align:right">$${p.precio.toFixed(2)}</div>
+                        <div style="color:#94A3B8; text-align:right">${p.stock} <small>und</small></div>
+                        <div style="text-align:right; color:var(--blue)"><i class="fas fa-plus-circle"></i></div>
+                    </div>`;
+            });
         };
 
-        // ... (Cargar Inventario y Renderizar igual) ...
+        window.sumarAlCarrito = (id) => {
+            const p = masterStock.find(item => item.id === id);
+            const existe = carrito.find(c => c.id === id);
+            if (existe) { (existe.cantidad < p.stock) ? existe.cantidad++ : alert("Sin stock"); }
+            else { carrito.push({ ...p, cantidad: 1 }); }
+            actualizarUI();
+        };
+
+        function actualizarUI() {
+            const box = document.getElementById('lista-carrito');
+            box.innerHTML = ""; let subtotal = 0;
+            carrito.forEach(c => {
+                subtotal += (c.precio * c.cantidad);
+                box.innerHTML += `<div class="cart-item"><span><b>${c.nombre}</b> (x${c.cantidad})</span><b>$${(c.precio*c.cantidad).toFixed(2)}</b></div>`;
+            });
+            document.getElementById('total-usd').innerText = `$ ${subtotal.toFixed(2)}`;
+            document.getElementById('total-bs').innerText = `${(subtotal * tasaActual).toLocaleString('es-VE')} Bs.`;
+            document.getElementById('btnCobrar').disabled = carrito.length === 0;
+        }
+
+        window.abrirModalPago = () => document.getElementById('modalPago').style.display = 'block';
+        window.cerrarModal = () => document.getElementById('modalPago').style.display = 'none';
+
+        window.seleccionarPago = (metodo, el) => {
+            metodoPago = metodo;
+            document.querySelectorAll('.pay-option').forEach(opt => opt.classList.remove('selected'));
+            el.classList.add('selected');
+        };
 
         window.procesarVenta = async () => {
-            const btn = document.getElementById('btnVender');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROCESANDO...';
-            
+            const btn = document.querySelector('.btn-register');
+            btn.disabled = true; btn.innerText = "REGISTRANDO...";
             try {
                 const totalUSD = carrito.reduce((s, i) => s + (i.precio * i.cantidad), 0);
-                
-                // GUARDAR VENTA CON EL MÉTODO DE PAGO
                 await addDoc(collection(db, "usuarios", UID, "ventas"), {
                     fecha: new Date().toLocaleString(),
                     timestamp: Date.now(),
                     items: carrito,
                     totalUSD: totalUSD,
-                    totalBS: totalUSD * tasaActual,
-                    tasa: tasaActual,
-                    metodoPago: metodoSeleccionado // <--- AQUÍ SE GUARDA PARA EL CUADRE
+                    metodoPago: metodoPago,
+                    tasa: tasaActual
                 });
-
-                // Descontar inventario
                 for (let item of carrito) {
                     await updateDoc(doc(db, "usuarios", UID, "productos", item.id), { stock: increment(-item.cantidad) });
                 }
-
-                alert("Venta Registrada como: " + metodoSeleccionado);
-                carrito = [];
-                actualizarUI();
-            } catch (e) { 
-                alert("Error en el registro"); 
-            } finally { 
-                btn.disabled = false; 
-                btn.innerHTML = '<i class="fas fa-wallet"></i> COMPLETAR COBRO';
-            }
+                alert("Venta Exitosa");
+                carrito = []; actualizarUI(); cerrarModal();
+            } catch (e) { alert("Error"); }
+            finally { btn.disabled = false; btn.innerText = "REGISTRAR VENTA"; }
         };
-        
-        // ... (Resto de funciones: sumarAlCarrito, actualizarUI, etc.) ...
+
+        window.filtrarVenta = () => {
+            const q = document.getElementById('inputBusqueda').value.toLowerCase();
+            renderizarVenta(masterStock.filter(p => p.nombre.toLowerCase().includes(q) || p.codigo.toLowerCase().includes(q)));
+        };
     </script>
 </body>
+</html>
