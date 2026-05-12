@@ -1,89 +1,278 @@
-<style>
-    .btn-pay {
-        border: none;
-        border-radius: 18px;
-        background: var(--emerald);
-        color: white;
-        font-weight: 800;
-        font-size: 1.1rem;
-        cursor: pointer;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        transition: 0.3s;
-        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
-    }
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS | You Control - Sistematikos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --primary-blue: #002D72; 
+            --electric-blue: #0052D4;
+            --vinotinto: #800020; 
+            --emerald: #10B981; 
+            --bg: #F0F4F8; 
+            --white: #FFFFFF;
+        }
+        
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        /* Bloqueo de Licencia */
+        #capaBloqueo { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: #001432; align-items: center; justify-content: center; }
+        .licencia-card { background: white; padding: 40px; border-radius: 30px; width: 90%; max-width: 450px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
 
-    .btn-pay:hover:not(:disabled) {
-        background: #059669;
-        transform: translateY(-2px);
-    }
+        /* Header */
+        .header-sales { 
+            background: var(--primary-blue); color: white; padding: 12px 25px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            border-bottom: 4px solid var(--vinotinto);
+        }
+        
+        .tasa-badge { background: rgba(255, 255, 255, 0.1); padding: 6px 15px; border-radius: 12px; font-weight: 800; border: 1px solid rgba(255,255,255,0.2); }
 
-    .btn-pay:disabled {
-        background: #94A3B8;
-        cursor: not-allowed;
-        box-shadow: none;
-    }
+        .pos-container { display: flex; flex: 1; gap: 15px; padding: 15px; overflow: hidden; }
 
-    .btn-pay small {
-        font-size: 0.7rem;
-        font-weight: 400;
-        opacity: 0.9;
-        margin-top: 2px;
-    }
-</style>
+        /* Panel Izquierdo */
+        .panel-left { flex: 1.4; background: var(--white); border-radius: 25px; display: flex; flex-direction: column; padding: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); }
+        .search-input { width: 100%; padding: 16px 20px 16px 55px; border: 2px solid #E2E8F0; border-radius: 50px; outline: none; font-size: 1.1rem; box-sizing: border-box; transition: 0.3s; }
+        .search-input:focus { border-color: var(--electric-blue); box-shadow: 0 0 10px rgba(0,82,212,0.1); }
+        
+        .product-grid { flex: 1; overflow-y: auto; margin-top: 15px; padding-right: 5px; }
+        .product-card { display: grid; grid-template-columns: 1fr 100px 90px 40px; align-items: center; padding: 12px; border-bottom: 1px solid #F1F5F9; cursor: pointer; transition: 0.2s; }
+        .product-card:hover { background: #F8FAFC; }
 
-<div class="checkout-footer">
-    <div class="total-box">
-        <span id="total-usd" style="font-size:1.8rem; font-weight:800; display:block;">$ 0.00</span>
-        <span id="total-bs" style="font-size:0.9rem; opacity:0.9;">0.00 Bs.</span>
+        /* Barra de Acciones F4, F5, F6 */
+        .action-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding-top: 15px; border-top: 2px solid #F1F5F9; margin-top: 10px; }
+        .btn-action { border: none; padding: 12px; border-radius: 15px; color: white; font-weight: 800; cursor: pointer; display: flex; flex-direction: column; align-items: center; font-size: 0.8rem; }
+        .btn-action small { font-weight: 400; font-size: 0.65rem; opacity: 0.8; }
+
+        /* Panel Derecho (Carrito) */
+        .panel-cart { flex: 1; background: var(--white); border-radius: 25px; display: flex; flex-direction: column; padding: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); border-top: 6px solid var(--electric-blue); }
+        .cart-list { flex: 1; overflow-y: auto; margin-bottom: 15px; }
+        .cart-item { padding: 12px; border: 1px solid #F1F5F9; border-radius: 12px; margin-bottom: 8px; cursor: pointer; transition: 0.2s; }
+        .cart-item.selected { background: #EBF4FF; border-color: var(--electric-blue); transform: scale(1.02); }
+        
+        .checkout-footer { display: grid; grid-template-columns: 1.2fr 1fr; gap: 10px; }
+        .total-box { background: var(--primary-blue); color: white; padding: 15px; border-radius: 18px; text-align: center; }
+        
+        .btn-pay { border: none; border-radius: 18px; background: var(--emerald); color: white; font-weight: 800; font-size: 1.1rem; cursor: pointer; transition: 0.3s; }
+        .btn-pay:disabled { background: #CBD5E1; cursor: not-allowed; }
+
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,20,50,0.7); backdrop-filter: blur(5px); }
+        .modal-content { background: white; margin: 10% auto; padding: 30px; border-radius: 25px; width: 90%; max-width: 400px; text-align: center; }
+    </style>
+</head>
+<body oncontextmenu="return false">
+
+    <audio id="beepSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" preload="auto"></audio>
+
+    <div id="capaBloqueo">
+        <div class="licencia-card">
+            <h2 style="color: var(--primary-blue);">Activar You Control</h2>
+            <textarea id="inputToken" placeholder="Pegue su licencia aquí..."></textarea>
+            <button class="btn-pay" style="width:100%; margin-top:15px; padding:15px;" onclick="validarYActivar()">ACTIVAR [F9]</button>
+        </div>
     </div>
-    <button id="btnCobrar" class="btn-pay" onclick="abrirModalPago()" disabled>
-        COBRAR
-        <small>[F9]</small>
-    </button>
-</div>
 
-<script>
-    window.addEventListener('keydown', function(e) {
-        // Bloqueamos F4, F5, F6 y ahora F9
-        if (["F4", "F5", "F6", "F9"].includes(e.key)) {
-            e.preventDefault();
-        }
+    <header class="header-sales">
+        <div id="nombreEmpresa" style="font-weight: 800;">YOU CONTROL</div>
+        <div class="tasa-badge">Tasa: <span id="txt-tasa">0.00</span> Bs.</div>
+    </header>
 
-        // F9: Acción Principal (Cobrar / Guardar)
-        if (e.key === "F9") {
-            const btn = document.getElementById('btnCobrar');
-            const modalPago = document.getElementById('modalPago');
+    <div class="pos-container">
+        <div class="panel-left">
+            <div style="position:relative">
+                <i class="fas fa-search" style="position:absolute; left:20px; top:18px; color:var(--electric-blue)"></i>
+                <input type="text" id="inputBusqueda" class="search-input" placeholder="Escanee o busque producto..." onkeyup="filtrarVenta()" autofocus>
+            </div>
             
-            // Si el modal de pago está abierto, F9 actúa como "Registrar Venta"
-            if (window.getComputedStyle(modalPago).display === 'block') {
-                procesarVenta();
-            } 
-            // Si el modal está cerrado y hay productos, abre el modal de pago
-            else if (carrito.length > 0) {
-                abrirModalPago();
-            }
-        }
+            <div id="grid-productos" class="product-grid"></div>
 
-        // Mantener las otras teclas F4, F5, F6...
-        if (carrito.length > 0) {
+            <div class="action-bar">
+                <button class="btn-action" style="background:#3B82F6" onclick="ejecutarAccion('cantidad')">CANTIDAD <small>[F5]</small></button>
+                <button class="btn-action" style="background:#F59E0B" onclick="ejecutarAccion('precio')">PRECIO <small>[F4]</small></button>
+                <button class="btn-action" style="background:#EF4444" onclick="ejecutarAccion('eliminar')">ELIMINAR <small>[F6]</small></button>
+            </div>
+        </div>
+
+        <div class="panel-cart">
+            <h3 style="margin:0 0 10px 0; color: var(--primary-blue); font-size: 0.9rem;">RESUMEN DE VENTA</h3>
+            <div id="lista-carrito" class="cart-list"></div>
+            
+            <div class="checkout-footer">
+                <div class="total-box">
+                    <span id="total-usd" style="font-size:1.6rem; font-weight:800; display:block;">$ 0.00</span>
+                    <span id="total-bs" style="font-size:0.8rem; opacity:0.8;">0.00 Bs.</span>
+                </div>
+                <button id="btnCobrar" class="btn-pay" onclick="gestionarF9()">COBRAR <small>[F9]</small></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalPago" class="modal">
+        <div class="modal-content">
+            <h2 style="color: var(--primary-blue);">Total: <span id="totalModal">$0.00</span></h2>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:20px 0;">
+                <button onclick="metodoPago='Divisas'" style="padding:15px; border-radius:12px; border:1px solid #DDD;">Divisas</button>
+                <button onclick="metodoPago='Bolivares'" style="padding:15px; border-radius:12px; border:1px solid #DDD;">Bolívares</button>
+            </div>
+            <button class="btn-pay" style="width:100%; padding:15px;" onclick="procesarVenta()">REGISTRAR VENTA <small>[F9]</small></button>
+            <p onclick="cerrarModal()" style="margin-top:15px; cursor:pointer; color:#64748B;">Cancelar</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { db } from './js/firebase-config.js';
+        import { collection, onSnapshot, doc, addDoc, updateDoc, increment, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const UID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
+        let tasaActual = 0, masterStock = [], carrito = [], metodoPago = "Divisas", idSeleccionado = null;
+
+        // --- TECLAS DE ACCESO RÁPIDO ---
+        window.addEventListener('keydown', (e) => {
+            if (["F4", "F5", "F6", "F9"].includes(e.key)) e.preventDefault();
+            
             if (e.key === "F4") ejecutarAccion('precio');
             if (e.key === "F5") ejecutarAccion('cantidad');
             if (e.key === "F6") ejecutarAccion('eliminar');
-        }
-    });
+            if (e.key === "F9") gestionarF9();
+        });
 
-    // También actualizamos el botón de "REGISTRAR" dentro del modal de pago
-    // para que el usuario vea que F9 también funciona allí.
-    window.abrirModalPago = () => {
-        const modal = document.getElementById('modalPago');
-        modal.style.display = 'block';
-        // Actualizamos el texto del botón dentro del modal
-        const btnRegistrar = modal.querySelector('.btn-pay');
-        if (btnRegistrar) {
-            btnRegistrar.innerHTML = `REGISTRAR VENTA <small>[F9]</small>`;
+        window.gestionarF9 = () => {
+            const modal = document.getElementById('modalPago');
+            if (window.getComputedStyle(modal).display === 'block') {
+                procesarVenta();
+            } else if (carrito.length > 0) {
+                abrirModalPago();
+            }
+        };
+
+        window.ejecutarAccion = (tipo) => {
+            if (!idSeleccionado) return;
+            if (tipo === 'cantidad') cambiarCantidad(idSeleccionado);
+            if (tipo === 'precio') cambiarPrecio(idSeleccionado);
+            if (tipo === 'eliminar') eliminarItem(idSeleccionado);
+        };
+
+        // --- ESCÁNER Y BÚSQUEDA ---
+        window.filtrarVenta = () => {
+            const input = document.getElementById('inputBusqueda');
+            const query = input.value.trim();
+            if (!query) { renderizarVenta(masterStock); return; }
+
+            const coincidencia = masterStock.find(p => p.codigo === query);
+            if (coincidencia) {
+                document.getElementById('beepSound').play();
+                sumarAlCarrito(coincidencia.id);
+                input.value = "";
+            } else {
+                const filtrados = masterStock.filter(p => p.nombre.toLowerCase().includes(query.toLowerCase()));
+                renderizarVenta(filtrados);
+            }
+        };
+
+        window.sumarAlCarrito = (id) => {
+            const p = masterStock.find(item => item.id === id);
+            if (!p || p.stock <= 0) return;
+            const existe = carrito.find(c => c.id === id);
+            if (existe) existe.cantidad++;
+            else carrito.push({ ...p, cantidad: 1, costoBase: p.costo || 0 });
+            
+            idSeleccionado = id;
+            actualizarUI();
+            document.getElementById('inputBusqueda').focus();
+        };
+
+        function actualizarUI() {
+            const box = document.getElementById('lista-carrito');
+            box.innerHTML = ""; let sub = 0;
+            carrito.forEach(c => {
+                const total = c.precio * c.cantidad; sub += total;
+                const sel = idSeleccionado === c.id;
+                box.innerHTML += `
+                    <div class="cart-item ${sel ? 'selected' : ''}" onclick="idSeleccionado='${c.id}'; actualizarUI();">
+                        <div style="display:flex; justify-content:space-between">
+                            <span><b>${c.cantidad}x</b> ${c.nombre}</span>
+                            <b>$${total.toFixed(2)}</b>
+                        </div>
+                    </div>`;
+            });
+            document.getElementById('total-usd').innerText = `$ ${sub.toFixed(2)}`;
+            document.getElementById('total-bs').innerText = `${(sub * tasaActual).toLocaleString('es-VE')} Bs.`;
+            document.getElementById('btnCobrar').disabled = carrito.length === 0;
+            box.scrollTop = box.scrollHeight;
         }
-    };
-</script>
+
+        window.cambiarCantidad = (id) => {
+            const item = carrito.find(c => c.id === id);
+            const n = prompt("Cantidad:", item.cantidad);
+            if (n && !isNaN(n) && n > 0) { item.cantidad = parseFloat(n); actualizarUI(); }
+        };
+
+        window.cambiarPrecio = (id) => {
+            const item = carrito.find(c => c.id === id);
+            const p = prompt("Precio:", item.precio);
+            if (p && !isNaN(p) && parseFloat(p) >= item.costoBase) { item.precio = parseFloat(p); actualizarUI(); }
+            else { alert("Precio no permitido"); }
+        };
+
+        window.eliminarItem = (id) => {
+            carrito = carrito.filter(c => c.id !== id);
+            idSeleccionado = carrito.length > 0 ? carrito[carrito.length-1].id : null;
+            actualizarUI();
+        };
+
+        window.abrirModalPago = () => {
+            document.getElementById('totalModal').innerText = document.getElementById('total-usd').innerText;
+            document.getElementById('modalPago').style.display = 'block';
+        };
+
+        window.cerrarModal = () => document.getElementById('modalPago').style.display = 'none';
+
+        window.procesarVenta = async () => {
+            try {
+                const btn = document.querySelector('#modalPago .btn-pay');
+                btn.disabled = true; btn.innerText = "PROCESANDO...";
+                
+                await addDoc(collection(db, "usuarios", UID, "ventas"), {
+                    fecha: new Date().toLocaleString(),
+                    items: carrito,
+                    total: carrito.reduce((s,i) => s+(i.precio*i.cantidad), 0),
+                    metodo: metodoPago
+                });
+
+                for (let i of carrito) {
+                    await updateDoc(doc(db, "usuarios", UID, "productos", i.id), { stock: increment(-i.cantidad) });
+                }
+
+                alert("Venta registrada");
+                carrito = []; idSeleccionado = null; actualizarUI(); cerrarModal();
+                btn.disabled = false; btn.innerHTML = `REGISTRAR VENTA <small>[F9]</small>`;
+            } catch (e) { alert("Error al registrar"); }
+        };
+
+        // --- INICIO ---
+        onSnapshot(doc(db, "usuarios", UID, "configuracion", "tasa"), (s) => {
+            if (s.exists()) { tasaActual = s.data().valor; document.getElementById('txt-tasa').innerText = tasaActual; }
+        });
+
+        onSnapshot(collection(db, "usuarios", UID, "productos"), (s) => {
+            masterStock = []; s.forEach(d => masterStock.push({id: d.id, ...d.data()}));
+            renderizarVenta(masterStock);
+        });
+
+        window.renderizarVenta = (l) => {
+            const g = document.getElementById('grid-productos'); g.innerHTML = "";
+            l.forEach(p => {
+                g.innerHTML += `<div class="product-card" onclick="sumarAlCarrito('${p.id}')">
+                    <b>${p.nombre}</b>
+                    <span style="text-align:right">$${p.precio.toFixed(2)}</span>
+                    <span style="text-align:right; color:#94A3B8">${p.stock}</span>
+                    <i class="fas fa-plus-circle" style="text-align:right; color:var(--electric-blue)"></i>
+                </div>`;
+            });
+        };
+    </script>
+</body>
+</html>
