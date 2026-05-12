@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador | Sistematikos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #002D72;
+            --accent: #0052D4;
+            --vinotinto: #800020;
+            --bg: #F1F5F9;
+        }
+
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding: 20px; }
+
+        .container { max-width: 600px; margin: 40px auto; background: white; padding: 40px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); border-top: 8px solid var(--primary); }
+
+        h1 { color: var(--primary); font-weight: 800; margin-bottom: 5px; text-align: center; }
+        p.subtitle { text-align: center; color: #64748B; margin-bottom: 30px; }
+
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-weight: 600; color: #334155; margin-bottom: 8px; font-size: 0.9rem; }
+        
+        input, select {
+            width: 100%; padding: 12px 15px; border: 2px solid #E2E8F0; border-radius: 12px;
+            font-family: inherit; font-size: 1rem; box-sizing: border-box; outline: none; transition: 0.3s;
+        }
+
+        input:focus { border-color: var(--accent); }
+
+        .btn-generate {
+            width: 100%; background: var(--primary); color: white; border: none; padding: 18px;
+            border-radius: 15px; font-weight: 800; font-size: 1.1rem; cursor: pointer; transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-generate:hover { background: var(--accent); transform: translateY(-2px); }
+
+        .result-box {
+            margin-top: 30px; padding: 20px; background: #F8FAFC; border: 2px dashed #CBD5E1;
+            border-radius: 15px; display: none; position: relative;
+        }
+
+        .result-box b { color: var(--primary); display: block; margin-bottom: 10px; }
+        
+        textarea {
+            width: 100%; height: 120px; border: none; background: transparent;
+            font-family: monospace; font-size: 0.85rem; resize: none; color: #475569;
+        }
+
+        .btn-copy {
+            position: absolute; right: 10px; top: 10px; background: var(--accent);
+            color: white; border: none; padding: 5px 12px; border-radius: 8px;
+            font-size: 0.7rem; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1><i class="fas fa-key"></i> Factory</h1>
+        <p class="subtitle">Generador de Licencias para You Control</p>
+
+        <div class="form-group">
+            <label>Nombre de la Empresa / Cliente</label>
+            <input type="text" id="nombre" placeholder="Ej: Voley Club Lara">
+        </div>
+
+        <div class="form-group">
+            <label>RIF / Identificación Fiscal</label>
+            <input type="text" id="rif" placeholder="Ej: J-12345678-0">
+        </div>
+
+        <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div>
+                <label>Límite de Equipos</label>
+                <select id="limite">
+                    <option value="1">1 Equipo</option>
+                    <option value="2">2 Equipos</option>
+                    <option value="3" selected>3 Equipos</option>
+                    <option value="5">5 Equipos</option>
+                    <option value="10">10 Equipos</option>
+                </select>
+            </div>
+            <div>
+                <label>Vencimiento</label>
+                <input type="date" id="vence">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>ID de Activación (Único)</label>
+            <input type="text" id="act_id" placeholder="Ej: VCL-2026-001">
+        </div>
+
+        <button class="btn-generate" onclick="crearToken()">GENERAR LICENCIA</button>
+
+        <div id="result" class="result-box">
+            <button class="btn-copy" onclick="copiar()">COPIAR</button>
+            <b>Código de Licencia:</b>
+            <textarea id="tokenResult" readonly></textarea>
+            <p style="font-size: 0.7rem; color: #94A3B8; margin-top: 10px;">Envíe este código al cliente para activar su sistema.</p>
+        </div>
+    </div>
+
+    <script>
+        // Ponemos una fecha por defecto (1 año después)
+        const fechaHoy = new Date();
+        fechaHoy.setFullYear(fechaHoy.getFullYear() + 1);
+        document.getElementById('vence').value = fechaHoy.toISOString().split('T')[0];
+
+        function crearToken() {
+            const n = document.getElementById('nombre').value;
+            const r = document.getElementById('rif').value;
+            const l = document.getElementById('limite').value;
+            const v = document.getElementById('vence').value;
+            const aid = document.getElementById('act_id').value;
+
+            if(!n || !aid) {
+                alert("Mínimo necesitas el nombre e ID de activación.");
+                return;
+            }
+
+            const data = {
+                n: n,
+                rif: r,
+                l: parseInt(l),
+                v: v,
+                activation_id: aid
+            };
+
+            // Convertimos a Base64
+            const token = btoa(JSON.stringify(data));
+            
+            document.getElementById('tokenResult').value = token;
+            document.getElementById('result').style.display = 'block';
+        }
+
+        function copiar() {
+            const copyText = document.getElementById("tokenResult");
+            copyText.select();
+            document.execCommand("copy");
+            alert("Licencia copiada al portapapeles");
+        }
+    </script>
+
+</body>
+</html>
