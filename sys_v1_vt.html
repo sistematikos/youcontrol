@@ -5,125 +5,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>POS | You Control - Sistematikos</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { 
             --midnight-dark: #001A3D; 
-            --midnight-gradient: linear-gradient(135deg, #002D72 0%, #001A3D 100%);
+            --vinotinto: #800020;
             --electric-blue: #0052D4;
-            --vinotinto: #800020; 
-            --bg-body: #F1F5F9; 
-            --white: #FFFFFF;
-            --border-color: #E2E8F0;
-            --action-grey: #475569;
         }
-        
-        body { font-family: 'Poppins', sans-serif; background: var(--bg-body); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        
-        .header-sales { background: var(--midnight-gradient); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--vinotinto); }
-        .tasa-badge { background: rgba(255, 255, 255, 0.1); padding: 8px 18px; border-radius: 10px; font-weight: 800; border: 1px solid rgba(255,255,255,0.2); }
-        
-        .pos-container { display: flex; flex: 1; gap: 20px; padding: 20px; overflow: hidden; }
-        .panel-left, .panel-cart { background: var(--white); border-radius: 25px; display: flex; flex-direction: column; padding: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.04); }
-        .panel-left { flex: 1.4; }
-        .panel-cart { flex: 1; border-top: 8px solid var(--midnight-dark); }
-
-        .product-grid { flex: 1; overflow-y: auto; margin-top: 20px; }
-        .product-card { display: grid; grid-template-columns: 1fr 100px 40px; align-items: center; padding: 14px; border-bottom: 1px solid #F1F5F9; cursor: pointer; }
-
-        /* VENTANA DE PAGO: CENTRADO ABSOLUTO */
-        .modal { 
-            display: none; 
-            position: fixed; 
-            z-index: 9999; 
-            left: 0; top: 0; width: 100%; height: 100%; 
-            background: rgba(0, 13, 26, 0.75); 
-            backdrop-filter: blur(8px); 
-            align-items: center; /* Centrado Vertical */
-            justify-content: center; /* Centrado Horizontal */
-        }
-
-        .modal-content { 
-            background: white; padding: 35px; border-radius: 35px; 
-            width: 90%; max-width: 450px; text-align: center;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-            animation: zoomIn 0.2s ease-out;
-        }
-
-        @keyframes zoomIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-        .btn-action-metodo {
-            border: 2px solid #E2E8F0; background: #F8FAFC; padding: 15px 5px; border-radius: 15px;
-            color: var(--action-grey); font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px;
-        }
-        
-        .input-pago-group { display: flex; flex-direction: column; background: #F1F5F9; border: 2px solid #E2E8F0; border-radius: 18px; padding: 10px 18px; margin-bottom: 12px; }
-        .input-pago-group label { font-size: 0.65rem; font-weight: 800; color: var(--action-grey); text-align: left; }
-        .input-pago-group input { border: none; background: transparent; outline: none; width: 100%; font-size: 1.4rem; font-weight: 700; text-align: right; color: var(--midnight-dark); }
-        
-        .status-badge { padding: 12px; border-radius: 12px; font-weight: 800; margin: 15px 0; }
-        .status-pending { background: #FEF3C7; color: #92400E; }
-        .status-complete { background: #D1FAE5; color: #065F46; }
-
-        .btn-pay { border: none; border-radius: 20px; background: var(--midnight-gradient); color: white; font-weight: 800; cursor: pointer; padding: 18px; width: 100%; }
-        .btn-pay:disabled { opacity: 0.4; cursor: not-allowed; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: #F1F5F9; }
+        header { background: var(--midnight-dark); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--vinotinto); }
+        .main-container { display: grid; grid-template-columns: 1fr 400px; gap: 20px; padding: 20px; height: calc(100vh - 80px); }
+        .panel-left { background: white; border-radius: 25px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+        .search-bar { width: 100%; padding: 15px; border-radius: 50px; border: 2px solid #E2E8F0; margin-bottom: 20px; box-sizing: border-box; }
+        .grid-productos { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; overflow-y: auto; }
+        .product-card { border: 1px solid #E2E8F0; padding: 15px; border-radius: 15px; cursor: pointer; transition: 0.2s; display: flex; justify-content: space-between; }
+        .product-card:hover { border-color: var(--electric-blue); background: #F8FAFC; }
+        .panel-right { background: white; border-radius: 25px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .total-box { background: #F8FAFC; padding: 30px; border-radius: 20px; text-align: center; margin-top: auto; }
+        .btn-cobrar { background: var(--midnight-dark); color: white; border: none; width: 100%; padding: 20px; border-radius: 15px; font-weight: 800; cursor: pointer; font-size: 1.1rem; margin-top: 15px; }
     </style>
 </head>
-<body oncontextmenu="return false">
-    <audio id="beepSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" preload="auto"></audio>
+<body>
 
-    <header class="header-sales">
-        <div class="header-brand">YOU CONTROL <small>| SISTEMATIKOS</small></div>
-        <div class="tasa-badge">TASA: <span id="txt-tasa">0,00</span> Bs.</div>
-    </header>
+<header>
+    <div><strong>YOU CONTROL</strong> | SISTEMATIKOS</div>
+    <div style="background: rgba(255,255,255,0.1); padding: 8px 15px; border-radius: 10px;">
+        TASA: <span id="top-tasa">0.00</span> Bs.
+    </div>
+</header>
 
-    <div class="pos-container">
-        <div class="panel-left">
-            <input type="text" id="inputBusqueda" style="width:100%; padding:15px; border-radius:50px; border:2px solid var(--border-color);" placeholder="Buscar producto...">
-            <div id="grid-productos" class="product-grid"></div>
-        </div>
-
-        <div class="panel-cart">
-            <div id="lista-carrito" style="flex:1; overflow-y:auto;"></div>
-            <div style="background:#F8FAFC; padding:20px; border-radius:20px; text-align:center; margin-bottom:15px; border:2px solid var(--border-color);">
-                <span id="total-usd" style="font-size:2.5rem; font-weight:800; display:block;">$ 0.00</span>
-                <span id="total-bs" style="font-size:1.1rem; opacity:0.7;">0,00 Bs.</span>
-            </div>
-            <button id="btnCobrar" class="btn-pay">COBRAR VENTA [F9]</button>
+<div class="main-container">
+    <div class="panel-left">
+        <input type="text" class="search-bar" placeholder="Buscar producto..." id="inputBusqueda">
+        <div id="grid-productos" class="grid-productos">
+            <!-- Productos cargados dinámicamente -->
         </div>
     </div>
 
-    <!-- VENTANA DE PAGO CENTRADA -->
-    <div id="modalPago" class="modal">
-        <div class="modal-content">
-            <h2 style="color: var(--midnight-dark); margin: 0; font-weight: 800;">Finalizar Cobro</h2>
-            <p style="font-size: 0.8rem; color: gray; margin-bottom: 20px;">Desglose los métodos de pago</p>
-            
-            <div style="background: var(--midnight-gradient); color: white; padding: 25px; border-radius: 25px; margin-bottom: 25px; border-bottom: 5px solid var(--vinotinto);">
-                <small style="opacity: 0.8; font-weight: 600;">MONTO TOTAL</small>
-                <div id="totalModalUSD" style="font-size: 3rem; font-weight: 800; line-height: 1;">$ 0.00</div>
-                <div id="totalModalBS" style="font-size: 1.2rem; opacity: 0.8; margin-top: 5px;">0,00 Bs.</div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px;">
-                <button class="btn-action-metodo" onclick="autoCompletar('punto')"><i class="fas fa-credit-card"></i><span style="font-size:0.55rem">PUNTO</span></button>
-                <button class="btn-action-metodo" onclick="autoCompletar('pagomovil')"><i class="fas fa-mobile-alt"></i><span style="font-size:0.55rem">P.MOVIL</span></button>
-                <button class="btn-action-metodo" onclick="autoCompletar('divisas')"><i class="fas fa-dollar-sign"></i><span style="font-size:0.55rem">DIVISAS</span></button>
-                <button class="btn-action-metodo" onclick="autoCompletar('efectivo')"><i class="fas fa-money-bill-wave"></i><span style="font-size:0.55rem">EFEC. BS</span></button>
-            </div>
-
-            <div class="input-pago-group"><label>PUNTO BS</label><input type="number" id="in-punto-bs" value="0" step="0.01" oninput="calcularRestante()"></div>
-            <div class="input-pago-group"><label>PAGO MÓVIL BS</label><input type="number" id="in-pagomovil-bs" value="0" step="0.01" oninput="calcularRestante()"></div>
-            <div class="input-pago-group"><label>EFECTIVO BS</label><input type="number" id="in-efectivo-bs" value="0" step="0.01" oninput="calcularRestante()"></div>
-            <div class="input-pago-group" style="border-left: 5px solid var(--electric-blue);"><label style="color:var(--electric-blue)">DIVISAS $</label><input type="number" id="in-divisas-usd" value="0" step="0.01" oninput="calcularRestante()"></div>
-
-            <div id="pago-status" class="status-badge status-pending">FALTAN: <span id="txt-restante">$ 0.00</span></div>
-            <button id="btnConfirmarVenta" class="btn-pay" disabled>CONFIRMAR Y REGISTRAR</button>
-            <p onclick="cerrarModal()" style="margin-top:20px; cursor:pointer; color:gray; font-size:0.85rem; font-weight:600;">Regresar al carrito</p>
+    <div class="panel-right">
+        <h3 style="margin-top:0;">Carrito de Venta</h3>
+        <div id="lista-carrito" style="flex-grow:1; overflow-y:auto;">
+            <!-- Items del carrito -->
+        </div>
+        
+        <div class="total-box">
+            <div id="total-usd" style="font-size: 2.5rem; font-weight: 800;">$ 0.00</div>
+            <div id="total-bs" style="color: #64748B;">0,00 Bs.</div>
+            <button class="btn-cobrar" id="btnCobrar">COBRAR VENTA [F9]</button>
         </div>
     </div>
+</div>
 
-    <script type="module" src="./js/pos-db-motor.js"></script>
-    <script type="module" src="./js/pos-core.js"></script>
+<audio id="beepSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
+
+<script type="module" src="./js/pos-core.js"></script>
 </body>
 </html>
