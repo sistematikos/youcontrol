@@ -1,9 +1,11 @@
 import { productosMaster, tasaActual } from './pos-db-motor.js';
 
+// --- ESTADO GLOBAL ---
 let carrito = [];
 let totalVentaUSD = 0;
 let indiceSeleccionado = -1;
 
+// --- RENDERIZADO DE BÚSQUEDA ---
 const renderizarProductos = (lista) => {
     const grid = document.getElementById('grid-productos');
     if (!grid) return;
@@ -23,6 +25,7 @@ const renderizarProductos = (lista) => {
     if (txtTasa) txtTasa.innerText = tasaActual.toLocaleString('es-VE');
 };
 
+// --- LÓGICA DEL CARRITO ---
 window.agregar = (id) => {
     if (document.getElementById('modalPago').style.display === "flex") return;
     const p = productosMaster.find(x => x.id === id);
@@ -105,16 +108,29 @@ window.abrirModalCobro = () => {
     window.calcularRestante();
 };
 
+// --- MOTOR DE COBRO ---
+
 window.autoCompletar = (tipo) => {
     const p = parseFloat(document.getElementById('in-punto-bs').value) || 0;
     const pm = parseFloat(document.getElementById('in-pagomovil-bs').value) || 0;
     const ef = parseFloat(document.getElementById('in-efectivo-bs').value) || 0;
     const dv = parseFloat(document.getElementById('in-divisas-usd').value) || 0;
-    let pagadoOtrosUSD = dv + ((p + pm + ef) / tasaActual) - (tipo === 'divisas' ? dv : (parseFloat(document.getElementById(`in-${tipo}-bs`).value) || 0) / tasaActual);
+
+    let pagadoOtrosUSD = 0;
+    if (tipo !== 'punto') pagadoOtrosUSD += (p / tasaActual);
+    if (tipo !== 'pagomovil') pagadoOtrosUSD += (pm / tasaActual);
+    if (tipo !== 'efectivo') pagadoOtrosUSD += (ef / tasaActual);
+    if (tipo !== 'divisas') pagadoOtrosUSD += dv;
+
     const faltanteUSD = totalVentaUSD - pagadoOtrosUSD;
+
     if (faltanteUSD > 0.001) {
-        if (tipo === 'divisas') document.getElementById('in-divisas-usd').value = faltanteUSD.toFixed(2);
-        else document.getElementById(`in-${tipo}-bs`).value = (faltanteUSD * tasaActual).toFixed(2);
+        if (tipo === 'divisas') {
+            document.getElementById('in-divisas-usd').value = faltanteUSD.toFixed(2);
+        } else {
+            const faltanteBS = faltanteUSD * tasaActual;
+            document.getElementById(`in-${tipo}-bs`).value = (faltanteUSD * tasaActual).toFixed(2);
+        }
     }
     window.calcularRestante();
 };
@@ -124,10 +140,12 @@ window.calcularRestante = () => {
     const pm = parseFloat(document.getElementById('in-pagomovil-bs').value) || 0;
     const ef = parseFloat(document.getElementById('in-efectivo-bs').value) || 0;
     const dv = parseFloat(document.getElementById('in-divisas-usd').value) || 0;
+
     const totalPagadoUSD = dv + ((p + pm + ef) / tasaActual);
     const faltante = totalVentaUSD - totalPagadoUSD;
     const status = document.getElementById('pago-status');
     const btn = document.getElementById('btnConfirmarVenta');
+
     if (faltante <= 0.01) {
         status.style.background = "#D1FAE5"; status.style.color = "#065F46";
         status.innerText = faltante < -0.01 ? "CAMBIO LISTO" : "PAGO COMPLETO";
@@ -139,14 +157,59 @@ window.calcularRestante = () => {
     }
 };
 
+// --- REGISTRO DE VENTA ---
+window.registrarVenta = async () => {
+    const btn = document.getElementById('btnConfirmarVenta');
+    btn.disabled = true;
+    btn.innerText = "PROCESANDO...";
+
+    const venta = {
+        fecha: new Date().toISOString(),
+        items: carrito.map(i => ({ id: i.id, nombre: i.nombre, cant: i.cantidad, precio: i.precio })),
+        totalUSD: totalVentaUSD,
+        tasa: tasaActual,
+        pagos: {
+            punto: parseFloat(document.getElementById('in-punto-bs').value) || 0,
+            pagomovil: parseFloat(document.getElementById('in-pagomovil-bs').value) || 0,
+            efectivo: parseFloat(document.getElementById('in-efectivo-bs').value) || 0,
+            divisas: parseFloat(document.getElementById('in-divisas-usd').value) || 0
+        }
+    };
+
+    try {
+        // Simulación de guardado (Frank, aquí integras tu lógica de Firebase)
+        console.log("Venta Registrada en Firebase:", venta);
+        
+        // Simulación de éxito
+        alert("Venta registrada correctamente.");
+
+        // Limpieza de estado
+        carrito = [];
+        totalVentaUSD = 0;
+        indiceSeleccionado = -1;
+        actualizarUI();
+        document.getElementById('modalPago').style.display = 'none';
+
+    } catch (e) {
+        console.error("Error guardando venta:", e);
+        alert("Ocurrió un error al registrar la venta.");
+    } finally {
+        btn.innerText = "CONFIRMAR VENTA";
+        btn.disabled = false;
+    }
+};
+
+// --- GESTIÓN DE TECLADO ---
 window.addEventListener('keydown', (e) => {
     if (e.key === "F9") { e.preventDefault(); window.abrirModalCobro(); return; }
     if (document.getElementById('modalPago').style.display === "flex") return;
+
     if (e.key === "F4") { e.preventDefault(); window.ejecutarF4(); }
     if (e.key === "F5") { e.preventDefault(); window.ejecutarF5(); }
     if (e.key === "F6") { e.preventDefault(); window.ejecutarF6(); }
 });
 
+// --- INICIALIZACIÓN ---
 const inputBusqueda = document.getElementById('inputBusqueda');
 if (inputBusqueda) {
     inputBusqueda.oninput = (e) => {
@@ -155,6 +218,5 @@ if (inputBusqueda) {
         renderizarProductos(productosMaster.filter(p => p.nombre.toLowerCase().includes(term)));
     };
 }
-
 document.addEventListener('productosActualizados', () => renderizarProductos(productosMaster));
 if (productosMaster && productosMaster.length > 0) renderizarProductos(productosMaster);
