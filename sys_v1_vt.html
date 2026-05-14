@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POS | You Control - Punto de Ventas</title>
+    <title>POS | You Control - Pago Mixto</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
@@ -16,120 +16,99 @@
             --bg-body: #F1F5F9; 
             --white: #FFFFFF;
             --border-color: #E2E8F0;
+            --success: #10B981;
+            --danger: #EF4444;
         }
         
-        body { font-family: 'Poppins', sans-serif; background: var(--bg-body); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: #1E293B; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-body); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* Header */
-        .header-sales { 
-            background: var(--midnight-gradient); 
-            color: white; padding: 15px 30px; 
-            display: flex; justify-content: space-between; align-items: center; 
-            border-bottom: 4px solid var(--vinotinto); 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-        .header-brand { font-weight: 800; font-size: 1.2rem; letter-spacing: 1px; }
-        .tasa-badge { background: rgba(255, 255, 255, 0.1); padding: 8px 18px; border-radius: 10px; font-weight: 800; border: 1px solid rgba(255,255,255,0.2); font-size: 0.9rem; }
+        .header-sales { background: var(--midnight-gradient); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--vinotinto); }
+        .tasa-badge { background: rgba(255, 255, 255, 0.1); padding: 8px 18px; border-radius: 10px; font-weight: 800; border: 1px solid rgba(255,255,255,0.2); }
 
         .pos-container { display: flex; flex: 1; gap: 20px; padding: 20px; overflow: hidden; }
         .panel-left, .panel-cart { background: var(--white); border-radius: 25px; display: flex; flex-direction: column; padding: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.04); }
-        .panel-left { flex: 1.4; min-width: 0; }
+        .panel-left { flex: 1.4; }
         .panel-cart { flex: 1; border-top: 8px solid var(--midnight-dark); }
 
-        /* Buscador */
-        .search-container { position: relative; width: 100%; margin-bottom: 5px; }
-        .search-input { width: 100%; padding: 14px 20px 14px 55px; border: 2px solid var(--border-color); border-radius: 50px; outline: none; font-size: 1rem; background: #F8FAFC; box-sizing: border-box; }
-        .search-container i { position: absolute; left: 22px; top: 50%; transform: translateY(-50%); color: var(--action-grey); }
-
-        /* Productos y Carrito */
         .product-grid, .cart-list { flex: 1; overflow-y: auto; margin-top: 20px; }
         .product-card { display: grid; grid-template-columns: 1fr 120px 90px 40px; align-items: center; padding: 14px; border-bottom: 1px solid #F1F5F9; cursor: pointer; }
         .cart-item { padding: 15px; border: 1px solid #F1F5F9; border-radius: 15px; margin-bottom: 10px; cursor: pointer; }
         .cart-item.selected { background: #F1F5F9; border-left: 5px solid var(--midnight-dark); }
 
-        /* Botones Acción */
-        .action-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding-top: 20px; border-top: 2px solid #F8FAFC; margin-top: 15px; }
-        .btn-action { border: 1px solid var(--border-color); background: #F8FAFC; padding: 12px; border-radius: 15px; color: var(--action-grey); font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; font-size: 0.75rem; }
+        .btn-pay { border: none; border-radius: 20px; background: var(--midnight-gradient); color: white; font-weight: 800; cursor: pointer; padding: 15px; width: 100%; transition: 0.3s; }
+        .btn-pay:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* Botón Cobrar */
-        .btn-pay { border: none; border-radius: 20px; background: var(--midnight-gradient); color: white; font-weight: 800; cursor: pointer; transition: 0.3s; padding: 15px; }
-        .btn-pay:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0, 45, 114, 0.3); }
-
-        /* Modal y Métodos de Pago */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,13,26,0.8); backdrop-filter: blur(8px); }
-        .modal-content { background: white; margin: 5% auto; padding: 40px; border-radius: 30px; width: 90%; max-width: 450px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+        /* Estilos Modal Pago Mixto */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,13,26,0.85); backdrop-filter: blur(10px); }
+        .modal-content { background: white; margin: 2% auto; padding: 30px; border-radius: 30px; width: 90%; max-width: 500px; text-align: center; }
         
-        .btn-action-metodo {
-            border: 2px solid #E2E8F0; background: #F8FAFC; padding: 18px 10px; border-radius: 15px;
-            color: #475569; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; transition: 0.3s;
-        }
-        .btn-action-metodo.active { background: var(--midnight-gradient); color: white; border-color: var(--midnight-dark); box-shadow: 0 8px 15px rgba(0, 26, 61, 0.2); }
+        .input-pago-group { display: flex; align-items: center; background: #F8FAFC; border: 2px solid #E2E8F0; border-radius: 15px; padding: 10px 20px; margin-bottom: 10px; transition: 0.3s; }
+        .input-pago-group:focus-within { border-color: var(--electric-blue); background: white; }
+        .input-pago-group i { color: var(--action-grey); width: 30px; font-size: 1.2rem; }
+        .input-pago-group input { border: none; background: transparent; outline: none; width: 100%; font-size: 1.2rem; font-weight: 700; color: var(--midnight-dark); text-align: right; }
+        .input-pago-group label { font-size: 0.8rem; font-weight: 600; color: var(--action-grey); margin-right: 10px; flex-shrink: 0; }
+
+        .status-badge { padding: 10px; border-radius: 12px; font-weight: 800; margin-top: 15px; font-size: 1.1rem; }
+        .status-pending { background: #FEF3C7; color: #92400E; }
+        .status-complete { background: #D1FAE5; color: #065F46; }
     </style>
 </head>
-<body oncontextmenu="return false">
+<body>
     <audio id="beepSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" preload="auto"></audio>
 
     <header class="header-sales">
-        <div class="header-brand">YOU CONTROL <small style="opacity:0.7;">| PUNTO DE VENTAS</small></div>
+        <div class="header-brand">YOU CONTROL <small>| POS MIXTO</small></div>
         <div class="tasa-badge">TASA: <span id="txt-tasa">0,00</span> Bs.</div>
     </header>
 
     <div class="pos-container">
         <div class="panel-left">
-            <div class="search-container">
-                <i class="fas fa-barcode"></i>
-                <input type="text" id="inputBusqueda" class="search-input" placeholder="Escanear o buscar producto..." autofocus>
-            </div>
+            <input type="text" id="inputBusqueda" style="width:100%; padding:15px; border-radius:50px; border:2px solid var(--border-color);" placeholder="Buscar producto...">
             <div id="grid-productos" class="product-grid"></div>
-            <div class="action-bar">
-                <button class="btn-action" id="btn-f5"><i class="fas fa-calculator"></i> CANTIDAD <small>[F5]</small></button>
-                <button class="btn-action" id="btn-f4"><i class="fas fa-tag"></i> PRECIO <small>[F4]</small></button>
-                <button class="btn-action" id="btn-f6"><i class="fas fa-trash-alt"></i> ELIMINAR <small>[F6]</small></button>
-            </div>
         </div>
 
         <div class="panel-cart">
-            <h3 style="margin:0 0 15px 0; color: var(--midnight-dark); font-size: 0.85rem; text-transform: uppercase;">Resumen de Venta</h3>
             <div id="lista-carrito" class="cart-list"></div>
-            <div style="background:#F8FAFC; padding:15px; border-radius:20px; text-align:center; border:2px solid var(--border-color); margin-bottom:15px;">
-                <span id="total-usd" style="font-size:2rem; font-weight:800; display:block;">$ 0.00</span>
-                <span id="total-bs" style="font-size:1rem; opacity:0.7; font-weight:600;">0,00 Bs.</span>
+            <div style="background:#F8FAFC; padding:20px; border-radius:20px; text-align:center; border:2px solid var(--border-color); margin-bottom:15px;">
+                <span id="total-usd" style="font-size:2.2rem; font-weight:800; display:block;">$ 0.00</span>
+                <span id="total-bs" style="font-size:1.1rem; opacity:0.7; font-weight:600;">0,00 Bs.</span>
             </div>
-            <button id="btnCobrar" class="btn-pay">COBRAR <small style="display:block; font-size:0.65rem; opacity:0.8;">[F9]</small></button>
+            <button id="btnCobrar" class="btn-pay">PROCESAR PAGO [F9]</button>
         </div>
     </div>
 
-    <!-- MODAL DE PAGO CORREGIDO -->
+    <!-- MODAL PAGO MIXTO -->
     <div id="modalPago" class="modal">
         <div class="modal-content">
-            <h2 style="color: var(--midnight-dark); margin-top: 0; font-weight: 800;">Confirmar Pago</h2>
+            <h2 style="color: var(--midnight-dark); margin: 0 0 20px 0;">Resumen de Cobro</h2>
             
-            <div style="background: #F8FAFC; padding: 25px; border-radius: 20px; margin: 20px 0; border: 1px solid var(--border-color);">
-                <div id="totalModalUSD" style="font-size: 3rem; font-weight: 800; color: var(--midnight-dark); line-height: 1;">$ 0.00</div>
-                <div id="totalModalBS" style="font-size: 1.3rem; font-weight: 600; color: var(--action-grey); margin-top: 10px;">0,00 Bs.</div>
-            </div>
-            
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
-                <button id="btn-metodo-pv" class="btn-action-metodo" onclick="seleccionarMetodo('Punto de Venta', this)">
-                    <i class="fas fa-credit-card"></i> PUNTO VENTAS
-                </button>
-                <button id="btn-metodo-pm" class="btn-action-metodo" onclick="seleccionarMetodo('Pago Movil', this)">
-                    <i class="fas fa-mobile-alt"></i> PAGO MOVIL
-                </button>
-            </div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:25px;">
-                <button id="btn-metodo-div" class="btn-action-metodo" onclick="seleccionarMetodo('Divisas', this)">
-                    <i class="fas fa-dollar-sign"></i> DIVISAS
-                </button>
-                <button id="btn-metodo-bs" class="btn-action-metodo" onclick="seleccionarMetodo('Efectivo Bs', this)">
-                    <i class="fas fa-money-bill-wave"></i> EFECTIVO BS
-                </button>
+            <div style="background: var(--midnight-dark); color: white; padding: 15px; border-radius: 20px; margin-bottom: 20px;">
+                <small style="opacity: 0.8;">TOTAL A PAGAR</small>
+                <div id="totalModalUSD" style="font-size: 2.5rem; font-weight: 800;">$ 0.00</div>
+                <div id="totalModalBS" style="font-size: 1rem; opacity: 0.8;">0,00 Bs.</div>
             </div>
 
-            <button id="btnConfirmarVenta" class="btn-pay" style="width:100%; padding: 20px; font-size: 1.2rem; text-transform: uppercase;">
-                Registrar Venta <small style="display:block; font-size:0.7rem; opacity:0.8;">[F9]</small>
+            <!-- Entradas de Dinero -->
+            <div class="input-pago-group">
+                <i class="fas fa-money-bill-wave" style="color: #059669;"></i>
+                <label>EFECTIVO $</label>
+                <input type="number" id="in-efectivo-usd" value="0" step="0.01" oninput="calcularRestante()">
+            </div>
+            <div class="input-pago-group">
+                <i class="fas fa-credit-card" style="color: #3B82F6;"></i>
+                <label>PUNTO / PM (Bs)</label>
+                <input type="number" id="in-electronico-bs" value="0" step="0.01" oninput="calcularRestante()">
+            </div>
+
+            <!-- Estado del Pago -->
+            <div id="pago-status" class="status-badge status-pending">
+                PENDIENTE: <span id="txt-restante">$ 0.00</span>
+            </div>
+
+            <button id="btnConfirmarVenta" class="btn-pay" style="margin-top: 25px; height: 60px;" disabled>
+                FINALIZAR TRANSACCIÓN
             </button>
-            <p id="btnCerrarModal" style="margin-top:25px; cursor:pointer; color:#94A3B8; font-weight:600; text-decoration: underline;">Regresar</p>
+            <p id="btnCerrarModal" style="margin-top:20px; cursor:pointer; color:var(--action-grey); font-weight:600;">CANCELAR</p>
         </div>
     </div>
 
