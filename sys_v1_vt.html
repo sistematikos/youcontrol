@@ -11,7 +11,6 @@
             --midnight-dark: #001A3D; 
             --midnight-gradient: linear-gradient(135deg, #002D72 0%, #001A3D 100%);
             --electric-blue: #0052D4;
-            --vinotinto: #800020; 
             --bg-body: #F1F5F9; 
             --white: #FFFFFF;
             --border-color: #E2E8F0;
@@ -19,10 +18,10 @@
         
         body { font-family: 'Poppins', sans-serif; background: var(--bg-body); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        .header-sales { background: var(--midnight-gradient); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--vinotinto); }
+        .header-sales { background: var(--midnight-gradient); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
         .tasa-badge { background: rgba(255, 255, 255, 0.1); padding: 8px 18px; border-radius: 10px; font-weight: 800; border: 1px solid rgba(255,255,255,0.2); }
         
-        /* BARRA DE ATAJOS PERSUASIVA */
+        /* BARRA DE ATAJOS PROFESIONAL (SIN ROJO) */
         .shortcuts-container { 
             display: flex; 
             justify-content: center; 
@@ -55,7 +54,7 @@
         .product-card { display: grid; grid-template-columns: 1fr 100px 40px; align-items: center; padding: 14px; border-bottom: 1px solid #F1F5F9; cursor: pointer; }
         .item-selected { border: 2px solid var(--electric-blue) !important; background: #EBF4FF !important; border-radius: 15px; }
 
-        /* MODAL CENTRADO ABSOLUTO */
+        /* MODAL CENTRADO ABSOLUTO CON FLEXBOX */
         .modal { 
             display: none; 
             position: fixed; 
@@ -66,9 +65,8 @@
             height: 100%; 
             background: rgba(0,13,26,0.85); 
             backdrop-filter: blur(10px); 
-            display: none;
-            justify-content: center; 
-            align-items: center; 
+            justify-content: center; /* Centrado horizontal */
+            align-items: center;     /* Centrado vertical */
         }
         .modal-content { 
             background: white; 
@@ -78,7 +76,7 @@
             max-width: 480px; 
             text-align: center; 
             box-shadow: 0 30px 70px rgba(0,0,0,0.5);
-            margin: 0; /* Evita desplazamientos raros */
+            margin: 0;
         }
 
         .btn-action-metodo {
@@ -97,7 +95,7 @@
         .btn-pay:disabled { opacity: 0.3; cursor: not-allowed; }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false">
     <audio id="beepSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" preload="auto"></audio>
 
     <header class="header-sales">
@@ -105,12 +103,11 @@
         <div class="tasa-badge">TASA: <span id="txt-tasa">0,00</span> Bs.</div>
     </header>
 
-    <!-- Barra de Atajos con Aspecto Atractivo -->
     <div class="shortcuts-container">
         <div class="key-pill"><b>F4</b> CANTIDAD</div>
         <div class="key-pill"><b>F5</b> PRECIO</div>
         <div class="key-pill"><b>F6</b> ELIMINAR</div>
-        <div class="key-pill" style="background: var(--vinotinto); color: white; border: none;"><b>F9</b> COBRAR</div>
+        <div class="key-pill" style="background: var(--midnight-dark); color: white; border: none;"><b>F9</b> COBRAR</div>
     </div>
 
     <div class="pos-container">
@@ -125,7 +122,8 @@
                 <span id="total-usd" style="font-size:2.5rem; font-weight:800; display:block; color: var(--midnight-dark);">$ 0.00</span>
                 <span id="total-bs" style="font-size:1.1rem; opacity:0.7; font-weight:600;">0,00 Bs.</span>
             </div>
-            <button id="btnCobrar" class="btn-pay">REGISTRAR PAGO [F9]</button>
+            <!-- BOTÓN RENOMBRADO -->
+            <button id="btnCobrar" class="btn-pay">COBRAR [F9]</button>
         </div>
     </div>
 
@@ -134,8 +132,8 @@
             <h2 style="color: var(--midnight-dark); margin: 0 0 15px 0;">Confirmar Cobro</h2>
             
             <div style="background: var(--midnight-dark); color: white; padding: 25px; border-radius: 20px; margin-bottom: 20px;">
-                <small style="opacity: 0.8; letter-spacing: 1px;">MONTO TOTAL A RECIBIR</small>
-                <div id="totalModalUSD" style="font-size: 3rem; font-weight: 800; margin: 5px 0;">$ 0.00</div>
+                <small style="opacity: 0.8;">MONTO TOTAL</small>
+                <div id="totalModalUSD" style="font-size: 3rem; font-weight: 800;">$ 0.00</div>
                 <div id="totalModalBS" style="font-size: 1.2rem; opacity: 0.8;">0,00 Bs.</div>
             </div>
 
