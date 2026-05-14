@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Finalizar Pago - You Control</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --midnight-dark: #001A3D; 
+            --midnight-gradient: linear-gradient(135deg, #002D72 0%, #001A3D 100%);
+            --vinotinto: #800020; 
+            --electric-blue: #0052D4;
+        }
+        body { font-family: 'Poppins', sans-serif; background: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .checkout-card { background: white; padding: 30px; border-radius: 30px; width: 400px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); text-align: center; }
+        .display-total { background: var(--midnight-gradient); color: white; padding: 20px; border-radius: 20px; margin-bottom: 20px; border-bottom: 5px solid var(--vinotinto); }
+        .input-group { background: #F1F5F9; border: 2px solid #E2E8F0; border-radius: 15px; padding: 10px; margin-bottom: 10px; display: flex; flex-direction: column; align-items: flex-start; }
+        .input-group label { font-size: 0.7rem; font-weight: 800; color: #64748B; }
+        .input-group input { border: none; background: transparent; width: 100%; text-align: right; font-size: 1.5rem; font-weight: 700; outline: none; }
+        .btn-confirm { background: var(--midnight-gradient); color: white; border: none; width: 100%; padding: 15px; border-radius: 15px; font-weight: 800; cursor: pointer; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="checkout-card">
+        <div class="display-total">
+            <small>MONTO TOTAL</small>
+            <div id="montoUSD" style="font-size: 2.5rem; font-weight: 800;">$ 0.00</div>
+            <div id="montoBS" style="font-size: 1.2rem; opacity: 0.8;">0.00 Bs.</div>
+        </div>
+
+        <div class="input-group"><label>PUNTO BS</label><input type="number" id="in-punto" value="0"></div>
+        <div class="input-group"><label>PAGO MÓVIL BS</label><input type="number" id="in-pagomovil" value="0"></div>
+        <div class="input-group"><label>EFECTIVO BS</label><input type="number" id="in-efectivo" value="0"></div>
+        <div class="input-group" style="border-left: 5px solid var(--electric-blue);"><label>DIVISAS $</label><input type="number" id="in-divisas" value="0"></div>
+
+        <button class="btn-confirm" id="confirmar">CONFIRMAR VENTA</button>
+    </div>
+
+    <script>
+        // Recibir datos de la ventana principal
+        const urlParams = new URLSearchParams(window.location.search);
+        const total = parseFloat(urlParams.get('total'));
+        const tasa = parseFloat(urlParams.get('tasa'));
+
+        document.getElementById('montoUSD').innerText = `$ ${total.toFixed(2)}`;
+        document.getElementById('montoBS').innerText = `${(total * tasa).toFixed(2)} Bs.`;
+
+        document.getElementById('confirmar').onclick = () => {
+            const detallePago = {
+                punto: document.getElementById('in-punto').value,
+                divisas: document.getElementById('in-divisas').value,
+                // ... más campos
+            };
+            
+            // Enviar señal de éxito a la ventana principal
+            window.opener.postMessage({ status: 'success', pago: detallePago }, "*");
+            window.close();
+        };
+    </script>
+</body>
+</html>
