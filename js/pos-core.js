@@ -4,12 +4,11 @@ let carrito = [];
 let totalVentaUSD = 0;
 let indiceSeleccionado = -1;
 
-// --- RENDER DE BÚSQUEDA ---
+// --- RENDER BÚSQUEDA ---
 const renderizarProductos = (lista) => {
     const grid = document.getElementById('grid-productos');
     if (!grid) return;
     grid.innerHTML = "";
-    
     lista.forEach(p => {
         const precioBS = (p.precio * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 });
         grid.innerHTML += `
@@ -24,107 +23,95 @@ const renderizarProductos = (lista) => {
     document.getElementById('txt-tasa').innerText = tasaActual.toLocaleString('es-VE');
 };
 
-// --- AGREGAR PRODUCTO ---
+// --- LÓGICA CARRITO ---
 window.agregar = (id) => {
     const p = productosMaster.find(x => x.id === id);
     if (!p) return;
-
-    const existente = carrito.find(c => c.id === id);
-    if (existente) {
-        existente.cantidad++;
-    } else {
-        carrito.push({ ...p, cantidad: 1 });
-    }
-    
+    const existe = carrito.find(c => c.id === id);
+    if (existe) existe.cantidad++;
+    else carrito.push({ ...p, cantidad: 1 });
     indiceSeleccionado = carrito.findIndex(c => c.id === id);
     actualizarUI();
 };
 
-// --- ACTUALIZAR RESUMEN (UNA LÍNEA) ---
 function actualizarUI() {
     const list = document.getElementById('lista-carrito');
-    list.innerHTML = ""; 
-    totalVentaUSD = 0;
-    
+    list.innerHTML = ""; totalVentaUSD = 0;
     carrito.forEach((c, index) => {
         const subUSD = c.precio * c.cantidad;
-        const subBS = (subUSD * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 });
         totalVentaUSD += subUSD;
         const sel = index === indiceSeleccionado ? 'item-selected' : '';
-        
         list.innerHTML += `
         <div class="single-line-row grid-cart ${sel}" onclick="seleccionarItem(${index})">
-            <span style="overflow:hidden; text-overflow:ellipsis;"><b>${c.cantidad}x</b> ${c.nombre}</span>
+            <span><b>${c.cantidad}x</b> ${c.nombre}</span>
             <span class="price-vibrant">$${subUSD.toFixed(2)}</span>
-            <span class="price-soft">${subBS} Bs</span>
+            <span class="price-soft">${(subUSD * tasaActual).toLocaleString('es-VE')} Bs</span>
             <i class="fas fa-chevron-right" style="opacity:0.2; text-align:right;"></i>
         </div>`;
     });
-    
     document.getElementById('total-usd').innerText = `$ ${totalVentaUSD.toFixed(2)}`;
     document.getElementById('total-bs').innerText = `${(totalVentaUSD * tasaActual).toLocaleString('es-VE')} Bs.`;
 }
 
-// --- SELECCIONAR ÍTEM DEL CARRITO ---
-window.seleccionarItem = (index) => {
-    indiceSeleccionado = index;
-    actualizarUI();
+window.seleccionarItem = (index) => { indiceSeleccionado = index; actualizarUI(); };
+
+// --- LÓGICA DE COBRO MULTIMONEDA ---
+window.calcularRestante = () => {
+    const p = parseFloat(document.getElementById('in-punto-bs').value) || 0;
+    const pm = parseFloat(document.getElementById('in-pagomovil-bs').value) || 0;
+    const ef = parseFloat(document.getElementById('in-efectivo-bs').value) || 0;
+    const dv = parseFloat(document.getElementById('in-divisas-usd').value) || 0;
+
+    const totalPagadoUSD = dv + ((p + pm + ef) / tasaActual);
+    const faltante = totalVentaUSD - totalPagadoUSD;
+    const status = document.getElementById('pago-status');
+    const btn = document.getElementById('btnConfirmarVenta');
+
+    if (faltante <= 0.01) {
+        status.style.background = "#D1FAE5"; status.style.color = "#065F46";
+        status.innerText = faltante < -0.01 ? "CAMBIO LISTO" : "PAGO COMPLETO";
+        btn.disabled = false;
+    } else {
+        status.style.background = "#FEF3C7"; status.style.color = "#92400E";
+        status.innerText = `FALTANTE: $ ${faltante.toFixed(2)}`;
+        btn.disabled = true;
+    }
 };
 
-// --- ATAJOS DE TECLADO (F4, F5, F6, F9) ---
+// --- TECLADO F4, F5, F6, F9 ---
 window.addEventListener('keydown', (e) => {
     if (indiceSeleccionado === -1 && e.key !== "F9") return;
-
-    // F4: Cambiar Cantidad
-    if (e.key === "F4") {
+    if (e.key === "F4") { // Cantidad
         e.preventDefault();
-        const nuevaCant = prompt("Nueva Cantidad:", carrito[indiceSeleccionado].cantidad);
-        if (nuevaCant !== null && !isNaN(nuevaCant) && nuevaCant > 0) {
-            carrito[indiceSeleccionado].cantidad = parseFloat(nuevaCant);
-            actualizarUI();
-        }
+        const n = prompt("Cantidad:", carrito[indiceSeleccionado].cantidad);
+        if (n > 0) { carrito[indiceSeleccionado].cantidad = parseFloat(n); actualizarUI(); }
     }
-
-    // F5: Cambiar Precio (Manual)
-    if (e.key === "F5") {
+    if (e.key === "F5") { // Precio
         e.preventDefault();
-        const nuevoPrecio = prompt("Nuevo Precio USD:", carrito[indiceSeleccionado].precio);
-        if (nuevoPrecio !== null && !isNaN(nuevoPrecio)) {
-            carrito[indiceSeleccionado].precio = parseFloat(nuevoPrecio);
-            actualizarUI();
-        }
+        const n = prompt("Precio USD:", carrito[indiceSeleccionado].precio);
+        if (n >= 0) { carrito[indiceSeleccionado].precio = parseFloat(n); actualizarUI(); }
     }
-
-    // F6: Eliminar Ítem
-    if (e.key === "F6") {
+    if (e.key === "F6") { // Eliminar
         e.preventDefault();
         carrito.splice(indiceSeleccionado, 1);
-        indiceSeleccionado = carrito.length > 0 ? carrito.length - 1 : -1;
+        indiceSeleccionado = carrito.length - 1;
         actualizarUI();
     }
-
-    // F9: Cobrar
-    if (e.key === "F9") {
+    if (e.key === "F9") { // Cobrar
         e.preventDefault();
-        if (carrito.length > 0) document.getElementById('btnCobrar').click();
+        if (carrito.length > 0) {
+            document.getElementById('totalModalUSD').innerText = `$ ${totalVentaUSD.toFixed(2)}`;
+            document.getElementById('totalModalBS').innerText = `${(totalVentaUSD * tasaActual).toLocaleString('es-VE')} Bs`;
+            document.getElementById('modalPago').style.display = "flex";
+            calcularRestante();
+        }
     }
 });
 
-// --- BUSCADOR ---
+// --- INICIO ---
 document.getElementById('inputBusqueda').oninput = (e) => {
     const term = e.target.value.toLowerCase();
-    const filtrados = productosMaster.filter(p => p.nombre.toLowerCase().includes(term));
-    renderizarProductos(filtrados);
+    renderizarProductos(productosMaster.filter(p => p.nombre.toLowerCase().includes(term)));
 };
-
-// --- MODAL DE COBRO ---
-document.getElementById('btnCobrar').onclick = () => {
-    if (carrito.length === 0) return;
-    document.getElementById('totalModalUSD').innerText = `$ ${totalVentaUSD.toFixed(2)}`;
-    document.getElementById('totalModalBS').innerText = `${(totalVentaUSD * tasaActual).toLocaleString('es-VE')} Bs`;
-    document.getElementById('modalPago').style.display = "flex";
-};
-
-// --- INICIO ---
 document.addEventListener('productosActualizados', () => renderizarProductos(productosMaster));
 if (productosMaster.length > 0) renderizarProductos(productosMaster);
