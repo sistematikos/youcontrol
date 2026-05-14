@@ -1,13 +1,13 @@
 import { db } from './firebase-config.js';
 import { collection, onSnapshot, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const USER_ID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
+const USER_ID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12"; 
 let productosMaster = [];
 let carrito = [];
 let itemSeleccionadoIndex = -1;
-let tasaActual = 36.50;
+let tasaActual = 36.50; 
 
-// --- TIEMPO REAL ---
+// --- CARGA DE PRODUCTOS ---
 onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
     productosMaster = [];
     snapshot.forEach(doc => productosMaster.push({ id: doc.id, ...doc.data() }));
@@ -55,9 +55,8 @@ function actualizarCarritoUI() {
 
 window.seleccionarItem = (index) => { itemSeleccionadoIndex = index; actualizarCarritoUI(); };
 
-// --- ACCIONES F (MODIFICADAS PARA NO INTERFERIR CON EL COBRO) ---
+// --- ACCIONES F CON BLOQUEO ---
 window.ejecutarF4 = () => {
-    // Si el modal de pago está abierto, no permitir edición de cantidad
     if (document.getElementById('modalPago').style.display === 'flex') return;
     if (itemSeleccionadoIndex === -1) return;
     const n = prompt("Cantidad:", carrito[itemSeleccionadoIndex].cantidad);
@@ -65,7 +64,6 @@ window.ejecutarF4 = () => {
 };
 
 window.ejecutarF5 = () => {
-    // Si el modal de pago está abierto, no permitir edición de precio
     if (document.getElementById('modalPago').style.display === 'flex') return;
     if (itemSeleccionadoIndex === -1) return;
     const p = prompt("Precio Unitario ($):", carrito[itemSeleccionadoIndex].precio);
@@ -73,7 +71,6 @@ window.ejecutarF5 = () => {
 };
 
 window.ejecutarF6 = () => {
-    // Si el modal de pago está abierto, no permitir eliminar ítems
     if (document.getElementById('modalPago').style.display === 'flex') return;
     if (itemSeleccionadoIndex === -1) return;
     carrito.splice(itemSeleccionadoIndex, 1);
@@ -81,7 +78,7 @@ window.ejecutarF6 = () => {
     actualizarCarritoUI();
 };
 
-// --- LÓGICA DE COBRO ---
+// --- COBRO Y AUTOCOMPLETADO ---
 window.abrirModalCobro = () => {
     if (carrito.length === 0) return;
     document.getElementById('totalModalUSD').innerText = `$ ${window.totalVentaUSD.toFixed(2)}`;
@@ -97,8 +94,8 @@ window.autoCompletarPago = (input) => {
     const ef = parseFloat(document.getElementById('in-efectivo-bs').value) || 0;
     const dv = parseFloat(document.getElementById('in-divisas-usd').value) || 0;
     const actualValor = parseFloat(input.value) || 0;
-    const totalPagadoSinActualUSD = (dv + ((p + pm + ef) / tasaActual)) - (input.id === 'in-divisas-usd' ? actualValor : actualValor / tasaActual);
-    const faltanteUSD = window.totalVentaUSD - totalPagadoSinActualUSD;
+    const totalPagadoUSD = (dv + ((p + pm + ef) / tasaActual)) - (input.id === 'in-divisas-usd' ? actualValor : actualValor / tasaActual);
+    const faltanteUSD = window.totalVentaUSD - totalPagadoUSD;
     if (faltanteUSD <= 0) return;
     input.value = (input.id === 'in-divisas-usd') ? faltanteUSD.toFixed(2) : (faltanteUSD * tasaActual).toFixed(2);
     window.calcularRestante();
@@ -124,7 +121,7 @@ window.registrarVenta = async () => {
             tasa: tasaActual,
             items: carrito.map(i => ({ nombre: i.nombre, cant: i.cantidad, precio: i.precio }))
         });
-        alert("✅ Venta Exitosa");
+        alert("✅ Venta Guardada");
         carrito = [];
         actualizarCarritoUI();
         document.getElementById('modalPago').style.display = 'none';
@@ -132,11 +129,9 @@ window.registrarVenta = async () => {
     btn.innerText = "CONFIRMAR VENTA";
 };
 
-// --- EVENTOS DE TECLADO ---
+// --- EVENTOS TECLADO ---
 window.addEventListener('keydown', (e) => {
-    // Si el modal está abierto, BLOQUEAMOS F4, F5, F6 para que no interfieran
     const modalAbierto = document.getElementById('modalPago').style.display === 'flex';
-
     if (e.key === "F4") { e.preventDefault(); if (!modalAbierto) window.ejecutarF4(); }
     if (e.key === "F5") { e.preventDefault(); if (!modalAbierto) window.ejecutarF5(); }
     if (e.key === "F6") { e.preventDefault(); if (!modalAbierto) window.ejecutarF6(); }
