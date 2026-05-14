@@ -28,6 +28,9 @@ const renderizarProductos = (lista) => {
 
 // --- LÓGICA DEL CARRITO ---
 window.agregar = (id) => {
+    // Si el modal de pago está abierto, no permitir agregar más productos
+    if (document.getElementById('modalPago').style.display === "flex") return;
+
     const p = productosMaster.find(x => x.id === id);
     if (!p) return;
     const existe = carrito.find(c => c.id === id);
@@ -64,6 +67,7 @@ function actualizarUI() {
 }
 
 window.seleccionarItem = (index) => { 
+    if (document.getElementById('modalPago').style.display === "flex") return;
     indiceSeleccionado = index; 
     actualizarUI(); 
 };
@@ -77,22 +81,20 @@ window.abrirModalCobro = () => {
     document.getElementById('totalModalBS').innerText = `${(totalVentaUSD * tasaActual).toLocaleString('es-VE')} Bs`;
     document.getElementById('modalPago').style.display = "flex";
     
-    // Limpiar campos al abrir
-    const campos = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd'];
-    campos.forEach(id => document.getElementById(id).value = "");
+    // Limpiar campos al abrir para evitar montos residuales
+    ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd'].forEach(id => {
+        document.getElementById(id).value = "";
+    });
     
     window.calcularRestante();
 };
 
-// Función solicitada: Coloca el monto automáticamente al dar click
 window.autoCompletar = (tipo) => {
-    // Obtener valores actuales (si están vacíos tratarlos como 0)
     const p = parseFloat(document.getElementById('in-punto-bs').value) || 0;
     const pm = parseFloat(document.getElementById('in-pagomovil-bs').value) || 0;
     const ef = parseFloat(document.getElementById('in-efectivo-bs').value) || 0;
     const dv = parseFloat(document.getElementById('in-divisas-usd').value) || 0;
 
-    // Calcular cuánto se ha pagado en USD sumando los demás campos
     let pagadoOtrosUSD = 0;
     if (tipo !== 'punto') pagadoOtrosUSD += (p / tasaActual);
     if (tipo !== 'pagomovil') pagadoOtrosUSD += (pm / tasaActual);
@@ -101,7 +103,6 @@ window.autoCompletar = (tipo) => {
 
     const faltanteUSD = totalVentaUSD - pagadoOtrosUSD;
 
-    // Solo autocompletar si hay una deuda pendiente
     if (faltanteUSD > 0.001) {
         if (tipo === 'divisas') {
             document.getElementById('in-divisas-usd').value = faltanteUSD.toFixed(2);
@@ -110,7 +111,6 @@ window.autoCompletar = (tipo) => {
             document.getElementById(`in-${tipo}-bs`).value = faltanteBS.toFixed(2);
         }
     }
-    
     window.calcularRestante();
 };
 
@@ -140,27 +140,38 @@ window.calcularRestante = () => {
     }
 };
 
-// --- GESTIÓN DE TECLADO ---
+// --- GESTIÓN DE TECLADO RESTRINGIDA ---
 window.addEventListener('keydown', (e) => {
-    // Si el modal está abierto, no procesar F4, F5, F6 para el carrito
-    const modalAbierto = document.getElementById('modalPago').style.display === "flex";
+    const modal = document.getElementById('modalPago');
+    const isModalOpen = modal && modal.style.display === "flex";
 
+    // F9 siempre funciona para abrir el modal si hay productos
     if (e.key === "F9") {
         e.preventDefault();
-        window.abrirModalCobro();
+        if (!isModalOpen) window.abrirModalCobro();
         return;
     }
 
-    if (!modalAbierto && indiceSeleccionado !== -1) {
+    // BLOQUEO: Si el modal está abierto, las teclas F4, F5 y F6 no hacen nada
+    if (isModalOpen) return;
+
+    // Solo si el modal está CERRADO y hay algo seleccionado
+    if (indiceSeleccionado !== -1) {
         if (e.key === "F4") {
             e.preventDefault();
             const n = prompt("Cantidad:", carrito[indiceSeleccionado].cantidad);
-            if (n > 0) { carrito[indiceSeleccionado].cantidad = parseFloat(n); actualizarUI(); }
+            if (n !== null && n > 0) { 
+                carrito[indiceSeleccionado].cantidad = parseFloat(n); 
+                actualizarUI(); 
+            }
         }
         if (e.key === "F5") {
             e.preventDefault();
             const n = prompt("Precio USD:", carrito[indiceSeleccionado].precio);
-            if (n >= 0) { carrito[indiceSeleccionado].precio = parseFloat(n); actualizarUI(); }
+            if (n !== null && n >= 0) { 
+                carrito[indiceSeleccionado].precio = parseFloat(n); 
+                actualizarUI(); 
+            }
         }
         if (e.key === "F6") {
             e.preventDefault();
@@ -175,6 +186,7 @@ window.addEventListener('keydown', (e) => {
 const inputBusqueda = document.getElementById('inputBusqueda');
 if (inputBusqueda) {
     inputBusqueda.oninput = (e) => {
+        if (document.getElementById('modalPago').style.display === "flex") return;
         const term = e.target.value.toLowerCase();
         renderizarProductos(productosMaster.filter(p => p.nombre.toLowerCase().includes(term)));
     };
