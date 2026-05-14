@@ -1,10 +1,10 @@
-import { productosMaster, tasaActual, procesarVentaFirebase } from './pos-db-motor.js';
+import { productosMaster, tasaActual } from './pos-db-motor.js';
 
 let carrito = [];
 let totalVentaUSD = 0;
 let indiceSeleccionado = -1;
 
-// Render de búsqueda (Panel Izquierdo)
+// Renderizar lista de búsqueda
 const renderizarProductos = (lista) => {
     const grid = document.getElementById('grid-productos');
     if (!grid) return;
@@ -24,7 +24,23 @@ const renderizarProductos = (lista) => {
     document.getElementById('txt-tasa').innerText = tasaActual.toLocaleString('es-VE');
 };
 
-// Render de Carrito (Panel Derecho - Optimizado a Una Línea)
+// Función para anexar productos al carrito (CRÍTICA)
+window.agregar = (id) => {
+    const p = productosMaster.find(x => x.id === id);
+    if (!p) return;
+
+    const existente = carrito.find(c => c.id === id);
+    if (existente) {
+        existente.cantidad++;
+    } else {
+        carrito.push({ ...p, cantidad: 1 });
+    }
+    
+    indiceSeleccionado = carrito.findIndex(c => c.id === id);
+    actualizarUI();
+};
+
+// Actualizar el Resumen de Venta
 function actualizarUI() {
     const list = document.getElementById('lista-carrito');
     list.innerHTML = ""; 
@@ -36,7 +52,6 @@ function actualizarUI() {
         totalVentaUSD += subUSD;
         const sel = index === indiceSeleccionado ? 'item-selected' : '';
         
-        // Formato: Cant x Nombre | Subtotal $ | Subtotal Bs | Icono
         list.innerHTML += `
         <div class="single-line-row grid-cart ${sel}" onclick="seleccionarItem(${index})">
             <span style="overflow:hidden; text-overflow:ellipsis;"><b>${c.cantidad}x</b> ${c.nombre}</span>
@@ -50,6 +65,26 @@ function actualizarUI() {
     document.getElementById('total-bs').innerText = `${(totalVentaUSD * tasaActual).toLocaleString('es-VE')} Bs.`;
 }
 
-// Eventos de inicio
+window.seleccionarItem = (index) => {
+    indiceSeleccionado = index;
+    actualizarUI();
+};
+
+// Buscador
+document.getElementById('inputBusqueda').oninput = (e) => {
+    const term = e.target.value.toLowerCase();
+    const filtrados = productosMaster.filter(p => p.nombre.toLowerCase().includes(term));
+    renderizarProductos(filtrados);
+};
+
+// Teclado
+window.addEventListener('keydown', (e) => {
+    if (e.key === "F9") { 
+        e.preventDefault(); 
+        if(carrito.length > 0) document.getElementById('btnCobrar').click(); 
+    }
+});
+
+// Inicialización
 document.addEventListener('productosActualizados', () => renderizarProductos(productosMaster));
 if (productosMaster.length > 0) renderizarProductos(productosMaster);
