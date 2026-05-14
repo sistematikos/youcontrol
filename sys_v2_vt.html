@@ -1,0 +1,34 @@
+<!-- ... (Mismo CSS que ya tienes) ... -->
+<body oncontextmenu="return false">
+    <header class="header-sales">
+        <div class="header-brand">YOU CONTROL - V2</div>
+        <div class="tasa-badge">BCV: <span id="txt-tasa">36,50</span> Bs.</div>
+    </header>
+
+    <!-- Atajos Visuales -->
+    <div class="shortcuts-container">
+        <div class="key-pill" onclick="window.ejecutarF4()"><b>F4</b> CANTIDAD</div>
+        <div class="key-pill" onclick="window.ejecutarF6()"><b>F6</b> BORRAR</div>
+        <div class="key-pill" onclick="window.abrirModalCobro()"><b>F9</b> COBRAR</div>
+    </div>
+
+    <div class="pos-container">
+        <div class="panel-left">
+            <input type="text" id="inputBusqueda" placeholder="Buscar artículo...">
+            <div id="grid-productos" class="product-grid"></div>
+        </div>
+        <div class="panel-cart">
+            <div id="lista-carrito" class="cart-list"></div>
+            <div class="summary-box">
+                <span id="total-usd">$ 0.00</span>
+                <span id="total-bs">0,00 Bs.</span>
+            </div>
+            <button id="btnCobrar" class="btn-pay" onclick="window.abrirModalCobro()">PAGAR [F9]</button>
+        </div>
+    </div>
+
+    <!-- El Modal de Pago que definiste anteriormente se mantiene igual -->
+    
+    <!-- CRUCIAL: type="module" -->
+    <script type="module" src="./js/pos-core.js"></script>
+</body>
