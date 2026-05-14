@@ -81,19 +81,37 @@
     </div>
 </div>
 
+<!-- Reemplaza el contenido del modalPago en sys_v1_vt.html -->
 <div id="modalPago" class="modal">
-    <div class="modal-content">
+    <div class="modal-content" style="width: 450px;">
         <h2 id="totalModalUSD" style="font-size: 30px; margin: 0;">$ 0.00</h2>
         <p id="totalModalBS" style="color: var(--vibrant-blue); font-weight: bold; margin-bottom: 20px;"></p>
         
-        <input type="number" id="in-punto-bs" placeholder="Punto de Venta (Bs)" oninput="window.calcularRestante()" onclick="window.autoCompletarPago(this)">
-        <input type="number" id="in-pagomovil-bs" placeholder="Pago Móvil (Bs)" oninput="window.calcularRestante()" onclick="window.autoCompletarPago(this)">
-        <input type="number" id="in-efectivo-bs" placeholder="Efectivo (Bs)" oninput="window.calcularRestante()" onclick="window.autoCompletarPago(this)">
-        <input type="number" id="in-divisas-usd" placeholder="Divisas ($)" oninput="window.calcularRestante()" onclick="window.autoCompletarPago(this)">
+        <!-- Estructura de filas para mantener el nombre y el monto aparte -->
+        <div class="pago-row" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+            <label style="font-weight: bold; color: #64748b;">Punto de Venta (Bs)</label>
+            <input type="number" id="in-punto-bs" step="0.01" style="width: 50%; text-align: right;" oninput="window.calcularRestante()" onclick="window.autoCompletarPago(this)">
+        </div>
+
+        <div class="pago-row" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+            <label style="font-weight: bold; color: #64748b;">Pago Móvil (Bs)</label>
+            <input type="number" id="in-pagomovil-bs" step="0.01" style="width: 50%; text-align: right;" oninput="window.calcularRestante()" onclick="window.autoCompletarPago(this)">
+        </div>
+
+        <div class="pago-row" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+            <label style="font-weight: bold; color: #64748b;">Efectivo (Bs)</label>
+            <input type="number" id="in-efectivo-bs" step="0.01" style="width: 50%; text-align: right;" oninput="window.calcularRestante()" onclick="window.autoCompletarPago(this)">
+        </div>
+
+        <div class="pago-row" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+            <label style="font-weight: bold; color: #64748b;">Divisas ($)</label>
+            <input type="number" id="in-divisas-usd" step="0.01" style="width: 50%; text-align: right;" oninput="window.calcularRestante()" onclick="window.autoCompletarPago(this)">
+        </div>
         
         <button id="btnConfirmarVenta" class="btn-pay" onclick="window.registrarVenta()" disabled>CONFIRMAR VENTA</button>
         <button onclick="document.getElementById('modalPago').style.display='none'" style="background:none; border:none; color:#94a3b8; margin-top:15px; cursor:pointer;">Regresar (ESC)</button>
     </div>
+</div>
 </div>
 
 <script type="module" src="./js/pos-core.js"></script>
