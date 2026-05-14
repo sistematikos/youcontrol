@@ -3,89 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POS | You Control - Sistematikos</title>
+    <title>POS | You Control - Pago Mixto</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --midnight: #001A3D; --vinotinto: #800020; --electric: #0052D4; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #F1F5F9; overflow: hidden; }
+        :root { 
+            --midnight-dark: #001A3D; 
+            --midnight-gradient: linear-gradient(135deg, #002D72 0%, #001A3D 100%);
+            --electric-blue: #0052D4;
+            --vinotinto: #800020; 
+            --bg-body: #F1F5F9; 
+            --white: #FFFFFF;
+            --border-color: #E2E8F0;
+            --action-grey: #475569;
+        }
         
-        header { background: var(--midnight); color: white; padding: 12px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--vinotinto); }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-body); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        .main-container { display: grid; grid-template-columns: 1fr 420px; gap: 20px; padding: 20px; height: calc(100vh - 60px); box-sizing: border-box; }
+        .header-sales { background: var(--midnight-gradient); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--vinotinto); }
+        .tasa-badge { background: rgba(255, 255, 255, 0.1); padding: 8px 18px; border-radius: 10px; font-weight: 800; border: 1px solid rgba(255,255,255,0.2); }
         
-        /* Paneles */
-        .panel-left, .panel-right { background: white; border-radius: 25px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; overflow: hidden; }
-        
-        .search-bar { width: 100%; padding: 15px; border-radius: 50px; border: 2px solid #E2E8F0; margin-bottom: 20px; box-sizing: border-box; }
-        
-        .grid-productos { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; overflow-y: auto; }
-        
-        .product-card { border: 1px solid #E2E8F0; padding: 15px; border-radius: 15px; cursor: pointer; transition: 0.2s; display: flex; justify-content: space-between; align-items: center; }
-        .product-card:hover { border-color: var(--electric); background: #f8faff; }
+        .pos-container { display: flex; flex: 1; gap: 20px; padding: 20px; overflow: hidden; }
+        .panel-left, .panel-cart { background: var(--white); border-radius: 25px; display: flex; flex-direction: column; padding: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.04); }
+        .panel-left { flex: 1.4; }
+        .panel-cart { flex: 1; border-top: 8px solid var(--midnight-dark); }
 
-        /* Totales */
-        .total-box { background: #F8FAFC; padding: 20px; border-radius: 20px; text-align: center; border: 1px solid #E2E8F0; margin-top: auto; }
-        .btn-cobrar { background: var(--midnight); color: white; border: none; width: 100%; padding: 18px; border-radius: 15px; font-weight: 800; cursor: pointer; font-size: 1.1rem; margin-top: 10px; }
+        .product-grid, .cart-list { flex: 1; overflow-y: auto; margin-top: 20px; }
+        .product-card { display: grid; grid-template-columns: 1fr 100px 40px; align-items: center; padding: 14px; border-bottom: 1px solid #F1F5F9; cursor: pointer; }
 
-        /* Modal Integrado */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-content { background: white; width: 400px; padding: 30px; border-radius: 25px; }
-        .input-pago { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; text-align: right; font-size: 1.1rem; }
-        .status-badge { padding: 10px; border-radius: 10px; text-align: center; font-weight: bold; margin: 15px 0; }
+        /* Modal */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,13,26,0.85); backdrop-filter: blur(10px); }
+        .modal-content { background: white; margin: 2% auto; padding: 30px; border-radius: 30px; width: 90%; max-width: 480px; text-align: center; }
+        
+        .btn-action-metodo {
+            border: 2px solid #E2E8F0; background: #F8FAFC; padding: 15px 5px; border-radius: 15px;
+            color: var(--action-grey); font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 0.7rem;
+        }
+        
+        .input-pago-group { display: flex; align-items: center; background: #F8FAFC; border: 2px solid #E2E8F0; border-radius: 15px; padding: 10px 20px; margin-bottom: 10px; }
+        .input-pago-group input { border: none; background: transparent; outline: none; width: 100%; font-size: 1.3rem; font-weight: 700; text-align: right; color: var(--midnight-dark); }
+        
+        .status-badge { padding: 12px; border-radius: 12px; font-weight: 800; margin: 15px 0; }
         .status-pending { background: #FEF3C7; color: #92400E; }
-        .status-complete { background: #DCFCE7; color: #166534; }
+        .status-complete { background: #D1FAE5; color: #065F46; }
+
+        .btn-pay { border: none; border-radius: 20px; background: var(--midnight-gradient); color: white; font-weight: 800; cursor: pointer; padding: 18px; width: 100%; }
+        .btn-pay:disabled { opacity: 0.4; cursor: not-allowed; }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false">
+    <audio id="beepSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" preload="auto"></audio>
 
-<header>
-    <strong>YOU CONTROL</strong>
-    <div style="background: rgba(255,255,255,0.1); padding: 5px 15px; border-radius: 8px;">
-        TASA: <span id="val-tasa">0.00</span> Bs.
-    </div>
-</header>
+    <header class="header-sales">
+        <div class="header-brand">YOU CONTROL <small>| SISTEMATIKOS</small></div>
+        <div class="tasa-badge">TASA: <span id="txt-tasa">0,00</span> Bs.</div>
+    </header>
 
-<div class="main-container">
-    <div class="panel-left">
-        <input type="text" class="search-bar" id="inputBusqueda" placeholder="Buscar producto...">
-        <div id="grid-productos" class="grid-productos"></div>
-    </div>
-
-    <div class="panel-right">
-        <h3 style="margin:0 0 20px 0;">Carrito</h3>
-        <div id="lista-carrito" style="flex-grow:1; overflow-y:auto;"></div>
-        <div class="total-box">
-            <h1 id="total-usd" style="margin:0;">$ 0.00</h1>
-            <p id="total-bs" style="color:#64748B; margin:5px 0 15px 0;">0,00 Bs.</p>
-            <button class="btn-cobrar" id="btnCobrar">COBRAR [F9]</button>
-        </div>
-    </div>
-</div>
-
-<!-- Modal de Pago Integrado -->
-<div id="modalPago" class="modal">
-    <div class="modal-content">
-        <h3 style="text-align:center; margin-top:0;">Finalizar Pago</h3>
-        <div style="background:#f1f5f9; padding:15px; border-radius:15px; text-align:center;">
-            <div id="totalModalUSD" style="font-size:1.5rem; font-weight:800;">$ 0.00</div>
-            <div id="totalModalBS" style="font-size:0.9rem;">0,00 Bs.</div>
-        </div>
-        
-        <div style="margin-top:20px;">
-            <label><small>DIVISAS $</small></label>
-            <input type="number" id="in-divisas-usd" class="input-pago" oninput="calcularRestante()" onclick="this.select()">
-            <label><small>PAGO MÓVIL BS</small></label>
-            <input type="number" id="in-pagomovil-bs" class="input-pago" oninput="calcularRestante()" onclick="this.select()">
+    <div class="pos-container">
+        <div class="panel-left">
+            <input type="text" id="inputBusqueda" style="width:100%; padding:15px; border-radius:50px; border:2px solid var(--border-color);" placeholder="Buscar producto...">
+            <div id="grid-productos" class="product-grid"></div>
         </div>
 
-        <div id="pago-status" class="status-badge status-pending">FALTAN: $ 0.00</div>
-
-        <button class="btn-cobrar" id="btnConfirmarVenta" disabled>CONFIRMAR VENTA</button>
-        <button onclick="cerrarModal()" style="width:100%; border:none; background:none; color:#64748B; margin-top:10px; cursor:pointer;">Cancelar</button>
+        <div class="panel-cart">
+            <div id="lista-carrito" class="cart-list"></div>
+            <div style="background:#F8FAFC; padding:20px; border-radius:20px; text-align:center; border:2px solid var(--border-color); margin-bottom:15px;">
+                <span id="total-usd" style="font-size:2.5rem; font-weight:800; display:block;">$ 0.00</span>
+                <span id="total-bs" style="font-size:1.1rem; opacity:0.7; font-weight:600;">0,00 Bs.</span>
+            </div>
+            <button id="btnCobrar" class="btn-pay">COBRAR [F9]</button>
+        </div>
     </div>
-</div>
 
-<audio id="beepSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
-<script type="module" src="./js/pos-core.js"></script>
+    <!-- MODAL DE PAGO -->
+    <div id="modalPago" class="modal">
+        <div class="modal-content">
+            <h2 style="color: var(--midnight-dark); margin: 0 0 15px 0;">Confirmar Cobro</h2>
+            
+            <div style="background: var(--midnight-dark); color: white; padding: 20px; border-radius: 20px; margin-bottom: 20px;">
+                <small style="opacity: 0.8;">MONTO TOTAL</small>
+                <div id="totalModalUSD" style="font-size: 2.8rem; font-weight: 800;">$ 0.00</div>
+                <div id="totalModalBS" style="font-size: 1.1rem; opacity: 0.8;">0,00 Bs.</div>
+            </div>
+
+            <!-- Botones -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px;">
+                <button class="btn-action-metodo" onclick="autoCompletar('punto')"><i class="fas fa-credit-card"></i> PUNTO</button>
+                <button class="btn-action-metodo" onclick="autoCompletar('pagomovil')"><i class="fas fa-mobile-alt"></i> P. MOVIL</button>
+                <button class="btn-action-metodo" onclick="autoCompletar('divisas')"><i class="fas fa-dollar-sign"></i> DIVISAS</button>
+                <button class="btn-action-metodo" onclick="autoCompletar('efectivo')"><i class="fas fa-money-bill-wave"></i> EFEC. BS</button>
+            </div>
+
+            <!-- Campos -->
+            <div class="input-pago-group"><label style="font-size:0.6rem;">PUNTO BS</label><input type="number" id="in-punto-bs" value="0" step="0.01" oninput="calcularRestante()"></div>
+            <div class="input-pago-group"><label style="font-size:0.6rem;">P.MOVIL BS</label><input type="number" id="in-pagomovil-bs" value="0" step="0.01" oninput="calcularRestante()"></div>
+            <div class="input-pago-group"><label style="font-size:0.6rem;">EFEC. BS</label><input type="number" id="in-efectivo-bs" value="0" step="0.01" oninput="calcularRestante()"></div>
+            <div class="input-pago-group" style="border-color: var(--electric-blue);"><label style="font-size:0.6rem; color:var(--electric-blue);">DIVISAS $</label><input type="number" id="in-divisas-usd" value="0" step="0.01" oninput="calcularRestante()"></div>
+
+            <div id="pago-status" class="status-badge status-pending">PENDIENTE: <span id="txt-restante">$ 0.00</span></div>
+            <button id="btnConfirmarVenta" class="btn-pay" disabled>REGISTRAR VENTA</button>
+            <p id="btnCerrarModal" style="margin-top:20px; cursor:pointer; color:var(--action-grey); font-size:0.8rem;">Cerrar</p>
+        </div>
+    </div>
+
+    <script type="module" src="./js/pos-db-motor.js"></script>
+    <script type="module" src="./js/pos-core.js"></script>
 </body>
 </html>
