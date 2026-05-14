@@ -11,70 +11,65 @@
             --royal-blue: #0056FF; 
             --deep-navy: #001529; 
             --vibrant-gradient: linear-gradient(135deg, #0056FF 0%, #00308F 100%);
-            --glass-bg: rgba(255, 255, 255, 0.95);
-            --success-green: #10B981;
             --bg-main: #F0F4F8;
             --text-main: #1E293B;
+            --border-color: #F1F5F9;
         }
         
         body { font-family: 'Poppins', sans-serif; background: var(--bg-main); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--text-main); }
         
-        /* HEADER PERSUASIVO */
+        /* HEADER */
         .header-sales { background: var(--vibrant-gradient); color: white; padding: 14px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0, 86, 255, 0.3); z-index: 10; }
-        .header-brand { font-weight: 800; letter-spacing: 1.5px; font-size: 1.3rem; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-        .tasa-badge { background: rgba(255, 255, 255, 0.2); padding: 8px 20px; border-radius: 12px; font-weight: 800; border: 1px solid rgba(255,255,255,0.3); backdrop-filter: blur(5px); }
+        .header-brand { font-weight: 800; letter-spacing: 1.5px; font-size: 1.3rem; }
+        .tasa-badge { background: rgba(255, 255, 255, 0.2); padding: 8px 20px; border-radius: 12px; font-weight: 800; border: 1px solid rgba(255,255,255,0.3); }
 
-        /* BARRA DE ATAJOS VIBRANTE */
+        /* BARRA DE ATAJOS */
         .shortcuts-container { display: flex; justify-content: center; gap: 12px; padding: 12px; background: white; border-bottom: 2px solid #E2E8F0; }
-        .key-pill { background: #FFFFFF; border: 2px solid #F1F5F9; padding: 6px 16px; border-radius: 50px; font-size: 0.75rem; font-weight: 700; color: var(--deep-navy); display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.2s; }
+        .key-pill { background: #FFFFFF; border: 2px solid #F1F5F9; padding: 6px 16px; border-radius: 50px; font-size: 0.75rem; font-weight: 700; color: var(--deep-navy); display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .key-pill b { background: var(--royal-blue); color: white; padding: 2px 8px; border-radius: 8px; font-size: 0.7rem; }
-        .key-pill:hover { transform: translateY(-2px); border-color: var(--royal-blue); }
 
         .pos-container { display: flex; flex: 1; gap: 20px; padding: 20px; overflow: hidden; }
-        .panel-left, .panel-cart { background: white; border-radius: 24px; display: flex; flex-direction: column; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.02); }
+        .panel-left, .panel-cart { background: white; border-radius: 24px; display: flex; flex-direction: column; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); }
         .panel-left { flex: 1.7; }
-        .panel-cart { flex: 1; border-top: 8px solid var(--royal-blue); }
+        .panel-cart { flex: 1.2; border-top: 8px solid var(--royal-blue); }
 
-        /* BUSCADOR MODERNO */
-        #inputBusqueda { width: 100%; padding: 16px 25px; border-radius: 15px; border: 2px solid #F1F5F9; background: #F8FAFC; font-size: 1rem; transition: 0.3s; font-family: inherit; }
-        #inputBusqueda:focus { border-color: var(--royal-blue); outline: none; background: white; box-shadow: 0 0 0 4px rgba(0, 86, 255, 0.1); }
-
-        .product-grid, .cart-list { flex: 1; overflow-y: auto; margin-top: 20px; padding-right: 5px; }
-
-        /* FILA PREMIUM: Una sola línea con colores vivos */
-        .product-card { 
+        /* LISTADOS OPTIMIZADOS A UNA LÍNEA */
+        .product-grid, .cart-list { flex: 1; overflow-y: auto; margin-top: 15px; }
+        
+        /* Estilo base para filas de una sola línea */
+        .single-line-row { 
             display: grid; 
-            grid-template-columns: 1fr 80px 90px 120px 40px; 
             align-items: center; 
-            padding: 14px 18px; 
-            border-bottom: 1px solid #F1F5F9; 
+            padding: 10px 15px; 
+            border-bottom: 1px solid var(--border-color); 
             cursor: pointer; 
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             transition: 0.2s;
-            border-radius: 12px;
-            margin-bottom: 4px;
+            white-space: nowrap;
         }
-        .product-card:hover { background: #F0F7FF; transform: scale(1.01); }
-        .product-card b { color: var(--deep-navy); font-weight: 700; }
-        .stk-tag { font-size: 0.7rem; background: #E2E8F0; color: #475569; padding: 2px 8px; border-radius: 6px; font-weight: 600; text-align: center; }
-        .price-usd { color: var(--royal-blue); font-weight: 800; text-align: right; font-size: 1rem; }
-        .price-bs { color: #64748B; text-align: right; font-weight: 600; font-size: 0.85rem; }
-        .item-selected { background: #EBF4FF !important; border: 2px solid var(--royal-blue) !important; }
+        .single-line-row:hover { background: #F0F7FF; }
+        
+        /* Grid para búsqueda: Nombre | Stock | USD | BS | Icono */
+        .grid-search { grid-template-columns: 1fr 70px 85px 110px 30px; }
+        
+        /* Grid para carrito: Cantidad + Nombre | Subtotal USD | Subtotal BS | Icono */
+        .grid-cart { grid-template-columns: 1fr 90px 120px 30px; }
 
-        /* TOTALES IMPACTANTES */
-        .summary-box { background: #F8FAFC; padding: 25px; border-radius: 20px; text-align: center; border: 2px solid #E2E8F0; margin-bottom: 15px; position: relative; overflow: hidden; }
-        .summary-box::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 5px; background: var(--vibrant-gradient); }
-        #total-usd { font-size: 2.8rem; font-weight: 800; color: var(--deep-navy); display: block; line-height: 1; }
-        #total-bs { font-size: 1.2rem; color: var(--royal-blue); font-weight: 700; margin-top: 5px; display: block; }
+        .price-vibrant { color: var(--royal-blue); font-weight: 800; text-align: right; }
+        .price-soft { color: #64748B; text-align: right; font-weight: 600; font-size: 0.8rem; }
+        .item-selected { background: #EBF4FF !important; border-left: 5px solid var(--royal-blue); }
 
-        /* BOTÓN DE ACCIÓN PERSUASIVO */
-        .btn-pay { border: none; border-radius: 18px; background: var(--vibrant-gradient); color: white; font-weight: 800; cursor: pointer; padding: 20px; width: 100%; font-size: 1.1rem; letter-spacing: 1px; transition: 0.3s; box-shadow: 0 10px 20px rgba(0, 86, 255, 0.2); }
-        .btn-pay:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(0, 86, 255, 0.3); }
-        .btn-pay:active { transform: translateY(0); }
+        /* TOTALES */
+        .summary-box { background: #F8FAFC; padding: 20px; border-radius: 20px; text-align: center; border: 2px solid #E2E8F0; margin-top: 15px; }
+        #total-usd { font-size: 2.5rem; font-weight: 800; color: var(--deep-navy); display: block; }
+        #total-bs { font-size: 1.1rem; color: var(--royal-blue); font-weight: 700; }
 
-        /* MODAL DE PAGO (Centrado Absoluto) */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0, 21, 41, 0.8); backdrop-filter: blur(12px); justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 35px; border-radius: 32px; width: 90%; max-width: 480px; box-shadow: 0 40px 100px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); }
+        .btn-pay { border: none; border-radius: 18px; background: var(--vibrant-gradient); color: white; font-weight: 800; cursor: pointer; padding: 18px; width: 100%; font-size: 1.1rem; box-shadow: 0 8px 20px rgba(0, 86, 255, 0.2); transition: 0.3s; margin-top: 10px; }
+        .btn-pay:hover { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(0, 86, 255, 0.3); }
+
+        /* MODAL */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0, 21, 41, 0.8); backdrop-filter: blur(10px); justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 30px; width: 90%; max-width: 450px; text-align: center; }
     </style>
 </head>
 <body oncontextmenu="return false">
@@ -91,14 +86,17 @@
     </div>
 
     <div class="pos-container">
+        <!-- Búsqueda de Productos -->
         <div class="panel-left">
-            <input type="text" id="inputBusqueda" placeholder="🔍 Buscar producto por nombre o código...">
+            <input type="text" id="inputBusqueda" style="width:100%; padding:14px 20px; border-radius:12px; border:2px solid var(--border-color); background:#F8FAFC;" placeholder="🔍 Buscar artículo...">
             <div id="grid-productos" class="product-grid"></div>
         </div>
 
+        <!-- Resumen de Venta (Carrito) -->
         <div class="panel-cart">
-            <h3 style="margin: 0 0 15px 0; font-size: 1.1rem;">Resumen de Venta</h3>
+            <h3 style="margin: 0; font-size: 1rem; color: var(--deep-navy);">Resumen Actual</h3>
             <div id="lista-carrito" class="cart-list"></div>
+            
             <div class="summary-box">
                 <span id="total-usd">$ 0.00</span>
                 <span id="total-bs">0,00 Bs.</span>
@@ -107,19 +105,16 @@
         </div>
     </div>
 
-    <!-- Modal centrado -->
     <div id="modalPago" class="modal">
         <div class="modal-content">
-            <h2 style="margin-top:0; color: var(--deep-navy); font-weight: 800;">Finalizar Venta</h2>
-            <div style="background: var(--vibrant-gradient); color: white; padding: 30px; border-radius: 20px; margin-bottom: 25px; box-shadow: inset 0 0 20px rgba(0,0,0,0.1);">
-                <div id="totalModalUSD" style="font-size: 3.2rem; font-weight: 800; line-height: 1;">$ 0.00</div>
-                <div id="totalModalBS" style="font-size: 1.3rem; opacity: 0.9; margin-top: 8px;">0,00 Bs.</div>
+            <h2 style="margin-top:0; color: var(--deep-navy);">Finalizar Pago</h2>
+            <div style="background: var(--vibrant-gradient); color: white; padding: 25px; border-radius: 20px; margin-bottom: 20px;">
+                <div id="totalModalUSD" style="font-size: 3rem; font-weight: 800;">$ 0.00</div>
+                <div id="totalModalBS" style="font-size: 1.2rem; opacity: 0.9;">0,00 Bs.</div>
             </div>
-            
-            <div id="pago-status" style="padding:15px; border-radius:12px; font-weight:700; margin-bottom:20px; font-size: 0.9rem;"></div>
-            
-            <button id="btnConfirmarVenta" class="btn-pay" disabled>CONFIRMAR TRANSACCIÓN</button>
-            <p onclick="document.getElementById('modalPago').style.display='none'" style="cursor:pointer; font-size:0.9rem; color:#64748B; margin-top:15px; font-weight: 600;">Regresar al Carrito</p>
+            <div id="pago-status" style="padding:12px; border-radius:10px; font-weight:700; margin-bottom:15px;"></div>
+            <button id="btnConfirmarVenta" class="btn-pay" disabled>CONFIRMAR VENTA</button>
+            <p onclick="document.getElementById('modalPago').style.display='none'" style="cursor:pointer; color:grey; margin-top:10px; font-size:0.9rem;">Regresar</p>
         </div>
     </div>
 
