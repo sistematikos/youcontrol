@@ -5,7 +5,7 @@ const UID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
 export let tasaActual = 0;
 export let productosMaster = [];
 
-// Escucha de Tasa en Tiempo Real
+// Tasa en tiempo real
 onSnapshot(doc(db, "usuarios", UID, "configuracion", "tasa"), (s) => {
     if (s.exists()) {
         tasaActual = s.data().valor;
@@ -14,7 +14,7 @@ onSnapshot(doc(db, "usuarios", UID, "configuracion", "tasa"), (s) => {
     }
 });
 
-// Escucha de Productos
+// Productos en tiempo real
 onSnapshot(collection(db, "usuarios", UID, "productos"), (s) => {
     productosMaster = [];
     s.forEach(d => productosMaster.push({ id: d.id, ...d.data() }));
@@ -27,10 +27,9 @@ export async function procesarVentaFirebase(carrito, total, pago) {
             fecha: new Date().toLocaleString(),
             items: carrito,
             totalUSD: total,
-            pagoDetalle: pago,
-            tasaAplicada: tasaActual
+            detalle: pago,
+            tasa: tasaActual
         });
-        // Descontar Stock
         for (let item of carrito) {
             await updateDoc(doc(db, "usuarios", UID, "productos", item.id), { stock: increment(-item.cantidad) });
         }
