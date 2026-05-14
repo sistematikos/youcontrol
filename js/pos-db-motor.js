@@ -5,7 +5,7 @@ const UID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
 export let tasaActual = 0;
 export let productosMaster = [];
 
-// Tasa en tiempo real
+// Escucha de tasa oficial en tiempo real
 onSnapshot(doc(db, "usuarios", UID, "configuracion", "tasa"), (s) => {
     if (s.exists()) {
         tasaActual = s.data().valor;
@@ -14,13 +14,14 @@ onSnapshot(doc(db, "usuarios", UID, "configuracion", "tasa"), (s) => {
     }
 });
 
-// Productos en tiempo real
+// Escucha de catálogo de productos
 onSnapshot(collection(db, "usuarios", UID, "productos"), (s) => {
     productosMaster = [];
     s.forEach(d => productosMaster.push({ id: d.id, ...d.data() }));
     document.dispatchEvent(new CustomEvent('productosActualizados'));
 });
 
+// Registro de venta y descuento de stock
 export async function procesarVentaFirebase(carrito, total, pago) {
     try {
         await addDoc(collection(db, "usuarios", UID, "ventas"), {
@@ -31,8 +32,13 @@ export async function procesarVentaFirebase(carrito, total, pago) {
             tasa: tasaActual
         });
         for (let item of carrito) {
-            await updateDoc(doc(db, "usuarios", UID, "productos", item.id), { stock: increment(-item.cantidad) });
+            await updateDoc(doc(db, "usuarios", UID, "productos", item.id), { 
+                stock: increment(-item.cantidad) 
+            });
         }
         return true;
-    } catch (e) { return false; }
+    } catch (e) { 
+        console.error("Error al registrar:", e);
+        return false; 
+    }
 }
