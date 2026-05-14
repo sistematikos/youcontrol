@@ -3,7 +3,7 @@ import { productosMaster, tasaActual, procesarVentaFirebase } from './pos-db-mot
 let carrito = [];
 let totalVentaUSD = 0;
 
-// Renderizado inicial
+// Sincronización con motor de datos
 document.addEventListener('productosActualizados', () => renderizar(productosMaster));
 document.addEventListener('tasaActualizada', () => renderizar(productosMaster));
 
@@ -41,17 +41,17 @@ function actualizarUI() {
     document.getElementById('total-bs').innerText = `${(totalVentaUSD * tasaActual).toLocaleString('es-VE')} Bs.`;
 }
 
-// Lógica de Ventana de Pago
+// MANEJO DE VENTANA DE PAGO
 document.getElementById('btnCobrar').onclick = () => {
     if (carrito.length === 0) return;
     document.getElementById('totalModalUSD').innerText = `$ ${totalVentaUSD.toFixed(2)}`;
     document.getElementById('totalModalBS').innerText = `${(totalVentaUSD * tasaActual).toLocaleString('es-VE')} Bs.`;
     
-    // Abrir con FLEX para el centrado CSS
+    // Activar Flex para centrado CSS
     const modal = document.getElementById('modalPago');
     modal.style.display = "flex";
     
-    // Reset campos
+    // Limpiar entradas
     ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd'].forEach(id => document.getElementById(id).value = 0);
     calcularRestante();
 };
@@ -97,20 +97,20 @@ window.calcularRestante = () => {
         btn.disabled = false;
     } else {
         status.className = "status-badge status-pending";
-        status.innerHTML = `FALTAN: $ ${dif.toFixed(2)}`;
+        status.innerHTML = `FALTANTE: $ ${dif.toFixed(2)}`;
         btn.disabled = true;
     }
 };
 
 document.getElementById('btnConfirmarVenta').onclick = async () => {
-    const pago = {
+    const pagoDetalle = {
         punto: parseFloat(document.getElementById('in-punto-bs').value),
         pagomovil: parseFloat(document.getElementById('in-pagomovil-bs').value),
         efectivo_bs: parseFloat(document.getElementById('in-efectivo-bs').value),
         divisas: parseFloat(document.getElementById('in-divisas-usd').value),
         tasa: tasaActual
     };
-    if (await procesarVentaFirebase(carrito, totalVentaUSD, pago)) {
+    if (await procesarVentaFirebase(carrito, totalVentaUSD, pagoDetalle)) {
         alert("¡Venta registrada con éxito!");
         carrito = []; actualizarUI();
         cerrarModal();
