@@ -12,38 +12,43 @@
             --bg-light: #f8fafc;
             --text-dark: #1e293b;
         }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-light); margin: 0; color: var(--text-dark); }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-light); margin: 0; color: var(--text-dark); overflow: hidden; }
         
+        /* Header y Botones F */
         .header-sales { 
-            background: var(--royal-blue); color: white; padding: 15px 30px; 
+            background: var(--royal-blue); color: white; padding: 10px 30px; 
             display: flex; justify-content: space-between; align-items: center;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
+        .action-buttons { display: flex; gap: 10px; }
+        .btn-f { 
+            background: white; border: none; padding: 8px 15px; border-radius: 20px; 
+            font-weight: bold; cursor: pointer; color: var(--royal-blue); font-size: 13px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: 0.2s;
+        }
+        .btn-f span { background: var(--vibrant-blue); color: white; padding: 2px 6px; border-radius: 5px; margin-right: 5px; }
+        .btn-f:hover { background: #e2e8f0; transform: translateY(-1px); }
 
-        .pos-container { display: grid; grid-template-columns: 1fr 400px; gap: 20px; padding: 20px; height: calc(100vh - 100px); }
-        
-        .panel-left { background: white; border-radius: 15px; padding: 20px; display: flex; flex-direction: column; shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        /* Layout */
+        .pos-container { display: grid; grid-template-columns: 1fr 400px; gap: 20px; padding: 20px; height: calc(100vh - 80px); }
+        .panel-left, .panel-cart { background: white; border-radius: 15px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         
         #inputBusqueda { 
             width: 95%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px; 
             font-size: 16px; margin-bottom: 20px; outline: none;
         }
-
         .product-grid { overflow-y: auto; flex-grow: 1; }
 
+        /* Filas de productos */
         .single-line-row {
             display: flex; justify-content: space-between; align-items: center;
             padding: 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: 0.2s;
         }
         .single-line-row:hover { background: #f1f7ff; }
+        .item-selected { background: #e0e7ff !important; border-left: 5px solid var(--royal-blue); }
 
-        .panel-cart { background: white; border-radius: 15px; padding: 20px; display: flex; flex-direction: column; border: 2px solid var(--royal-blue); }
-        
-        .cart-list { flex-grow: 1; overflow-y: auto; }
-
-        .summary-box { 
-            background: #f1f7ff; padding: 20px; border-radius: 12px; text-align: center; margin-top: 15px;
-        }
+        /* Totales */
+        .summary-box { background: #f1f7ff; padding: 20px; border-radius: 12px; text-align: center; margin-top: 15px; }
         #total-usd { display: block; font-size: 32px; font-weight: 800; color: var(--royal-blue); }
         #total-bs { font-size: 18px; color: #64748b; }
 
@@ -52,34 +57,40 @@
             padding: 15px; border-radius: 12px; font-size: 18px; font-weight: bold;
             margin-top: 15px; cursor: pointer; transition: 0.3s;
         }
-        .btn-pay:hover { background: var(--royal-blue); transform: scale(1.02); }
+        .btn-pay:hover { background: var(--royal-blue); }
 
-        /* Modal de Pago */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; }
+        /* Modales */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 100; }
         .modal-content { background: white; padding: 30px; border-radius: 20px; width: 400px; text-align: center; }
-        .modal-content input { width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; }
+        .modal-content input { width: 90%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; }
     </style>
 </head>
 <body>
 
 <header class="header-sales">
-    <div style="font-weight: 800; font-size: 20px;">YOU CONTROL - PUNTO DE VENTAS</div>
-    <div style="background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 20px;">
+    <div style="font-weight: 800; font-size: 18px;">YOU CONTROL - PUNTO DE VENTAS</div>
+    
+    <div class="action-buttons">
+        <button onclick="window.ejecutarF4()" class="btn-f"><span>F4</span> CANTIDAD</button>
+        <button onclick="window.ejecutarF5()" class="btn-f"><span>F5</span> PRECIO</button>
+        <button onclick="window.ejecutarF6()" class="btn-f"><span>F6</span> ELIMINAR</button>
+        <button onclick="window.abrirModalCobro()" class="btn-f"><span>F9</span> COBRAR</button>
+    </div>
+
+    <div style="background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 20px; font-weight: bold;">
         BCV: <span id="txt-tasa">36,50</span> Bs.
     </div>
 </header>
 
 <div class="pos-container">
     <div class="panel-left">
-        <input type="text" id="inputBusqueda" placeholder="🔍 Buscar artículo o código...">
-        <div id="grid-productos" class="product-grid">
-            <!-- Los productos de Firebase se cargarán aquí -->
-        </div>
+        <input type="text" id="inputBusqueda" placeholder="🔍 Buscar artículo o código (F2)..." autofocus>
+        <div id="grid-productos" class="product-grid"></div>
     </div>
 
     <div class="panel-cart">
-        <div style="font-weight: bold; margin-bottom: 10px; color: #64748b;">CARRITO DE VENTAS</div>
-        <div id="lista-carrito" class="cart-list"></div>
+        <div style="font-weight: bold; margin-bottom: 10px; color: #64748b; font-size: 12px; letter-spacing: 1px;">CARRITO ACTUAL</div>
+        <div id="lista-carrito" style="flex-grow: 1; overflow-y: auto;"></div>
         
         <div class="summary-box">
             <span id="total-usd">$ 0.00</span>
@@ -89,18 +100,16 @@
     </div>
 </div>
 
-<!-- Modal -->
 <div id="modalPago" class="modal">
     <div class="modal-content">
-        <h2 id="totalModalUSD">$ 0.00</h2>
-        <p id="totalModalBS" style="color: var(--vibrant-blue); font-weight: bold;"></p>
-        <hr>
-        <input type="number" id="in-punto-bs" placeholder="Pago por Punto (Bs)" oninput="window.calcularRestante()">
+        <h2 id="totalModalUSD" style="font-size: 30px; margin: 0;">$ 0.00</h2>
+        <p id="totalModalBS" style="color: var(--vibrant-blue); font-weight: bold; margin-bottom: 20px;"></p>
+        <input type="number" id="in-punto-bs" placeholder="Punto de Venta (Bs)" oninput="window.calcularRestante()">
         <input type="number" id="in-pagomovil-bs" placeholder="Pago Móvil (Bs)" oninput="window.calcularRestante()">
         <input type="number" id="in-efectivo-bs" placeholder="Efectivo (Bs)" oninput="window.calcularRestante()">
         <input type="number" id="in-divisas-usd" placeholder="Divisas ($)" oninput="window.calcularRestante()">
         <button id="btnConfirmarVenta" class="btn-pay" onclick="window.registrarVenta()" disabled>CONFIRMAR VENTA</button>
-        <button onclick="document.getElementById('modalPago').style.display='none'" style="background:none; border:none; color:#64748b; margin-top:10px; cursor:pointer;">Cancelar</button>
+        <button onclick="document.getElementById('modalPago').style.display='none'" style="background:none; border:none; color:#94a3b8; margin-top:15px; cursor:pointer;">Regresar (ESC)</button>
     </div>
 </div>
 
