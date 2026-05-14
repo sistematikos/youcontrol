@@ -19,13 +19,15 @@ onSnapshot(collection(db, "usuarios", UID, "productos"), (s) => {
     document.dispatchEvent(new CustomEvent('productosActualizados'));
 });
 
-export async function procesarVentaFirebase(carrito, total, metodo) {
+export async function procesarVentaFirebase(carrito, total, desglose) {
     try {
         await addDoc(collection(db, "usuarios", UID, "ventas"), {
             fecha: new Date().toLocaleString(),
             items: carrito,
-            total: total,
-            metodo: metodo,
+            totalUSD: total,
+            pagoEfectivoUSD: desglose.usd,
+            pagoBolivares: desglose.bs,
+            metodo: "Mixto",
             tasa: tasaActual
         });
         for (let item of carrito) {
