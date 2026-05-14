@@ -4,7 +4,7 @@ let carrito = [];
 let totalVentaUSD = 0;
 let indiceSeleccionado = -1;
 
-// Renderizar lista de búsqueda
+// --- RENDER DE BÚSQUEDA ---
 const renderizarProductos = (lista) => {
     const grid = document.getElementById('grid-productos');
     if (!grid) return;
@@ -24,7 +24,7 @@ const renderizarProductos = (lista) => {
     document.getElementById('txt-tasa').innerText = tasaActual.toLocaleString('es-VE');
 };
 
-// Función para anexar productos al carrito (CRÍTICA)
+// --- AGREGAR PRODUCTO ---
 window.agregar = (id) => {
     const p = productosMaster.find(x => x.id === id);
     if (!p) return;
@@ -40,7 +40,7 @@ window.agregar = (id) => {
     actualizarUI();
 };
 
-// Actualizar el Resumen de Venta
+// --- ACTUALIZAR RESUMEN (UNA LÍNEA) ---
 function actualizarUI() {
     const list = document.getElementById('lista-carrito');
     list.innerHTML = ""; 
@@ -65,26 +65,66 @@ function actualizarUI() {
     document.getElementById('total-bs').innerText = `${(totalVentaUSD * tasaActual).toLocaleString('es-VE')} Bs.`;
 }
 
+// --- SELECCIONAR ÍTEM DEL CARRITO ---
 window.seleccionarItem = (index) => {
     indiceSeleccionado = index;
     actualizarUI();
 };
 
-// Buscador
+// --- ATAJOS DE TECLADO (F4, F5, F6, F9) ---
+window.addEventListener('keydown', (e) => {
+    if (indiceSeleccionado === -1 && e.key !== "F9") return;
+
+    // F4: Cambiar Cantidad
+    if (e.key === "F4") {
+        e.preventDefault();
+        const nuevaCant = prompt("Nueva Cantidad:", carrito[indiceSeleccionado].cantidad);
+        if (nuevaCant !== null && !isNaN(nuevaCant) && nuevaCant > 0) {
+            carrito[indiceSeleccionado].cantidad = parseFloat(nuevaCant);
+            actualizarUI();
+        }
+    }
+
+    // F5: Cambiar Precio (Manual)
+    if (e.key === "F5") {
+        e.preventDefault();
+        const nuevoPrecio = prompt("Nuevo Precio USD:", carrito[indiceSeleccionado].precio);
+        if (nuevoPrecio !== null && !isNaN(nuevoPrecio)) {
+            carrito[indiceSeleccionado].precio = parseFloat(nuevoPrecio);
+            actualizarUI();
+        }
+    }
+
+    // F6: Eliminar Ítem
+    if (e.key === "F6") {
+        e.preventDefault();
+        carrito.splice(indiceSeleccionado, 1);
+        indiceSeleccionado = carrito.length > 0 ? carrito.length - 1 : -1;
+        actualizarUI();
+    }
+
+    // F9: Cobrar
+    if (e.key === "F9") {
+        e.preventDefault();
+        if (carrito.length > 0) document.getElementById('btnCobrar').click();
+    }
+});
+
+// --- BUSCADOR ---
 document.getElementById('inputBusqueda').oninput = (e) => {
     const term = e.target.value.toLowerCase();
     const filtrados = productosMaster.filter(p => p.nombre.toLowerCase().includes(term));
     renderizarProductos(filtrados);
 };
 
-// Teclado
-window.addEventListener('keydown', (e) => {
-    if (e.key === "F9") { 
-        e.preventDefault(); 
-        if(carrito.length > 0) document.getElementById('btnCobrar').click(); 
-    }
-});
+// --- MODAL DE COBRO ---
+document.getElementById('btnCobrar').onclick = () => {
+    if (carrito.length === 0) return;
+    document.getElementById('totalModalUSD').innerText = `$ ${totalVentaUSD.toFixed(2)}`;
+    document.getElementById('totalModalBS').innerText = `${(totalVentaUSD * tasaActual).toLocaleString('es-VE')} Bs`;
+    document.getElementById('modalPago').style.display = "flex";
+};
 
-// Inicialización
+// --- INICIO ---
 document.addEventListener('productosActualizados', () => renderizarProductos(productosMaster));
 if (productosMaster.length > 0) renderizarProductos(productosMaster);
