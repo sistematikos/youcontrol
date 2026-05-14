@@ -23,7 +23,8 @@
         .tasa-badge { background: rgba(255, 255, 255, 0.2); padding: 8px 20px; border-radius: 12px; font-weight: 800; border: 1px solid rgba(255,255,255,0.3); }
 
         .shortcuts-container { display: flex; justify-content: center; gap: 12px; padding: 12px; background: white; border-bottom: 2px solid #E2E8F0; }
-        .key-pill { background: #FFFFFF; border: 2px solid #F1F5F9; padding: 6px 16px; border-radius: 50px; font-size: 0.75rem; font-weight: 700; color: var(--deep-navy); display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .key-pill { background: #FFFFFF; border: 2px solid #F1F5F9; padding: 6px 16px; border-radius: 50px; font-size: 0.75rem; font-weight: 700; color: var(--deep-navy); display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.2s; }
+        .key-pill:hover { border-color: var(--royal-blue); background: #F8FAFC; }
         .key-pill b { background: var(--royal-blue); color: white; padding: 2px 8px; border-radius: 8px; font-size: 0.7rem; }
 
         .pos-container { display: flex; flex: 1; gap: 20px; padding: 20px; overflow: hidden; }
@@ -53,7 +54,6 @@
         .input-pago-group { display: flex; align-items: center; background: #F8FAFC; border: 2px solid #E2E8F0; border-radius: 15px; padding: 10px 18px; margin-bottom: 10px; transition: 0.3s; }
         .input-pago-group:focus-within { border-color: var(--royal-blue); background: white; }
         .input-pago-group label { font-size: 0.65rem; font-weight: 800; color: #64748B; width: 100px; text-align: left; text-transform: uppercase; cursor: pointer; }
-        .input-pago-group label:hover { color: var(--royal-blue); }
         .input-pago-group input { border: none; background: transparent; outline: none; width: 100%; font-size: 1.2rem; font-weight: 700; text-align: right; color: var(--deep-navy); }
     </style>
 </head>
@@ -64,10 +64,10 @@
     </header>
 
     <div class="shortcuts-container">
-        <div class="key-pill"><b>F4</b> CANTIDAD</div>
-        <div class="key-pill"><b>F5</b> PRECIO</div>
-        <div class="key-pill"><b>F6</b> ELIMINAR</div>
-        <div class="key-pill" style="background: var(--deep-navy); color: white;"><b>F9</b> COBRAR</div>
+        <div class="key-pill" onclick="window.ejecutarF4()" style="cursor:pointer;"><b>F4</b> CANTIDAD</div>
+        <div class="key-pill" onclick="window.ejecutarF5()" style="cursor:pointer;"><b>F5</b> PRECIO</div>
+        <div class="key-pill" onclick="window.ejecutarF6()" style="cursor:pointer;"><b>F6</b> ELIMINAR</div>
+        <div class="key-pill" onclick="window.abrirModalCobro()" style="cursor:pointer;"><b>F9</b> COBRAR</div>
     </div>
 
     <div class="pos-container">
@@ -86,7 +86,6 @@
         </div>
     </div>
 
-    <!-- MODAL DE PAGOS -->
     <div id="modalPago" class="modal">
         <div class="modal-content">
             <div style="background: var(--vibrant-gradient); color: white; padding: 25px; border-radius: 20px; margin-bottom: 20px;">
@@ -94,7 +93,6 @@
                 <p id="totalModalBS" style="font-size: 1.1rem; opacity: 0.9; margin: 5px 0 0 0;">0,00 Bs</p>
             </div>
 
-            <!-- Labels con onclick para autocompletar rápido -->
             <div class="input-pago-group">
                 <label onclick="window.autoCompletar('punto')">Punto Bs</label>
                 <input type="number" id="in-punto-bs" value="0" step="0.01" oninput="window.calcularRestante()" onclick="this.select()">
@@ -112,7 +110,7 @@
                 <input type="number" id="in-divisas-usd" value="0" step="0.01" oninput="window.calcularRestante()" onclick="this.select()">
             </div>
 
-            <div id="pago-status" style="padding:12px; border-radius:12px; font-weight:700; margin-bottom:15px; font-size: 0.85rem;">Cargando...</div>
+            <div id="pago-status" style="padding:12px; border-radius:12px; font-weight:700; margin-bottom:15px; font-size: 0.85rem;"></div>
 
             <button id="btnConfirmarVenta" class="btn-pay" disabled>CONFIRMAR VENTA</button>
             <p onclick="document.getElementById('modalPago').style.display='none'" style="cursor:pointer; margin-top:15px; color: #94A3B8; font-weight: 600; font-size: 0.9rem;">Regresar al Carrito</p>
