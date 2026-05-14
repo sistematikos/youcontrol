@@ -1,12 +1,13 @@
 import { db } from './firebase-config.js';
 import { collection, onSnapshot, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const USER_ID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12"; 
+const USER_ID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
 let productosMaster = [];
 let carrito = [];
 let itemSeleccionadoIndex = -1;
-let tasaActual = 36.50; 
+let tasaActual = 36.50;
 
+// --- TIEMPO REAL ---
 onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
     productosMaster = [];
     snapshot.forEach(doc => productosMaster.push({ id: doc.id, ...doc.data() }));
@@ -27,6 +28,7 @@ function renderizarProductos(lista) {
 }
 
 window.agregarCarrito = (id) => {
+    if (document.getElementById('modalPago').style.display === 'flex') return;
     const p = productosMaster.find(x => x.id === id);
     if (!p) return;
     const item = carrito.find(c => c.id === id);
@@ -53,35 +55,38 @@ function actualizarCarritoUI() {
 
 window.seleccionarItem = (index) => { itemSeleccionadoIndex = index; actualizarCarritoUI(); };
 
-// --- ACCIONES F ---
+// --- ACCIONES F (MODIFICADAS PARA NO INTERFERIR CON EL COBRO) ---
 window.ejecutarF4 = () => {
+    // Si el modal de pago está abierto, no permitir edición de cantidad
+    if (document.getElementById('modalPago').style.display === 'flex') return;
     if (itemSeleccionadoIndex === -1) return;
     const n = prompt("Cantidad:", carrito[itemSeleccionadoIndex].cantidad);
     if (n && !isNaN(n)) { carrito[itemSeleccionadoIndex].cantidad = parseInt(n); actualizarCarritoUI(); }
 };
 
 window.ejecutarF5 = () => {
+    // Si el modal de pago está abierto, no permitir edición de precio
+    if (document.getElementById('modalPago').style.display === 'flex') return;
     if (itemSeleccionadoIndex === -1) return;
     const p = prompt("Precio Unitario ($):", carrito[itemSeleccionadoIndex].precio);
     if (p && !isNaN(p)) { carrito[itemSeleccionadoIndex].precio = parseFloat(p); actualizarCarritoUI(); }
 };
 
 window.ejecutarF6 = () => {
+    // Si el modal de pago está abierto, no permitir eliminar ítems
+    if (document.getElementById('modalPago').style.display === 'flex') return;
     if (itemSeleccionadoIndex === -1) return;
     carrito.splice(itemSeleccionadoIndex, 1);
     itemSeleccionadoIndex = carrito.length > 0 ? carrito.length - 1 : -1;
     actualizarCarritoUI();
 };
 
-// --- LÓGICA DE COBRO AUTOMÁTICO ---
+// --- LÓGICA DE COBRO ---
 window.abrirModalCobro = () => {
     if (carrito.length === 0) return;
     document.getElementById('totalModalUSD').innerText = `$ ${window.totalVentaUSD.toFixed(2)}`;
     document.getElementById('totalModalBS').innerText = `${(window.totalVentaUSD * tasaActual).toLocaleString('es-VE')} Bs`;
-    
-    // Limpiar inputs previos
     ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd'].forEach(id => document.getElementById(id).value = '');
-    
     document.getElementById('modalPago').style.display = 'flex';
     window.calcularRestante();
 };
@@ -91,13 +96,10 @@ window.autoCompletarPago = (input) => {
     const pm = parseFloat(document.getElementById('in-pagomovil-bs').value) || 0;
     const ef = parseFloat(document.getElementById('in-efectivo-bs').value) || 0;
     const dv = parseFloat(document.getElementById('in-divisas-usd').value) || 0;
-
     const actualValor = parseFloat(input.value) || 0;
     const totalPagadoSinActualUSD = (dv + ((p + pm + ef) / tasaActual)) - (input.id === 'in-divisas-usd' ? actualValor : actualValor / tasaActual);
-    
     const faltanteUSD = window.totalVentaUSD - totalPagadoSinActualUSD;
     if (faltanteUSD <= 0) return;
-
     input.value = (input.id === 'in-divisas-usd') ? faltanteUSD.toFixed(2) : (faltanteUSD * tasaActual).toFixed(2);
     window.calcularRestante();
 };
@@ -107,7 +109,6 @@ window.calcularRestante = () => {
     const pm = parseFloat(document.getElementById('in-pagomovil-bs').value) || 0;
     const ef = parseFloat(document.getElementById('in-efectivo-bs').value) || 0;
     const dv = parseFloat(document.getElementById('in-divisas-usd').value) || 0;
-
     const totalPagadoUSD = dv + ((p + pm + ef) / tasaActual);
     document.getElementById('btnConfirmarVenta').disabled = (window.totalVentaUSD - totalPagadoUSD) > 0.01;
 };
@@ -131,16 +132,14 @@ window.registrarVenta = async () => {
     btn.innerText = "CONFIRMAR VENTA";
 };
 
-// --- EVENTOS ---
-document.getElementById('inputBusqueda').addEventListener('input', (e) => {
-    const term = e.target.value.toLowerCase();
-    renderizarProductos(productosMaster.filter(p => p.nombre.toLowerCase().includes(term)));
-});
-
+// --- EVENTOS DE TECLADO ---
 window.addEventListener('keydown', (e) => {
-    if (e.key === "F4") { e.preventDefault(); window.ejecutarF4(); }
-    if (e.key === "F5") { e.preventDefault(); window.ejecutarF5(); }
-    if (e.key === "F6") { e.preventDefault(); window.ejecutarF6(); }
+    // Si el modal está abierto, BLOQUEAMOS F4, F5, F6 para que no interfieran
+    const modalAbierto = document.getElementById('modalPago').style.display === 'flex';
+
+    if (e.key === "F4") { e.preventDefault(); if (!modalAbierto) window.ejecutarF4(); }
+    if (e.key === "F5") { e.preventDefault(); if (!modalAbierto) window.ejecutarF5(); }
+    if (e.key === "F6") { e.preventDefault(); if (!modalAbierto) window.ejecutarF6(); }
     if (e.key === "F9") { e.preventDefault(); window.abrirModalCobro(); }
     if (e.key === "Escape") document.getElementById('modalPago').style.display = 'none';
 });
