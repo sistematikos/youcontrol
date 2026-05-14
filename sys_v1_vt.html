@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POS | You Control - Pago Mixto</title>
+    <title>POS | You Control - Sistematikos</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
@@ -20,28 +20,47 @@
         
         body { font-family: 'Poppins', sans-serif; background: var(--bg-body); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
+        /* Header con branding profesional */
         .header-sales { background: var(--midnight-gradient); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--vinotinto); }
         .tasa-badge { background: rgba(255, 255, 255, 0.1); padding: 8px 18px; border-radius: 10px; font-weight: 800; border: 1px solid rgba(255,255,255,0.2); }
         
+        /* Layout principal */
         .pos-container { display: flex; flex: 1; gap: 20px; padding: 20px; overflow: hidden; }
         .panel-left, .panel-cart { background: var(--white); border-radius: 25px; display: flex; flex-direction: column; padding: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.04); }
         .panel-left { flex: 1.4; }
         .panel-cart { flex: 1; border-top: 8px solid var(--midnight-dark); }
 
-        .product-grid, .cart-list { flex: 1; overflow-y: auto; margin-top: 20px; }
+        .product-grid { flex: 1; overflow-y: auto; margin-top: 20px; }
         .product-card { display: grid; grid-template-columns: 1fr 100px 40px; align-items: center; padding: 14px; border-bottom: 1px solid #F1F5F9; cursor: pointer; }
 
-        /* Modal */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,13,26,0.85); backdrop-filter: blur(10px); }
-        .modal-content { background: white; margin: 2% auto; padding: 30px; border-radius: 30px; width: 90%; max-width: 480px; text-align: center; }
-        
+        /* --- VENTANA DE PAGO CENTRADA --- */
+        .modal { 
+            display: none; 
+            position: fixed; 
+            z-index: 9999; 
+            left: 0; top: 0; width: 100%; height: 100%; 
+            background: rgba(0, 13, 26, 0.7); 
+            backdrop-filter: blur(8px); 
+            align-items: center; justify-content: center; 
+        }
+
+        .modal-content { 
+            background: white; padding: 35px; border-radius: 35px; 
+            width: 90%; max-width: 450px; text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
         .btn-action-metodo {
             border: 2px solid #E2E8F0; background: #F8FAFC; padding: 15px 5px; border-radius: 15px;
-            color: var(--action-grey); font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 0.7rem;
+            color: var(--action-grey); font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px;
         }
         
-        .input-pago-group { display: flex; align-items: center; background: #F8FAFC; border: 2px solid #E2E8F0; border-radius: 15px; padding: 10px 20px; margin-bottom: 10px; }
-        .input-pago-group input { border: none; background: transparent; outline: none; width: 100%; font-size: 1.3rem; font-weight: 700; text-align: right; color: var(--midnight-dark); }
+        .input-pago-group { display: flex; flex-direction: column; background: #F1F5F9; border: 2px solid #E2E8F0; border-radius: 18px; padding: 10px 18px; margin-bottom: 12px; }
+        .input-pago-group label { font-size: 0.65rem; font-weight: 800; color: var(--action-grey); text-align: left; }
+        .input-pago-group input { border: none; background: transparent; outline: none; width: 100%; font-size: 1.4rem; font-weight: 700; text-align: right; color: var(--midnight-dark); }
         
         .status-badge { padding: 12px; border-radius: 12px; font-weight: 800; margin: 15px 0; }
         .status-pending { background: #FEF3C7; color: #92400E; }
@@ -66,43 +85,44 @@
         </div>
 
         <div class="panel-cart">
-            <div id="lista-carrito" class="cart-list"></div>
-            <div style="background:#F8FAFC; padding:20px; border-radius:20px; text-align:center; border:2px solid var(--border-color); margin-bottom:15px;">
+            <div id="lista-carrito" style="flex:1; overflow-y:auto;"></div>
+            <div style="background:#F8FAFC; padding:20px; border-radius:20px; text-align:center; margin-bottom:15px; border:2px solid var(--border-color);">
                 <span id="total-usd" style="font-size:2.5rem; font-weight:800; display:block;">$ 0.00</span>
-                <span id="total-bs" style="font-size:1.1rem; opacity:0.7; font-weight:600;">0,00 Bs.</span>
+                <span id="total-bs" style="font-size:1.1rem; opacity:0.7;">0,00 Bs.</span>
             </div>
-            <button id="btnCobrar" class="btn-pay">COBRAR [F9]</button>
+            <button id="btnCobrar" class="btn-pay">COBRAR VENTA [F9]</button>
         </div>
     </div>
 
-    <!-- MODAL DE PAGO -->
+    <!-- MODAL CENTRADO -->
     <div id="modalPago" class="modal">
         <div class="modal-content">
-            <h2 style="color: var(--midnight-dark); margin: 0 0 15px 0;">Confirmar Cobro</h2>
+            <h2 style="color: var(--midnight-dark); margin: 0;">Finalizar Cobro</h2>
+            <p style="font-size: 0.8rem; color: gray; margin-bottom: 20px;">Desglose los métodos de pago</p>
             
-            <div style="background: var(--midnight-dark); color: white; padding: 20px; border-radius: 20px; margin-bottom: 20px;">
+            <div style="background: var(--midnight-gradient); color: white; padding: 20px; border-radius: 20px; margin-bottom: 20px; border-bottom: 4px solid var(--vinotinto);">
                 <small style="opacity: 0.8;">MONTO TOTAL</small>
                 <div id="totalModalUSD" style="font-size: 2.8rem; font-weight: 800;">$ 0.00</div>
                 <div id="totalModalBS" style="font-size: 1.1rem; opacity: 0.8;">0,00 Bs.</div>
             </div>
 
-            <!-- Botones -->
+            <!-- Botones Rápidos -->
             <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px;">
-                <button class="btn-action-metodo" onclick="autoCompletar('punto')"><i class="fas fa-credit-card"></i> PUNTO</button>
-                <button class="btn-action-metodo" onclick="autoCompletar('pagomovil')"><i class="fas fa-mobile-alt"></i> P. MOVIL</button>
-                <button class="btn-action-metodo" onclick="autoCompletar('divisas')"><i class="fas fa-dollar-sign"></i> DIVISAS</button>
-                <button class="btn-action-metodo" onclick="autoCompletar('efectivo')"><i class="fas fa-money-bill-wave"></i> EFEC. BS</button>
+                <button class="btn-action-metodo" onclick="autoCompletar('punto')"><i class="fas fa-credit-card"></i><span style="font-size:0.55rem">PUNTO</span></button>
+                <button class="btn-action-metodo" onclick="autoCompletar('pagomovil')"><i class="fas fa-mobile-alt"></i><span style="font-size:0.55rem">P.MOVIL</span></button>
+                <button class="btn-action-metodo" onclick="autoCompletar('divisas')"><i class="fas fa-dollar-sign"></i><span style="font-size:0.55rem">DIVISAS</span></button>
+                <button class="btn-action-metodo" onclick="autoCompletar('efectivo')"><i class="fas fa-money-bill-wave"></i><span style="font-size:0.55rem">EFEC. BS</span></button>
             </div>
 
-            <!-- Campos -->
-            <div class="input-pago-group"><label style="font-size:0.6rem;">PUNTO BS</label><input type="number" id="in-punto-bs" value="0" step="0.01" oninput="calcularRestante()"></div>
-            <div class="input-pago-group"><label style="font-size:0.6rem;">P.MOVIL BS</label><input type="number" id="in-pagomovil-bs" value="0" step="0.01" oninput="calcularRestante()"></div>
-            <div class="input-pago-group"><label style="font-size:0.6rem;">EFEC. BS</label><input type="number" id="in-efectivo-bs" value="0" step="0.01" oninput="calcularRestante()"></div>
-            <div class="input-pago-group" style="border-color: var(--electric-blue);"><label style="font-size:0.6rem; color:var(--electric-blue);">DIVISAS $</label><input type="number" id="in-divisas-usd" value="0" step="0.01" oninput="calcularRestante()"></div>
+            <!-- Entradas Independientes -->
+            <div class="input-pago-group"><label>RECIBIDO PUNTO BS</label><input type="number" id="in-punto-bs" value="0" step="0.01" oninput="calcularRestante()"></div>
+            <div class="input-pago-group"><label>RECIBIDO P. MOVIL BS</label><input type="number" id="in-pagomovil-bs" value="0" step="0.01" oninput="calcularRestante()"></div>
+            <div class="input-pago-group"><label>RECIBIDO EFECTIVO BS</label><input type="number" id="in-efectivo-bs" value="0" step="0.01" oninput="calcularRestante()"></div>
+            <div class="input-pago-group" style="border-left: 5px solid var(--electric-blue);"><label style="color:var(--electric-blue)">RECIBIDO DIVISAS $</label><input type="number" id="in-divisas-usd" value="0" step="0.01" oninput="calcularRestante()"></div>
 
-            <div id="pago-status" class="status-badge status-pending">PENDIENTE: <span id="txt-restante">$ 0.00</span></div>
-            <button id="btnConfirmarVenta" class="btn-pay" disabled>REGISTRAR VENTA</button>
-            <p id="btnCerrarModal" style="margin-top:20px; cursor:pointer; color:var(--action-grey); font-size:0.8rem;">Cerrar</p>
+            <div id="pago-status" class="status-badge status-pending">FALTAN: <span id="txt-restante">$ 0.00</span></div>
+            <button id="btnConfirmarVenta" class="btn-pay" disabled>CONFIRMAR Y REGISTRAR</button>
+            <p onclick="cerrarModal()" style="margin-top:15px; cursor:pointer; color:gray; font-size:0.8rem;">Regresar al carrito</p>
         </div>
     </div>
 
