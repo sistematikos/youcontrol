@@ -4,7 +4,7 @@ let carrito = [];
 let totalVentaUSD = 0;
 let indiceSeleccionado = -1;
 
-// --- RENDER BÚSQUEDA ---
+// --- RENDERIZADO DE BÚSQUEDA ---
 const renderizarProductos = (lista) => {
     const grid = document.getElementById('grid-productos');
     if (!grid) return;
@@ -23,7 +23,7 @@ const renderizarProductos = (lista) => {
     document.getElementById('txt-tasa').innerText = tasaActual.toLocaleString('es-VE');
 };
 
-// --- LÓGICA CARRITO ---
+// --- ANEXAR AL CARRITO ---
 window.agregar = (id) => {
     const p = productosMaster.find(x => x.id === id);
     if (!p) return;
@@ -55,7 +55,31 @@ function actualizarUI() {
 
 window.seleccionarItem = (index) => { indiceSeleccionado = index; actualizarUI(); };
 
-// --- LÓGICA DE COBRO MULTIMONEDA ---
+// --- MOTOR DE PAGOS INTELIGENTE ---
+window.autocompletar = (tipo) => {
+    const p = parseFloat(document.getElementById('in-punto-bs').value) || 0;
+    const pm = parseFloat(document.getElementById('in-pagomovil-bs').value) || 0;
+    const ef = parseFloat(document.getElementById('in-efectivo-bs').value) || 0;
+    const dv = parseFloat(document.getElementById('in-divisas-usd').value) || 0;
+
+    let pagadoOtroUSD = 0;
+    if (tipo !== 'punto') pagadoOtroUSD += (p / tasaActual);
+    if (tipo !== 'pagomovil') pagadoOtroUSD += (pm / tasaActual);
+    if (tipo !== 'efectivo') pagadoOtroUSD += (ef / tasaActual);
+    if (tipo !== 'divisas') pagadoOtroUSD += dv;
+
+    const faltanteUSD = totalVentaUSD - pagadoOtroUSD;
+
+    if (faltanteUSD > 0) {
+        if (tipo === 'divisas') {
+            document.getElementById('in-divisas-usd').value = faltanteUSD.toFixed(2);
+        } else {
+            document.getElementById(`in-${tipo}-bs`).value = (faltanteUSD * tasaActual).toFixed(2);
+        }
+    }
+    calcularRestante();
+};
+
 window.calcularRestante = () => {
     const p = parseFloat(document.getElementById('in-punto-bs').value) || 0;
     const pm = parseFloat(document.getElementById('in-pagomovil-bs').value) || 0;
@@ -78,7 +102,7 @@ window.calcularRestante = () => {
     }
 };
 
-// --- TECLADO F4, F5, F6, F9 ---
+// --- GESTIÓN DE TECLADO ---
 window.addEventListener('keydown', (e) => {
     if (indiceSeleccionado === -1 && e.key !== "F9") return;
     if (e.key === "F4") { // Cantidad
@@ -97,7 +121,7 @@ window.addEventListener('keydown', (e) => {
         indiceSeleccionado = carrito.length - 1;
         actualizarUI();
     }
-    if (e.key === "F9") { // Cobrar
+    if (e.key === "F9") { // Abrir Cobro
         e.preventDefault();
         if (carrito.length > 0) {
             document.getElementById('totalModalUSD').innerText = `$ ${totalVentaUSD.toFixed(2)}`;
@@ -108,7 +132,7 @@ window.addEventListener('keydown', (e) => {
     }
 });
 
-// --- INICIO ---
+// --- INICIALIZACIÓN ---
 document.getElementById('inputBusqueda').oninput = (e) => {
     const term = e.target.value.toLowerCase();
     renderizarProductos(productosMaster.filter(p => p.nombre.toLowerCase().includes(term)));
