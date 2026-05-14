@@ -1,111 +1,112 @@
-import { productosMaster, tasaActual, procesarVentaFirebase } from './pos-db-motor.js';
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS | You Control - Pago Mixto</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --midnight-dark: #001A3D; 
+            --midnight-gradient: linear-gradient(135deg, #002D72 0%, #001A3D 100%);
+            --electric-blue: #0052D4;
+            --vinotinto: #800020; 
+            --bg-body: #F1F5F9; 
+            --white: #FFFFFF;
+            --border-color: #E2E8F0;
+            --action-grey: #475569;
+        }
+        
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-body); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        .header-sales { background: var(--midnight-gradient); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--vinotinto); }
+        .tasa-badge { background: rgba(255, 255, 255, 0.1); padding: 8px 18px; border-radius: 10px; font-weight: 800; border: 1px solid rgba(255,255,255,0.2); }
+        
+        .pos-container { display: flex; flex: 1; gap: 20px; padding: 20px; overflow: hidden; }
+        .panel-left, .panel-cart { background: var(--white); border-radius: 25px; display: flex; flex-direction: column; padding: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.04); }
+        .panel-left { flex: 1.4; }
+        .panel-cart { flex: 1; border-top: 8px solid var(--midnight-dark); }
 
-let carrito = [];
-let totalVentaUSD = 0;
+        .product-grid, .cart-list { flex: 1; overflow-y: auto; margin-top: 20px; }
+        .product-card { display: grid; grid-template-columns: 1fr 100px 40px; align-items: center; padding: 14px; border-bottom: 1px solid #F1F5F9; cursor: pointer; }
 
-document.addEventListener('productosActualizados', () => renderizar(productosMaster));
-document.addEventListener('tasaActualizada', () => renderizar(productosMaster));
+        /* Modal */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,13,26,0.85); backdrop-filter: blur(10px); }
+        .modal-content { background: white; margin: 2% auto; padding: 30px; border-radius: 30px; width: 90%; max-width: 480px; text-align: center; }
+        
+        .btn-action-metodo {
+            border: 2px solid #E2E8F0; background: #F8FAFC; padding: 15px 5px; border-radius: 15px;
+            color: var(--action-grey); font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 0.7rem;
+        }
+        
+        .input-pago-group { display: flex; align-items: center; background: #F8FAFC; border: 2px solid #E2E8F0; border-radius: 15px; padding: 10px 20px; margin-bottom: 10px; }
+        .input-pago-group input { border: none; background: transparent; outline: none; width: 100%; font-size: 1.3rem; font-weight: 700; text-align: right; color: var(--midnight-dark); }
+        
+        .status-badge { padding: 12px; border-radius: 12px; font-weight: 800; margin: 15px 0; }
+        .status-pending { background: #FEF3C7; color: #92400E; }
+        .status-complete { background: #D1FAE5; color: #065F46; }
 
-function renderizar(lista) {
-    const grid = document.getElementById('grid-productos');
-    if(!grid) return;
-    grid.innerHTML = "";
-    lista.forEach(p => {
-        grid.innerHTML += `<div class="product-card" onclick="agregar('${p.id}')">
-            <div><b>${p.nombre}</b><br><small>Stock: ${p.stock}</small></div>
-            <div style="text-align:right;"><b>$${p.precio.toFixed(2)}</b></div>
-            <i class="fas fa-plus-circle" style="color:var(--electric-blue); text-align:right;"></i>
-        </div>`;
-    });
-}
+        .btn-pay { border: none; border-radius: 20px; background: var(--midnight-gradient); color: white; font-weight: 800; cursor: pointer; padding: 18px; width: 100%; }
+        .btn-pay:disabled { opacity: 0.4; cursor: not-allowed; }
+    </style>
+</head>
+<body oncontextmenu="return false">
+    <audio id="beepSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" preload="auto"></audio>
 
-window.agregar = (id) => {
-    const p = productosMaster.find(x => x.id === id);
-    if (!p || p.stock <= 0) return;
-    const existe = carrito.find(c => c.id === id);
-    if (existe) existe.cantidad++;
-    else carrito.push({...p, cantidad: 1});
-    actualizarUI();
-    document.getElementById('beepSound').play();
-};
+    <header class="header-sales">
+        <div class="header-brand">YOU CONTROL <small>| SISTEMATIKOS</small></div>
+        <div class="tasa-badge">TASA: <span id="txt-tasa">0,00</span> Bs.</div>
+    </header>
 
-function actualizarUI() {
-    const list = document.getElementById('lista-carrito');
-    list.innerHTML = ""; totalVentaUSD = 0;
-    carrito.forEach(c => {
-        totalVentaUSD += (c.precio * c.cantidad);
-        list.innerHTML += `<div class="cart-item"><span><b>${c.cantidad}x</b> ${c.nombre}</span><b style="float:right;">$${(c.precio * c.cantidad).toFixed(2)}</b></div>`;
-    });
-    document.getElementById('total-usd').innerText = `$ ${totalVentaUSD.toFixed(2)}`;
-    document.getElementById('total-bs').innerText = `${(totalVentaUSD * tasaActual).toLocaleString('es-VE')} Bs.`;
-}
+    <div class="pos-container">
+        <div class="panel-left">
+            <input type="text" id="inputBusqueda" style="width:100%; padding:15px; border-radius:50px; border:2px solid var(--border-color);" placeholder="Buscar producto...">
+            <div id="grid-productos" class="product-grid"></div>
+        </div>
 
-window.autoCompletar = (tipo) => {
-    const punto = parseFloat(document.getElementById('in-punto-bs').value) || 0;
-    const pmovil = parseFloat(document.getElementById('in-pagomovil-bs').value) || 0;
-    const efecBS = parseFloat(document.getElementById('in-efectivo-bs').value) || 0;
-    const divUSD = parseFloat(document.getElementById('in-divisas-usd').value) || 0;
+        <div class="panel-cart">
+            <div id="lista-carrito" class="cart-list"></div>
+            <div style="background:#F8FAFC; padding:20px; border-radius:20px; text-align:center; border:2px solid var(--border-color); margin-bottom:15px;">
+                <span id="total-usd" style="font-size:2.5rem; font-weight:800; display:block;">$ 0.00</span>
+                <span id="total-bs" style="font-size:1.1rem; opacity:0.7; font-weight:600;">0,00 Bs.</span>
+            </div>
+            <button id="btnCobrar" class="btn-pay">COBRAR [F9]</button>
+        </div>
+    </div>
 
-    const pagadoUSD = divUSD + ((punto + pmovil + efecBS) / tasaActual);
-    const faltanteUSD = totalVentaUSD - pagadoUSD;
+    <!-- MODAL DE PAGO -->
+    <div id="modalPago" class="modal">
+        <div class="modal-content">
+            <h2 style="color: var(--midnight-dark); margin: 0 0 15px 0;">Confirmar Cobro</h2>
+            
+            <div style="background: var(--midnight-dark); color: white; padding: 20px; border-radius: 20px; margin-bottom: 20px;">
+                <small style="opacity: 0.8;">MONTO TOTAL</small>
+                <div id="totalModalUSD" style="font-size: 2.8rem; font-weight: 800;">$ 0.00</div>
+                <div id="totalModalBS" style="font-size: 1.1rem; opacity: 0.8;">0,00 Bs.</div>
+            </div>
 
-    if (faltanteUSD <= 0) return;
+            <!-- Botones -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px;">
+                <button class="btn-action-metodo" onclick="autoCompletar('punto')"><i class="fas fa-credit-card"></i> PUNTO</button>
+                <button class="btn-action-metodo" onclick="autoCompletar('pagomovil')"><i class="fas fa-mobile-alt"></i> P. MOVIL</button>
+                <button class="btn-action-metodo" onclick="autoCompletar('divisas')"><i class="fas fa-dollar-sign"></i> DIVISAS</button>
+                <button class="btn-action-metodo" onclick="autoCompletar('efectivo')"><i class="fas fa-money-bill-wave"></i> EFEC. BS</button>
+            </div>
 
-    if (tipo === 'divisas') {
-        document.getElementById('in-divisas-usd').value = (divUSD + faltanteUSD).toFixed(2);
-    } else {
-        const faltanteBS = faltanteUSD * tasaActual;
-        if (tipo === 'punto') document.getElementById('in-punto-bs').value = (punto + faltanteBS).toFixed(2);
-        if (tipo === 'pagomovil') document.getElementById('in-pagomovil-bs').value = (pmovil + faltanteBS).toFixed(2);
-        if (tipo === 'efectivo') document.getElementById('in-efectivo-bs').value = (efecBS + faltanteBS).toFixed(2);
-    }
-    calcularRestante();
-};
+            <!-- Campos -->
+            <div class="input-pago-group"><label style="font-size:0.6rem;">PUNTO BS</label><input type="number" id="in-punto-bs" value="0" step="0.01" oninput="calcularRestante()"></div>
+            <div class="input-pago-group"><label style="font-size:0.6rem;">P.MOVIL BS</label><input type="number" id="in-pagomovil-bs" value="0" step="0.01" oninput="calcularRestante()"></div>
+            <div class="input-pago-group"><label style="font-size:0.6rem;">EFEC. BS</label><input type="number" id="in-efectivo-bs" value="0" step="0.01" oninput="calcularRestante()"></div>
+            <div class="input-pago-group" style="border-color: var(--electric-blue);"><label style="font-size:0.6rem; color:var(--electric-blue);">DIVISAS $</label><input type="number" id="in-divisas-usd" value="0" step="0.01" oninput="calcularRestante()"></div>
 
-window.calcularRestante = () => {
-    const p = parseFloat(document.getElementById('in-punto-bs').value) || 0;
-    const pm = parseFloat(document.getElementById('in-pagomovil-bs').value) || 0;
-    const eb = parseFloat(document.getElementById('in-efectivo-bs').value) || 0;
-    const du = parseFloat(document.getElementById('in-divisas-usd').value) || 0;
-    
-    const pagadoUSD = du + ((p + pm + eb) / tasaActual);
-    const dif = totalVentaUSD - pagadoUSD;
-    const status = document.getElementById('pago-status');
-    const btn = document.getElementById('btnConfirmarVenta');
+            <div id="pago-status" class="status-badge status-pending">PENDIENTE: <span id="txt-restante">$ 0.00</span></div>
+            <button id="btnConfirmarVenta" class="btn-pay" disabled>REGISTRAR VENTA</button>
+            <p id="btnCerrarModal" style="margin-top:20px; cursor:pointer; color:var(--action-grey); font-size:0.8rem;">Cerrar</p>
+        </div>
+    </div>
 
-    if (dif <= 0.01) {
-        status.className = "status-badge status-complete";
-        status.innerHTML = dif < -0.01 ? `CAMBIO: $ ${Math.abs(dif).toFixed(2)}` : "PAGO COMPLETO";
-        btn.disabled = false;
-    } else {
-        status.className = "status-badge status-pending";
-        status.innerHTML = `FALTAN: $ ${dif.toFixed(2)}`;
-        btn.disabled = true;
-    }
-};
-
-document.getElementById('btnCobrar').onclick = () => {
-    if (carrito.length === 0) return;
-    document.getElementById('totalModalUSD').innerText = `$ ${totalVentaUSD.toFixed(2)}`;
-    document.getElementById('totalModalBS').innerText = `${(totalVentaUSD * tasaActual).toLocaleString('es-VE')} Bs.`;
-    document.getElementById('modalPago').style.display = "block";
-    document.querySelectorAll('#modalPago input').forEach(i => i.value = 0);
-    calcularRestante();
-};
-
-document.getElementById('btnConfirmarVenta').onclick = async () => {
-    const data = {
-        p: parseFloat(document.getElementById('in-punto-bs').value),
-        pm: parseFloat(document.getElementById('in-pagomovil-bs').value),
-        eb: parseFloat(document.getElementById('in-efectivo-bs').value),
-        du: parseFloat(document.getElementById('in-divisas-usd').value),
-        t: tasaActual
-    };
-    if (await procesarVentaFirebase(carrito, totalVentaUSD, data)) {
-        alert("Venta Exitosa");
-        carrito = []; actualizarUI();
-        document.getElementById('modalPago').style.display = "none";
-    }
-};
-
-document.getElementById('btnCerrarModal').onclick = () => document.getElementById('modalPago').style.display = "none";
+    <script type="module" src="./js/pos-db-motor.js"></script>
+    <script type="module" src="./js/pos-core.js"></script>
+</body>
+</html>
