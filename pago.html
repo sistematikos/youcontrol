@@ -2,140 +2,42 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Caja - You Control</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <title>Cobro - You Control</title>
     <style>
-        :root { 
-            --midnight-dark: #001A3D; 
-            --midnight-gradient: linear-gradient(135deg, #002D72 0%, #001A3D 100%);
-            --vinotinto: #800020; 
-            --electric-blue: #0052D4;
-        }
-        body { 
-            font-family: 'Poppins', sans-serif; 
-            background: #F1F5F9; 
-            margin: 0; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-        }
-        .pago-container { 
-            background: white; 
-            padding: 30px; 
-            border-radius: 30px; 
-            width: 100%; 
-            max-width: 420px; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.15); 
-            text-align: center;
-        }
-        .monto-total { 
-            background: var(--midnight-gradient); 
-            color: white; 
-            padding: 25px; 
-            border-radius: 20px; 
-            margin-bottom: 25px; 
-            border-bottom: 5px solid var(--vinotinto); 
-        }
-        .input-pago {
-            background: #F8FAFC; 
-            border: 2px solid #E2E8F0; 
-            border-radius: 15px; 
-            padding: 12px 20px; 
-            margin-bottom: 12px; 
-            display: flex; 
-            flex-direction: column; 
-            text-align: left;
-        }
-        .input-pago label { font-size: 0.65rem; font-weight: 800; color: #64748B; }
-        .input-pago input { 
-            border: none; 
-            background: transparent; 
-            outline: none; 
-            width: 100%; 
-            font-size: 1.5rem; 
-            font-weight: 700; 
-            text-align: right; 
-            color: var(--midnight-dark);
-        }
-        .btn-finalizar { 
-            background: var(--midnight-gradient); 
-            color: white; 
-            border: none; 
-            width: 100%; 
-            padding: 20px; 
-            border-radius: 20px; 
-            font-weight: 800; 
-            cursor: pointer; 
-            margin-top: 10px;
-        }
+        body { font-family: sans-serif; background: #001A3D; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; color: #333; padding: 30px; border-radius: 20px; width: 350px; text-align: center; }
+        .display { background: #001A3D; color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; }
+        input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1.2rem; text-align: right; }
+        .btn { background: #0052D4; color: white; border: none; width: 100%; padding: 15px; border-radius: 10px; cursor: pointer; font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body>
-    <div class="pago-container">
-        <h2 style="margin-top:0; color: var(--midnight-dark);">Finalizar Venta</h2>
-        
-        <div class="monto-total">
-            <small style="opacity:0.8;">MONTO TOTAL</small>
-            <div id="displayUSD" style="font-size: 2.8rem; font-weight: 800;">$ 0.00</div>
-            <div id="displayBS" style="font-size: 1.1rem; opacity: 0.8;">0,00 Bs.</div>
+    <div class="card">
+        <div class="display">
+            <div id="mUSD" style="font-size: 2rem;">$ 0.00</div>
+            <div id="mBS">0,00 Bs.</div>
         </div>
-
-        <div class="input-pago"><label>PUNTO BS</label><input type="number" id="p-punto" value="0" oninput="calcular()"></div>
-        <div class="input-pago"><label>PAGO MÓVIL BS</label><input type="number" id="p-pm" value="0" oninput="calcular()"></div>
-        <div class="input-pago"><label>EFECTIVO BS</label><input type="number" id="p-efec" value="0" oninput="calcular()"></div>
-        <div class="input-pago" style="border-left: 5px solid var(--electric-blue);"><label>DIVISAS $</label><input type="number" id="p-usd" value="0" oninput="calcular()"></div>
-
-        <div id="status" style="padding:10px; font-weight:800; color: #92400E;">FALTAN: $ 0.00</div>
-        
-        <button class="btn-finalizar" id="btnConfirmar" disabled>REGISTRAR PAGO</button>
+        <label>DIVISAS $</label>
+        <input type="number" id="inUSD" value="0">
+        <label>PAGO MÓVIL BS</label>
+        <input type="number" id="inPM" value="0">
+        <button class="btn" id="btnOk">REGISTRAR PAGO</button>
     </div>
 
     <script>
-        // Obtener datos enviados desde la ventana principal
         const params = new URLSearchParams(window.location.search);
-        const totalVenta = parseFloat(params.get('total'));
+        const total = parseFloat(params.get('total'));
         const tasa = parseFloat(params.get('tasa'));
 
-        document.getElementById('displayUSD').innerText = `$ ${totalVenta.toFixed(2)}`;
-        document.getElementById('displayBS').innerText = `${(totalVenta * tasa).toLocaleString('es-VE')} Bs.`;
+        document.getElementById('mUSD').innerText = `$ ${total.toFixed(2)}`;
+        document.getElementById('mBS').innerText = `${(total * tasa).toFixed(2)} Bs.`;
 
-        function calcular() {
-            const p = parseFloat(document.getElementById('p-punto').value) || 0;
-            const pm = parseFloat(document.getElementById('p-pm').value) || 0;
-            const ef = parseFloat(document.getElementById('p-efec').value) || 0;
-            const us = parseFloat(document.getElementById('p-usd').value) || 0;
-
-            const pagado = us + ((p + pm + ef) / tasa);
-            const resta = totalVenta - pagado;
-
-            const st = document.getElementById('status');
-            const btn = document.getElementById('btnConfirmar');
-
-            if (resta <= 0.01) {
-                st.innerText = "PAGO COMPLETO";
-                st.style.color = "#065F46";
-                btn.disabled = false;
-            } else {
-                st.innerText = `FALTAN: $ ${resta.toFixed(2)}`;
-                st.style.color = "#92400E";
-                btn.disabled = true;
-            }
-        }
-
-        document.getElementById('btnConfirmar').onclick = () => {
-            // Enviar señal de éxito a la ventana principal (sys_v1_vt.html)
+        document.getElementById('btnOk').onclick = () => {
             window.opener.postMessage({ 
-                action: 'VENTA_COMPLETADA',
-                pagos: {
-                    punto: document.getElementById('p-punto').value,
-                    pm: document.getElementById('p-pm').value,
-                    efec: document.getElementById('p-efec').value,
-                    divisas: document.getElementById('p-usd').value
-                }
+                action: 'VENTA_COMPLETADA', 
+                pagos: { usd: document.getElementById('inUSD').value, pm: document.getElementById('inPM').value } 
             }, "*");
-            window.close(); // Cerrar ventana emergente
+            window.close();
         };
     </script>
 </body>
