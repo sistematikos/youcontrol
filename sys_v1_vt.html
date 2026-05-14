@@ -15,7 +15,6 @@
             --bg-body: #F1F5F9; 
             --white: #FFFFFF;
             --border-color: #E2E8F0;
-            --action-grey: #475569;
         }
         
         body { font-family: 'Poppins', sans-serif; background: var(--bg-body); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
@@ -23,7 +22,29 @@
         .header-sales { background: var(--midnight-gradient); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--vinotinto); }
         .tasa-badge { background: rgba(255, 255, 255, 0.1); padding: 8px 18px; border-radius: 10px; font-weight: 800; border: 1px solid rgba(255,255,255,0.2); }
         
-        .shortcuts-bar { display: flex; gap: 15px; padding: 10px 30px; background: #e2e8f0; font-size: 0.75rem; font-weight: 600; color: #475569; }
+        /* BARRA DE ATAJOS PERSUASIVA */
+        .shortcuts-container { 
+            display: flex; 
+            justify-content: center; 
+            gap: 10px; 
+            padding: 12px; 
+            background: #FFFFFF; 
+            border-bottom: 1px solid var(--border-color);
+        }
+        .key-pill {
+            background: #F1F5F9;
+            border: 1px solid var(--border-color);
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--midnight-dark);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .key-pill b { background: var(--midnight-dark); color: white; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; }
 
         .pos-container { display: flex; flex: 1; gap: 20px; padding: 20px; overflow: hidden; }
         .panel-left, .panel-cart { background: var(--white); border-radius: 25px; display: flex; flex-direction: column; padding: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.04); }
@@ -34,7 +55,7 @@
         .product-card { display: grid; grid-template-columns: 1fr 100px 40px; align-items: center; padding: 14px; border-bottom: 1px solid #F1F5F9; cursor: pointer; }
         .item-selected { border: 2px solid var(--electric-blue) !important; background: #EBF4FF !important; border-radius: 15px; }
 
-        /* MODAL CENTRADO */
+        /* MODAL CENTRADO ABSOLUTO */
         .modal { 
             display: none; 
             position: fixed; 
@@ -45,8 +66,9 @@
             height: 100%; 
             background: rgba(0,13,26,0.85); 
             backdrop-filter: blur(10px); 
-            justify-content: center; /* Centrado Horizontal */
-            align-items: center;     /* Centrado Vertical */
+            display: none;
+            justify-content: center; 
+            align-items: center; 
         }
         .modal-content { 
             background: white; 
@@ -55,15 +77,13 @@
             width: 90%; 
             max-width: 480px; 
             text-align: center; 
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-            animation: modalIn 0.3s ease-out;
+            box-shadow: 0 30px 70px rgba(0,0,0,0.5);
+            margin: 0; /* Evita desplazamientos raros */
         }
 
-        @keyframes modalIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        
         .btn-action-metodo {
             border: 2px solid #E2E8F0; background: #F8FAFC; padding: 15px 5px; border-radius: 15px;
-            color: var(--action-grey); font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 0.7rem;
+            color: #475569; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 0.7rem;
         }
         
         .input-pago-group { display: flex; align-items: center; background: #F8FAFC; border: 2px solid #E2E8F0; border-radius: 15px; padding: 10px 20px; margin-bottom: 10px; }
@@ -73,11 +93,11 @@
         .status-pending { background: #FEF3C7; color: #92400E; }
         .status-complete { background: #D1FAE5; color: #065F46; }
 
-        .btn-pay { border: none; border-radius: 20px; background: var(--midnight-gradient); color: white; font-weight: 800; cursor: pointer; padding: 18px; width: 100%; }
+        .btn-pay { border: none; border-radius: 20px; background: var(--midnight-gradient); color: white; font-weight: 800; cursor: pointer; padding: 18px; width: 100%; transition: 0.3s; }
         .btn-pay:disabled { opacity: 0.3; cursor: not-allowed; }
     </style>
 </head>
-<body oncontextmenu="return false">
+<body>
     <audio id="beepSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" preload="auto"></audio>
 
     <header class="header-sales">
@@ -85,8 +105,12 @@
         <div class="tasa-badge">TASA: <span id="txt-tasa">0,00</span> Bs.</div>
     </header>
 
-    <div class="shortcuts-bar">
-        <span>F4: CANTIDAD</span> | <span>F5: PRECIO</span> | <span>F6: BORRAR</span> | <span>F9: COBRAR</span>
+    <!-- Barra de Atajos con Aspecto Atractivo -->
+    <div class="shortcuts-container">
+        <div class="key-pill"><b>F4</b> CANTIDAD</div>
+        <div class="key-pill"><b>F5</b> PRECIO</div>
+        <div class="key-pill"><b>F6</b> ELIMINAR</div>
+        <div class="key-pill" style="background: var(--vinotinto); color: white; border: none;"><b>F9</b> COBRAR</div>
     </div>
 
     <div class="pos-container">
@@ -98,22 +122,21 @@
         <div class="panel-cart">
             <div id="lista-carrito" class="cart-list"></div>
             <div style="background:#F8FAFC; padding:20px; border-radius:20px; text-align:center; border:2px solid var(--border-color); margin-bottom:15px;">
-                <span id="total-usd" style="font-size:2.5rem; font-weight:800; display:block;">$ 0.00</span>
+                <span id="total-usd" style="font-size:2.5rem; font-weight:800; display:block; color: var(--midnight-dark);">$ 0.00</span>
                 <span id="total-bs" style="font-size:1.1rem; opacity:0.7; font-weight:600;">0,00 Bs.</span>
             </div>
-            <button id="btnCobrar" class="btn-pay">COBRAR [F9]</button>
+            <button id="btnCobrar" class="btn-pay">REGISTRAR PAGO [F9]</button>
         </div>
     </div>
 
-    <!-- MODAL DE PAGO -->
     <div id="modalPago" class="modal">
         <div class="modal-content">
             <h2 style="color: var(--midnight-dark); margin: 0 0 15px 0;">Confirmar Cobro</h2>
             
-            <div style="background: var(--midnight-dark); color: white; padding: 20px; border-radius: 20px; margin-bottom: 20px;">
-                <small style="opacity: 0.8;">MONTO TOTAL</small>
-                <div id="totalModalUSD" style="font-size: 2.8rem; font-weight: 800;">$ 0.00</div>
-                <div id="totalModalBS" style="font-size: 1.1rem; opacity: 0.8;">0,00 Bs.</div>
+            <div style="background: var(--midnight-dark); color: white; padding: 25px; border-radius: 20px; margin-bottom: 20px;">
+                <small style="opacity: 0.8; letter-spacing: 1px;">MONTO TOTAL A RECIBIR</small>
+                <div id="totalModalUSD" style="font-size: 3rem; font-weight: 800; margin: 5px 0;">$ 0.00</div>
+                <div id="totalModalBS" style="font-size: 1.2rem; opacity: 0.8;">0,00 Bs.</div>
             </div>
 
             <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px;">
@@ -123,14 +146,14 @@
                 <button class="btn-action-metodo" onclick="autoCompletar('efectivo')"><i class="fas fa-money-bill-wave"></i> EFEC. BS</button>
             </div>
 
-            <div class="input-pago-group"><label style="font-size:0.6rem; width:80px;">PUNTO BS</label><input type="number" id="in-punto-bs" value="0" step="0.01" oninput="calcularRestante()" onclick="this.select()"></div>
-            <div class="input-pago-group"><label style="font-size:0.6rem; width:80px;">P.MOVIL BS</label><input type="number" id="in-pagomovil-bs" value="0" step="0.01" oninput="calcularRestante()" onclick="this.select()"></div>
-            <div class="input-pago-group"><label style="font-size:0.6rem; width:80px;">EFEC. BS</label><input type="number" id="in-efectivo-bs" value="0" step="0.01" oninput="calcularRestante()" onclick="this.select()"></div>
-            <div class="input-pago-group" style="border-color: var(--electric-blue);"><label style="font-size:0.6rem; width:80px; color:var(--electric-blue);">DIVISAS $</label><input type="number" id="in-divisas-usd" value="0" step="0.01" oninput="calcularRestante()" onclick="this.select()"></div>
+            <div class="input-pago-group"><label style="font-size:0.65rem; width:100px; text-align:left;">PUNTO BS</label><input type="number" id="in-punto-bs" value="0" step="0.01" oninput="calcularRestante()" onclick="this.select()"></div>
+            <div class="input-pago-group"><label style="font-size:0.65rem; width:100px; text-align:left;">P.MOVIL BS</label><input type="number" id="in-pagomovil-bs" value="0" step="0.01" oninput="calcularRestante()" onclick="this.select()"></div>
+            <div class="input-pago-group"><label style="font-size:0.65rem; width:100px; text-align:left;">EFEC. BS</label><input type="number" id="in-efectivo-bs" value="0" step="0.01" oninput="calcularRestante()" onclick="this.select()"></div>
+            <div class="input-pago-group" style="border-color: var(--electric-blue); background: #f0f7ff;"><label style="font-size:0.65rem; width:100px; text-align:left; color:var(--electric-blue);">DIVISAS $</label><input type="number" id="in-divisas-usd" value="0" step="0.01" oninput="calcularRestante()" onclick="this.select()"></div>
 
-            <div id="pago-status" class="status-badge status-pending">PENDIENTE: <span id="txt-restante">$ 0.00</span></div>
-            <button id="btnConfirmarVenta" class="btn-pay" disabled>REGISTRAR VENTA</button>
-            <p id="btnCerrarModal" style="margin-top:20px; cursor:pointer; color:var(--action-grey); font-size:0.8rem; font-weight:600;">Cerrar y Volver</p>
+            <div id="pago-status" class="status-badge status-pending">PENDIENTE: $ 0.00</div>
+            <button id="btnConfirmarVenta" class="btn-pay" disabled>CONFIRMAR TRANSACCIÓN</button>
+            <p id="btnCerrarModal" style="margin-top:20px; cursor:pointer; color:#64748b; font-size:0.85rem; font-weight:600;">Regresar al Carrito</p>
         </div>
     </div>
 
