@@ -4,59 +4,258 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>POS | You Control - Sistematikos</title>
+    <!-- Iconos y Fuentes -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         :root { 
-            --midnight-dark: #001A3D; 
+            --midnight: #001A3D; 
             --vinotinto: #800020;
             --electric-blue: #0052D4;
+            --soft-gray: #F1F5F9;
         }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: #F1F5F9; }
-        header { background: var(--midnight-dark); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--vinotinto); }
-        .main-container { display: grid; grid-template-columns: 1fr 400px; gap: 20px; padding: 20px; height: calc(100vh - 80px); }
-        .panel-left { background: white; border-radius: 25px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
-        .search-bar { width: 100%; padding: 15px; border-radius: 50px; border: 2px solid #E2E8F0; margin-bottom: 20px; box-sizing: border-box; }
-        .grid-productos { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; overflow-y: auto; }
-        .product-card { border: 1px solid #E2E8F0; padding: 15px; border-radius: 15px; cursor: pointer; transition: 0.2s; display: flex; justify-content: space-between; }
-        .product-card:hover { border-color: var(--electric-blue); background: #F8FAFC; }
-        .panel-right { background: white; border-radius: 25px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .total-box { background: #F8FAFC; padding: 30px; border-radius: 20px; text-align: center; margin-top: auto; }
-        .btn-cobrar { background: var(--midnight-dark); color: white; border: none; width: 100%; padding: 20px; border-radius: 15px; font-weight: 800; cursor: pointer; font-size: 1.1rem; margin-top: 15px; }
+
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            margin: 0; 
+            background: var(--soft-gray); 
+            overflow: hidden;
+        }
+
+        /* Header Profesional */
+        header { 
+            background: var(--midnight); 
+            color: white; 
+            padding: 12px 25px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 4px solid var(--vinotinto);
+            height: 60px;
+            box-sizing: border-box;
+        }
+
+        .tasa-badge {
+            background: rgba(255,255,255,0.1);
+            padding: 8px 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* Contenedor Principal */
+        .main-container { 
+            display: grid; 
+            grid-template-columns: 1fr 420px; 
+            gap: 20px; 
+            padding: 20px; 
+            height: calc(100vh - 60px); 
+            box-sizing: border-box;
+        }
+
+        /* Panel Izquierdo: Productos */
+        .panel-left { 
+            background: white; 
+            border-radius: 25px; 
+            padding: 20px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+            display: flex; 
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .search-bar { 
+            width: 100%; 
+            padding: 15px 25px; 
+            border-radius: 50px; 
+            border: 2px solid #E2E8F0; 
+            margin-bottom: 20px; 
+            font-size: 1rem;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .search-bar:focus { border-color: var(--electric-blue); }
+
+        .grid-productos { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
+            gap: 15px; 
+            overflow-y: auto; 
+            padding-right: 5px;
+        }
+
+        .product-card { 
+            border: 1px solid #E2E8F0; 
+            padding: 15px; 
+            border-radius: 18px; 
+            cursor: pointer; 
+            transition: 0.2s; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+        }
+
+        .product-card:hover { 
+            border-color: var(--electric-blue); 
+            background: #f8faff; 
+            transform: translateY(-2px);
+        }
+
+        /* Panel Derecho: Carrito */
+        .panel-right { 
+            background: white; 
+            border-radius: 25px; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        #lista-carrito { flex-grow: 1; overflow-y: auto; margin-bottom: 20px; }
+
+        /* Caja de Totales */
+        .total-box { 
+            background: #F8FAFC; 
+            padding: 25px; 
+            border-radius: 20px; 
+            text-align: center; 
+            border: 1px solid #E2E8F0;
+        }
+
+        .total-usd { font-size: 2.8rem; font-weight: 800; color: var(--midnight); margin: 0; }
+        .total-bs { font-size: 1.2rem; color: #64748B; margin-bottom: 15px; }
+
+        .btn-cobrar { 
+            background: var(--midnight); 
+            color: white; 
+            border: none; 
+            width: 100%; 
+            padding: 18px; 
+            border-radius: 15px; 
+            font-weight: 800; 
+            cursor: pointer; 
+            font-size: 1.1rem;
+            transition: 0.3s;
+        }
+
+        .btn-cobrar:hover { background: var(--electric-blue); }
+
+        /* Modal de Pago */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 26, 61, 0.9);
+            z-index: 1000;
+            justify-content: center; align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            width: 450px;
+            padding: 30px;
+            border-radius: 30px;
+            position: relative;
+        }
+
+        .pago-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 0.8rem; font-weight: bold; margin-bottom: 5px; color: #64748B; }
+        .input-group input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #DDD; font-size: 1.1rem; box-sizing: border-box; }
+
+        .status-badge {
+            padding: 15px; border-radius: 10px; text-align: center; font-weight: bold; margin-top: 15px;
+        }
+        .status-pending { background: #FEF3C7; color: #92400E; }
+        .status-complete { background: #DCFCE7; color: #166534; }
+
+        /* Scrollbar Personalizado */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
     </style>
 </head>
 <body>
 
 <header>
-    <div><strong>YOU CONTROL</strong> | SISTEMATIKOS</div>
-    <div style="background: rgba(255,255,255,0.1); padding: 8px 15px; border-radius: 10px;">
-        TASA: <span id="top-tasa">0.00</span> Bs.
+    <div style="font-size: 1.2rem; letter-spacing: 1px;">
+        <strong>YOU CONTROL</strong> | SISTEMATIKOS
+    </div>
+    <div class="tasa-badge">
+        TASA: <span id="val-tasa">0.00</span> Bs.
     </div>
 </header>
 
-<div class="main-container">
-    <div class="panel-left">
-        <input type="text" class="search-bar" placeholder="Buscar producto..." id="inputBusqueda">
+<main class="main-container">
+    <!-- Panel de Selección de Productos -->
+    <section class="panel-left">
+        <input type="text" class="search-bar" id="inputBusqueda" placeholder="Buscar producto por nombre o código...">
         <div id="grid-productos" class="grid-productos">
-            <!-- Productos cargados dinámicamente -->
+            <!-- Los productos se inyectan aquí desde pos-core.js -->
         </div>
-    </div>
+    </section>
 
-    <div class="panel-right">
-        <h3 style="margin-top:0;">Carrito de Venta</h3>
-        <div id="lista-carrito" style="flex-grow:1; overflow-y:auto;">
-            <!-- Items del carrito -->
+    <!-- Panel de Facturación -->
+    <section class="panel-right">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin:0; color: var(--midnight);">Carrito de Venta</h3>
+            <button onclick="location.reload()" style="border:none; background:none; cursor:pointer; color:#94a3b8;"><i class="fas fa-sync"></i></button>
+        </div>
+
+        <div id="lista-carrito">
+            <!-- Items agregados aparecerán aquí -->
         </div>
         
         <div class="total-box">
-            <div id="total-usd" style="font-size: 2.5rem; font-weight: 800;">$ 0.00</div>
-            <div id="total-bs" style="color: #64748B;">0,00 Bs.</div>
+            <p class="total-usd" id="total-usd">$ 0.00</p>
+            <p class="total-bs" id="total-bs">0,00 Bs.</p>
             <button class="btn-cobrar" id="btnCobrar">COBRAR VENTA [F9]</button>
+        </div>
+    </section>
+</main>
+
+<!-- Modal de Procesamiento de Pago -->
+<div id="modalPago" class="modal">
+    <div class="modal-content">
+        <h2 style="margin-top:0; text-align:center;">Finalizar Venta</h2>
+        <div style="background:var(--soft-gray); padding:15px; border-radius:15px; text-align:center; margin-bottom:20px;">
+            <span id="totalModalUSD" style="font-size:1.8rem; font-weight:800;">$ 0.00</span><br>
+            <span id="totalModalBS" style="color:#64748B;">0,00 Bs.</span>
+        </div>
+
+        <div class="pago-grid">
+            <div class="input-group">
+                <label>PUNTO DE VENTA (BS)</label>
+                <input type="number" id="in-punto-bs" oninput="calcularRestante()" onclick="autoCompletar('punto')">
+            </div>
+            <div class="input-group">
+                <label>PAGO MÓVIL (BS)</label>
+                <input type="number" id="in-pagomovil-bs" oninput="calcularRestante()" onclick="autoCompletar('pagomovil')">
+            </div>
+            <div class="input-group">
+                <label>EFECTIVO (BS)</label>
+                <input type="number" id="in-efectivo-bs" oninput="calcularRestante()" onclick="autoCompletar('efectivo')">
+            </div>
+            <div class="input-group">
+                <label>DIVISAS (USD)</label>
+                <input type="number" id="in-divisas-usd" oninput="calcularRestante()" onclick="autoCompletar('divisas')">
+            </div>
+        </div>
+
+        <div id="pago-status" class="status-badge status-pending">FALTAN: $ 0.00</div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px;">
+            <button class="btn-cobrar" style="background:#64748B;" onclick="cerrarModal()">CANCELAR</button>
+            <button class="btn-cobrar" id="btnConfirmarVenta" disabled>CONFIRMAR</button>
         </div>
     </div>
 </div>
 
+<!-- Audio para feedback de escaneo -->
 <audio id="beepSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
 
+<!-- IMPORTANTE: El script debe ser type="module" -->
 <script type="module" src="./js/pos-core.js"></script>
+
 </body>
 </html>
