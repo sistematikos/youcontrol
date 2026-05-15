@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Control Panel | Sistematikos</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
     <style>
         :root { --navy: #1A1A2E; --electric: #007BFF; --vinotinto: #800020; }
         body { 
@@ -82,28 +81,28 @@
     <main class="container">
         <div class="menu-grid">
             
-            <a href="sys_v1_101.html" class="card-link">
-                <i class="fas fa-layer-group"></i>
-                <span>ALMACÉN</span>
+            <a href="index_datos.html" class="card-link">
+                <i class="fas fa-boxes"></i>
+                <span>INVENTARIO</span>
                 <small>ID: SYS_101_INV</small>
             </a>
 
-            <a href="sys_v1_202.html" class="card-link">
+            <a href="sys_v1_vt.html" class="card-link">
                 <i class="fas fa-cash-register"></i>
-                <span>CAJA RÁPIDA</span>
+                <span>VENTAS (POS)</span>
                 <small>ID: SYS_202_POS</small>
             </a>
 
-            <a href="node_v2_505.html" class="card-link">
-                <i class="fas fa-globe"></i>
-                <span>CATÁLOGO</span>
-                <small>ID: NODE_505_PUB</small>
+            <a href="index_estad.html" class="card-link">
+                <i class="fas fa-chart-line"></i>
+                <span>REPORTES</span>
+                <small>ID: NODE_505_STATS</small>
             </a>
 
-            <a href="node_v2_808.html" class="card-link">
-                <i class="fas fa-user-shield"></i>
-                <span>DATOS CORE</span>
-                <small>ID: NODE_808_SEC</small>
+            <a href="index_atletas.html" class="card-link">
+                <i class="fas fa-users"></i>
+                <span>ATLETAS</span>
+                <small>ID: NODE_808_DATA</small>
             </a>
 
         </div>
@@ -111,16 +110,17 @@
         <div class="status-bar">
             <p><i class="fas fa-lock"></i> Entorno Seguro Activado para Frank Hernandez</p>
             <button onclick="location.href='index.html'" style="background:none; border:1px solid #ccc; padding:5px 15px; border-radius:15px; cursor:pointer; color:#64748b;">
-                Volver al Inicio
+                Cerrar Sesión
             </button>
         </div>
     </main>
 
     <script>
-        // Bloqueo de inspección adicional
+        // Protección de código solicitada
         document.onkeydown = function(e) {
             if(event.keyCode == 123) return false;
             if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
+            if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
         }
     </script>
 </body>
