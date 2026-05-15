@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #F8FAFC; --primary: #3B82F6; --text: #1E293B; --border: #E2E8F0; --emerald: #10B981; }
-        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding-bottom: 50px; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding-bottom: 50px; color: var(--text); }
         
         .container { padding: 15px; max-width: 1100px; margin: auto; }
         .header-table { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
@@ -25,15 +25,16 @@
             box-sizing: border-box; background: #F1F5F9;
         }
         .input-table:focus { outline: none; border-color: var(--primary); background: white; }
+        .input-table[readonly] { background: #E2E8F0; color: #64748B; cursor: not-allowed; }
         
         .p-barcode { font-family: 'Courier New', monospace; font-weight: bold; color: var(--primary); }
 
         .btn-add { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; }
         .btn-save { background: var(--emerald); color: white; border: none; padding: 18px; border-radius: 15px; cursor: pointer; font-weight: 800; width: 100%; margin-top: 25px; font-size: 1.1rem; }
-        .btn-remove { color: #EF4444; background: #FEE2E2; border: none; cursor: pointer; padding: 8px; border-radius: 8px; transition: 0.2s; }
-        .btn-remove:hover { background: #EF4444; color: white; }
+        .btn-remove { color: #EF4444; background: #FEE2E2; border: none; cursor: pointer; padding: 8px; border-radius: 8px; }
 
         .btn-back { border: none; background: none; color: var(--primary); cursor: pointer; font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; gap: 5px; }
+        .loading-overlay { text-align: center; padding: 20px; color: var(--primary); font-weight: bold; }
     </style>
 </head>
 <body oncontextmenu="return false">
@@ -44,28 +45,29 @@
         </button>
 
         <div class="header-table">
-            <h3><i class="fas fa-barcode"></i> CARGA DE PRODUCTOS (SYS_V1)</h3>
-            <button class="btn-add" onclick="window.agregarFila()"><i class="fas fa-plus"></i> NUEVA FILA</button>
+            <h3><i class="fas fa-boxes-stacked"></i> GESTIÓN DE INVENTARIO</h3>
+            <button class="btn-add" onclick="window.agregarFila()"><i class="fas fa-plus"></i> NUEVO ITEM</button>
         </div>
 
         <div class="table-responsive">
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 20%;">Cód. Barras</th>
-                        <th style="width: 40%;">Descripción del Producto</th>
+                        <th style="width: 20%;">Cód. / SKU</th>
+                        <th style="width: 40%;">Descripción</th>
                         <th style="width: 15%;">Precio $</th>
                         <th style="width: 15%;">Stock</th>
                         <th style="width: 10%; text-align: center;">Acción</th>
                     </tr>
                 </thead>
                 <tbody id="cuerpo-tabla">
-                    </tbody>
+                    <tr><td colspan="5" class="loading-overlay"><i class="fas fa-spinner fa-spin"></i> Cargando productos...</td></tr>
+                </tbody>
             </table>
         </div>
 
         <button class="btn-save" id="btnGuardarTodo" onclick="window.guardarInventario()">
-            <i class="fas fa-save"></i> PROCESAR CARGA MASIVA (FIREBASE)
+            <i class="fas fa-sync-alt"></i> SINCRONIZAR CON FIREBASE
         </button>
     </div>
 
