@@ -4,7 +4,8 @@ import {
     onSnapshot, 
     addDoc, 
     serverTimestamp, 
-    doc 
+    doc,
+    getDoc // Importante para leer la tasa una vez
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const USER_ID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12"; 
@@ -12,12 +13,27 @@ const USER_ID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
 let productosMaster = [];
 let carrito = [];
 let itemSeleccionadoIndex = -1;
-let tasaActual = 36.50; 
+let tasaActual = 1; // Valor inicial, se actualizará desde Firebase
 
-// --- DETECCIÓN DE MODAL ---
+// --- 1. CARGA DE TASA REAL DESDE FIREBASE ---
+async function cargarTasa() {
+    try {
+        const tasaSnap = await getDoc(doc(db, "usuarios", USER_ID, "configuracion", "tasa"));
+        if (tasaSnap.exists()) {
+            tasaActual = tasaSnap.data().valor || 1;
+            console.log("Tasa actualizada desde DB:", tasaActual);
+            // Actualizamos la UI si ya hay algo en el carrito
+            window.actualizarCarritoUI();
+        }
+    } catch (e) {
+        console.error("Error cargando tasa:", e);
+    }
+}
+
+// --- 2. DETECCIÓN DE MODAL ---
 const isModalOpen = () => document.getElementById('modalPago').style.display === 'flex';
 
-// --- CARGA DE PRODUCTOS ---
+// --- 3. CARGA DE PRODUCTOS ---
 onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
     productosMaster = [];
     snapshot.forEach(doc => productosMaster.push({ id: doc.id, ...doc.data() }));
@@ -41,7 +57,11 @@ window.agregarCarrito = (id) => {
     const p = productosMaster.find(x => x.id === id);
     if (!p) return;
     const item = carrito.find(c => c.id === id);
-    if (item) { item.cantidad++; } else { carrito.push({ ...p, cantidad: 1 }); }
+    if (item) { 
+        item.cantidad++; 
+    } else { 
+        carrito.push({ ...p, cantidad: 1 }); 
+    }
     itemSeleccionadoIndex = carrito.length - 1;
     window.actualizarCarritoUI();
 };
@@ -56,14 +76,16 @@ window.actualizarCarritoUI = () => {
             <b>$${(c.precio * c.cantidad).toFixed(2)}</b>
         </div>`;
     }).join('');
+    
     document.getElementById('total-usd').innerText = `$ ${total.toFixed(2)}`;
+    // Aquí ya usa la tasaActual cargada de Firebase
     document.getElementById('total-bs').innerText = `${(total * tasaActual).toFixed(2)} Bs`;
     window.totalVentaUSD = total;
 };
 
 window.seleccionarItem = (i) => { itemSeleccionadoIndex = i; window.actualizarCarritoUI(); };
 
-// --- FUNCIONES F (SOLO PARA EL CARRITO) ---
+// --- FUNCIONES F (SIN CAMBIOS) ---
 window.ejecutarF4 = () => {
     if (isModalOpen() || itemSeleccionadoIndex === -1) return;
     const n = prompt("Nueva Cantidad:", carrito[itemSeleccionadoIndex].cantidad);
@@ -140,21 +162,14 @@ window.registrarVenta = async () => {
 // --- CONTROL DE TECLADO ---
 window.addEventListener('keydown', (e) => {
     const modalActivo = isModalOpen();
-
-    // Bloqueo de F4 y F6
     if (e.key === "F4") { e.preventDefault(); if (!modalActivo) window.ejecutarF4(); }
     if (e.key === "F6") { e.preventDefault(); if (!modalActivo) window.ejecutarF6(); }
-
-    // F5: Solo ejecuta si no se presiona Control
     if (e.key === "F5") {
         if (!e.ctrlKey) { 
             e.preventDefault(); 
             if (!modalActivo) window.ejecutarF5(); 
         } 
-        // Si es Ctrl+F5, el navegador refrescará normalmente
     }
-
-    // F9: Cobrar o Confirmar
     if (e.key === "F9") { 
         e.preventDefault(); 
         if (!modalActivo) {
@@ -163,6 +178,8 @@ window.addEventListener('keydown', (e) => {
             window.registrarVenta();
         }
     }
-
     if (e.key === "Escape") document.getElementById('modalPago').style.display = 'none';
 });
+
+// --- INICIO ---
+cargarTasa(); // Llamamos a la función para obtener la tasa real
