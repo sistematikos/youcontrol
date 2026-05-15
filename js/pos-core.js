@@ -8,60 +8,87 @@ const USER_ID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
 let productosMaster = [];
 let carrito = [];
 let itemSeleccionadoIndex = -1;
-let tasaActual = 1; // Valor por defecto hasta que cargue la DB
+let tasaActual = 1;
 
-// --- CARGA DE TASA REAL DESDE FIREBASE ---
+// --- CARGA DE TASA REAL ---
 async function cargarTasa() {
     try {
-        // Accedemos a usuarios -> USER_ID -> configuracion -> tasa
         const tasaRef = doc(db, "usuarios", USER_ID, "configuracion", "tasa");
         const tasaSnap = await getDoc(tasaRef);
         
         if (tasaSnap.exists()) {
-            const data = tasaSnap.data();
-            // Asegúrate de que el campo en Firebase se llame 'valor'
-            tasaActual = parseFloat(data.valor) || 1;
-            
-            // ACTUALIZACIÓN DEL ENCABEZADO (TXT-TASA)
+            tasaActual = parseFloat(tasaSnap.data().valor) || 1;
             const txtTasa = document.getElementById('txt-tasa');
-            if (txtTasa) {
-                // Formato con coma para decimales (ej: 36,50)
-                txtTasa.innerText = tasaActual.toFixed(2).replace('.', ',');
-            }
-
-            console.log("Tasa sincronizada con éxito:", tasaActual);
+            if (txtTasa) txtTasa.innerText = tasaActual.toFixed(2).replace('.', ',');
+            
+            // Refrescamos la lista de productos para que muestren el precio en Bs al cargar la tasa
+            renderizarProductos(productosMaster);
             window.actualizarCarritoUI();
-        } else {
-            console.warn("No se encontró el documento de tasa en Firebase.");
         }
     } catch (e) {
-        console.error("Error al cargar la tasa desde Firebase:", e);
+        console.error("Error al cargar la tasa:", e);
     }
 }
 
-// --- RESTO DE LA LÓGICA DEL POS (MANTENER IGUAL) ---
+// --- RENDERIZAR LISTA DE PRODUCTOS CON PRECIO EN BS ---
+function renderizarProductos(lista) {
+    const container = document.getElementById('grid-productos');
+    if (!container) return;
 
-const isModalOpen = () => document.getElementById('modalPago').style.display === 'flex';
+    container.innerHTML = lista.map(p => {
+        const precioUSD = parseFloat(p.precio) || 0;
+        const precioBS = (precioUSD * tasaActual).toFixed(2).replace('.', ',');
 
+        return `
+            <div class="single-line-row" onclick="window.agregarCarrito('${p.id}')">
+                <span><b>${p.nombre}</b></span>
+                <div style="text-align: right;">
+                    <b style="display: block;">$${precioUSD.toFixed(2)}</b>
+                    <small style="color: #64748b;">${precioBS} Bs.</small>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// --- ESCUCHA DE CAMBIOS EN PRODUCTOS ---
 onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
     productosMaster = [];
     snapshot.forEach(doc => productosMaster.push({ id: doc.id, ...doc.data() }));
     renderizarProductos(productosMaster);
 });
 
-function renderizarProductos(lista) {
-    const container = document.getElementById('grid-productos');
-    if (!container) return;
-    container.innerHTML = lista.map(p => `
-        <div class="single-line-row" onclick="window.agregarCarrito('${p.id}')">
-            <span><b>${p.nombre}</b></span>
-            <b>$${parseFloat(p.precio).toFixed(2)}</b>
-        </div>
-    `).join('');
-}
+// --- ACTUALIZAR UI DEL CARRITO ---
+window.actualizarCarritoUI = () => {
+    const list = document.getElementById('lista-carrito');
+    let total = 0;
+    if (!list) return;
+
+    list.innerHTML = carrito.map((c, index) => {
+        const subtotalUSD = c.precio * c.cantidad;
+        const subtotalBS = (subtotalUSD * tasaActual).toFixed(2).replace('.', ',');
+        total += subtotalUSD;
+
+        return `
+            <div class="single-line-row ${index === itemSeleccionadoIndex ? 'item-selected' : ''}" onclick="window.seleccionarItem(${index})">
+                <span>${c.cantidad}x ${c.nombre}</span>
+                <div style="text-align: right;">
+                    <b style="display: block;">$${subtotalUSD.toFixed(2)}</b>
+                    <small style="color: #64748b;">${subtotalBS} Bs.</small>
+                </div>
+            </div>`;
+    }).join('');
+    
+    document.getElementById('total-usd').innerText = `$ ${total.toFixed(2)}`;
+    document.getElementById('total-bs').innerText = `${(total * tasaActual).toFixed(2).replace('.', ',')} Bs.`;
+    window.totalVentaUSD = total;
+};
+
+// --- EL RESTO DE TUS FUNCIONES (agregarCarrito, abrirModalCobro, etc.) SE MANTIENEN IGUAL ---
 
 window.agregarCarrito = (id) => {
-    if (isModalOpen()) return;
+    const isModalOpen = document.getElementById('modalPago').style.display === 'flex';
+    if (isModalOpen) return;
     const p = productosMaster.find(x => x.id === id);
     if (!p) return;
     const item = carrito.find(c => c.id === id);
@@ -70,28 +97,8 @@ window.agregarCarrito = (id) => {
     window.actualizarCarritoUI();
 };
 
-window.actualizarCarritoUI = () => {
-    const list = document.getElementById('lista-carrito');
-    let total = 0;
-    if (!list) return;
-
-    list.innerHTML = carrito.map((c, index) => {
-        total += (c.precio * c.cantidad);
-        return `<div class="single-line-row ${index === itemSeleccionadoIndex ? 'item-selected' : ''}" onclick="window.seleccionarItem(${index})">
-            <span>${c.cantidad}x ${c.nombre}</span>
-            <b>$${(c.precio * c.cantidad).toFixed(2)}</b>
-        </div>`;
-    }).join('');
-    
-    document.getElementById('total-usd').innerText = `$ ${total.toFixed(2)}`;
-    // Aquí también se usa la tasaActual para el total en Bs
-    document.getElementById('total-bs').innerText = `${(total * tasaActual).toFixed(2).replace('.', ',')} Bs.`;
-    window.totalVentaUSD = total;
-};
-
 window.seleccionarItem = (i) => { itemSeleccionadoIndex = i; window.actualizarCarritoUI(); };
 
-// --- FUNCIONES F9 Y COBRO ---
 window.abrirModalCobro = () => {
     if (carrito.length === 0) return;
     document.getElementById('totalModalUSD').innerText = `$ ${window.totalVentaUSD.toFixed(2)}`;
@@ -150,5 +157,14 @@ window.registrarVenta = async () => {
     btn.innerText = "CONFIRMAR VENTA";
 };
 
-// Iniciar carga de tasa al cargar el script
+// Atajos de teclado
+window.addEventListener('keydown', (e) => {
+    const modalActivo = document.getElementById('modalPago').style.display === 'flex';
+    if (e.key === "F4") { e.preventDefault(); if (!modalActivo) window.ejecutarF4(); }
+    if (e.key === "F6") { e.preventDefault(); if (!modalActivo) window.ejecutarF6(); }
+    if (e.key === "F5" && !e.ctrlKey) { e.preventDefault(); if (!modalActivo) window.ejecutarF5(); }
+    if (e.key === "F9") { e.preventDefault(); if (!modalActivo) { window.abrirModalCobro(); } else { window.registrarVenta(); } }
+    if (e.key === "Escape") document.getElementById('modalPago').style.display = 'none';
+});
+
 cargarTasa();
