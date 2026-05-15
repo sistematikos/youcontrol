@@ -9,14 +9,22 @@
     <style>
         :root { --bg: #F8FAFC; --primary: #3B82F6; --text: #1E293B; --border: #E2E8F0; --emerald: #10B981; }
         body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding-bottom: 50px; color: var(--text); }
-        .container { padding: 15px; max-width: 1200px; margin: auto; }
+        .container { padding: 15px; max-width: 1300px; margin: auto; }
         .header-table { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        
+        /* Panel de Tasa */
+        .tasa-panel { background: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .tasa-input { padding: 10px; border-radius: 10px; border: 2px solid var(--primary); width: 130px; font-weight: 800; font-size: 1.2rem; text-align: center; color: var(--text); }
+
         .table-responsive { overflow-x: auto; background: white; border-radius: 15px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        table { width: 100%; border-collapse: collapse; min-width: 900px; }
-        th { background: #F1F5F9; padding: 15px; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: #64748B; }
-        td { padding: 10px; border-bottom: 1px solid var(--border); }
-        .input-table { width: 100%; border: 1px solid transparent; padding: 10px; border-radius: 8px; font-size: 0.9rem; transition: 0.2s; box-sizing: border-box; background: #F1F5F9; }
+        table { width: 100%; border-collapse: collapse; min-width: 1100px; }
+        th { background: #F1F5F9; padding: 12px; text-align: left; font-size: 0.7rem; text-transform: uppercase; color: #64748B; }
+        td { padding: 8px; border-bottom: 1px solid var(--border); }
+        
+        .input-table { width: 100%; border: 1px solid transparent; padding: 8px; border-radius: 8px; font-size: 0.85rem; background: #F1F5F9; box-sizing: border-box; }
         .input-table:focus { outline: none; border-color: var(--primary); background: white; }
+        .p-precio-bs { font-weight: bold; color: #059669; background: #ecfdf5 !important; }
+
         .btn-add { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; }
         .btn-save { background: var(--emerald); color: white; border: none; padding: 18px; border-radius: 15px; cursor: pointer; font-weight: 800; width: 100%; margin-top: 25px; font-size: 1.1rem; }
         .btn-remove { color: #EF4444; background: #FEE2E2; border: none; cursor: pointer; padding: 8px; border-radius: 8px; }
@@ -30,24 +38,33 @@
         </button>
 
         <div class="header-table">
-            <h3><i class="fas fa-boxes-stacked"></i> CONTROL DE INVENTARIO (DUAL CODE)</h3>
+            <h3><i class="fas fa-boxes-stacked"></i> GESTIÓN DE INVENTARIO</h3>
             <button class="btn-add" onclick="window.agregarFila()"><i class="fas fa-plus"></i> NUEVO ITEM</button>
+        </div>
+
+        <div class="tasa-panel">
+            <label style="font-weight: 600; color: #475569;"><i class="fas fa-money-bill-wave" style="color: #10B981;"></i> TASA BS:</label>
+            <input type="number" id="tasaCambio" value="1.00" step="0.01" oninput="window.actualizarPreciosBS()" class="tasa-input">
+            <span style="color: #64748B; font-size: 0.85rem; font-style: italic;">* Se sincroniza con Firebase</span>
         </div>
 
         <div class="table-responsive">
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 15%;">Cód. Barras</th>
-                        <th style="width: 15%;">SKU Interno</th>
-                        <th style="width: 35%;">Descripción del Producto</th>
-                        <th style="width: 12%;">Precio $</th>
-                        <th style="width: 13%;">Stock</th>
-                        <th style="width: 10%; text-align: center;">Acción</th>
+                        <th style="width: 10%;">Barras</th>
+                        <th style="width: 10%;">SKU</th>
+                        <th style="width: 22%;">Descripción</th>
+                        <th style="width: 9%;">Costo $</th>
+                        <th style="width: 7%;">% Gan.</th>
+                        <th style="width: 9%;">Precio $</th>
+                        <th style="width: 12%;">Precio BS</th>
+                        <th style="width: 9%;">Stock</th>
+                        <th style="width: 8%; text-align: center;">Acción</th>
                     </tr>
                 </thead>
                 <tbody id="cuerpo-tabla">
-                    <tr><td colspan="6" style="text-align:center; padding:20px;">Cargando base de datos...</td></tr>
+                    <tr><td colspan="9" style="text-align:center; padding:30px;">Cargando base de datos...</td></tr>
                 </tbody>
             </table>
         </div>
