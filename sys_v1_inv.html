@@ -1,1 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario | Sistematikos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root { --bg: #F8FAFC; --primary: #3B82F6; --text: #1E293B; --border: #E2E8F0; --emerald: #10B981; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding-bottom: 50px; }
+        
+        .container { padding: 15px; max-width: 1100px; margin: auto; }
+        .header-table { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        
+        .table-responsive { overflow-x: auto; background: white; border-radius: 15px; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        
+        th { background: #F1F5F9; padding: 12px; text-align: left; font-size: 0.8rem; text-transform: uppercase; color: #64748B; }
+        td { padding: 8px; border-bottom: 1px solid var(--border); }
 
+        .input-table {
+            width: 100%; border: 1px solid transparent; padding: 10px;
+            border-radius: 8px; font-size: 0.9rem; transition: 0.2s;
+            box-sizing: border-box;
+        }
+        .input-table:focus { outline: none; border-color: var(--primary); background: #F0F7FF; }
+        
+        /* Resaltado para el código de barras */
+        .p-barcode { font-family: 'Courier New', monospace; font-weight: bold; color: var(--primary); }
+
+        .btn-add { background: var(--primary); color: white; border: none; padding: 10px 18px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+        .btn-save { background: var(--emerald); color: white; border: none; padding: 15px; border-radius: 15px; cursor: pointer; font-weight: 800; width: 100%; margin-top: 20px; font-size: 1rem; }
+        .btn-remove { color: #EF4444; background: none; border: none; cursor: pointer; padding: 5px; }
+    </style>
+</head>
+<body oncontextmenu="return false">
+
+    <div class="container">
+        <div class="header-table">
+            <h3><i class="fas fa-barcode"></i> CARGA DE PRODUCTOS</h3>
+            <button class="btn-add" onclick="agregarFila()"><i class="fas fa-plus"></i> Fila</button>
+        </div>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Cód. Barras</th>
+                        <th style="width: 35%;">Descripción del Producto</th>
+                        <th style="width: 15%;">Precio $</th>
+                        <th style="width: 15%;">Stock</th>
+                        <th style="width: 10%;"></th>
+                    </tr>
+                </thead>
+                <tbody id="cuerpo-tabla"></tbody>
+            </table>
+        </div>
+
+        <button class="btn-save" id="btnGuardarTodo" onclick="guardarInventario()">
+            <i class="fas fa-check-double"></i> GUARDAR EN SISTEMA
+        </button>
+    </div>
+
+    <script type="module" src="js/inventario.js"></script>
+</body>
+</html>
