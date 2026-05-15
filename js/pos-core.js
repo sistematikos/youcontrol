@@ -10,7 +10,7 @@ let carrito = [];
 let itemSeleccionadoIndex = -1;
 let tasaActual = 1;
 
-// --- CARGA DE TASA REAL ---
+// --- CARGA DE TASA REAL DESDE FIREBASE ---
 async function cargarTasa() {
     try {
         const tasaRef = doc(db, "usuarios", USER_ID, "configuracion", "tasa");
@@ -21,60 +21,61 @@ async function cargarTasa() {
             const txtTasa = document.getElementById('txt-tasa');
             if (txtTasa) txtTasa.innerText = tasaActual.toFixed(2).replace('.', ',');
             
-            // Refrescamos la lista de productos para que muestren el precio en Bs al cargar la tasa
+            // Refrescar vistas con la nueva tasa
             renderizarProductos(productosMaster);
             window.actualizarCarritoUI();
         }
     } catch (e) {
-        console.error("Error al cargar la tasa:", e);
+        console.error("Error cargando tasa:", e);
     }
 }
 
-// --- RENDERIZAR LISTA DE PRODUCTOS CON PRECIO EN BS ---
+// --- RENDERIZAR PRODUCTOS IZQUIERDA (PRECIOS AL LADO) ---
 function renderizarProductos(lista) {
     const container = document.getElementById('grid-productos');
     if (!container) return;
 
     container.innerHTML = lista.map(p => {
-        const precioUSD = parseFloat(p.precio) || 0;
-        const precioBS = (precioUSD * tasaActual).toFixed(2).replace('.', ',');
+        const pUSD = parseFloat(p.precio) || 0;
+        const pBS = (pUSD * tasaActual).toFixed(2).replace('.', ',');
 
         return `
             <div class="single-line-row" onclick="window.agregarCarrito('${p.id}')">
-                <span><b>${p.nombre}</b></span>
-                <div style="text-align: right;">
-                    <b style="display: block;">$${precioUSD.toFixed(2)}</b>
-                    <small style="color: #64748b;">${precioBS} Bs.</small>
+                <span style="flex: 1; margin-right: 15px;"><b>${p.nombre}</b></span>
+                <div class="price-group">
+                    <b>$${pUSD.toFixed(2)}</b>
+                    <small>${pBS} Bs.</small>
                 </div>
             </div>
         `;
     }).join('');
 }
 
-// --- ESCUCHA DE CAMBIOS EN PRODUCTOS ---
 onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
     productosMaster = [];
     snapshot.forEach(doc => productosMaster.push({ id: doc.id, ...doc.data() }));
     renderizarProductos(productosMaster);
 });
 
-// --- ACTUALIZAR UI DEL CARRITO ---
+// --- ACTUALIZAR RESUMEN DE VENTA (ESPACIADO) ---
 window.actualizarCarritoUI = () => {
     const list = document.getElementById('lista-carrito');
     let total = 0;
     if (!list) return;
 
     list.innerHTML = carrito.map((c, index) => {
-        const subtotalUSD = c.precio * c.cantidad;
-        const subtotalBS = (subtotalUSD * tasaActual).toFixed(2).replace('.', ',');
-        total += subtotalUSD;
+        const subUSD = c.precio * c.cantidad;
+        const subBS = (subUSD * tasaActual).toFixed(2).replace('.', ',');
+        total += subUSD;
 
         return `
-            <div class="single-line-row ${index === itemSeleccionadoIndex ? 'item-selected' : ''}" onclick="window.seleccionarItem(${index})">
-                <span>${c.cantidad}x ${c.nombre}</span>
-                <div style="text-align: right;">
-                    <b style="display: block;">$${subtotalUSD.toFixed(2)}</b>
-                    <small style="color: #64748b;">${subtotalBS} Bs.</small>
+            <div class="single-line-row ${index === itemSeleccionadoIndex ? 'item-selected' : ''}" 
+                 onclick="window.seleccionarItem(${index})"
+                 style="padding: 12px 0;">
+                <span style="flex: 1; margin-right: 15px;">${c.cantidad}x ${c.nombre}</span>
+                <div class="price-group">
+                    <b>$${subUSD.toFixed(2)}</b>
+                    <small>${subBS} Bs.</small>
                 </div>
             </div>`;
     }).join('');
@@ -84,8 +85,7 @@ window.actualizarCarritoUI = () => {
     window.totalVentaUSD = total;
 };
 
-// --- EL RESTO DE TUS FUNCIONES (agregarCarrito, abrirModalCobro, etc.) SE MANTIENEN IGUAL ---
-
+// --- GESTIÓN DE ITEMS ---
 window.agregarCarrito = (id) => {
     const isModalOpen = document.getElementById('modalPago').style.display === 'flex';
     if (isModalOpen) return;
@@ -99,6 +99,7 @@ window.agregarCarrito = (id) => {
 
 window.seleccionarItem = (i) => { itemSeleccionadoIndex = i; window.actualizarCarritoUI(); };
 
+// --- COBRO Y REGISTRO ---
 window.abrirModalCobro = () => {
     if (carrito.length === 0) return;
     document.getElementById('totalModalUSD').innerText = `$ ${window.totalVentaUSD.toFixed(2)}`;
@@ -157,14 +158,5 @@ window.registrarVenta = async () => {
     btn.innerText = "CONFIRMAR VENTA";
 };
 
-// Atajos de teclado
-window.addEventListener('keydown', (e) => {
-    const modalActivo = document.getElementById('modalPago').style.display === 'flex';
-    if (e.key === "F4") { e.preventDefault(); if (!modalActivo) window.ejecutarF4(); }
-    if (e.key === "F6") { e.preventDefault(); if (!modalActivo) window.ejecutarF6(); }
-    if (e.key === "F5" && !e.ctrlKey) { e.preventDefault(); if (!modalActivo) window.ejecutarF5(); }
-    if (e.key === "F9") { e.preventDefault(); if (!modalActivo) { window.abrirModalCobro(); } else { window.registrarVenta(); } }
-    if (e.key === "Escape") document.getElementById('modalPago').style.display = 'none';
-});
-
+// Iniciar proceso
 cargarTasa();
