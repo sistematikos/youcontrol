@@ -4,6 +4,25 @@ import { collection, doc, setDoc, getDocs, deleteDoc, getDoc } from "https://www
 const UID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
 const tabla = document.getElementById('cuerpo-tabla');
 const inputTasa = document.getElementById('tasaCambio');
+const inputBusqueda = document.getElementById('buscador');
+
+// --- FILTRADO EN TIEMPO REAL ---
+window.filtrarProductos = () => {
+    const termino = inputBusqueda.value.toLowerCase();
+    const filas = document.querySelectorAll('.fila-producto');
+
+    filas.forEach(fila => {
+        const barras = fila.querySelector('.p-barcode').value.toLowerCase();
+        const sku = fila.querySelector('.p-sku').value.toLowerCase();
+        const nombre = fila.querySelector('.p-nombre').value.toLowerCase();
+
+        if (barras.includes(termino) || sku.includes(termino) || nombre.includes(termino)) {
+            fila.classList.remove('oculto');
+        } else {
+            fila.classList.add('oculto');
+        }
+    });
+};
 
 window.actualizarPreciosBS = () => {
     const tasa = parseFloat(inputTasa.value) || 1;
