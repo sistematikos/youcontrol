@@ -5,7 +5,6 @@ const UID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
 const tabla = document.getElementById('cuerpo-tabla');
 const inputTasa = document.getElementById('tasaCambio');
 
-// --- ACTUALIZAR COLUMNA BS AL CAMBIAR TASA ---
 window.actualizarPreciosBS = () => {
     const tasa = parseFloat(inputTasa.value) || 1;
     document.querySelectorAll('.fila-producto').forEach(fila => {
@@ -14,7 +13,6 @@ window.actualizarPreciosBS = () => {
     });
 };
 
-// --- CÁLCULOS DE MARGEN Y PRECIO DE VENTA ---
 window.calcularPrecios = (input, tipo) => {
     const fila = input.closest('.fila-producto');
     const costo = parseFloat(fila.querySelector('.p-costo').value) || 0;
@@ -31,7 +29,6 @@ window.calcularPrecios = (input, tipo) => {
     window.actualizarPreciosBS();
 };
 
-// --- CREAR FILA EN TABLA ---
 window.agregarFila = (bar = "", sku = "", nom = "", cos = 0, por = 0, pre = 0, sto = 0, existe = false) => {
     if (tabla.querySelector('td[colspan]')) tabla.innerHTML = "";
     const tasa = parseFloat(inputTasa.value) || 1;
@@ -39,12 +36,12 @@ window.agregarFila = (bar = "", sku = "", nom = "", cos = 0, por = 0, pre = 0, s
     const tr = document.createElement('tr');
     tr.className = "fila-producto";
     tr.innerHTML = `
-        <td><input type="text" class="input-table p-barcode" value="${bar}" placeholder="Scanner"></td>
-        <td><input type="text" class="input-table p-sku" value="${sku}" placeholder="SKU" ${existe ? 'readonly style="background:#f1f5f9;"' : ''}></td>
-        <td><input type="text" class="input-table p-nombre" value="${nom}" placeholder="Producto"></td>
-        <td><input type="number" class="input-table p-costo" value="${cos}" step="0.01" oninput="window.calcularPrecios(this, 'costo')"></td>
-        <td><input type="number" class="input-table p-porcentaje" value="${por}" step="0.1" oninput="window.calcularPrecios(this, 'porcentaje')"></td>
-        <td><input type="number" class="input-table p-precio" value="${pre}" step="0.01" oninput="window.calcularPrecios(this, 'precio')"></td>
+        <td><input type="text" class="input-table p-barcode" value="${bar}"></td>
+        <td><input type="text" class="input-table p-sku" value="${sku}" ${existe ? 'readonly style="background:#f1f5f9;"' : ''}></td>
+        <td><input type="text" class="input-table p-nombre" value="${nom}"></td>
+        <td><input type="number" class="input-table p-costo" value="${cos}" oninput="window.calcularPrecios(this, 'costo')"></td>
+        <td><input type="number" class="input-table p-porcentaje" value="${por}" oninput="window.calcularPrecios(this, 'porcentaje')"></td>
+        <td><input type="number" class="input-table p-precio" value="${pre}" oninput="window.calcularPrecios(this, 'precio')"></td>
         <td><input type="text" class="input-table p-precio-bs" value="${(pre * tasa).toFixed(2)}" readonly></td>
         <td><input type="number" class="input-table p-stock" value="${sto}"></td>
         <td style="text-align:center;"><button class="btn-remove" onclick="window.eliminarProducto(this, '${sku}')"><i class="fas fa-trash"></i></button></td>
@@ -52,14 +49,11 @@ window.agregarFila = (bar = "", sku = "", nom = "", cos = 0, por = 0, pre = 0, s
     tabla.appendChild(tr);
 };
 
-// --- CARGAR TASA Y PRODUCTOS AL INICIAR ---
 async function cargarTodo() {
     try {
-        // Cargar Tasa guardada en Firebase
         const tasaSnap = await getDoc(doc(db, "usuarios", UID, "configuracion", "tasa"));
         if (tasaSnap.exists()) inputTasa.value = tasaSnap.data().valor || 1;
 
-        // Cargar Productos
         const querySnapshot = await getDocs(collection(db, "usuarios", UID, "productos"));
         tabla.innerHTML = "";
         if (querySnapshot.empty) { window.agregarFila(); return; }
@@ -69,20 +63,15 @@ async function cargarTodo() {
             const porc = p.costo > 0 ? ((p.precio - p.costo) / p.costo) * 100 : 0;
             window.agregarFila(p.codigo_barras || "", docSnap.id, p.nombre, p.costo || 0, porc.toFixed(2), p.precio || 0, p.stock || 0, true);
         });
-    } catch (e) { 
-        console.error(e);
-        tabla.innerHTML = "<tr><td colspan='9' style='text-align:center; color:red;'>Error de conexión</td></tr>";
-    }
+    } catch (e) { console.error(e); }
 }
 
-// --- GUARDAR INVENTARIO Y CONFIGURACIÓN ---
 window.guardarInventario = async () => {
     const btn = document.getElementById('btnGuardarTodo');
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GUARDANDO...';
 
     try {
-        // Guardar Tasa actual en Firebase
         await setDoc(doc(db, "usuarios", UID, "configuracion", "tasa"), { valor: parseFloat(inputTasa.value) });
 
         const filas = document.querySelectorAll('.fila-producto');
@@ -100,14 +89,14 @@ window.guardarInventario = async () => {
                 }, { merge: true });
             }
         }
-        alert("Sincronización completa");
+        alert("¡Cambios guardados con éxito!");
         location.reload();
     } catch (e) { alert("Error al guardar"); }
-    finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> SINCRONIZAR CON FIREBASE'; }
+    finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> GUARDAR CAMBIOS'; }
 };
 
 window.eliminarProducto = async (btn, id) => {
-    if (id && confirm(`¿Eliminar ${id} permanentemente?`)) {
+    if (id && confirm(`¿Eliminar ${id}?`)) {
         await deleteDoc(doc(db, "usuarios", UID, "productos", id));
         btn.closest('tr').remove();
     } else if (!id) btn.closest('tr').remove();
