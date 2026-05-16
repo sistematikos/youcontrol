@@ -39,7 +39,7 @@ async function inicializarInventario() {
     }
 }
 
-// --- RENDERIZAR TABLA CON CORRECCIÓN DE CAMPOS ---
+// --- RENDERIZAR TABLA ---
 function renderizarTabla(lista) {
     const tbody = document.getElementById('cuerpo-tabla');
     if (!tbody) return;
@@ -55,7 +55,6 @@ function renderizarTabla(lista) {
         const precioUSD = p.precio ? parseFloat(p.precio) : (costo + (costo * (ganancia / 100)));
         const precioBS = precioUSD * tasaActual;
 
-        // CORRECCIÓN CLAVE: Asegurar la lectura exacta de minúsculas desde Firestore
         const codigoBarras = p.barras || p.codigo || ''; 
         const codigoSku = p.sku || p.SKU || '';
 
@@ -154,7 +153,7 @@ window.eliminarFila = async (btn, id) => {
     btn.closest('tr').remove();
 };
 
-// --- GUARDAR TODO EN BATCH ---
+// --- GUARDAR TODO EN BATCH (CORREGIDO PARA USAR EL SKU COMO DOCUMENT ID) ---
 window.guardarInventario = async () => {
     const btnGuardar = document.getElementById('btnGuardarTodo');
     btnGuardar.disabled = true;
@@ -168,14 +167,17 @@ window.guardarInventario = async () => {
         batch.set(tasaRef, { valor: tasaActual });
 
         filas.forEach(fila => {
-            const id = fila.getAttribute('data-id');
-            const nombre = fila.querySelector('.p-nombre').value.trim();
-            if (!nombre) return; 
+            const idExistente = fila.getAttribute('data-id');
+            const txtNombre = fila.querySelector('.p-nombre').value.trim();
+            const txtSku = fila.querySelector('.p-sku').value.trim();
+            const txtBarras = fila.querySelector('.p-barras').value.trim();
+            
+            if (!txtNombre) return; // Omitir filas sin descripción válida
 
             const datosProducto = {
-                barras: fila.querySelector('.p-barras').value.trim(),
-                sku: fila.querySelector('.p-sku').value.trim(),
-                nombre: nombre,
+                barras: txtBarras,
+                sku: txtSku,
+                nombre: txtNombre,
                 costo: parseFloat(fila.querySelector('.p-costo').value) || 0,
                 ganancia: parseFloat(fila.querySelector('.p-ganancia').value) || 0,
                 precio: parseFloat(fila.querySelector('.p-precio-usd').value) || 0,
@@ -183,17 +185,27 @@ window.guardarInventario = async () => {
             };
 
             let docRef;
-            if (id) {
-                docRef = doc(db, "usuarios", USER_ID, "productos", id);
+            if (idExistente) {
+                // Si ya existe en Firebase, conserva su ID anterior (ya sea SKU o UID)
+                docRef = doc(db, "usuarios", USER_ID, "productos", idExistente);
                 batch.set(docRef, datosProducto, { merge: true });
             } else {
-                docRef = doc(collection(db, "usuarios", USER_ID, "productos"));
-                batch.set(docRef, datosProducto);
+                // SI ES UN ARTÍCULO NUEVO: Asigna el SKU como ID del documento de forma prioritaria
+                const idDocumentoNuevo = txtSku || txtBarras;
+
+                if (idDocumentoNuevo) {
+                    docRef = doc(db, "usuarios", USER_ID, "productos", idDocumentoNuevo);
+                    batch.set(docRef, datosProducto, { merge: true });
+                } else {
+                    // Fallback de seguridad: si no escribiste ni SKU ni Barras, genera un ID automático temporal
+                    docRef = doc(collection(db, "usuarios", USER_ID, "productos"));
+                    batch.set(docRef, datosProducto);
+                }
             }
         });
 
         await batch.commit();
-        mostrarEstado("✅ ¡Inventario y tasa guardados perfectamente!", "success");
+        mostrarEstado("✅ ¡Inventario guardado utilizando la estructura correcta!", "success");
     } catch (e) {
         mostrarEstado("❌ Error al procesar guardado masivo.", "loading");
         console.error(e);
