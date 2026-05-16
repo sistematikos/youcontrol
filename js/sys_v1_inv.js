@@ -78,7 +78,7 @@ function renderizarTabla(lista) {
     }).join('');
 }
 
-// --- ACCIÓN: AGREGAR NUEVA FILA AL INICIO ---
+// --- AGREGAR NUEVA FILA AL INICIO ---
 window.agregarFila = () => {
     const tbody = document.getElementById('cuerpo-tabla');
     if (!tbody) return;
@@ -153,11 +153,13 @@ window.eliminarFila = async (btn, id) => {
     btn.closest('tr').remove();
 };
 
-// --- GUARDAR TODO EN BATCH (CORREGIDO PARA USAR EL SKU COMO DOCUMENT ID) ---
+// --- GUARDAR EN BATCH (USA SKU COMO DOCUMENT ID) ---
 window.guardarInventario = async () => {
     const btnGuardar = document.getElementById('btnGuardarTodo');
+    if (btnGuardar.disabled) return; // Evitar llamadas duplicadas si ya está guardando
+
     btnGuardar.disabled = true;
-    mostrarEstado("⏳ Guardando cambios de inventario en masa...", "loading");
+    mostrarEstado("⏳ Guardando cambios de inventario (F9)...", "loading");
 
     try {
         const batch = writeBatch(db);
@@ -172,7 +174,7 @@ window.guardarInventario = async () => {
             const txtSku = fila.querySelector('.p-sku').value.trim();
             const txtBarras = fila.querySelector('.p-barras').value.trim();
             
-            if (!txtNombre) return; // Omitir filas sin descripción válida
+            if (!txtNombre) return; 
 
             const datosProducto = {
                 barras: txtBarras,
@@ -186,18 +188,14 @@ window.guardarInventario = async () => {
 
             let docRef;
             if (idExistente) {
-                // Si ya existe en Firebase, conserva su ID anterior (ya sea SKU o UID)
                 docRef = doc(db, "usuarios", USER_ID, "productos", idExistente);
                 batch.set(docRef, datosProducto, { merge: true });
             } else {
-                // SI ES UN ARTÍCULO NUEVO: Asigna el SKU como ID del documento de forma prioritaria
                 const idDocumentoNuevo = txtSku || txtBarras;
-
                 if (idDocumentoNuevo) {
                     docRef = doc(db, "usuarios", USER_ID, "productos", idDocumentoNuevo);
                     batch.set(docRef, datosProducto, { merge: true });
                 } else {
-                    // Fallback de seguridad: si no escribiste ni SKU ni Barras, genera un ID automático temporal
                     docRef = doc(collection(db, "usuarios", USER_ID, "productos"));
                     batch.set(docRef, datosProducto);
                 }
@@ -205,7 +203,7 @@ window.guardarInventario = async () => {
         });
 
         await batch.commit();
-        mostrarEstado("✅ ¡Inventario guardado utilizando la estructura correcta!", "success");
+        mostrarEstado("✅ ¡Inventario guardado con éxito!", "success");
     } catch (e) {
         mostrarEstado("❌ Error al procesar guardado masivo.", "loading");
         console.error(e);
@@ -243,5 +241,13 @@ window.filtrarProductos = () => {
         }
     });
 };
+
+// --- ASIGNACIÓN DE ATAJO F9 ---
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'F9') {
+        e.preventDefault(); // Evita que el navegador use F9 para otra cosa
+        window.guardarInventario();
+    }
+});
 
 inicializarInventario();
