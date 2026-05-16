@@ -1,196 +1,376 @@
-import { db } from './firebase-config.js';
-import { 
-    collection, onSnapshot, doc, getDoc, setDoc, deleteDoc
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-const USER_ID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
-let productosLocales = [];
-let tasaActual = 1.00;
-
-function mostrarEstado(mensaje, tipo) {
-    const bar = document.getElementById('status-bar-inv');
-    if (!bar) return;
-    bar.className = `status-${tipo}`;
-    bar.innerText = mensaje;
-    bar.style.display = 'block';
-    if (tipo === 'success') setTimeout(() => { bar.style.display = 'none'; }, 3000);
-}
-
-async function inicializarInventario() {
-    try {
-        const tasaSnap = await getDoc(doc(db, "usuarios", USER_ID, "configuracion", "tasa"));
-        if (tasaSnap.exists()) {
-            tasaActual = parseFloat(tasaSnap.data().valor) || 1.00;
-            document.getElementById('tasaCambio').value = tasaActual.toFixed(2);
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario Pro | Sistematikos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --bg: #F8FAFC; 
+            --primary: #3B82F6; 
+            --text: #1E293B; 
+            --border: #E2E8F0; 
+            --emerald: #10B981; 
+            --indigo: #6366F1;
         }
-
-        onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
-            productosLocales = [];
-            snapshot.forEach(doc => productosLocales.push({ id: doc.id, ...doc.data() }));
-            renderizarTabla(productosLocales);
-        });
-    } catch (e) { console.error(e); }
-}
-
-function renderizarTabla(lista) {
-    const tbody = document.getElementById('cuerpo-tabla');
-    if (!tbody) return;
-
-    if (lista.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:20px;">No hay productos.</td></tr>`;
-        return;
-    }
-
-    tbody.innerHTML = lista.map((p) => {
-        const costo = parseFloat(p.costo) || 0;
-        const ganancia = parseFloat(p.ganancia) || 0;
-        const precioUSD = p.precio ? parseFloat(p.precio) : (costo + (costo * (ganancia / 100)));
-        const precioBS = precioUSD * tasaActual;
-
-        return `
-            <tr class="fila-producto" data-id="${p.id}">
-                <td class="td-barras">${p.barras || ''}</td>
-                <td class="td-sku">${p.sku || ''}</td>
-                <td class="td-nombre txt-bold">${p.nombre || ''}</td>
-                <td>$${costo.toFixed(2)}</td>
-                <td>${ganancia.toFixed(1)}%</td>
-                <td class="txt-bold">$${precioUSD.toFixed(2)}</td>
-                <td><span class="badge-bs">${precioBS.toFixed(2).replace('.', ',')} Bs.</span></td>
-                <td><span class="badge-stock">${p.stock || 0}</span></td>
-                <td style="text-align: center;">
-                    <button class="btn-edit" onclick="window.abrirModalEditar('${p.id}')" title="Editar"><i class="fas fa-pen"></i></button>
-                    <button class="btn-remove" onclick="window.eliminarProducto('${p.id}')" title="Eliminar"><i class="fas fa-trash"></i></button>
-                </td>
-            </tr>
-        `;
-    }).join('');
-}
-
-// --- MANEJO DEL MODAL ---
-window.abrirModalNuevo = () => {
-    document.getElementById('modalTitulo').innerHTML = '<i class="fas fa-plus"></i> Nuevo Producto';
-    document.getElementById('form-id').value = '';
-    document.getElementById('form-barras').value = '';
-    document.getElementById('form-sku').value = '';
-    document.getElementById('form-nombre').value = '';
-    document.getElementById('form-costo').value = '0.00';
-    document.getElementById('form-ganancia').value = '0.0';
-    document.getElementById('form-precio').value = '0.00';
-    document.getElementById('form-stock').value = '0';
-    document.getElementById('modalProducto').style.display = 'flex';
-    document.getElementById('form-sku').focus();
-};
-
-window.abrirModalEditar = (id) => {
-    const prod = productosLocales.find(p => p.id === id);
-    if (!prod) return;
-
-    document.getElementById('modalTitulo').innerHTML = '<i class="fas fa-pen"></i> Editar Producto';
-    document.getElementById('form-id').value = prod.id;
-    document.getElementById('form-barras').value = prod.barras || '';
-    document.getElementById('form-sku').value = prod.sku || '';
-    document.getElementById('form-sku').disabled = true; // No alterar la clave ID primaria existente
-    document.getElementById('form-nombre').value = prod.nombre || '';
-    document.getElementById('form-costo').value = (prod.costo || 0).toFixed(2);
-    document.getElementById('form-ganancia').value = (prod.ganancia || 0).toFixed(1);
-    document.getElementById('form-precio').value = (prod.precio || 0).toFixed(2);
-    document.getElementById('form-stock').value = prod.stock || 0;
-
-    document.getElementById('modalProducto').style.display = 'flex';
-    document.getElementById('form-nombre').focus();
-};
-
-window.cerrarModal = () => {
-    document.getElementById('modalProducto').style.display = 'none';
-    document.getElementById('form-sku').disabled = false;
-};
-
-// --- CÁLCULOS DENTRO DEL MODAL ---
-window.calcularPrecioModal = () => {
-    const costo = parseFloat(document.getElementById('form-costo').value) || 0;
-    const ganancia = parseFloat(document.getElementById('form-ganancia').value) || 0;
-    document.getElementById('form-precio').value = (costo + (costo * (ganancia / 100))).toFixed(2);
-};
-
-window.calcularGananciaModal = () => {
-    const costo = parseFloat(document.getElementById('form-costo').value) || 0;
-    const precio = parseFloat(document.getElementById('form-precio').value) || 0;
-    if (costo > 0) {
-        document.getElementById('form-ganancia').value = (((precio - costo) / costo) * 100).toFixed(1);
-    }
-};
-
-// --- GUARDAR EDICIÓN O CREACIÓN ---
-window.guardarCambiosModal = async () => {
-    const idExistente = document.getElementById('form-id').value;
-    const nombre = document.getElementById('form-nombre').value.trim();
-    const sku = document.getElementById('form-sku').value.trim();
-    const barras = document.getElementById('form-barras').value.trim();
-
-    if (!nombre) { alert("La descripción es obligatoria"); return; }
-
-    mostrarEstado("⏳ Guardando datos del producto...", "loading");
-
-    const datos = {
-        barras: barras,
-        sku: sku,
-        nombre: nombre,
-        costo: parseFloat(document.getElementById('form-costo').value) || 0,
-        ganancia: parseFloat(document.getElementById('form-ganancia').value) || 0,
-        precio: parseFloat(document.getElementById('form-precio').value) || 0,
-        stock: parseInt(document.getElementById('form-stock').value) || 0
-    };
-
-    try {
-        // Si no tiene ID previo, el ID del documento es el SKU (o barras, o auto-generado)
-        const idDocumento = idExistente || sku || barras || doc(collection(db, "temp")).id;
-        await setDoc(doc(db, "usuarios", USER_ID, "productos", idDocumento), datos, { merge: true });
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background: var(--bg); 
+            margin: 0; 
+            padding-bottom: 50px; 
+            color: var(--text); 
+        }
+        .container { 
+            padding: 15px; 
+            max-width: 1300px; 
+            margin: auto; 
+        }
         
-        window.cerrarModal();
-        mostrarEstado("✅ Producto guardado correctamente.", "success");
-    } catch (e) {
-        console.error(e);
-        mostrarEstado("❌ Error al guardar.", "loading");
-    }
-};
-
-window.eliminarProducto = async (id) => {
-    if (!confirm("¿Seguro que deseas eliminar permanentemente este producto de la DB?")) return;
-    try {
-        await deleteDoc(doc(db, "usuarios", USER_ID, "productos", id));
-        mostrarEstado("✅ Producto removido.", "success");
-    } catch(e) { console.error(e); }
-};
-
-window.actualizarTasaTop = async () => {
-    tasaActual = parseFloat(document.getElementById('tasaCambio').value) || 1.00;
-    renderizarTabla(productosLocales);
-};
-
-window.filtrarProductos = () => {
-    const busqueda = document.getElementById('buscador').value.toLowerCase();
-    const filas = document.querySelectorAll('.fila-producto');
-    filas.forEach(fila => {
-        const barras = fila.querySelector('.td-barras').innerText.toLowerCase();
-        const sku = fila.querySelector('.td-sku').innerText.toLowerCase();
-        const nombre = fila.querySelector('.td-nombre').innerText.toLowerCase();
-        if (barras.includes(busqueda) || sku.includes(busqueda) || nombre.includes(busqueda)) {
-            fila.classList.remove('oculto');
-        } else {
-            fila.classList.add('oculto');
+        .header-table { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 15px; 
         }
-    });
-};
-
-// Atajo de teclado F9 para guardar estando el modal activo
-window.addEventListener('keydown', (e) => {
-    if (e.key === 'F9') {
-        const modal = document.getElementById('modalProducto');
-        if (modal.style.display === 'flex') {
-            e.preventDefault();
-            window.guardarCambiosModal();
+        .header-actions { 
+            display: flex; 
+            gap: 10px; 
+            align-items: center; 
         }
-    }
-});
+        
+        /* Paneles Superiores */
+        .top-panels { 
+            display: grid; 
+            grid-template-columns: 1fr 2fr; 
+            gap: 15px; 
+            margin-bottom: 10px; 
+        }
+        .panel-card { 
+            background: white; 
+            padding: 15px; 
+            border-radius: 12px; 
+            border: 1px solid var(--border); 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+        }
+        
+        .tasa-input { 
+            padding: 8px; 
+            border-radius: 10px; 
+            border: 2px solid var(--primary); 
+            width: 110px; 
+            font-weight: 800; 
+            font-size: 1.1rem; 
+            text-align: center; 
+        }
+        .search-container { 
+            display: flex; 
+            gap: 10px; 
+            width: 100%; 
+            align-items: center; 
+        }
+        .search-input { 
+            flex: 1; 
+            padding: 10px 15px; 
+            border-radius: 10px; 
+            border: 1px solid var(--border); 
+            font-size: 0.9rem; 
+            outline: none; 
+            transition: 0.3s; 
+        }
+        .search-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        /* Estilos de la Tabla Informativa (Texto plano) */
+        .table-responsive { 
+            overflow-x: auto; 
+            background: white; 
+            border-radius: 15px; 
+            border: 1px solid var(--border); 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            min-width: 1100px; 
+        }
+        th { 
+            background: #F1F5F9; 
+            padding: 14px; 
+            text-align: left; 
+            font-size: 0.75rem; 
+            text-transform: uppercase; 
+            color: #64748B; 
+            letter-spacing: 0.5px; 
+        }
+        td { 
+            padding: 12px 14px; 
+            border-bottom: 1px solid var(--border); 
+            font-size: 0.9rem; 
+        }
+        
+        .txt-bold { font-weight: 600; color: var(--text); }
+        .badge-bs { font-weight: 700; color: #059669; background: #ecfdf5; padding: 4px 8px; border-radius: 6px; }
+        .badge-stock { font-weight: 600; padding: 4px 8px; border-radius: 6px; background: #F1F5F9; }
 
-inicializarInventario();
+        /* Botones de Acciones */
+        .btn-add { 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 10px 18px; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            display: flex; 
+            align-items: center; 
+            gap: 6px; 
+            font-size: 0.9rem;
+        }
+        .btn-compras { 
+            background: var(--indigo); 
+            color: white; 
+            border: none; 
+            padding: 10px 18px; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            display: flex; 
+            align-items: center; 
+            gap: 6px; 
+            text-decoration: none; 
+            font-size: 0.9rem; 
+        }
+        .btn-edit { 
+            color: var(--primary); 
+            background: #EFF6FF; 
+            border: none; 
+            cursor: pointer; 
+            padding: 8px; 
+            border-radius: 8px; 
+            margin-right: 5px; 
+        }
+        .btn-remove { 
+            color: #EF4444; 
+            background: #FEE2E2; 
+            border: none; 
+            cursor: pointer; 
+            padding: 8px; 
+            border-radius: 8px; 
+        }
+        .btn-back { 
+            border: none; 
+            background: none; 
+            color: var(--primary); 
+            cursor: pointer; 
+            font-weight: bold; 
+            margin-bottom: 15px; 
+            display: flex; 
+            align-items: center; 
+            gap: 5px; 
+        }
+
+        /* --- VENTANA MODAL PARA EDITAR --- */
+        .modal { 
+            display: none; 
+            position: fixed; 
+            z-index: 1000; 
+            left: 0; 
+            top: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.4); 
+            align-items: center; 
+            justify-content: center; 
+        }
+        .modal-content { 
+            background: white; 
+            padding: 25px; 
+            border-radius: 16px; 
+            width: 90%; 
+            max-width: 500px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+        }
+        .modal-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 20px; 
+            border-bottom: 1px solid var(--border); 
+            padding-bottom: 10px; 
+        }
+        .modal-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 15px; 
+            margin-bottom: 15px; 
+        }
+        .form-group { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 5px; 
+        }
+        .form-group.full { 
+            grid-column: span 2; 
+        }
+        .form-group label { 
+            font-size: 0.8rem; 
+            font-weight: 600; 
+            color: #64748B; 
+        }
+        .form-group input { 
+            padding: 10px; 
+            border: 1px solid var(--border); 
+            border-radius: 8px; 
+            font-family: 'Poppins'; 
+            font-size: 0.9rem; 
+        }
+        .form-group input:focus { 
+            border-color: var(--primary); 
+            outline: none; 
+        }
+        .modal-footer { 
+            display: flex; 
+            gap: 10px; 
+            justify-content: flex-end; 
+            margin-top: 20px; 
+        }
+        .btn-modal-save { 
+            background: var(--emerald); 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-weight: 600; 
+        }
+        .btn-modal-close { 
+            background: #94A3B8; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-weight: 600; 
+        }
+
+        #status-bar-inv { 
+            width: 100%; 
+            padding: 8px; 
+            border-radius: 10px; 
+            font-size: 13px; 
+            font-weight: 600; 
+            text-align: center; 
+            margin-bottom: 15px; 
+            display: none; 
+        }
+        .status-loading { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+        .status-success { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+        
+        .oculto { display: none; }
+    </style>
+</head>
+<body oncontextmenu="return false">
+    <div class="container">
+        <button class="btn-back" onclick="location.href='index.html'">
+            <i class="fas fa-arrow-left"></i> VOLVER AL MENÚ
+        </button>
+
+        <div class="header-table">
+            <h3><i class="fas fa-boxes-stacked"></i> INVENTARIO GENERAL</h3>
+            <div class="header-actions">
+                <a href="sys_v3_comp.html" class="btn-compras"><i class="fas fa-cart-plus"></i> ENTRADA MERCANCÍA</a>
+                <button class="btn-add" onclick="window.abrirModalNuevo()"><i class="fas fa-plus"></i> NUEVO ITEM</button>
+            </div>
+        </div>
+
+        <div class="top-panels">
+            <div class="panel-card">
+                <label style="font-weight: 600;"><i class="fas fa-money-bill-wave" style="color: #10B981;"></i> TASA:</label>
+                <input type="number" id="tasaCambio" value="1.00" step="0.01" oninput="window.actualizarTasaTop()" class="tasa-input">
+            </div>
+            <div class="panel-card" style="flex-grow: 1;">
+                <div class="search-container">
+                    <i class="fas fa-search" style="color: #94A3B8;"></i>
+                    <input type="text" id="buscador" placeholder="Buscar por Nombre, SKU o Código de Barras..." onkeyup="window.filtrarProductos()" class="search-input">
+                </div>
+            </div>
+        </div>
+
+        <div id="status-bar-inv"></div>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 12%;">Barras</th>
+                        <th style="width: 12%;">SKU</th>
+                        <th style="width: 30%;">Descripción</th>
+                        <th style="width: 10%;">Costo $</th>
+                        <th style="width: 8%;">% Gan.</th>
+                        <th style="width: 10%;">Precio $</th>
+                        <th style="width: 14%;">Precio BS</th>
+                        <th style="width: 8%;">Stock</th>
+                        <th style="width: 10%; text-align: center;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="cuerpo-tabla">
+                    <tr><td colspan="9" style="text-align:center; padding:30px;">Cargando base de datos...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="modal" id="modalProducto">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 id="modalTitulo"><i class="fas fa-box"></i> Editar Producto</h4>
+                <button style="border:none; background:none; font-size:1.2rem; cursor:pointer;" onclick="window.cerrarModal()">&times;</button>
+            </div>
+            <input type="hidden" id="form-id">
+            <div class="modal-grid">
+                <div class="form-group">
+                    <label>Código Barras</label>
+                    <input type="text" id="form-barras">
+                </div>
+                <div class="form-group">
+                    <label>SKU / Código Interno</label>
+                    <input type="text" id="form-sku">
+                </div>
+                <div class="form-group full">
+                    <label>Descripción del Producto</label>
+                    <input type="text" id="form-nombre" required>
+                </div>
+                <div class="form-group">
+                    <label>Costo USD ($)</label>
+                    <input type="number" step="0.01" id="form-costo" oninput="window.calcularPrecioModal()">
+                </div>
+                <div class="form-group">
+                    <label>% Ganancia</label>
+                    <input type="number" step="0.1" id="form-ganancia" oninput="window.calcularPrecioModal()">
+                </div>
+                <div class="form-group">
+                    <label>Precio USD ($)</label>
+                    <input type="number" step="0.01" id="form-precio" oninput="window.calcularGananciaModal()">
+                </div>
+                <div class="form-group">
+                    <label>Stock Actual</label>
+                    <input type="number" id="form-stock">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-modal-close" onclick="window.cerrarModal()">Cancelar</button>
+                <button class="btn-modal-save" onclick="window.guardarCambiosModal()">Guardar (F9)</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="./js/sys_v1_inv.js"></script>
+</body>
+</html>
