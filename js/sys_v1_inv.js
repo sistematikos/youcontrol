@@ -22,7 +22,6 @@ function mostrarEstado(mensaje, tipo) {
 // --- CARGAR TASA E INVENTARIO INICIAL ---
 async function inicializarInventario() {
     try {
-        // Cargar tasa de configuración
         const tasaSnap = await getDoc(doc(db, "usuarios", USER_ID, "configuracion", "tasa"));
         if (tasaSnap.exists()) {
             tasaActual = parseFloat(tasaSnap.data().valor) || 1.00;
@@ -30,7 +29,6 @@ async function inicializarInventario() {
             if (inputTasa) inputTasa.value = tasaActual.toFixed(2);
         }
 
-        // Escucha en tiempo real de productos
         onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
             productosLocales = [];
             snapshot.forEach(doc => productosLocales.push({ id: doc.id, ...doc.data() }));
@@ -41,7 +39,7 @@ async function inicializarInventario() {
     }
 }
 
-// --- RENDERIZAR TABLA CON FILAS EDITABLES ---
+// --- RENDERIZAR TABLA CON CORRECCIÓN DE CAMPOS ---
 function renderizarTabla(lista) {
     const tbody = document.getElementById('cuerpo-tabla');
     if (!tbody) return;
@@ -51,16 +49,20 @@ function renderizarTabla(lista) {
         return;
     }
 
-    tbody.innerHTML = lista.map((p, index) => {
+    tbody.innerHTML = lista.map((p) => {
         const costo = parseFloat(p.costo) || 0;
         const ganancia = parseFloat(p.ganancia) || 0;
         const precioUSD = p.precio ? parseFloat(p.precio) : (costo + (costo * (ganancia / 100)));
         const precioBS = precioUSD * tasaActual;
 
+        // CORRECCIÓN CLAVE: Asegurar la lectura exacta de minúsculas desde Firestore
+        const codigoBarras = p.barras || p.codigo || ''; 
+        const codigoSku = p.sku || p.SKU || '';
+
         return `
             <tr data-id="${p.id || ''}" class="fila-producto">
-                <td><input type="text" class="input-table p-barras" value="${p.barras || ''}"></td>
-                <td><input type="text" class="input-table p-sku" value="${p.sku || ''}"></td>
+                <td><input type="text" class="input-table p-barras" value="${codigoBarras}"></td>
+                <td><input type="text" class="input-table p-sku" value="${codigoSku}"></td>
                 <td><input type="text" class="input-table p-nombre" value="${p.nombre || ''}" required></td>
                 <td><input type="number" step="0.01" class="input-table p-costo" value="${costo.toFixed(2)}" oninput="window.calcularPreciosFila(this)"></td>
                 <td><input type="number" step="0.1" class="input-table p-ganancia" value="${ganancia.toFixed(1)}" oninput="window.calcularPreciosFila(this)"></td>
@@ -82,7 +84,6 @@ window.agregarFila = () => {
     const tbody = document.getElementById('cuerpo-tabla');
     if (!tbody) return;
 
-    // Si estaba vacío el indicador de carga, lo removemos
     if (tbody.innerHTML.includes("No hay productos") || tbody.innerHTML.includes("Cargando")) {
         tbody.innerHTML = '';
     }
@@ -106,12 +107,11 @@ window.agregarFila = () => {
         </td>
     `;
 
-    // INSERTAR AL PRINCIPIO DE LA TABLA
     tbody.insertBefore(nuevaFila, tbody.firstChild);
     nuevaFila.querySelector('.p-nombre').focus();
 };
 
-// --- CÁLCULOS EN CALIENTE DENTRO DE LAS CELDAS ---
+// --- CÁLCULOS INTERNOS ---
 window.calcularPreciosFila = (input) => {
     const fila = input.closest('tr');
     const costo = parseFloat(fila.querySelector('.p-costo').value) || 0;
@@ -138,7 +138,6 @@ window.calcularGananciaFila = (input) => {
     fila.querySelector('.p-precio-bs').value = (precioUSD * tasaActual).toFixed(2).replace('.', ',') + " Bs.";
 };
 
-// --- CAMBIO DE TASA (ACTUALIZA COLUMNA EN CALIENTE) ---
 window.actualizarPreciosBS = () => {
     const inputTasa = document.getElementById('tasaCambio');
     tasaActual = parseFloat(inputTasa.value) || 1.00;
@@ -150,15 +149,12 @@ window.actualizarPreciosBS = () => {
     });
 };
 
-// --- ELIMINAR FILA DE LA PANTALLA / BASE DE DATOS ---
 window.eliminarFila = async (btn, id) => {
     if (!confirm("¿Desear remover este item? (Los cambios permanentes se aplican al Guardar Todo)")) return;
-    const fila = btn.closest('tr');
-    fila.remove();
-    // Nota: Si ya tenía ID se puede manejar un borrado inmediato o dejar que la sobreescritura haga lo propio.
+    btn.closest('tr').remove();
 };
 
-// --- GUARDAR TODO EN BATCH (TRANSMISIÓN MASIVA) ---
+// --- GUARDAR TODO EN BATCH ---
 window.guardarInventario = async () => {
     const btnGuardar = document.getElementById('btnGuardarTodo');
     btnGuardar.disabled = true;
@@ -168,15 +164,13 @@ window.guardarInventario = async () => {
         const batch = writeBatch(db);
         const filas = document.querySelectorAll('.fila-producto');
 
-        // 1. Guardar la tasa de cambio actual primero
         const tasaRef = doc(db, "usuarios", USER_ID, "configuracion", "tasa");
         batch.set(tasaRef, { valor: tasaActual });
 
-        // 2. Procesar cada fila de la tabla
         filas.forEach(fila => {
             const id = fila.getAttribute('data-id');
             const nombre = fila.querySelector('.p-nombre').value.trim();
-            if (!nombre) return; // Saltarse celdas sin descripción válida
+            if (!nombre) return; 
 
             const datosProducto = {
                 barras: fila.querySelector('.p-barras').value.trim(),
@@ -193,7 +187,6 @@ window.guardarInventario = async () => {
                 docRef = doc(db, "usuarios", USER_ID, "productos", id);
                 batch.set(docRef, datosProducto, { merge: true });
             } else {
-                // Producto nuevo genera auto-ID
                 docRef = doc(collection(db, "usuarios", USER_ID, "productos"));
                 batch.set(docRef, datosProducto);
             }
@@ -209,7 +202,6 @@ window.guardarInventario = async () => {
     }
 };
 
-// --- COMPACT SYNC (BOTÓN 🔄 REUBICADO ARRIBA) ---
 window.forzarSincronizacion = async () => {
     mostrarEstado("🔄 Sincronizando datos con el servidor...", "loading");
     try {
@@ -223,7 +215,6 @@ window.forzarSincronizacion = async () => {
     }
 };
 
-// --- BUSCADOR / FILTRO ---
 window.filtrarProductos = () => {
     const busqueda = document.getElementById('buscador').value.toLowerCase();
     const filas = document.querySelectorAll('.fila-producto');
