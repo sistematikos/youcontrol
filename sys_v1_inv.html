@@ -3,127 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>You Control - Inventario</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Inventario Pro | Sistematikos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --royal-blue: #0052d4;
-            --vibrant-blue: #006aff;
-            --bg-light: #f8fafc;
-            --text-dark: #1e293b;
-        }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-light); margin: 0; color: var(--text-dark); padding-bottom: 40px; }
+        :root { --bg: #F8FAFC; --primary: #3B82F6; --text: #1E293B; --border: #E2E8F0; --emerald: #10B981; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding-bottom: 50px; color: var(--text); }
+        .container { padding: 15px; max-width: 1300px; margin: auto; }
+        .header-table { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         
-        .header-inv { 
-            background: var(--royal-blue); color: white; padding: 15px 30px; 
-            display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        .container { max-width: 1100px; margin: 20px auto; padding: 0 20px; }
+        /* Paneles Superiores */
+        .top-panels { display: grid; grid-template-columns: 1fr 2fr; gap: 15px; margin-bottom: 10px; }
+        .panel-card { background: white; padding: 15px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 12px; }
         
-        /* Contenedor de Formulario arriba */
-        .top-panel {
-            background: white; border-radius: 15px; padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px;
-        }
+        .tasa-input { padding: 8px; border-radius: 10px; border: 2px solid var(--primary); width: 110px; font-weight: 800; font-size: 1.1rem; text-align: center; }
+        .search-container { display: flex; gap: 10px; width: 100%; align-items: center; }
+        .search-input { flex: 1; padding: 10px 15px; border-radius: 10px; border: 1px solid var(--border); font-size: 0.9rem; outline: none; transition: 0.3s; }
+        .search-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
 
-        .form-grid { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; align-items: center; }
-        .form-grid input { 
-            padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; 
-            font-size: 14px; outline: none; width: 100%; box-sizing: border-box;
-        }
-        .form-grid input:focus { border-color: var(--vibrant-blue); }
-
-        .btn-add { 
-            background: var(--vibrant-blue); color: white; border: none; 
-            padding: 11px 20px; border-radius: 8px; font-weight: bold; 
-            cursor: pointer; transition: 0.2s; white-space: nowrap;
-        }
-        .btn-add:hover { background: var(--royal-blue); }
-
-        /* Barra de estado arriba */
-        #status-bar { 
-            margin-top: 10px; padding: 8px; border-radius: 6px; 
-            font-size: 13px; font-weight: 600; text-align: center; display: none; 
-        }
-        .status-loading { background: #e0f2fe; color: #0369a1; }
-        .status-success { background: #dcfce7; color: #15803d; }
-
-        /* Barra de Controles de la Tabla */
-        .table-controls { 
-            display: flex; gap: 10px; margin-bottom: 15px; align-items: center; 
-        }
-        #searchBar { 
-            flex: 1; padding: 10px; border: 2px solid #e2e8f0; 
-            border-radius: 8px; font-size: 14px; outline: none; 
-        }
-
-        /* Botón de actualizar compacto */
+        /* Botón Actualizar Compacto Arriba */
         .btn-sync-mini {
-            background: white; border: 2px solid #e2e8f0; color: #64748b;
-            padding: 10px 14px; border-radius: 8px; cursor: pointer;
-            font-size: 14px; transition: 0.2s; display: flex; align-items: center; justify-content: center;
+            background: white; border: 2px solid var(--border); color: #64748b;
+            padding: 10px 14px; border-radius: 10px; cursor: pointer; font-size: 14px;
+            transition: 0.2s; display: flex; align-items: center; justify-content: center; height: 42px;
         }
-        .btn-sync-mini:hover { background: #f1f5f9; color: var(--royal-blue); border-color: #cbd5e1; }
+        .btn-sync-mini:hover { background: #F1F5F9; color: var(--primary); border-color: #cbd5e1; }
 
-        /* Diseño de Tabla */
-        .table-wrapper { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
-        th { background: #f8fafc; color: #64748b; padding: 14px 20px; font-weight: 600; border-bottom: 2px solid #edf2f7; }
-        td { padding: 14px 20px; border-bottom: 1px solid #f1f5f9; }
-        tr:hover td { background: #f8fafc; }
+        /* Barra de carga superior */
+        #status-bar-inv {
+            width: 100%; padding: 8px; border-radius: 10px; font-size: 13px;
+            font-weight: 600; text-align: center; margin-bottom: 15px; display: none;
+            box-sizing: border-box;
+        }
+        .status-loading { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+        .status-success { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
 
-        .btn-delete { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 16px; transition: 0.2s; }
-        .btn-delete:hover { transform: scale(1.1); }
+        .table-responsive { overflow-x: auto; background: white; border-radius: 15px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; min-width: 1100px; }
+        th { background: #F1F5F9; padding: 12px; text-align: left; font-size: 0.7rem; text-transform: uppercase; color: #64748B; }
+        td { padding: 8px; border-bottom: 1px solid var(--border); }
+        
+        .input-table { width: 100%; border: 1px solid transparent; padding: 8px; border-radius: 8px; font-size: 0.85rem; background: #F1F5F9; box-sizing: border-box; }
+        .input-table:focus { outline: none; border-color: var(--primary); background: white; }
+        .p-precio-bs { font-weight: bold; color: #059669; background: #ecfdf5 !important; }
+
+        .btn-add { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; }
+        .btn-save { background: var(--emerald); color: white; border: none; padding: 18px; border-radius: 15px; cursor: pointer; font-weight: 800; width: 100%; margin-top: 25px; font-size: 1.1rem; transition: 0.3s; }
+        .btn-save:hover { background: #059669; transform: translateY(-2px); }
+        .btn-remove { color: #EF4444; background: #FEE2E2; border: none; cursor: pointer; padding: 8px; border-radius: 8px; }
+        .btn-back { border: none; background: none; color: var(--primary); cursor: pointer; font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; gap: 5px; }
+
+        .oculto { display: none; }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false">
+    <div class="container">
+        <button class="btn-back" onclick="location.href='index.html'">
+            <i class="fas fa-arrow-left"></i> VOLVER AL MENÚ
+        </button>
 
-<header class="header-inv">
-    <div style="font-weight: 800; font-size: 18px;">YOU CONTROL - INVENTARIO</div>
-    <div style="background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 14px;">
-        Configuración General
-    </div>
-</header>
-
-<div class="container">
-    <div class="top-panel">
-        <div style="font-weight: bold; margin-bottom: 12px; color: #64748b; font-size: 12px; letter-spacing: 1px; text-transform: uppercase;">
-            Registrar Nuevo Artículo
+        <div class="header-table">
+            <h3><i class="fas fa-boxes-stacked"></i> GESTIÓN DE INVENTARIO</h3>
+            <button class="btn-add" onclick="window.agregarFila()"><i class="fas fa-plus"></i> NUEVO ITEM</button>
         </div>
-        <div class="form-grid">
-            <input type="text" id="p-nombre" placeholder="Nombre del Producto..." required>
-            <input type="number" id="p-precio" step="0.01" placeholder="Precio ($)..." required>
-            <input type="number" id="p-stock" placeholder="Stock Inicial..." required>
-            <button class="btn-add" onclick="window.agregarArticulo()">Añadir Producto</button>
-        </div>
-        <div id="status-bar"></div>
-    </div>
 
-    <div class="table-controls">
-        <input type="text" id="searchBar" placeholder="🔍 Buscar en el inventario por nombre...">
-        <button class="btn-sync-mini" onclick="window.forzarRefresco()" title="Sincronizar base de datos">
-            <i class="fa-solid fa-arrows-rotate"></i>
+        <div class="top-panels">
+            <div class="panel-card">
+                <label style="font-weight: 600;"><i class="fas fa-money-bill-wave" style="color: #10B981;"></i> TASA:</label>
+                <input type="number" id="tasaCambio" value="1.00" step="0.01" oninput="window.actualizarPreciosBS()" class="tasa-input">
+            </div>
+            <div class="panel-card" style="flex-grow: 1;">
+                <div class="search-container">
+                    <i class="fas fa-search" style="color: #94A3B8;"></i>
+                    <input type="text" id="buscador" placeholder="Buscar por Nombre, SKU o Código de Barras..." onkeyup="window.filtrarProductos()" class="search-input">
+                    <button class="btn-sync-mini" onclick="window.forzarSincronizacion()" title="Sincronizar DB">
+                        <i class="fas fa-arrows-rotate"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="status-bar-inv"></div>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 12%;">Barras</th>
+                        <th style="width: 10%;">SKU</th>
+                        <th style="width: 22%;">Descripción</th>
+                        <th style="width: 9%;">Costo $</th>
+                        <th style="width: 7%;">% Gan.</th>
+                        <th style="width: 9%;">Precio $</th>
+                        <th style="width: 14%;">Precio BS</th>
+                        <th style="width: 9%;">Stock</th>
+                        <th style="width: 8%; text-align: center;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="cuerpo-tabla">
+                    <tr><td colspan="9" style="text-align:center; padding:30px;">Cargando base de datos...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <button class="btn-save" id="btnGuardarTodo" onclick="window.guardarInventario()">
+            <i class="fas fa-save"></i> GUARDAR CAMBIOS
         </button>
     </div>
-
-    <div class="table-wrapper">
-        <table>
-            <thead>
-                <tr>
-                    <th>Producto</th>
-                    <th>Precio ($)</th>
-                    <th>Stock</th>
-                    <th style="width: 50px; text-align: center;">Acción</th>
-                </tr>
-            </thead>
-            <tbody id="tabla-inventario">
-                </tbody>
-        </table>
-    </div>
-</div>
-
-<script type="module" src="./js/sys_v1_inv.js"></script>
+    <script type="module" src="./js/sys_v1_inv.js"></script>
 </body>
 </html>
