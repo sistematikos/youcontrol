@@ -21,74 +21,67 @@
         .tasa-input { padding: 8px; border-radius: 10px; border: 2px solid var(--primary); width: 110px; font-weight: 800; font-size: 1.1rem; text-align: center; }
         .search-container { display: flex; gap: 10px; width: 100%; align-items: center; }
         .search-input { flex: 1; padding: 10px 15px; border-radius: 10px; border: 1px solid var(--border); font-size: 0.9rem; outline: none; transition: 0.3s; }
-        .search-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
-
-        /* Botón Actualizar Compacto Arriba */
-        .btn-sync-mini {
-            background: white; border: 2px solid var(--border); color: #64748b;
-            padding: 10px 14px; border-radius: 10px; cursor: pointer; font-size: 14px;
-            transition: 0.2s; display: flex; align-items: center; justify-content: center; height: 42px;
-        }
-        .btn-sync-mini:hover { background: #F1F5F9; color: var(--primary); border-color: #cbd5e1; }
-
-        /* Barra de carga superior */
-        #status-bar-inv {
-            width: 100%; padding: 8px; border-radius: 10px; font-size: 13px;
-            font-weight: 600; text-align: center; margin-bottom: 15px; display: none;
-            box-sizing: border-box;
-        }
-        .status-loading { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
-        .status-success { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
-
+        
+        /* Estilos de la Tabla Informativa (Texto plano) */
         .table-responsive { overflow-x: auto; background: white; border-radius: 15px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; min-width: 1100px; }
-        th { background: #F1F5F9; padding: 12px; text-align: left; font-size: 0.7rem; text-transform: uppercase; color: #64748B; }
-        td { padding: 8px; border-bottom: 1px solid var(--border); }
+        th { background: #F1F5F9; padding: 14px; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: #64748B; letter-spacing: 0.5px; }
+        td { padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
         
-        .input-table { width: 100%; border: 1px solid transparent; padding: 8px; border-radius: 8px; font-size: 0.85rem; background: #F1F5F9; box-sizing: border-box; }
-        .input-table:focus { outline: none; border-color: var(--primary); background: white; }
-        .p-precio-bs { font-weight: bold; color: #059669; background: #ecfdf5 !important; }
+        .txt-bold { font-weight: 600; color: var(--text); }
+        .badge-bs { font-weight: 700; color: #059669; background: #ecfdf5; padding: 4px 8px; border-radius: 6px; }
+        .badge-stock { font-weight: 600; padding: 4px 8px; border-radius: 6px; background: #F1F5F9; }
 
-        /* Botones de Cabecera */
-        .btn-add { background: var(--primary); color: white; border: none; padding: 10px 18px; border-radius: 12px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 6px; font-size: 0.9rem; }
-        .btn-save-top { background: var(--emerald); color: white; border: none; padding: 10px 18px; border-radius: 12px; cursor: pointer; font-weight: 700; display: flex; align-items: center; gap: 6px; font-size: 0.9rem; transition: 0.2s; }
-        .btn-save-top:hover { background: #059669; }
-        .btn-save-top:disabled { background: #cbd5e1; cursor: not-allowed; }
-        
+        /* Botones */
+        .btn-add { background: var(--primary); color: white; border: none; padding: 10px 18px; border-radius: 12px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+        .btn-compras { background: #6366F1; color: white; border: none; padding: 10px 18px; border-radius: 12px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 6px; text-decoration: none; font-size: 0.9rem; }
+        .btn-edit { color: var(--primary); background: #EFF6FF; border: none; cursor: pointer; padding: 8px; border-radius: 8px; margin-right: 5px; }
         .btn-remove { color: #EF4444; background: #FEE2E2; border: none; cursor: pointer; padding: 8px; border-radius: 8px; }
         .btn-back { border: none; background: none; color: var(--primary); cursor: pointer; font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; gap: 5px; }
 
+        /* --- VENTANA MODAL PARA EDITAR --- */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 25px; border-radius: 16px; width: 90%; max-width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        .form-group.full { grid-column: span 2; }
+        .form-group label { font-size: 0.8rem; font-weight: 600; color: #64748B; }
+        .form-group input { padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-family: 'Poppins'; font-size: 0.9rem; }
+        .form-group input:focus { border-color: var(--primary); outline: none; }
+        .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+        .btn-modal-save { background: var(--emerald); color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+        .btn-modal-close { background: #94A3B8; color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+
+        #status-bar-inv { width: 100%; padding: 8px; border-radius: 10px; font-size: 13px; font-weight: 600; text-align: center; margin-bottom: 15px; display: none; }
+        .status-loading { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+        .status-success { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
         .oculto { display: none; }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false">
     <div class="container">
         <button class="btn-back" onclick="location.href='index.html'">
             <i class="fas fa-arrow-left"></i> VOLVER AL MENÚ
         </button>
 
         <div class="header-table">
-            <h3><i class="fas fa-boxes-stacked"></i> GESTIÓN DE INVENTARIO</h3>
+            <h3><i class="fas fa-boxes-stacked"></i> INVENTARIO GENERAL</h3>
             <div class="header-actions">
-                <button class="btn-add" onclick="window.agregarFila()"><i class="fas fa-plus"></i> NUEVO ITEM</button>
-                <button class="btn-save-top" id="btnGuardarTodo" onclick="window.guardarInventario()">
-                    <i class="fas fa-save"></i> GUARDAR (F9)
-                </button>
+                <a href="sys_v1_compras.html" class="btn-compras"><i class="fas fa-cart-plus"></i> ENTRADA MERCANCÍA</a>
+                <button class="btn-add" onclick="window.abrirModalNuevo()"><i class="fas fa-plus"></i> NUEVO ITEM</button>
             </div>
         </div>
 
         <div class="top-panels">
             <div class="panel-card">
                 <label style="font-weight: 600;"><i class="fas fa-money-bill-wave" style="color: #10B981;"></i> TASA:</label>
-                <input type="number" id="tasaCambio" value="1.00" step="0.01" oninput="window.actualizarPreciosBS()" class="tasa-input">
+                <input type="number" id="tasaCambio" value="1.00" step="0.01" oninput="window.actualizarTasaTop()" class="tasa-input">
             </div>
             <div class="panel-card" style="flex-grow: 1;">
                 <div class="search-container">
                     <i class="fas fa-search" style="color: #94A3B8;"></i>
                     <input type="text" id="buscador" placeholder="Buscar por Nombre, SKU o Código de Barras..." onkeyup="window.filtrarProductos()" class="search-input">
-                    <button class="btn-sync-mini" onclick="window.forzarSincronizacion()" title="Sincronizar DB">
-                        <i class="fas fa-arrows-rotate"></i>
-                    </button>
                 </div>
             </div>
         </div>
@@ -100,14 +93,14 @@
                 <thead>
                     <tr>
                         <th style="width: 12%;">Barras</th>
-                        <th style="width: 10%;">SKU</th>
-                        <th style="width: 22%;">Descripción</th>
-                        <th style="width: 9%;">Costo $</th>
-                        <th style="width: 7%;">% Gan.</th>
-                        <th style="width: 9%;">Precio $</th>
+                        <th style="width: 12%;">SKU</th>
+                        <th style="width: 30%;">Descripción</th>
+                        <th style="width: 10%;">Costo $</th>
+                        <th style="width: 8%;">% Gan.</th>
+                        <th style="width: 10%;">Precio $</th>
                         <th style="width: 14%;">Precio BS</th>
-                        <th style="width: 9%;">Stock</th>
-                        <th style="width: 8%; text-align: center;">Acción</th>
+                        <th style="width: 8%;">Stock</th>
+                        <th style="width: 10%; text-align: center;">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="cuerpo-tabla">
@@ -116,6 +109,51 @@
             </table>
         </div>
     </div>
+
+    <div class="modal" id="modalProducto">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 id="modalTitulo"><i class="fas fa-box"></i> Editar Producto</h4>
+                <button style="border:none; background:none; font-size:1.2rem; cursor:pointer;" onclick="window.cerrarModal()">&times;</button>
+            </div>
+            <input type="hidden" id="form-id">
+            <div class="modal-grid">
+                <div class="form-group">
+                    <label>Código Barras</label>
+                    <input type="text" id="form-barras">
+                </div>
+                <div class="form-group">
+                    <label>SKU / Código Interno</label>
+                    <input type="text" id="form-sku">
+                </div>
+                <div class="form-group full">
+                    <label>Descripción del Producto</label>
+                    <input type="text" id="form-nombre" required>
+                </div>
+                <div class="form-group">
+                    <label>Costo USD ($)</label>
+                    <input type="number" step="0.01" id="form-costo" oninput="window.calcularPrecioModal()">
+                </div>
+                <div class="form-group">
+                    <label>% Ganancia</label>
+                    <input type="number" step="0.1" id="form-ganancia" oninput="window.calcularPrecioModal()">
+                </div>
+                <div class="form-group">
+                    <label>Precio USD ($)</label>
+                    <input type="number" step="0.01" id="form-precio" oninput="window.calcularGananciaModal()">
+                </div>
+                <div class="form-group">
+                    <label>Stock Actual</label>
+                    <input type="number" id="form-stock">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-modal-close" onclick="window.cerrarModal()">Cancelar</button>
+                <button class="btn-modal-save" onclick="window.guardarCambiosModal()">Guardar (F9)</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="./js/sys_v1_inv.js"></script>
 </body>
 </html>
