@@ -1,32 +1,27 @@
 import { db } from './firebase-config.js';
 import { 
-    collection, onSnapshot, writeBatch, doc, getDoc, getDocs 
+    collection, onSnapshot, doc, getDoc, setDoc, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const USER_ID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
 let productosLocales = [];
 let tasaActual = 1.00;
 
-// --- MOSTRAR ESTADO EN LA BARRA SUPERIOR ---
 function mostrarEstado(mensaje, tipo) {
     const bar = document.getElementById('status-bar-inv');
     if (!bar) return;
     bar.className = `status-${tipo}`;
     bar.innerText = mensaje;
     bar.style.display = 'block';
-    if (tipo === 'success') {
-        setTimeout(() => { bar.style.display = 'none'; }, 3000);
-    }
+    if (tipo === 'success') setTimeout(() => { bar.style.display = 'none'; }, 3000);
 }
 
-// --- CARGAR TASA E INVENTARIO INICIAL ---
 async function inicializarInventario() {
     try {
         const tasaSnap = await getDoc(doc(db, "usuarios", USER_ID, "configuracion", "tasa"));
         if (tasaSnap.exists()) {
             tasaActual = parseFloat(tasaSnap.data().valor) || 1.00;
-            const inputTasa = document.getElementById('tasaCambio');
-            if (inputTasa) inputTasa.value = tasaActual.toFixed(2);
+            document.getElementById('tasaCambio').value = tasaActual.toFixed(2);
         }
 
         onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
@@ -34,18 +29,15 @@ async function inicializarInventario() {
             snapshot.forEach(doc => productosLocales.push({ id: doc.id, ...doc.data() }));
             renderizarTabla(productosLocales);
         });
-    } catch (e) {
-        console.error("Error al inicializar:", e);
-    }
+    } catch (e) { console.error(e); }
 }
 
-// --- RENDERIZAR TABLA ---
 function renderizarTabla(lista) {
     const tbody = document.getElementById('cuerpo-tabla');
     if (!tbody) return;
 
     if (lista.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:20px; color:#94a3b8;">No hay productos. Usa "NUEVO ITEM" para empezar.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:20px;">No hay productos.</td></tr>`;
         return;
     }
 
@@ -55,185 +47,133 @@ function renderizarTabla(lista) {
         const precioUSD = p.precio ? parseFloat(p.precio) : (costo + (costo * (ganancia / 100)));
         const precioBS = precioUSD * tasaActual;
 
-        const codigoBarras = p.barras || p.codigo || ''; 
-        const codigoSku = p.sku || p.SKU || '';
-
         return `
-            <tr data-id="${p.id || ''}" class="fila-producto">
-                <td><input type="text" class="input-table p-barras" value="${codigoBarras}"></td>
-                <td><input type="text" class="input-table p-sku" value="${codigoSku}"></td>
-                <td><input type="text" class="input-table p-nombre" value="${p.nombre || ''}" required></td>
-                <td><input type="number" step="0.01" class="input-table p-costo" value="${costo.toFixed(2)}" oninput="window.calcularPreciosFila(this)"></td>
-                <td><input type="number" step="0.1" class="input-table p-ganancia" value="${ganancia.toFixed(1)}" oninput="window.calcularPreciosFila(this)"></td>
-                <td><input type="number" step="0.01" class="input-table p-precio-usd" value="${precioUSD.toFixed(2)}" oninput="window.calcularGananciaFila(this)"></td>
-                <td><input type="text" class="input-table p-precio-bs" value="${precioBS.toFixed(2).replace('.', ',')} Bs." readonly></td>
-                <td><input type="number" class="input-table p-stock" value="${p.stock || 0}"></td>
+            <tr class="fila-producto" data-id="${p.id}">
+                <td class="td-barras">${p.barras || ''}</td>
+                <td class="td-sku">${p.sku || ''}</td>
+                <td class="td-nombre txt-bold">${p.nombre || ''}</td>
+                <td>$${costo.toFixed(2)}</td>
+                <td>${ganancia.toFixed(1)}%</td>
+                <td class="txt-bold">$${precioUSD.toFixed(2)}</td>
+                <td><span class="badge-bs">${precioBS.toFixed(2).replace('.', ',')} Bs.</span></td>
+                <td><span class="badge-stock">${p.stock || 0}</span></td>
                 <td style="text-align: center;">
-                    <button class="btn-remove" onclick="window.eliminarFila(this, '${p.id || ''}')">
-                        <i class="fas fa-trash-can"></i>
-                    </button>
+                    <button class="btn-edit" onclick="window.abrirModalEditar('${p.id}')" title="Editar"><i class="fas fa-pen"></i></button>
+                    <button class="btn-remove" onclick="window.eliminarProducto('${p.id}')" title="Eliminar"><i class="fas fa-trash"></i></button>
                 </td>
             </tr>
         `;
     }).join('');
 }
 
-// --- AGREGAR NUEVA FILA AL INICIO ---
-window.agregarFila = () => {
-    const tbody = document.getElementById('cuerpo-tabla');
-    if (!tbody) return;
-
-    if (tbody.innerHTML.includes("No hay productos") || tbody.innerHTML.includes("Cargando")) {
-        tbody.innerHTML = '';
-    }
-
-    const nuevaFila = document.createElement('tr');
-    nuevaFila.setAttribute('data-id', '');
-    nuevaFila.className = 'fila-producto';
-    nuevaFila.innerHTML = `
-        <td><input type="text" class="input-table p-barras" value=""></td>
-        <td><input type="text" class="input-table p-sku" value=""></td>
-        <td><input type="text" class="input-table p-nombre" value="" placeholder="Nuevo Artículo..." required></td>
-        <td><input type="number" step="0.01" class="input-table p-costo" value="0.00" oninput="window.calcularPreciosFila(this)"></td>
-        <td><input type="number" step="0.1" class="input-table p-ganancia" value="0.0" oninput="window.calcularPreciosFila(this)"></td>
-        <td><input type="number" step="0.01" class="input-table p-precio-usd" value="0.00" oninput="window.calcularGananciaFila(this)"></td>
-        <td><input type="text" class="input-table p-precio-bs" value="0,00 Bs." readonly></td>
-        <td><input type="number" class="input-table p-stock" value="0"></td>
-        <td style="text-align: center;">
-            <button class="btn-remove" onclick="window.eliminarFila(this, '')">
-                <i class="fas fa-trash-can"></i>
-            </button>
-        </td>
-    `;
-
-    tbody.insertBefore(nuevaFila, tbody.firstChild);
-    nuevaFila.querySelector('.p-nombre').focus();
+// --- MANEJO DEL MODAL ---
+window.abrirModalNuevo = () => {
+    document.getElementById('modalTitulo').innerHTML = '<i class="fas fa-plus"></i> Nuevo Producto';
+    document.getElementById('form-id').value = '';
+    document.getElementById('form-barras').value = '';
+    document.getElementById('form-sku').value = '';
+    document.getElementById('form-nombre').value = '';
+    document.getElementById('form-costo').value = '0.00';
+    document.getElementById('form-ganancia').value = '0.0';
+    document.getElementById('form-precio').value = '0.00';
+    document.getElementById('form-stock').value = '0';
+    document.getElementById('modalProducto').style.display = 'flex';
+    document.getElementById('form-sku').focus();
 };
 
-// --- CÁLCULOS INTERNOS ---
-window.calcularPreciosFila = (input) => {
-    const fila = input.closest('tr');
-    const costo = parseFloat(fila.querySelector('.p-costo').value) || 0;
-    const ganancia = parseFloat(fila.querySelector('.p-ganancia').value) || 0;
-    
-    const precioUSD = costo + (costo * (ganancia / 100));
-    const precioBS = precioUSD * tasaActual;
+window.abrirModalEditar = (id) => {
+    const prod = productosLocales.find(p => p.id === id);
+    if (!prod) return;
 
-    fila.querySelector('.p-precio-usd').value = precioUSD.toFixed(2);
-    fila.querySelector('.p-precio-bs').value = precioBS.toFixed(2).replace('.', ',') + " Bs.";
+    document.getElementById('modalTitulo').innerHTML = '<i class="fas fa-pen"></i> Editar Producto';
+    document.getElementById('form-id').value = prod.id;
+    document.getElementById('form-barras').value = prod.barras || '';
+    document.getElementById('form-sku').value = prod.sku || '';
+    document.getElementById('form-sku').disabled = true; // No alterar la clave ID primaria existente
+    document.getElementById('form-nombre').value = prod.nombre || '';
+    document.getElementById('form-costo').value = (prod.costo || 0).toFixed(2);
+    document.getElementById('form-ganancia').value = (prod.ganancia || 0).toFixed(1);
+    document.getElementById('form-precio').value = (prod.precio || 0).toFixed(2);
+    document.getElementById('form-stock').value = prod.stock || 0;
+
+    document.getElementById('modalProducto').style.display = 'flex';
+    document.getElementById('form-nombre').focus();
 };
 
-window.calcularGananciaFila = (input) => {
-    const fila = input.closest('tr');
-    const costo = parseFloat(fila.querySelector('.p-costo').value) || 0;
-    const precioUSD = parseFloat(fila.querySelector('.p-precio-usd').value) || 0;
+window.cerrarModal = () => {
+    document.getElementById('modalProducto').style.display = 'none';
+    document.getElementById('form-sku').disabled = false;
+};
 
-    let ganancia = 0;
+// --- CÁLCULOS DENTRO DEL MODAL ---
+window.calcularPrecioModal = () => {
+    const costo = parseFloat(document.getElementById('form-costo').value) || 0;
+    const ganancia = parseFloat(document.getElementById('form-ganancia').value) || 0;
+    document.getElementById('form-precio').value = (costo + (costo * (ganancia / 100))).toFixed(2);
+};
+
+window.calcularGananciaModal = () => {
+    const costo = parseFloat(document.getElementById('form-costo').value) || 0;
+    const precio = parseFloat(document.getElementById('form-precio').value) || 0;
     if (costo > 0) {
-        ganancia = ((precioUSD - costo) / costo) * 100;
+        document.getElementById('form-ganancia').value = (((precio - costo) / costo) * 100).toFixed(1);
     }
-
-    fila.querySelector('.p-ganancia').value = ganancia.toFixed(1);
-    fila.querySelector('.p-precio-bs').value = (precioUSD * tasaActual).toFixed(2).replace('.', ',') + " Bs.";
 };
 
-window.actualizarPreciosBS = () => {
-    const inputTasa = document.getElementById('tasaCambio');
-    tasaActual = parseFloat(inputTasa.value) || 1.00;
+// --- GUARDAR EDICIÓN O CREACIÓN ---
+window.guardarCambiosModal = async () => {
+    const idExistente = document.getElementById('form-id').value;
+    const nombre = document.getElementById('form-nombre').value.trim();
+    const sku = document.getElementById('form-sku').value.trim();
+    const barras = document.getElementById('form-barras').value.trim();
 
-    const filas = document.querySelectorAll('.fila-producto');
-    filas.forEach(fila => {
-        const precioUSD = parseFloat(fila.querySelector('.p-precio-usd').value) || 0;
-        fila.querySelector('.p-precio-bs').value = (precioUSD * tasaActual).toFixed(2).replace('.', ',') + " Bs.";
-    });
-};
+    if (!nombre) { alert("La descripción es obligatoria"); return; }
 
-window.eliminarFila = async (btn, id) => {
-    if (!confirm("¿Desear remover este item? (Los cambios permanentes se aplican al Guardar Todo)")) return;
-    btn.closest('tr').remove();
-};
+    mostrarEstado("⏳ Guardando datos del producto...", "loading");
 
-// --- GUARDAR EN BATCH (USA SKU COMO DOCUMENT ID) ---
-window.guardarInventario = async () => {
-    const btnGuardar = document.getElementById('btnGuardarTodo');
-    if (btnGuardar.disabled) return; // Evitar llamadas duplicadas si ya está guardando
-
-    btnGuardar.disabled = true;
-    mostrarEstado("⏳ Guardando cambios de inventario (F9)...", "loading");
+    const datos = {
+        barras: barras,
+        sku: sku,
+        nombre: nombre,
+        costo: parseFloat(document.getElementById('form-costo').value) || 0,
+        ganancia: parseFloat(document.getElementById('form-ganancia').value) || 0,
+        precio: parseFloat(document.getElementById('form-precio').value) || 0,
+        stock: parseInt(document.getElementById('form-stock').value) || 0
+    };
 
     try {
-        const batch = writeBatch(db);
-        const filas = document.querySelectorAll('.fila-producto');
-
-        const tasaRef = doc(db, "usuarios", USER_ID, "configuracion", "tasa");
-        batch.set(tasaRef, { valor: tasaActual });
-
-        filas.forEach(fila => {
-            const idExistente = fila.getAttribute('data-id');
-            const txtNombre = fila.querySelector('.p-nombre').value.trim();
-            const txtSku = fila.querySelector('.p-sku').value.trim();
-            const txtBarras = fila.querySelector('.p-barras').value.trim();
-            
-            if (!txtNombre) return; 
-
-            const datosProducto = {
-                barras: txtBarras,
-                sku: txtSku,
-                nombre: txtNombre,
-                costo: parseFloat(fila.querySelector('.p-costo').value) || 0,
-                ganancia: parseFloat(fila.querySelector('.p-ganancia').value) || 0,
-                precio: parseFloat(fila.querySelector('.p-precio-usd').value) || 0,
-                stock: parseInt(fila.querySelector('.p-stock').value) || 0
-            };
-
-            let docRef;
-            if (idExistente) {
-                docRef = doc(db, "usuarios", USER_ID, "productos", idExistente);
-                batch.set(docRef, datosProducto, { merge: true });
-            } else {
-                const idDocumentoNuevo = txtSku || txtBarras;
-                if (idDocumentoNuevo) {
-                    docRef = doc(db, "usuarios", USER_ID, "productos", idDocumentoNuevo);
-                    batch.set(docRef, datosProducto, { merge: true });
-                } else {
-                    docRef = doc(collection(db, "usuarios", USER_ID, "productos"));
-                    batch.set(docRef, datosProducto);
-                }
-            }
-        });
-
-        await batch.commit();
-        mostrarEstado("✅ ¡Inventario guardado con éxito!", "success");
+        // Si no tiene ID previo, el ID del documento es el SKU (o barras, o auto-generado)
+        const idDocumento = idExistente || sku || barras || doc(collection(db, "temp")).id;
+        await setDoc(doc(db, "usuarios", USER_ID, "productos", idDocumento), datos, { merge: true });
+        
+        window.cerrarModal();
+        mostrarEstado("✅ Producto guardado correctamente.", "success");
     } catch (e) {
-        mostrarEstado("❌ Error al procesar guardado masivo.", "loading");
         console.error(e);
-    } finally {
-        btnGuardar.disabled = false;
+        mostrarEstado("❌ Error al guardar.", "loading");
     }
 };
 
-window.forzarSincronizacion = async () => {
-    mostrarEstado("🔄 Sincronizando datos con el servidor...", "loading");
+window.eliminarProducto = async (id) => {
+    if (!confirm("¿Seguro que deseas eliminar permanentemente este producto de la DB?")) return;
     try {
-        const snapshot = await getDocs(collection(db, "usuarios", USER_ID, "productos"));
-        productosLocales = [];
-        snapshot.forEach(doc => productosLocales.push({ id: doc.id, ...doc.data() }));
-        renderizarTabla(productosLocales);
-        mostrarEstado("✅ Sincronización completa", "success");
-    } catch (e) {
-        mostrarEstado("❌ Error de refresco masivo", "loading");
-    }
+        await deleteDoc(doc(db, "usuarios", USER_ID, "productos", id));
+        mostrarEstado("✅ Producto removido.", "success");
+    } catch(e) { console.error(e); }
+};
+
+window.actualizarTasaTop = async () => {
+    tasaActual = parseFloat(document.getElementById('tasaCambio').value) || 1.00;
+    renderizarTabla(productosLocales);
 };
 
 window.filtrarProductos = () => {
     const busqueda = document.getElementById('buscador').value.toLowerCase();
     const filas = document.querySelectorAll('.fila-producto');
-
     filas.forEach(fila => {
-        const barras = fila.querySelector('.p-barras').value.toLowerCase();
-        const sku = fila.querySelector('.p-sku').value.toLowerCase();
-        const nombre = fila.querySelector('.p-nombre').value.toLowerCase();
-
+        const barras = fila.querySelector('.td-barras').innerText.toLowerCase();
+        const sku = fila.querySelector('.td-sku').innerText.toLowerCase();
+        const nombre = fila.querySelector('.td-nombre').innerText.toLowerCase();
         if (barras.includes(busqueda) || sku.includes(busqueda) || nombre.includes(busqueda)) {
             fila.classList.remove('oculto');
         } else {
@@ -242,11 +182,14 @@ window.filtrarProductos = () => {
     });
 };
 
-// --- ASIGNACIÓN DE ATAJO F9 ---
+// Atajo de teclado F9 para guardar estando el modal activo
 window.addEventListener('keydown', (e) => {
     if (e.key === 'F9') {
-        e.preventDefault(); // Evita que el navegador use F9 para otra cosa
-        window.guardarInventario();
+        const modal = document.getElementById('modalProducto');
+        if (modal.style.display === 'flex') {
+            e.preventDefault();
+            window.guardarCambiosModal();
+        }
     }
 });
 
