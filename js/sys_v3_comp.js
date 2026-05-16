@@ -6,75 +6,78 @@ import {
 const USER_ID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
 let tasaActual = 1.00;
 
+// --- MOSTRAR NOTIFICACIONES EN LA BARRA DE ESTADO ---
 function mostrarEstado(mensaje, tipo) {
     const bar = document.getElementById('status-bar-comp');
     if (!bar) return;
     bar.className = `status-${tipo}`;
     bar.innerText = mensaje;
     bar.style.display = 'block';
-    if (tipo === 'success') setTimeout(() => { bar.style.display = 'none'; }, 4000);
+    if (tipo === 'success') {
+        setTimeout(() => { bar.style.display = 'none'; }, 4000);
+    }
 }
 
-// Inicializar Tasa y colocar fecha de hoy por defecto
+// --- CONTEXTO DE INICIALIZACIÓN ---
 async function inicializarModulo() {
-    // 1. Colocar fecha actual en el input
+    // Definir la fecha actual por defecto en el input
     const hoy = new Date().toISOString().split('T')[0];
     document.getElementById('comp-fecha').value = hoy;
 
     try {
-        // 2. Obtener la tasa de cambio actual de la DB
+        // Consultar la tasa de cambio vigente
         const tasaSnap = await getDoc(doc(db, "usuarios", USER_ID, "configuracion", "tasa"));
         if (tasaSnap.exists()) {
             tasaActual = parseFloat(tasaSnap.data().valor) || 1.00;
             document.getElementById('txt-tasa').innerText = tasaActual.toFixed(2).replace('.', ',');
         }
     } catch (e) {
-        console.error("Error cargando configuración inicial:", e);
+        console.error("Error al inicializar el módulo de compras:", e);
     }
 }
 
-// --- BUSCADOR DINÁMICO (AL PRESIONAR ENTER O ESCANEAR) ---
+// --- BUSCADOR INTELIGENTE POR ENTRADA O ESCANEO ---
 window.buscarProductoCompra = async (e) => {
     if (e.key === 'Enter') {
-        e.preventDefault();
+        e.preventDefault(); // Bloquear saltos de línea del lector
         const criterio = document.getElementById('buscador-dinamico').value.trim();
         if (!criterio) return;
 
-        mostrarEstado("🔍 Buscando artículo...", "loading");
+        mostrarEstado("🔍 Localizando artículo en Firebase...", "loading");
 
         try {
-            // 1. Intentar buscar primero asumiendo que el criterio es el ID directo del documento (SKU)
+            // Camino 1: Buscar usando el criterio como el ID directo del documento (SKU)
             let prodDoc = await getDoc(doc(db, "usuarios", USER_ID, "productos", criterio));
             
             if (prodDoc.exists()) {
                 cargarDatosFicha(prodDoc.id, prodDoc.data());
-                mostrarEstado("✅ Producto encontrado por SKU.", "success");
+                mostrarEstado("✅ Producto localizado mediante su SKU.", "success");
             } else {
-                // 2. Si no lo encuentra por ID, hacer una consulta en el campo "barras"
+                // Camino 2: Buscar dentro de la colección filtrando por el campo "barras"
                 const q = query(collection(db, "usuarios", USER_ID, "productos"), where("barras", "==", criterio));
                 const querySnapshot = await getDocs(q);
                 
                 if (!querySnapshot.empty) {
                     const docEncontrado = querySnapshot.docs[0];
                     cargarDatosFicha(docEncontrado.id, docEncontrado.data());
-                    mostrarEstado("✅ Producto encontrado por Código de Barras.", "success");
+                    mostrarEstado("✅ Producto localizado mediante su Código de Barras.", "success");
                 } else {
-                    // 3. Es un producto totalmente nuevo
+                    // Camino 3: Es un artículo que no existe en el inventario actual
                     limpiarFormularioParaNuevo(criterio);
-                    mostrarEstado("ℹ️ El código no existe. Preparado para registro nuevo.", "success");
+                    mostrarEstado("ℹ️ El código digitado no existe. Preparado para registro nuevo.", "success");
                 }
             }
         } catch (error) {
             console.error(error);
-            mostrarEstado("❌ Error al consultar la base de datos.", "error");
+            mostrarEstado("❌ Error de comunicación con la base de datos.", "error");
         }
     }
 };
 
-// --- LLENAR CAMPOS DE LA FICHA ---
+// --- ACOPLAMIENTO DE DATOS EN LOS CAMPOS ---
 function cargarDatosFicha(id, data) {
     document.getElementById('comp-sku').value = id || data.sku || '';
-    document.getElementById('comp-sku').disabled = true; // Si existe, protegemos el ID
+    document.getElementById('comp-sku').disabled = true; // Proteger clave ID primaria de productos viejos
     document.getElementById('comp-barras').value = data.barras || '';
     document.getElementById('comp-nombre').value = data.nombre || '';
     document.getElementById('comp-costo').value = (data.costo || 0).toFixed(2);
@@ -90,7 +93,8 @@ function cargarDatosFicha(id, data) {
 function limpiarFormularioParaNuevo(codigo) {
     document.getElementById('comp-sku').value = codigo;
     document.getElementById('comp-sku').disabled = false;
-    document.getElementById('comp-barras').value = codigo.length > 8 ? codigo : '';
+    // Si el código parece un código de barras de producto real (largo), clonarlo al campo barras
+    document.getElementById('comp-barras').value = codigo.length > 7 ? codigo : '';
     document.getElementById('comp-nombre').value = '';
     document.getElementById('comp-costo').value = '0.00';
     document.getElementById('comp-ganancia').value = '0.0';
@@ -101,7 +105,7 @@ function limpiarFormularioParaNuevo(codigo) {
     document.getElementById('comp-nombre').focus();
 }
 
-// --- MATEMÁTICA Y CÁLCULOS INTERNOS ---
+// --- FÓRMULAS MATEMÁTICAS EN CALIENTE ---
 window.calcularPreciosCompra = () => {
     const costo = parseFloat(document.getElementById('comp-costo').value) || 0;
     const ganancia = parseFloat(document.getElementById('comp-ganancia').value) || 0;
@@ -118,14 +122,16 @@ window.calcularGananciaCompra = () => {
     const precioUSD = parseFloat(document.getElementById('comp-precio').value) || 0;
 
     if (costo > 0) {
-        document.getElementById('form-ganancia').value = (((precioUSD - costo) / costo) * 100).toFixed(1);
+        document.getElementById('comp-ganancia').value = (((precioUSD - costo) / costo) * 100).toFixed(1);
     }
     document.getElementById('comp-precio-bs').value = (precioUSD * tasaActual).toFixed(2).replace('.', ',') + " Bs.";
 };
 
-// --- PROCESAR PROCESO DE GUARDADO MASIVO / INDIVIDUAL ---
+// --- PROCESAMIENTO E INYECCIÓN DE LA ENTRADA ---
 window.procesarIngresoMercancia = async () => {
     const btn = document.getElementById('btnGuardarCompra');
+    if (btn.disabled) return;
+
     const sku = document.getElementById('comp-sku').value.trim();
     const nombre = document.getElementById('comp-nombre').value.trim();
     const stockViejo = parseInt(document.getElementById('comp-stock-viejo').value) || 0;
@@ -133,14 +139,14 @@ window.procesarIngresoMercancia = async () => {
     const fecha = document.getElementById('comp-fecha').value;
 
     if (!sku || !nombre) {
-        alert("Los campos SKU y Descripción son obligatorios.");
+        alert("Los campos SKU y Descripción son obligatorios para guardar el registro.");
         return;
     }
 
     btn.disabled = true;
-    mostrarEstado("⏳ Guardando y actualizando inventario...", "loading");
+    mostrarEstado("⏳ Procesando ingreso y recalculando inventarios...", "loading");
 
-    // Calcular el inventario acumulado final
+    // Realizar la suma acumulativa matemática del stock
     const stockFinal = stockViejo + cantidadEntrante;
 
     const datosProducto = {
@@ -151,31 +157,33 @@ window.procesarIngresoMercancia = async () => {
         ganancia: parseFloat(document.getElementById('comp-ganancia').value) || 0,
         precio: parseFloat(document.getElementById('comp-precio').value) || 0,
         stock: stockFinal,
-        fecha_ingreso: fecha // Tu nuevo campo fecha guardado con éxito
+        fecha_ingreso: fecha // Nuevo campo fecha de trazabilidad inyectado con éxito
     };
 
     try {
+        // Se guarda en Firebase usando siempre el SKU como el identificador único del documento
         await setDoc(doc(db, "usuarios", USER_ID, "productos", sku), datosProducto, { merge: true });
         
-        mostrarEstado(`✅ Éxito: Ingresaron ${cantidadEntrante} unidades a ${sku}. Stock total: ${stockFinal}`, "success");
+        mostrarEstado(`✅ Éxito: Se ingresaron ${cantidadEntrante} unidades a [${sku}]. Nuevo Total: ${stockFinal}`, "success");
         
-        // Limpiar buscador principal para la siguiente entrada
+        // Limpieza y enfoque automático del buscador para dejar el sistema listo para el siguiente artículo
         document.getElementById('buscador-dinamico').value = '';
         document.getElementById('buscador-dinamico').focus();
     } catch (error) {
         console.error(error);
-        mostrarEstado("❌ Ocurrió un error al guardar en Firestore.", "error");
+        mostrarEstado("❌ Error crítico: No se pudieron consolidar los datos en el servidor.", "error");
     } finally {
         btn.disabled = false;
     }
 };
 
-// --- ESCUCHADOR ATAJO DE TECLADO F9 ---
+// --- ESCUCHADOR GLOBAL DE ATAJOS (F9) ---
 window.addEventListener('keydown', (e) => {
     if (e.key === 'F9') {
-        e.preventDefault();
+        e.preventDefault(); // Previene comportamientos de ayuda del navegador
         window.procesarIngresoMercancia();
     }
 });
 
+// Arrancar proceso
 inicializarModulo();
