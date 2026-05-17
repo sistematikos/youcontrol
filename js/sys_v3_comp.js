@@ -7,28 +7,26 @@
 // ==========================================
 // 1. CONFIGURACIÓN Y CONEXIÓN REAL DE FIREBASE
 // ==========================================
-// NOTA: Si ya inicializaste Firebase en otro script global, puedes omitir esta sección de config.
+// NOTA: Configura aquí las credenciales exactas de tu Base de Datos Firebase
 const firebaseConfig = {
-    databaseURL: "https://tu-proyecto-firebase.firebaseio.com" // <- Reemplaza por tu URL real de Firebase
+    databaseURL: "https://tu-proyecto-firebase.firebaseio.com" 
 };
 
-// Inicializar si no se ha hecho previamente
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
 
 const db = firebase.database();
 
-// Arreglo en memoria mapeado dinámicamente desde Firebase
+// Arreglos reactivos en memoria
 let listaProductos = [];
-let tasaCambio = 1.00; // Se actualizará en tiempo real desde la BD
+let tasaCambio = 1.00; 
 
-// Elementos del DOM
+// Capturas del DOM
 const buscador = document.getElementById('buscador-dinamico');
 const dropdown = document.getElementById('dropdown-resultados');
 const txtTasa = document.getElementById('txt-tasa');
 
-// Elementos del Formulario
 const inputSku = document.getElementById('comp-sku');
 const inputBarras = document.getElementById('comp-barras');
 const inputNombre = document.getElementById('comp-nombre');
@@ -42,12 +40,12 @@ const inputFecha = document.getElementById('comp-fecha');
 const statusBar = document.getElementById('status-bar-comp');
 
 // ==========================================
-// 2. ESCUCHA DE DATOS EN TIEMPO REAL (FIREBASE)
+// 2. SINCRONIZACIÓN DE FIREBASE EN TIEMPO REAL
 // ==========================================
 function iniciarSincronizacion() {
-    mostrarMensajeEstado("Conectando con base de datos real...", "loading");
+    mostrarMensajeEstado("Conectando al servidor Firebase...", "loading");
 
-    // 1. Cargar Tasa de Cambio del día
+    // Escuchar Tasa de Cambio del día
     db.ref('tasas/hoy').on('value', (snapshot) => {
         const val = snapshot.val();
         if (val) {
@@ -57,17 +55,16 @@ function iniciarSincronizacion() {
         }
     });
 
-    // 2. Escuchar Inventario Oficial
+    // Escuchar nodo Oficial de Inventario
     db.ref('inventario').on('value', (snapshot) => {
         const datos = snapshot.val();
-        listaProductos = []; // Limpiar matriz local anterior
+        listaProductos = []; // Reseteamos el listado local
 
         if (datos) {
             Object.keys(datos).forEach(id => {
                 const p = datos[id];
-                // Mapeamos el objeto al formato legible por nuestro buscador predictivo
                 listaProductos.push({
-                    keyFirebase: id, // Guardamos la llave por seguridad
+                    keyFirebase: id,
                     sku: p.sku || id,
                     barras: p.barras || '',
                     nombre: p.nombre || p.descripcion || '',
@@ -78,25 +75,22 @@ function iniciarSincronizacion() {
                 });
             });
         }
-        mostrarMensajeEstado("Catálogo de inventario sincronizado y listo.", "success");
-        setTimeout(() => { if(statusBar) statusBar.style.display = 'none'; }, 2000);
+        mostrarMensajeEstado("Inventario real sincronizado perfectamente.", "success");
+        setTimeout(() => { if(statusBar) statusBar.style.display = 'none'; }, 1500);
     }, (error) => {
-        mostrarMensajeEstado("Error de conexión con Firebase: " + error.message, "error");
+        mostrarMensajeEstado("Error al leer Firebase: " + error.message, "error");
     });
 }
 
-// Inicializar la pantalla
+// Inicializadores principales
 document.addEventListener('DOMContentLoaded', () => {
-    // Configurar fecha por defecto
     const hoy = new Date().toISOString().split('T')[0];
     if (inputFecha) inputFecha.value = hoy;
 
-    // Listeners de cálculo matemático
     if (inputCosto) inputCosto.addEventListener('input', window.calcularPreciosCompra);
     if (inputGanancia) inputGanancia.addEventListener('input', window.calcularPreciosCompra);
     if (inputPrecio) inputPrecio.addEventListener('input', window.calcularGananciaCompra);
 
-    // Atajo F9
     document.addEventListener('keydown', (e) => {
         if (e.key === 'F9') {
             e.preventDefault();
@@ -109,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// 3. LÓGICA DEL BUSCADOR INTELIGENTE
+// 3. EVENTOS DEL BUSCADOR DINÁMICO
 // ==========================================
 if (buscador) {
     buscador.addEventListener('input', (e) => {
@@ -120,7 +114,6 @@ if (buscador) {
             return;
         }
 
-        // Filtro Predictivo Cruzado
         const filtrados = listaProductos.filter(p => 
             p.sku.toLowerCase().includes(criterio) || 
             (p.barras && p.barras.toLowerCase().includes(criterio)) || 
@@ -136,7 +129,6 @@ function renderizarDropdown(productos, textoBuscado) {
     dropdown.innerHTML = '';
     
     if (productos.length === 0) {
-        // Alerta interactiva requerida: Si el artículo no existe, permite crearlo
         dropdown.innerHTML = `
             <div class="no-products-alert" onclick="window.prepararNuevoProducto('${textoBuscado}')">
                 <i class="fas fa-plus-circle"></i> El producto no existe. ¿Deseas crearlo?
@@ -197,10 +189,9 @@ window.prepararNuevoProducto = function(textoBuscado) {
     if (buscador) buscador.value = '';
     
     inputSku.focus();
-    mostrarMensajeEstado("Modo alta de nuevo producto activado.", "success");
+    mostrarMensajeEstado("Modo registro de producto nuevo.", "success");
 };
 
-// Cerrar dropdown al hacer clic fuera
 document.addEventListener('click', (e) => {
     if (dropdown && !e.target.closest('.search-wrapper')) {
         dropdown.style.display = 'none';
@@ -208,7 +199,7 @@ document.addEventListener('click', (e) => {
 });
 
 // ==========================================
-// 4. LÓGICA DE CÁLCULO
+// 4. LÓGICA DE OPERACIONES MATEMÁTICAS
 // ==========================================
 window.calcularPreciosCompra = function() {
     const costo = parseFloat(inputCosto.value) || 0;
@@ -232,23 +223,8 @@ window.calcularGananciaCompra = function() {
     inputPrecioBs.value = precioBs.toLocaleString('es-VE', { minimumFractionDigits: 2 }) + " Bs.";
 };
 
-window.buscarProductoCompra = function(event) {
-    if (event.key === 'Enter') {
-        event.preventDefault();
-        const criterio = event.target.value.trim();
-        if (!criterio) return;
-
-        const exacto = listaProductos.find(p => 
-            p.sku.toLowerCase() === criterio.toLowerCase() || p.barras === criterio
-        );
-
-        if (exacto) seleccionarProducto(exacto);
-        else window.prepararNuevoProducto(criterio);
-    }
-};
-
 // ==========================================
-// 5. GUARDADO DEFINITIVO EN CONSOLA FIREBASE
+// 5. ENVÍO DE DATOS SEGURO A FIREBASE DB
 // ==========================================
 window.procesarIngresoMercancia = function() {
     const sku = inputSku.value.trim();
@@ -261,24 +237,20 @@ window.procesarIngresoMercancia = function() {
     const barras = inputBarras.value.trim();
 
     if (!sku || !nombre) {
-        mostrarMensajeEstado("El SKU y el Nombre son requeridos obligatoriamente.", "error");
+        mostrarMensajeEstado("Error: El SKU y Nombre del producto son obligatorios.", "error");
         return;
     }
     if (cantidadEntrante <= 0) {
-        mostrarMensajeEstado("La cantidad entrante debe ser mayor a cero.", "error");
+        mostrarMensajeEstado("La cantidad entrante debe ser superior a 0.", "error");
         inputCantidad.focus();
         return;
     }
 
-    // Buscamos si ya existe en Firebase usando el SKU como nodo clave uniforme
     const nodoRuta = db.ref('inventario/' + sku);
-
-    // Sumatoria de stock real
     const nuevoStockTotal = stockViejo + cantidadEntrante;
 
-    mostrarMensajeEstado("Guardando cambios en Firebase...", "loading");
+    mostrarMensajeEstado("Guardando lote de mercancía...", "loading");
 
-    // Ejecutamos actualización directa
     nodoRuta.set({
         sku: sku,
         barras: barras,
@@ -290,11 +262,11 @@ window.procesarIngresoMercancia = function() {
         ultima_actualizacion: inputFecha.value
     })
     .then(() => {
-        mostrarMensajeEstado(`Procesado con éxito. Nuevo stock total: ${nuevoStockTotal}`, "success");
+        mostrarMensajeEstado(`¡Procesado! Stock total actualizado: ${nuevoStockTotal}`, "success");
         limpiarFormularioCompleto();
     })
     .catch((error) => {
-        mostrarMensajeEstado("Error al guardar: " + error.message, "error");
+        mostrarMensajeEstado("Error en Firebase: " + error.message, "error");
     });
 };
 
