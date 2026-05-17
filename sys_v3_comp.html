@@ -45,7 +45,12 @@
             margin-top: 15px; 
         }
         
-        /* Buscador superior destacado para Lector de Barras */
+        /* Contenedor relativo del Buscador Avanzado */
+        .search-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
         .search-box { 
             background: #EEF2F6; 
             padding: 15px; 
@@ -53,7 +58,6 @@
             display: flex; 
             align-items: center; 
             gap: 12px; 
-            margin-bottom: 20px; 
             border: 1px solid #CBD5E1; 
         }
         .search-box input { 
@@ -69,6 +73,60 @@
         .search-box input:focus { 
             border-color: var(--indigo); 
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); 
+        }
+
+        /* Lista de sugerencias predictivas (Dropdown) */
+        .search-results-dropdown {
+            position: absolute;
+            top: 102%;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #CBD5E1;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none; /* Se activa mediante JS */
+            padding: 6px 0;
+        }
+
+        .search-item {
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .search-item:hover {
+            background: #F1F5F9;
+        }
+
+        .search-item .item-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .search-item .item-name {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .search-item .item-meta {
+            font-size: 0.75rem;
+            color: #64748B;
+        }
+
+        .search-item .item-stock {
+            background: #E2E8F0;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
         }
 
         /* Grid del Formulario */
@@ -198,9 +256,15 @@
         <div id="status-bar-comp"></div>
 
         <div class="compra-card">
-            <div class="search-box">
-                <i class="fas fa-barcode" style="font-size: 1.5rem; color: #64748B;"></i>
-                <input type="text" id="buscador-dinamico" placeholder="Escanee Código de Barras o digite SKU y presione Enter..." onkeydown="window.buscarProductoCompra(event)">
+            
+            <div class="search-wrapper">
+                <div class="search-box">
+                    <i class="fas fa-magnifying-glass" style="font-size: 1.3rem; color: #64748B;"></i>
+                    <input type="text" id="buscador-dinamico" placeholder="Escanee código o busque por nombre de artículo..." oninput="window.filtrarProductosCompra?.(this.value)" onkeydown="window.buscarProductoCompra(event)">
+                </div>
+                
+                <div id="dropdown-resultados" class="search-results-dropdown">
+                    </div>
             </div>
 
             <div class="form-grid">
