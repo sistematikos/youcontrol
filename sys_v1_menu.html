@@ -14,11 +14,10 @@
             --text-muted: #64748B;
             --vinotinto: #800020;
             
-            /* Paleta de colores sutiles por módulo */
-            --color-inv: #10B981;       /* Verde Esmeralda */
-            --color-comp: #6366F1;      /* Índigo */
-            --color-ventas: #0284C7;    /* Azul Corporativo */
-            --color-reportes: #F59E0B;  /* Ámbar/Dorado */
+            --color-inv: #10B981;       
+            --color-comp: #6366F1;      
+            --color-ventas: #0284C7;    
+            --color-reportes: #F59E0B;  
         }
 
         body {
@@ -37,34 +36,33 @@
             background-color: var(--bg-dark);
             color: white;
             text-align: center;
-            padding: 35px 20px;
+            padding: 25px 20px;
             border-bottom: 4px solid var(--vinotinto);
             box-shadow: 0 4px 20px rgba(10, 25, 47, 0.15);
         }
 
         .header-core h1 {
             margin: 0;
-            font-size: 1.7rem;
+            font-size: 1.6rem;
             font-weight: 700;
-            letter-spacing: 1.5px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            letter-spacing: 1px;
         }
 
         .header-core p {
-            margin: 8px 0 0 0;
-            font-size: 0.8rem;
+            margin: 5px 0 0 0;
+            font-size: 0.75rem;
             color: #94A3B8;
             font-weight: 500;
-            letter-spacing: 2px;
+            letter-spacing: 1.5px;
             text-transform: uppercase;
         }
 
         /* Contenedor Principal */
         .menu-container {
-            max-width: 1280px;
-            width: 95%;
+            max-width: 1200px;
+            width: 92%;
             margin: auto;
-            padding: 40px 0;
+            padding: 25px 0;
             flex-grow: 1;
             display: flex;
             align-items: center;
@@ -74,93 +72,86 @@
         .menu-flex-row {
             display: flex;
             flex-direction: row;
-            gap: 20px;
+            gap: 15px;
             width: 100%;
             justify-content: space-between;
         }
 
-        /* Estructura Base de las Tarjetas */
+        /* Tarjetas Reducidas y Compactas */
         .menu-card {
             background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 40px 15px;
+            border-radius: 16px;
+            padding: 22px 14px; /* Padding interno reducido */
             text-align: center;
             text-decoration: none;
             color: var(--text-dark);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 
-                        0 10px 15px -3px rgba(0, 0, 0, 0.02);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 
+                        0 10px 15px -3px rgba(0, 0, 0, 0.01);
             flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
             box-sizing: border-box;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            min-height: 280px;
-            border: 2px solid transparent; /* Reservamos el espacio para el borde */
+            transition: all 0.25s ease;
+            min-height: 200px; /* Altura mínima ajustada */
+            border: 2px solid transparent;
         }
 
-        /* Clases específicas con bordes sutiles iniciales y efectos hover */
-        .card-inv { border-color: rgba(16, 185, 129, 0.25); }
+        .card-inv { border-color: rgba(16, 185, 129, 0.2); }
         .card-inv i { color: var(--color-inv); }
         .card-inv:hover {
             border-color: var(--color-inv);
-            box-shadow: 0 20px 25px -5px rgba(16, 185, 129, 0.12);
+            box-shadow: 0 15px 20px -5px rgba(16, 185, 129, 0.1);
         }
 
-        .card-comp { border-color: rgba(99, 102, 241, 0.25); }
+        .card-comp { border-color: rgba(99, 102, 241, 0.2); }
         .card-comp i { color: var(--color-comp); }
         .card-comp:hover {
             border-color: var(--color-comp);
-            box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.12);
+            box-shadow: 0 15px 20px -5px rgba(99, 102, 241, 0.1);
         }
 
-        .card-ventas { border-color: rgba(2, 132, 199, 0.25); }
+        .card-ventas { border-color: rgba(2, 132, 199, 0.2); }
         .card-ventas i { color: var(--color-ventas); }
         .card-ventas:hover {
             border-color: var(--color-ventas);
-            box-shadow: 0 20px 25px -5px rgba(2, 132, 199, 0.12);
+            box-shadow: 0 15px 20px -5px rgba(2, 132, 199, 0.1);
         }
 
-        .card-reportes { border-color: rgba(245, 158, 11, 0.25); }
+        .card-reportes { border-color: rgba(245, 158, 11, 0.2); }
         .card-reportes i { color: var(--color-reportes); }
         .card-reportes:hover {
             border-color: var(--color-reportes);
-            box-shadow: 0 20px 25px -5px rgba(245, 158, 11, 0.12);
+            box-shadow: 0 15px 20px -5px rgba(245, 158, 11, 0.1);
         }
 
-        /* Efecto general hover en tarjetas */
         .menu-card:hover {
-            transform: translateY(-8px);
+            transform: translateY(-5px);
             background: #FFFFFF;
         }
 
-        .menu-card:hover i {
-            transform: scale(1.1);
-        }
-
         .menu-card i {
-            font-size: 2.6rem;
-            margin-bottom: 15px;
-            transition: transform 0.3s ease;
-        }
-
-        .menu-card span {
-            font-size: 1.1rem;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            display: block;
-            text-transform: uppercase;
-            color: #0F172A;
+            font-size: 2.2rem; /* Iconos sutilmente más pequeños */
             margin-bottom: 12px;
         }
 
+        .menu-card span {
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            display: block;
+            text-transform: uppercase;
+            color: #0F172A;
+            margin-bottom: 8px;
+        }
+
         .menu-card p {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: var(--text-muted);
             margin: 0;
-            line-height: 1.4;
+            line-height: 1.35;
             font-weight: 400;
         }
 
@@ -173,37 +164,48 @@
             }
         }
 
-        /* Footer de Licenciamiento */
+        /* Footer Ajustado en 2 Líneas Centradas */
         .footer-core {
             text-align: center;
-            padding: 30px;
+            padding: 20px;
             color: var(--text-muted);
-            font-size: 0.8rem;
+            font-size: 0.78rem;
+        }
+
+        .license-block {
+            margin-bottom: 10px;
         }
 
         .license-info {
             background: rgba(255, 255, 255, 0.6);
             border: 1px solid rgba(226, 232, 240, 0.8);
-            display: inline-block;
-            padding: 8px 20px;
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 18px;
             border-radius: 50px;
             font-weight: 500;
             color: #334155;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.01);
+        }
+
+        .developer-info {
+            font-weight: 500;
+            font-size: 0.75rem;
+            opacity: 0.85;
+            margin-bottom: 12px;
         }
 
         .btn-logout {
             background: transparent;
             border: 1px solid #CBD5E1;
-            padding: 6px 18px;
-            border-radius: 10px;
+            padding: 5px 15px;
+            border-radius: 8px;
             cursor: pointer;
             font-family: 'Poppins';
             font-weight: 500;
             color: var(--text-muted);
             transition: 0.2s;
-            font-size: 0.75rem;
+            font-size: 0.72rem;
         }
 
         .btn-logout:hover {
@@ -251,15 +253,17 @@
     </main>
 
     <footer class="footer-core">
-        <div>
+        <div class="license-block">
             <div class="license-info">
                 <i class="fas fa-certificate" style="color: #10B981; margin-right: 6px;"></i> 
-                Licencia registrada a nombre de: <strong id="lblEmpresa" style="color: #0284C7;">Cargando...</strong>
+                Licencia registrada a nombre de: &nbsp;<strong id="lblEmpresa" style="color: #0284C7;">Cargando...</strong>
             </div>
         </div>
-        <div style="margin-bottom: 12px; font-weight: 500; font-size: 0.75rem; opacity: 0.8;">
+        
+        <div class="developer-info">
             Desarrollado por Sistematikos - Frank Hernandez &copy; 2026
         </div>
+        
         <button class="btn-logout" onclick="location.href='index.html'"><i class="fas fa-power-off"></i> Cerrar Sesión</button>
     </footer>
 
