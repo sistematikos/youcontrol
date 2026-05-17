@@ -8,7 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-dark: #0A192F;
+            /* Cambio a un Azul Vivo y Vibrante para la barra superior */
+            --bg-vivo: #0284C7;         
             --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
             --text-dark: #1E293B;
             --text-muted: #64748B;
@@ -16,7 +17,7 @@
             
             --color-inv: #10B981;       
             --color-comp: #6366F1;      
-            --color-ventas: #0284C7;    
+            --color-ventas: #0EA5E9;    /* Azul claro vivo para la tarjeta */
             --color-reportes: #F59E0B;  
         }
 
@@ -31,14 +32,14 @@
             color: var(--text-dark);
         }
 
-        /* Navbar Superior */
+        /* Navbar Superior con Color Más Vivo */
         .header-core {
-            background-color: var(--bg-dark);
+            background-color: var(--bg-vivo);
             color: white;
             text-align: center;
             padding: 25px 20px;
             border-bottom: 4px solid var(--vinotinto);
-            box-shadow: 0 4px 20px rgba(10, 25, 47, 0.15);
+            box-shadow: 0 4px 20px rgba(2, 132, 199, 0.2);
         }
 
         .header-core h1 {
@@ -46,13 +47,14 @@
             font-size: 1.6rem;
             font-weight: 700;
             letter-spacing: 1px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
         .header-core p {
             margin: 5px 0 0 0;
             font-size: 0.75rem;
-            color: #94A3B8;
-            font-weight: 500;
+            color: #E0F2FE; /* Texto claro que contrasta con el azul vivo */
+            font-weight: 600;
             letter-spacing: 1.5px;
             text-transform: uppercase;
         }
@@ -82,7 +84,7 @@
             background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(10px);
             border-radius: 16px;
-            padding: 22px 14px; /* Padding interno reducido */
+            padding: 22px 14px;
             text-align: center;
             text-decoration: none;
             color: var(--text-dark);
@@ -95,7 +97,7 @@
             justify-content: flex-start;
             box-sizing: border-box;
             transition: all 0.25s ease;
-            min-height: 200px; /* Altura mínima ajustada */
+            min-height: 200px;
             border: 2px solid transparent;
         }
 
@@ -113,11 +115,11 @@
             box-shadow: 0 15px 20px -5px rgba(99, 102, 241, 0.1);
         }
 
-        .card-ventas { border-color: rgba(2, 132, 199, 0.2); }
+        .card-ventas { border-color: rgba(14, 165, 233, 0.2); }
         .card-ventas i { color: var(--color-ventas); }
         .card-ventas:hover {
             border-color: var(--color-ventas);
-            box-shadow: 0 15px 20px -5px rgba(2, 132, 199, 0.1);
+            box-shadow: 0 15px 20px -5px rgba(14, 165, 233, 0.1);
         }
 
         .card-reportes { border-color: rgba(245, 158, 11, 0.2); }
@@ -133,7 +135,7 @@
         }
 
         .menu-card i {
-            font-size: 2.2rem; /* Iconos sutilmente más pequeños */
+            font-size: 2.2rem;
             margin-bottom: 12px;
         }
 
@@ -164,54 +166,51 @@
             }
         }
 
-        /* Footer Ajustado en 2 Líneas Centradas */
+        /* Footer con Licencia en Varias Líneas */
         .footer-core {
             text-align: center;
-            padding: 20px;
+            padding: 25px 20px;
             color: var(--text-muted);
             font-size: 0.78rem;
         }
 
         .license-block {
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
 
+        /* Caja de información con salto de línea interno estructurado */
         .license-info {
-            background: rgba(255, 255, 255, 0.6);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-            display: inline-flex;
-            align-items: center;
-            padding: 6px 18px;
-            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            display: inline-block;
+            padding: 10px 24px;
+            border-radius: 16px;
             font-weight: 500;
-            color: #334155;
+            color: #475569;
             box-shadow: 0 2px 4px rgba(0,0,0,0.01);
+            text-align: center;
+        }
+
+        .license-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .license-company {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #0284C7;
+            display: block;
         }
 
         .developer-info {
             font-weight: 500;
             font-size: 0.75rem;
             opacity: 0.85;
-            margin-bottom: 12px;
-        }
-
-        .btn-logout {
-            background: transparent;
-            border: 1px solid #CBD5E1;
-            padding: 5px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-family: 'Poppins';
-            font-weight: 500;
-            color: var(--text-muted);
-            transition: 0.2s;
-            font-size: 0.72rem;
-        }
-
-        .btn-logout:hover {
-            background: #FFFFFF;
-            color: #EF4444;
-            border-color: #FCA5A5;
         }
     </style>
 </head>
@@ -255,16 +254,14 @@
     <footer class="footer-core">
         <div class="license-block">
             <div class="license-info">
-                <i class="fas fa-certificate" style="color: #10B981; margin-right: 6px;"></i> 
-                Licencia registrada a nombre de: &nbsp;<strong id="lblEmpresa" style="color: #0284C7;">Cargando...</strong>
+                <span class="license-title"><i class="fas fa-certificate" style="color: #10B981; margin-right: 4px;"></i> Licencia registrada a nombre de:</span>
+                <span class="license-company" id="lblEmpresa">Cargando Empresa...</span>
             </div>
         </div>
         
         <div class="developer-info">
             Desarrollado por Sistematikos - Frank Hernandez &copy; 2026
         </div>
-        
-        <button class="btn-logout" onclick="location.href='index.html'"><i class="fas fa-power-off"></i> Cerrar Sesión</button>
     </footer>
 
     <script>
