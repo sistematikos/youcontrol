@@ -74,19 +74,19 @@
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); 
         }
 
-        /* Lista de sugerencias predictivas (Dropdown Corregido) */
+        /* Lista de sugerencias predictivas flotante (Capa Oca Sólida) */
         .search-results-dropdown {
             position: absolute;
             top: 102%;
             left: 0;
             right: 0;
-            background: white; /* Opaco absoluto para que no se traspase el fondo */
+            background: #FFFFFF !important; 
             border-radius: 12px;
             border: 1px solid #CBD5E1;
             box-shadow: 0 10px 25px rgba(0,0,0,0.15);
             max-height: 260px;
             overflow-y: auto;
-            z-index: 100;
+            z-index: 9999; /* Posicionado por encima de todo el formulario */
             display: none;
             padding: 0;
         }
@@ -100,7 +100,7 @@
             transition: background 0.2s;
             font-size: 0.9rem;
             border-bottom: 1px solid #F1F5F9;
-            background: white;
+            background: #FFFFFF;
         }
         .search-item:last-child { border: none; border-radius: 0 0 12px 12px; }
         .search-item:hover { background: #F1F5F9; }
@@ -116,7 +116,7 @@
             font-weight: 600;
         }
 
-        /* Alerta Dinámica Naranja - No Existe Producto (Corregida) */
+        /* Aviso flotante de no existencia */
         .no-products-alert {
             padding: 15px;
             text-align: center;
@@ -131,7 +131,6 @@
             gap: 10px;
             transition: background 0.2s;
             border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
         .no-products-alert:hover { background: #FFEDD5; }
 
@@ -159,7 +158,7 @@
             color: var(--text); 
             box-sizing: border-box; 
         }
-        .form-group input:focus { 
+        .form-grid .form-group input:focus { 
             border-color: var(--primary); 
             background: white; 
             outline: none; 
@@ -238,7 +237,7 @@
         <div class="header-table">
             <h3><i class="fas fa-cart-plus" style="color: var(--indigo);"></i> ENTRADA DE MERCANCÍA</h3>
             <span style="font-size: 0.85rem; color: #64748B; font-weight: 600; background: #E2E8F0; padding: 4px 10px; border-radius: 6px;">
-                Tasa de hoy: <span id="txt-tasa">0,00</span> Bs.
+                Tasa de hoy: <span id="txt-tasa">1,00</span> Bs.
             </span>
         </div>
 
@@ -249,7 +248,7 @@
             <div class="search-wrapper">
                 <div class="search-box">
                     <i class="fas fa-magnifying-glass" style="font-size: 1.3rem; color: #64748B;"></i>
-                    <input type="text" id="buscador-dinamico" placeholder="Escriba código de barras, SKU o nombre del producto...">
+                    <input type="text" id="buscador-dinamico" placeholder="Escriba código de barras, SKU o descripción del producto...">
                 </div>
                 
                 <div id="dropdown-resultados" class="search-results-dropdown"></div>
@@ -257,7 +256,7 @@
 
             <div class="form-grid">
                 <div class="form-group">
-                    <label>Código SKU / ID Documento</label>
+                    <label>SKU / Código Interno</label>
                     <input type="text" id="comp-sku" placeholder="Ej: PIÑ-01" required>
                 </div>
                 <div class="form-group">
@@ -265,19 +264,19 @@
                     <input type="text" id="comp-barras" placeholder="Código de barras leído...">
                 </div>
                 <div class="form-group full">
-                    <label>Descripción / Nombre del Artículo</label>
+                    <label>Descripción del Producto</label>
                     <input type="text" id="comp-nombre" placeholder="Descripción completa del artículo..." required>
                 </div>
                 <div class="form-group">
-                    <label>Costo Unitario USD ($)</label>
+                    <label>Costo USD ($)</label>
                     <input type="number" step="0.01" id="comp-costo" value="0.00">
                 </div>
                 <div class="form-group">
-                    <label>% Ganancia Sugerido</label>
+                    <label>% Ganancia</label>
                     <input type="number" step="0.1" id="comp-ganancia" value="0.0">
                 </div>
                 <div class="form-group">
-                    <label>Precio de Venta USD ($)</label>
+                    <label>Precio USD ($)</label>
                     <input type="number" step="0.01" id="comp-precio" value="0.00">
                 </div>
                 <div class="form-group">
@@ -285,7 +284,7 @@
                     <input type="text" id="comp-precio-bs" class="precio-bs-box" value="0,00 Bs." readonly>
                 </div>
                 <div class="form-group">
-                    <label>Stock Actual (En Sistema)</label>
+                    <label>Stock Actual</label>
                     <input type="number" id="comp-stock-viejo" value="0" readonly>
                 </div>
                 <div class="form-group">
@@ -293,7 +292,7 @@
                     <input type="number" id="comp-cantidad" value="0" style="border: 2px solid var(--indigo); font-weight: bold; background: #F5F3FF;">
                 </div>
                 <div class="form-group full">
-                    <label>Fecha de Entrada / Registro</label>
+                    <label>Fecha de Registro</label>
                     <input type="date" id="comp-fecha">
                 </div>
             </div>
