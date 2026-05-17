@@ -1,28 +1,25 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * Módulo: Entrada de Mercancía (sys_v3_comp.js)
- * Desarrollado por: Frank Hernandez (2026)
+ * Módulo Integrado de Entrada de Mercancía (sys_v3_comp.js)
+ * Sincronizado con la raíz real de Inventario Pro
  */
 
 // ==========================================
-// 1. CONFIGURACIÓN Y CONEXIÓN REAL DE FIREBASE
+// 1. CONEXIÓN DIRECTA A FIREBASE INTERNA
 // ==========================================
-// NOTA: Configura aquí las credenciales exactas de tu Base de Datos Firebase
 const firebaseConfig = {
-    databaseURL: "https://tu-proyecto-firebase.firebaseio.com" 
+    databaseURL: "https://tu-proyecto-firebase.firebaseio.com" // <- Mantén tu URL real aquí
 };
 
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
-
 const db = firebase.database();
 
-// Arreglos reactivos en memoria
 let listaProductos = [];
-let tasaCambio = 1.00; 
+let tasaCambio = 1.00;
 
-// Capturas del DOM
+// Vinculaciones del DOM
 const buscador = document.getElementById('buscador-dinamico');
 const dropdown = document.getElementById('dropdown-resultados');
 const txtTasa = document.getElementById('txt-tasa');
@@ -39,34 +36,48 @@ const inputCantidad = document.getElementById('comp-cantidad');
 const inputFecha = document.getElementById('comp-fecha');
 const statusBar = document.getElementById('status-bar-comp');
 
+// Mensajes de alerta en barra superior
+function mostrarMensajeEstado(texto, tipo) {
+    if (!statusBar) return;
+    statusBar.className = '';
+    statusBar.innerText = texto;
+    statusBar.style.display = 'block';
+    if (tipo === 'loading') statusBar.classList.add('status-loading');
+    if (tipo === 'success') statusBar.classList.add('status-success');
+    if (tipo === 'error') statusBar.classList.add('status-error');
+}
+
 // ==========================================
-// 2. SINCRONIZACIÓN DE FIREBASE EN TIEMPO REAL
+// 2. ESCUCHA ACTIVA DE LA RUTA DEL INVENTARIO
 // ==========================================
 function iniciarSincronizacion() {
-    mostrarMensajeEstado("Conectando al servidor Firebase...", "loading");
+    mostrarMensajeEstado("Cargando base de datos...", "loading");
 
-    // Escuchar Tasa de Cambio del día
-    db.ref('tasas/hoy').on('value', (snapshot) => {
+    // Sincronizar tasa global del sistema
+    db.ref('tasaCambio').on('value', (snapshot) => {
         const val = snapshot.val();
         if (val) {
             tasaCambio = parseFloat(val) || 1.00;
-            if (txtTasa) txtTasa.innerText = tasaCambio.toLocaleString('es-VE', { minimumFractionDigits: 2 });
-            window.calcularPreciosCompra();
+        } else {
+            tasaCambio = 45.50; // Tasa de respaldo detectada en tus pantallas
         }
+        if (txtTasa) txtTasa.innerText = tasaCambio.toLocaleString('es-VE', { minimumFractionDigits: 2 }) + " Bs.";
+        window.calcularPreciosCompra();
     });
 
-    // Escuchar nodo Oficial de Inventario
-    db.ref('inventario').on('value', (snapshot) => {
+    // Sincronizar el nodo exacto que usa tu tabla general de Inventario Pro
+    db.ref('productos').on('value', (snapshot) => {
         const datos = snapshot.val();
-        listaProductos = []; // Reseteamos el listado local
+        listaProductos = [];
 
         if (datos) {
             Object.keys(datos).forEach(id => {
                 const p = datos[id];
+                // Lectura e indexación cruzada para el buscador predictivo
                 listaProductos.push({
-                    keyFirebase: id,
-                    sku: p.sku || id,
+                    id: id,
                     barras: p.barras || '',
+                    sku: p.sku || '',
                     nombre: p.nombre || p.descripcion || '',
                     costo: parseFloat(p.costo) || 0,
                     ganancia: parseFloat(p.ganancia) || 0,
@@ -75,14 +86,14 @@ function iniciarSincronizacion() {
                 });
             });
         }
-        mostrarMensajeEstado("Inventario real sincronizado perfectamente.", "success");
-        setTimeout(() => { if(statusBar) statusBar.style.display = 'none'; }, 1500);
+        mostrarMensajeEstado("Base de datos en la nube lista.", "success");
+        setTimeout(() => { if(statusBar) statusBar.style.display = 'none'; }, 1000);
     }, (error) => {
-        mostrarMensajeEstado("Error al leer Firebase: " + error.message, "error");
+        mostrarMensajeEstado("Error de sincronización: " + error.message, "error");
     });
 }
 
-// Inicializadores principales
+// Inicializadores al cargar la ventana
 document.addEventListener('DOMContentLoaded', () => {
     const hoy = new Date().toISOString().split('T')[0];
     if (inputFecha) inputFecha.value = hoy;
@@ -103,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// 3. EVENTOS DEL BUSCADOR DINÁMICO
+// 3. CONTROLADOR DEL BUSCADOR INTELIGENTE
 // ==========================================
 if (buscador) {
     buscador.addEventListener('input', (e) => {
@@ -114,10 +125,11 @@ if (buscador) {
             return;
         }
 
+        // Búsqueda cruzada inteligente por Nombre, SKU o Barras
         const filtrados = listaProductos.filter(p => 
+            p.nombre.toLowerCase().includes(criterio) || 
             p.sku.toLowerCase().includes(criterio) || 
-            (p.barras && p.barras.toLowerCase().includes(criterio)) || 
-            p.nombre.toLowerCase().includes(criterio)
+            p.barras.toLowerCase().includes(criterio)
         );
 
         renderizarDropdown(filtrados, e.target.value);
@@ -141,7 +153,7 @@ function renderizarDropdown(productos, textoBuscado) {
             item.innerHTML = `
                 <div class="item-info">
                     <span class="item-name">${p.nombre}</span>
-                    <span class="item-meta">SKU: ${p.sku} | Barras: ${p.barras || 'N/A'}</span>
+                    <span class="item-meta">SKU: ${p.sku} | Barras: ${p.barras || 'Sin código'}</span>
                 </div>
                 <span class="item-stock">Stock: ${p.stock}</span>
             `;
@@ -154,11 +166,11 @@ function renderizarDropdown(productos, textoBuscado) {
 
 function seleccionarProducto(producto) {
     inputSku.value = producto.sku;
-    inputBarras.value = producto.barras || '';
+    inputBarras.value = producto.barras;
     inputNombre.value = producto.nombre;
-    inputCosto.value = parseFloat(producto.costo).toFixed(2);
-    inputGanancia.value = parseFloat(producto.ganancia).toFixed(1);
-    inputPrecio.value = parseFloat(producto.precio).toFixed(2);
+    inputCosto.value = producto.costo.toFixed(2);
+    inputGanancia.value = producto.ganancia.toFixed(1);
+    inputPrecio.value = producto.precio.toFixed(2);
     inputStockViejo.value = producto.stock;
     
     inputCantidad.value = '0';
@@ -172,9 +184,9 @@ function seleccionarProducto(producto) {
 }
 
 window.prepararNuevoProducto = function(textoBuscado) {
-    const esNumero = !isNaN(textoBuscado);
+    const esNumero = !isNaN(textoBuscado) && textoBuscado.length > 4;
 
-    inputSku.value = esNumero ? '' : textoBuscado.toUpperCase().substring(0, 6);
+    inputSku.value = esNumero ? '' : textoBuscado.toUpperCase().substring(0, 7);
     inputBarras.value = esNumero ? textoBuscado : '';
     inputNombre.value = esNumero ? '' : textoBuscado;
     
@@ -189,7 +201,6 @@ window.prepararNuevoProducto = function(textoBuscado) {
     if (buscador) buscador.value = '';
     
     inputSku.focus();
-    mostrarMensajeEstado("Modo registro de producto nuevo.", "success");
 };
 
 document.addEventListener('click', (e) => {
@@ -199,7 +210,7 @@ document.addEventListener('click', (e) => {
 });
 
 // ==========================================
-// 4. LÓGICA DE OPERACIONES MATEMÁTICAS
+// 4. LÓGICA DE DERIVACIÓN ECONÓMICA
 // ==========================================
 window.calcularPreciosCompra = function() {
     const costo = parseFloat(inputCosto.value) || 0;
@@ -224,7 +235,7 @@ window.calcularGananciaCompra = function() {
 };
 
 // ==========================================
-// 5. ENVÍO DE DATOS SEGURO A FIREBASE DB
+// 5. ENVÍO DE ACTUALIZACIÓN COMBINADA A FIREBASE
 // ==========================================
 window.procesarIngresoMercancia = function() {
     const sku = inputSku.value.trim();
@@ -237,21 +248,24 @@ window.procesarIngresoMercancia = function() {
     const barras = inputBarras.value.trim();
 
     if (!sku || !nombre) {
-        mostrarMensajeEstado("Error: El SKU y Nombre del producto son obligatorios.", "error");
+        mostrarMensajeEstado("Error: SKU y Descripción son obligatorios.", "error");
         return;
     }
     if (cantidadEntrante <= 0) {
-        mostrarMensajeEstado("La cantidad entrante debe ser superior a 0.", "error");
+        mostrarMensajeEstado("Indique una cantidad entrante válida.", "error");
         inputCantidad.focus();
         return;
     }
 
-    const nodoRuta = db.ref('inventario/' + sku);
+    // Buscamos si el producto ya existe mediante SKU para heredar la ID estructural correcta
+    const productoExistente = listaProductos.find(p => p.sku.toLowerCase() === sku.toLowerCase());
+    const idNodo = productoExistente ? productoExistente.id : db.ref('productos').push().key;
+
     const nuevoStockTotal = stockViejo + cantidadEntrante;
+    mostrarMensajeEstado("Guardando modificaciones...", "loading");
 
-    mostrarMensajeEstado("Guardando lote de mercancía...", "loading");
-
-    nodoRuta.set({
+    // Escribe directamente en el nodo de productos sincronizado con Inventario Pro
+    db.ref('productos/' + idNodo).set({
         sku: sku,
         barras: barras,
         nombre: nombre,
@@ -259,14 +273,14 @@ window.procesarIngresoMercancia = function() {
         ganancia: ganancia,
         precio: precio,
         stock: nuevoStockTotal,
-        ultima_actualizacion: inputFecha.value
+        actualizado: inputFecha.value
     })
     .then(() => {
-        mostrarMensajeEstado(`¡Procesado! Stock total actualizado: ${nuevoStockTotal}`, "success");
+        mostrarMensajeEstado(`¡Procesado con éxito! Stock actual: ${nuevoStockTotal}`, "success");
         limpiarFormularioCompleto();
     })
     .catch((error) => {
-        mostrarMensajeEstado("Error en Firebase: " + error.message, "error");
+        mostrarMensajeEstado("Error al guardar: " + error.message, "error");
     });
 };
 
