@@ -1,14 +1,15 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
  * Módulo Integrado de Entrada de Mercancía (sys_v3_comp.js)
- * Sincronizado con la raíz real de Inventario Pro
+ * Sincronizado con las rutas reales de tu base de datos
  */
 
 // ==========================================
 // 1. CONEXIÓN DIRECTA A FIREBASE INTERNA
 // ==========================================
 const firebaseConfig = {
-    databaseURL: "https://tu-proyecto-firebase.firebaseio.com" // <- Mantén tu URL real aquí
+    // REPLAZA ESTA URL por la tuya real (ejemplo: https://youcontrol-xxxxx.firebaseio.com)
+    databaseURL: "https://tu-proyecto-firebase.firebaseio.com" 
 };
 
 if (!firebase.apps.length) {
@@ -53,31 +54,31 @@ function mostrarMensajeEstado(texto, tipo) {
 function iniciarSincronizacion() {
     mostrarMensajeEstado("Cargando base de datos...", "loading");
 
-    // Sincronizar tasa global del sistema
-    db.ref('tasaCambio').on('value', (snapshot) => {
+    // Sincronizar tasa global desde tu nodo real: tasas/hoy
+    db.ref('tasas/hoy').on('value', (snapshot) => {
         const val = snapshot.val();
         if (val) {
             tasaCambio = parseFloat(val) || 1.00;
         } else {
-            tasaCambio = 45.50; // Tasa de respaldo detectada en tus pantallas
+            tasaCambio = 45.50; // Tasa de respaldo por si acaso
         }
-        if (txtTasa) txtTasa.innerText = tasaCambio.toLocaleString('es-VE', { minimumFractionDigits: 2 }) + " Bs.";
+        if (txtTasa) txtTasa.innerText = tasaCambio.toLocaleString('es-VE', { minimumFractionDigits: 2 });
         window.calcularPreciosCompra();
     });
 
-    // Sincronizar el nodo exacto que usa tu tabla general de Inventario Pro
-    db.ref('productos').on('value', (snapshot) => {
+    // Sincronizar desde tu nodo real: inventario
+    db.ref('inventario').on('value', (snapshot) => {
         const datos = snapshot.val();
         listaProductos = [];
 
         if (datos) {
             Object.keys(datos).forEach(id => {
                 const p = datos[id];
-                // Lectura e indexación cruzada para el buscador predictivo
+                // Mapeo adaptado a la estructura de tus carpetas
                 listaProductos.push({
-                    id: id,
+                    id: id, 
+                    sku: p.sku || id,
                     barras: p.barras || '',
-                    sku: p.sku || '',
                     nombre: p.nombre || p.descripcion || '',
                     costo: parseFloat(p.costo) || 0,
                     ganancia: parseFloat(p.ganancia) || 0,
@@ -125,7 +126,7 @@ if (buscador) {
             return;
         }
 
-        // Búsqueda cruzada inteligente por Nombre, SKU o Barras
+        // Búsqueda por Nombre, SKU o Barras
         const filtrados = listaProductos.filter(p => 
             p.nombre.toLowerCase().includes(criterio) || 
             p.sku.toLowerCase().includes(criterio) || 
@@ -210,7 +211,7 @@ document.addEventListener('click', (e) => {
 });
 
 // ==========================================
-// 4. LÓGICA DE DERIVACIÓN ECONÓMICA
+// 4. LÓGICA MATEMÁTICA
 // ==========================================
 window.calcularPreciosCompra = function() {
     const costo = parseFloat(inputCosto.value) || 0;
@@ -235,7 +236,7 @@ window.calcularGananciaCompra = function() {
 };
 
 // ==========================================
-// 5. ENVÍO DE ACTUALIZACIÓN COMBINADA A FIREBASE
+// 5. GRABACIÓN EN EL NODO REAL (inventario/)
 // ==========================================
 window.procesarIngresoMercancia = function() {
     const sku = inputSku.value.trim();
@@ -257,15 +258,11 @@ window.procesarIngresoMercancia = function() {
         return;
     }
 
-    // Buscamos si el producto ya existe mediante SKU para heredar la ID estructural correcta
-    const productoExistente = listaProductos.find(p => p.sku.toLowerCase() === sku.toLowerCase());
-    const idNodo = productoExistente ? productoExistente.id : db.ref('productos').push().key;
-
     const nuevoStockTotal = stockViejo + cantidadEntrante;
     mostrarMensajeEstado("Guardando modificaciones...", "loading");
 
-    // Escribe directamente en el nodo de productos sincronizado con Inventario Pro
-    db.ref('productos/' + idNodo).set({
+    // Guarda exactamente usando como llave el SKU en el nodo 'inventario'
+    db.ref('inventario/' + sku).set({
         sku: sku,
         barras: barras,
         nombre: nombre,
@@ -273,7 +270,7 @@ window.procesarIngresoMercancia = function() {
         ganancia: ganancia,
         precio: precio,
         stock: nuevoStockTotal,
-        actualizado: inputFecha.value
+        ultima_actualizacion: inputFecha.value
     })
     .then(() => {
         mostrarMensajeEstado(`¡Procesado con éxito! Stock actual: ${nuevoStockTotal}`, "success");
