@@ -3,130 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control Panel | Sistematikos</title>
+    <title>Menú Principal | You Control</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --navy: #1A1A2E; --electric: #007BFF; --vinotinto: #800020; }
+        :root {
+            --primary-blue: #002D72; 
+            --electric-blue: #0052D4;
+            --vinotinto: #800020;
+            --bg: #F8FAFC;
+            --emerald: #10B981;
+            --indigo: #6366F1;
+        }
+
         body { 
             font-family: 'Poppins', sans-serif; 
-            background: #F4F7F6; 
+            background: var(--bg); 
             margin: 0; 
-            color: var(--navy);
+            padding-bottom: 60px;
         }
-        .header-sys {
-            background: var(--navy);
-            color: white;
-            padding: 20px;
-            text-align: center;
+
+        .header-main {
+            background: var(--primary-blue); 
+            color: white; 
+            padding: 20px 40px;
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
             border-bottom: 5px solid var(--vinotinto);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
-        .container {
-            max-width: 900px;
-            margin: 40px auto;
-            padding: 20px;
-        }
+
         .menu-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px; 
+            padding: 40px; 
+            max-width: 1100px; 
+            margin: auto;
         }
-        .card-link {
-            background: white;
-            border-radius: 20px;
-            padding: 30px 20px;
+
+        .menu-item {
+            background: white; 
+            padding: 35px 20px; 
+            border-radius: 20px; 
             text-align: center;
-            text-decoration: none;
-            color: var(--navy);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-            transition: all 0.3s ease;
+            text-decoration: none; 
+            color: #1E293B; 
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            border: 2px solid transparent;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 15px;
-            border: 1px solid #eee;
         }
-        .card-link:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 35px rgba(0,123,255,0.2);
-            border-color: var(--electric);
+
+        .menu-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 25px rgba(0, 45, 114, 0.1);
         }
-        .card-link i {
-            font-size: 2.5rem;
-            color: var(--electric);
-        }
-        .card-link span {
-            font-weight: 700;
-            font-size: 1.1rem;
-            letter-spacing: 1px;
-        }
-        .card-link small {
-            color: #64748b;
-            font-size: 0.75rem;
-        }
-        .status-bar {
-            margin-top: 40px;
-            text-align: center;
-            font-size: 0.8rem;
-            color: #94a3b8;
+
+        /* Enfoques e íconos específicos por módulo */
+        .menu-item.inv:hover { border-color: var(--emerald); }
+        .menu-item.inv i { font-size: 2.8rem; color: var(--emerald); }
+
+        .menu-item.compras:hover { border-color: var(--indigo); }
+        .menu-item.compras i { font-size: 2.8rem; color: var(--indigo); }
+
+        .menu-item.ventas:hover { border-color: var(--electric-blue); }
+        .menu-item.ventas i { font-size: 2.8rem; color: var(--electric-blue); }
+
+        .menu-item.reportes:hover { border-color: #F59E0B; }
+        .menu-item.reportes i { font-size: 2.8rem; color: #F59E0B; }
+
+        .menu-item.ajustes:hover { border-color: #64748B; }
+        .menu-item.ajustes i { font-size: 2.8rem; color: #64748B; }
+
+        .status-badge {
+            background: #10B981; 
+            padding: 6px 14px; 
+            border-radius: 50px; 
+            font-size: 0.75rem; 
+            font-weight: 800;
+            letter-spacing: 0.5px;
         }
     </style>
 </head>
-<body oncontextmenu="return false" onkeydown="return (event.keyCode != 123)">
+<body oncontextmenu="return false">
 
-    <header class="header-sys">
-        <h2 style="margin:0; font-weight: 800;">SISTEMATIKOS CORE</h2>
-        <small style="opacity: 0.7;">Terminal de Gestión v3.0</small>
+    <header class="header-main">
+        <div>
+            <h1 id="txtEmpresa" style="margin: 0; font-size: 1.5rem; font-weight: 800; letter-spacing: 0.5px;">You Control</h1>
+            <small id="txtRif" style="opacity: 0.8; font-weight: 600;">Cargando identificación...</small>
+        </div>
+        <div style="text-align: right;">
+            <span class="status-badge"><i class="fas fa-shield-check"></i> LICENCIA ACTIVA</span>
+        </div>
     </header>
 
-    <main class="container">
-        <div class="menu-grid">
-            
-            <a href="index_datos.html" class="card-link">
-                <i class="fas fa-boxes"></i>
-                <span>INVENTARIO</span>
-                <small>ID: SYS_101_INV</small>
-            </a>
+    <div class="menu-grid">
+        <a href="sys_v1_inv.html" class="menu-item inv">
+            <i class="fas fa-boxes-stacked"></i>
+            <span>INVENTARIO GENERAL</span>
+        </a>
 
-            <a href="sys_v1_vt.html" class="card-link">
-                <i class="fas fa-cash-register"></i>
-                <span>VENTAS (POS)</span>
-                <small>ID: SYS_202_POS</small>
-            </a>
+        <a href="sys_v3_comp.html" class="menu-item compras">
+            <i class="fas fa-cart-plus"></i>
+            <span>ENTRADA MERCANCÍA</span>
+        </a>
 
-            <a href="sys_v3_comp.html" class="menu-card">
-                <i class="fas fa-cart-plus" style="color: #6366F1; font-size: 2.5rem;"></i>
-                <span style="font-family: 'Poppins', sans-serif; font-weight: 600; color: #1E293B;">ENTRADA MERCANCÍA</span>
-            </a>
-            
-            <a href="index_estad.html" class="card-link">
-                <i class="fas fa-chart-line"></i>
-                <span>REPORTES</span>
-                <small>ID: NODE_505_STATS</small>
-            </a>
+        <a href="sys_v1_vt.html" class="menu-item ventas">
+            <i class="fas fa-cash-register"></i>
+            <span>PUNTO DE VENTA</span>
+        </a>
 
-            <a href="index_atletas.html" class="card-link">
-                <i class="fas fa-users"></i>
-                <span>ATLETAS</span>
-                <small>ID: NODE_808_DATA</small>
-            </a>
+        <a href="sys_v1_reportes.html" class="menu-item reportes">
+            <i class="fas fa-chart-line"></i>
+            <span>REPORTE DE VENTAS</span>
+        </a>
 
-        </div>
+        <a href="node_v2_config.html" class="menu-item ajustes">
+            <i class="fas fa-gears"></i>
+            <span>AJUSTES DEL SISTEMA</span>
+        </a>
+    </div>
 
-        <div class="status-bar">
-            <p><i class="fas fa-lock"></i> Entorno Seguro Activado para Frank Hernandez</p>
-            <button onclick="location.href='index.html'" style="background:none; border:1px solid #ccc; padding:5px 15px; border-radius:15px; cursor:pointer; color:#64748b;">
-                Cerrar Sesión
-            </button>
-        </div>
-    </main>
+    <footer style="text-align: center; margin-top: 40px; color: #94A3B8; font-size: 0.85rem; font-weight: 600;">
+        Desarrollado por Sistematikos - Frank Hernandez &copy; 2026
+    </footer>
 
     <script>
-        // Protección de código solicitada
-        document.onkeydown = function(e) {
-            if(event.keyCode == 123) return false;
-            if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
-            if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+        // Carga de metadatos locales de la empresa de forma inmediata y offline
+        function cargarDatosLicenciaLocales() {
+            const token = localStorage.getItem('licencia_youcontrol');
+            if (!token) {
+                // Redirección de seguridad preventiva si intentan saltarse el index
+                location.href = "index.html";
+                return;
+            }
+            try {
+                const data = JSON.parse(atob(token));
+                document.getElementById('txtEmpresa').innerText = data.n || "You Control";
+                document.getElementById('txtRif').innerText = `RIF: ${data.rif || 'N/A'}`;
+            } catch(e) {
+                location.href = "index.html";
+            }
         }
+        
+        cargarDatosLicenciaLocales();
     </script>
 </body>
 </html>
