@@ -1,24 +1,17 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
  * Módulo Integrado de Entrada de Mercancía (sys_v3_comp.js)
- * Sincronizado con las rutas reales de tu base de datos
+ * Sincronizado al 100% con Cloud Firestore de Inventario Pro
  */
 
-// ==========================================
-// 1. CONEXIÓN DIRECTA A FIREBASE INTERNA
-// ==========================================
-const firebaseConfig = {
-    // REPLAZA ESTA URL por la tuya real (ejemplo: https://youcontrol-xxxxx.firebaseio.com)
-    databaseURL: "https://tu-proyecto-firebase.firebaseio.com" 
-};
+import { db } from './firebase-config.js';
+import { 
+    collection, onSnapshot, doc, getDoc, setDoc 
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
-const db = firebase.database();
-
-let listaProductos = [];
-let tasaCambio = 1.00;
+const USER_ID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
+let productosLocales = [];
+let tasaActual = 1.00;
 
 // Vinculaciones del DOM
 const buscador = document.getElementById('buscador-dinamico');
@@ -37,64 +30,48 @@ const inputCantidad = document.getElementById('comp-cantidad');
 const inputFecha = document.getElementById('comp-fecha');
 const statusBar = document.getElementById('status-bar-comp');
 
-// Mensajes de alerta en barra superior
-function mostrarMensajeEstado(texto, tipo) {
+// Mensajes de Alerta (Misma estética You Control)
+function mostrarEstado(mensaje, tipo) {
     if (!statusBar) return;
-    statusBar.className = '';
-    statusBar.innerText = texto;
+    statusBar.className = `status-${tipo}`;
+    statusBar.innerText = mensaje;
     statusBar.style.display = 'block';
-    if (tipo === 'loading') statusBar.classList.add('status-loading');
-    if (tipo === 'success') statusBar.classList.add('status-success');
-    if (tipo === 'error') statusBar.classList.add('status-error');
+    if (tipo === 'success') {
+        setTimeout(() => { statusBar.style.display = 'none'; }, 3000);
+    }
 }
 
 // ==========================================
-// 2. ESCUCHA ACTIVA DE LA RUTA DEL INVENTARIO
+// 1. INICIALIZACIÓN Y ESCUCHA FIRESTORE
 // ==========================================
-function iniciarSincronizacion() {
-    mostrarMensajeEstado("Cargando base de datos...", "loading");
-
-    // Sincronizar tasa global desde tu nodo real: tasas/hoy
-    db.ref('tasas/hoy').on('value', (snapshot) => {
-        const val = snapshot.val();
-        if (val) {
-            tasaCambio = parseFloat(val) || 1.00;
-        } else {
-            tasaCambio = 45.50; // Tasa de respaldo por si acaso
+async function inicializarEntradaMercancia() {
+    mostrarEstado("⏳ Conectando con el inventario...", "loading");
+    try {
+        // Leer la tasa exacta desde tu configuración de Firestore
+        const tasaSnap = await getDoc(doc(db, "usuarios", USER_ID, "configuracion", "tasa"));
+        if (tasaSnap.exists()) {
+            tasaActual = parseFloat(tasaSnap.data().valor) || 1.00;
+            if (txtTasa) {
+                txtTasa.innerText = tasaActual.toFixed(2).replace('.', ',') + " Bs.";
+            }
         }
-        if (txtTasa) txtTasa.innerText = tasaCambio.toLocaleString('es-VE', { minimumFractionDigits: 2 });
-        window.calcularPreciosCompra();
-    });
 
-    // Sincronizar desde tu nodo real: inventario
-    db.ref('inventario').on('value', (snapshot) => {
-        const datos = snapshot.val();
-        listaProductos = [];
-
-        if (datos) {
-            Object.keys(datos).forEach(id => {
-                const p = datos[id];
-                // Mapeo adaptado a la estructura de tus carpetas
-                listaProductos.push({
-                    id: id, 
-                    sku: p.sku || id,
-                    barras: p.barras || '',
-                    nombre: p.nombre || p.descripcion || '',
-                    costo: parseFloat(p.costo) || 0,
-                    ganancia: parseFloat(p.ganancia) || 0,
-                    precio: parseFloat(p.precio) || 0,
-                    stock: parseInt(p.stock) || 0
-                });
+        // Escucha en tiempo real de la colección exacta de tus productos
+        onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
+            productosLocales = [];
+            snapshot.forEach(doc => {
+                productosLocales.push({ id: doc.id, ...doc.data() });
             });
-        }
-        mostrarMensajeEstado("Base de datos en la nube lista.", "success");
-        setTimeout(() => { if(statusBar) statusBar.style.display = 'none'; }, 1000);
-    }, (error) => {
-        mostrarMensajeEstado("Error de sincronización: " + error.message, "error");
-    });
+            mostrarEstado("✅ Inventario sincronizado y listo.", "success");
+        });
+
+    } catch (e) {
+        console.error("Error al enlazar Firestore en módulo compras:", e);
+        mostrarEstado("❌ Error de comunicación con la base de datos.", "loading");
+    }
 }
 
-// Inicializadores al cargar la ventana
+// Inicializadores de interfaz
 document.addEventListener('DOMContentLoaded', () => {
     const hoy = new Date().toISOString().split('T')[0];
     if (inputFecha) inputFecha.value = hoy;
@@ -103,6 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (inputGanancia) inputGanancia.addEventListener('input', window.calcularPreciosCompra);
     if (inputPrecio) inputPrecio.addEventListener('input', window.calcularGananciaCompra);
 
+    // Atajo F9 para procesar la entrada
     document.addEventListener('keydown', (e) => {
         if (e.key === 'F9') {
             e.preventDefault();
@@ -110,12 +88,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    iniciarSincronizacion();
+    inicializarEntradaMercancia();
     if (buscador) buscador.focus();
 });
 
 // ==========================================
-// 3. CONTROLADOR DEL BUSCADOR INTELIGENTE
+// 2. BUSCADOR DINÁMICO PREDICTIVO
 // ==========================================
 if (buscador) {
     buscador.addEventListener('input', (e) => {
@@ -126,12 +104,13 @@ if (buscador) {
             return;
         }
 
-        // Búsqueda por Nombre, SKU o Barras
-        const filtrados = listaProductos.filter(p => 
-            p.nombre.toLowerCase().includes(criterio) || 
-            p.sku.toLowerCase().includes(criterio) || 
-            p.barras.toLowerCase().includes(criterio)
-        );
+        // Filtro cruzado sobre los mismos campos de tu tabla
+        const filtrados = productosLocales.filter(p => {
+            const barras = (p.barras || '').toLowerCase();
+            const sku = (p.sku || '').toLowerCase();
+            const nombre = (p.nombre || '').toLowerCase();
+            return barras.includes(criterio) || sku.includes(criterio) || nombre.includes(criterio);
+        });
 
         renderizarDropdown(filtrados, e.target.value);
     });
@@ -144,7 +123,7 @@ function renderizarDropdown(productos, textoBuscado) {
     if (productos.length === 0) {
         dropdown.innerHTML = `
             <div class="no-products-alert" onclick="window.prepararNuevoProducto('${textoBuscado}')">
-                <i class="fas fa-plus-circle"></i> El producto no existe. ¿Deseas crearlo?
+                <i class="fas fa-plus-circle"></i> El producto no existe en la DB. ¿Deseas crearlo?
             </div>
         `;
     } else {
@@ -153,10 +132,10 @@ function renderizarDropdown(productos, textoBuscado) {
             item.className = 'search-item';
             item.innerHTML = `
                 <div class="item-info">
-                    <span class="item-name">${p.nombre}</span>
-                    <span class="item-meta">SKU: ${p.sku} | Barras: ${p.barras || 'Sin código'}</span>
+                    <span class="item-name">${p.nombre || 'Sin descripción'}</span>
+                    <span class="item-meta">SKU: ${p.sku || 'N/A'} | Barras: ${p.barras || 'Sin código'}</span>
                 </div>
-                <span class="item-stock">Stock: ${p.stock}</span>
+                <span class="item-stock">Stock: ${p.stock || 0}</span>
             `;
             item.onclick = () => seleccionarProducto(p);
             dropdown.appendChild(item);
@@ -166,13 +145,13 @@ function renderizarDropdown(productos, textoBuscado) {
 }
 
 function seleccionarProducto(producto) {
-    inputSku.value = producto.sku;
-    inputBarras.value = producto.barras;
-    inputNombre.value = producto.nombre;
-    inputCosto.value = producto.costo.toFixed(2);
-    inputGanancia.value = producto.ganancia.toFixed(1);
-    inputPrecio.value = producto.precio.toFixed(2);
-    inputStockViejo.value = producto.stock;
+    inputSku.value = producto.sku || '';
+    inputBarras.value = producto.barras || '';
+    inputNombre.value = producto.nombre || '';
+    inputCosto.value = (producto.costo || 0).toFixed(2);
+    inputGanancia.value = (producto.ganancia || 0).toFixed(1);
+    inputPrecio.value = (producto.precio || 0).toFixed(2);
+    inputStockViejo.value = producto.stock || 0;
     
     inputCantidad.value = '0';
     inputCantidad.focus();
@@ -204,6 +183,7 @@ window.prepararNuevoProducto = function(textoBuscado) {
     inputSku.focus();
 };
 
+// Ocultar dropdown si se hace click fuera
 document.addEventListener('click', (e) => {
     if (dropdown && !e.target.closest('.search-wrapper')) {
         dropdown.style.display = 'none';
@@ -211,16 +191,16 @@ document.addEventListener('click', (e) => {
 });
 
 // ==========================================
-// 4. LÓGICA MATEMÁTICA
+// 3. MATEMÁTICA Y CONVERSIÓN DE PRECIOS
 // ==========================================
 window.calcularPreciosCompra = function() {
     const costo = parseFloat(inputCosto.value) || 0;
     const ganancia = parseFloat(inputGanancia.value) || 0;
-    const precioUsd = costo * (1 + (ganancia / 100));
+    const precioUsd = costo + (costo * (ganancia / 100));
     
     inputPrecio.value = precioUsd.toFixed(2);
-    const precioBs = precioUsd * tasaCambio;
-    inputPrecioBs.value = precioBs.toLocaleString('es-VE', { minimumFractionDigits: 2 }) + " Bs.";
+    const precioBs = precioUsd * tasaActual;
+    inputPrecioBs.value = precioBs.toFixed(2).replace('.', ',') + " Bs.";
 };
 
 window.calcularGananciaCompra = function() {
@@ -231,57 +211,63 @@ window.calcularGananciaCompra = function() {
         const porcentaje = ((precio - costo) / costo) * 100;
         inputGanancia.value = porcentaje.toFixed(1);
     }
-    const precioBs = precio * tasaCambio;
-    inputPrecioBs.value = precioBs.toLocaleString('es-VE', { minimumFractionDigits: 2 }) + " Bs.";
+    const precioBs = precio * tasaActual;
+    inputPrecioBs.value = precioBs.toFixed(2).replace('.', ',') + " Bs.";
 };
 
 // ==========================================
-// 5. GRABACIÓN EN EL NODO REAL (inventario/)
+// 4. PROCESAR ENTRADA (SETDOC EN FIRESTORE)
 // ==========================================
-window.procesarIngresoMercancia = function() {
+window.procesarIngresoMercancia = async () => {
     const sku = inputSku.value.trim();
     const nombre = inputNombre.value.trim();
+    const barras = inputBarras.value.trim();
     const cantidadEntrante = parseInt(inputCantidad.value) || 0;
     const stockViejo = parseInt(inputStockViejo.value) || 0;
-    const costo = parseFloat(inputCosto.value) || 0;
-    const precio = parseFloat(inputPrecio.value) || 0;
-    const ganancia = parseFloat(inputGanancia.value) || 0;
-    const barras = inputBarras.value.trim();
 
-    if (!sku || !nombre) {
-        mostrarMensajeEstado("Error: SKU y Descripción son obligatorios.", "error");
-        return;
+    if (!nombre) { 
+        mostrarEstado("❌ La descripción del producto es obligatoria.", "loading"); 
+        return; 
     }
     if (cantidadEntrante <= 0) {
-        mostrarMensajeEstado("Indique una cantidad entrante válida.", "error");
+        mostrarEstado("❌ Ingrese una cantidad entrante mayor a cero.", "loading");
         inputCantidad.focus();
         return;
     }
 
-    const nuevoStockTotal = stockViejo + cantidadEntrante;
-    mostrarMensajeEstado("Guardando modificaciones...", "loading");
+    mostrarEstado("⏳ Registrando entrada en Firestore...", "loading");
 
-    // Guarda exactamente usando como llave el SKU en el nodo 'inventario'
-    db.ref('inventario/' + sku).set({
+    const nuevoStockTotal = stockViejo + cantidadEntrante;
+
+    const datos = {
         sku: sku,
         barras: barras,
         nombre: nombre,
-        costo: costo,
-        ganancia: ganancia,
-        precio: precio,
+        costo: parseFloat(inputCosto.value) || 0,
+        ganancia: parseFloat(inputGanancia.value) || 0,
+        precio: parseFloat(inputPrecio.value) || 0,
         stock: nuevoStockTotal,
         ultima_actualizacion: inputFecha.value
-    })
-    .then(() => {
-        mostrarMensajeEstado(`¡Procesado con éxito! Stock actual: ${nuevoStockTotal}`, "success");
-        limpiarFormularioCompleto();
-    })
-    .catch((error) => {
-        mostrarMensajeEstado("Error al guardar: " + error.message, "error");
-    });
+    };
+
+    try {
+        // Determinamos el ID del documento usando tu misma regla exacta de sys_v1_inv
+        // Busca si ya existía por id analizando el array de productosLocales
+        const prodExistente = productosLocales.find(p => p.sku === sku || (barras && p.barras === barras));
+        const idDocumento = prodExistente ? prodExistente.id : (sku || barras || doc(collection(db, "temp")).id);
+
+        // Escritura limpia y directa en tu colección real de usuarios
+        await setDoc(doc(db, "usuarios", USER_ID, "productos", idDocumento), datos, { merge: true });
+        
+        mostrarEstado(`✅ Entrada exitosa. Nuevo Stock: ${nuevoStockTotal}`, "success");
+        limpiarFormulario();
+    } catch (e) {
+        console.error("Error al asentar la entrada:", e);
+        mostrarEstado("❌ Error crítico: No se pudo actualizar el inventario.", "loading");
+    }
 };
 
-function limpiarFormularioCompleto() {
+function limpiarFormulario() {
     inputSku.value = '';
     inputBarras.value = '';
     inputNombre.value = '';
