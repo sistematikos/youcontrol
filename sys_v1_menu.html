@@ -8,11 +8,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-dark: #0A192F;         /* Azul profundo corporativo */
+            --bg-dark: #0A192F;
             --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
             --text-dark: #1E293B;
             --text-muted: #64748B;
-            --blue-sistematikos: #0284C7; /* Azul claro/eléctrico profesional */
+            --blue-sistematikos: #0284C7;
             --vinotinto: #800020;
         }
 
@@ -27,7 +27,7 @@
             color: var(--text-dark);
         }
 
-        /* Navbar Superior Profesional */
+        /* Navbar Superior */
         .header-core {
             background-color: var(--bg-dark);
             color: white;
@@ -56,8 +56,8 @@
 
         /* Contenedor Principal */
         .menu-container {
-            max-width: 1240px;
-            width: 90%;
+            max-width: 1280px;
+            width: 95%;
             margin: auto;
             padding: 40px 0;
             flex-grow: 1;
@@ -69,21 +69,20 @@
         .menu-flex-row {
             display: flex;
             flex-direction: row;
-            gap: 25px;
+            gap: 20px;
             width: 100%;
             justify-content: space-between;
         }
 
-        /* Tarjetas con Sombras Suaves (Soft Shadows) y Efecto Persuasivo */
+        /* Tarjetas con Sombras Suaves */
         .menu-card {
             background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(10px);
             border-radius: 20px;
-            padding: 45px 20px;
+            padding: 40px 15px;
             text-align: center;
             text-decoration: none;
             color: var(--text-dark);
-            /* Sombra elegante multinivel */
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 
                         0 10px 15px -3px rgba(0, 0, 0, 0.03),
                         0 20px 25px -5px rgba(0, 0, 0, 0.02);
@@ -92,12 +91,12 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             box-sizing: border-box;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            min-height: 280px; /* Asegura que todas tengan la misma altura */
         }
 
-        /* Hover dinámico persuasivo */
         .menu-card:hover {
             transform: translateY(-8px);
             background: #FFFFFF;
@@ -107,9 +106,9 @@
         }
 
         .menu-card i {
-            font-size: 2.8rem;
+            font-size: 2.6rem;
             color: var(--blue-sistematikos);
-            margin-bottom: 22px;
+            margin-bottom: 15px;
             transition: transform 0.3s ease;
         }
 
@@ -118,28 +117,30 @@
         }
 
         .menu-card span {
-            font-size: 1.05rem;
-            font-weight: 600;
+            font-size: 1.1rem;
+            font-weight: 700;
             letter-spacing: 0.5px;
             display: block;
             text-transform: uppercase;
             color: #0F172A;
+            margin-bottom: 12px;
         }
 
-        .menu-card .module-id {
-            font-size: 0.65rem;
+        /* Párrafo descriptivo estilizado */
+        .menu-card p {
+            font-size: 0.8rem;
             color: var(--text-muted);
-            margin-top: 12px;
-            font-weight: 500;
-            letter-spacing: 1px;
-            background: #F1F5F9;
-            padding: 4px 10px;
-            border-radius: 50px;
+            margin: 0;
+            line-height: 1.4;
+            font-weight: 400;
         }
 
-        @media (max-width: 900px) {
+        @media (max-width: 950px) {
             .menu-flex-row {
                 flex-direction: column;
+            }
+            .menu-card {
+                min-height: auto;
             }
         }
 
@@ -200,25 +201,25 @@
             <a href="sys_v1_inv.html" class="menu-card">
                 <i class="fas fa-boxes-stacked"></i>
                 <span>Inventario</span>
-                <div class="module-id">SYS_101_INV</div>
+                <p>Visualiza tus existencias, costos, porcentajes de ganancia y precios en Bolívares de manera rápida.</p>
             </a>
 
             <a href="sys_v3_comp.html" class="menu-card">
                 <i class="fas fa-cart-plus"></i>
                 <span>Entrada Mercancía</span>
-                <div class="module-id">SYS_102_COMP</div>
+                <p>Registra nuevos lotes de productos en stock, actualiza costos base y gestiona tus proveedores.</p>
             </a>
 
             <a href="sys_v1_vt.html" class="menu-card">
                 <i class="fas fa-cash-register"></i>
                 <span>Ventas (POS)</span>
-                <div class="module-id">SYS_202_POS</div>
+                <p>Factura en tiempo real, procesa pagos de clientes y mantén el control de la caja registradora de forma ágil.</p>
             </a>
 
             <a href="sys_v1_reportes.html" class="menu-card">
                 <i class="fas fa-chart-line"></i>
                 <span>Reportes</span>
-                <div class="module-id">NODE_505_STATS</div>
+                <p>Analiza el rendimiento de tu negocio con estadísticas claras de ingresos totales y cierres diarios.</p>
             </a>
 
         </div>
@@ -246,7 +247,6 @@
             }
             try {
                 const data = JSON.parse(atob(token));
-                // Inyecta el nombre real de la empresa decodificado en la etiqueta inferior
                 document.getElementById('lblEmpresa').innerText = data.n || "Cliente Autorizado";
             } catch(e) {
                 location.href = "index.html";
