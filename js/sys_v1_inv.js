@@ -7,7 +7,6 @@ const USER_ID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
 let productosLocales = [];
 let tasaActual = 1.00;
 
-// --- GESTIÓN DE NOTIFICACIONES ---
 function mostrarEstado(mensaje, tipo) {
     const bar = document.getElementById('status-bar-inv');
     if (!bar) return;
@@ -17,7 +16,6 @@ function mostrarEstado(mensaje, tipo) {
     if (tipo === 'success') setTimeout(() => { bar.style.display = 'none'; }, 3000);
 }
 
-// --- ESCUCHA DE DATOS EN TIEMPO REAL ---
 async function inicializarInventario() {
     try {
         const tasaSnap = await getDoc(doc(db, "usuarios", USER_ID, "configuracion", "tasa"));
@@ -36,7 +34,6 @@ async function inicializarInventario() {
     }
 }
 
-// --- RENDERIZACIÓN EN MODO LECTURA ---
 function renderizarTabla(lista) {
     const tbody = document.getElementById('cuerpo-tabla');
     if (!tbody) return;
@@ -71,13 +68,12 @@ function renderizarTabla(lista) {
     }).join('');
 }
 
-// --- CONTROLADORES DE VENTANA MODAL ---
 window.abrirModalNuevo = () => {
     document.getElementById('modalTitulo').innerHTML = '<i class="fas fa-plus"></i> Registrar Nuevo Artículo';
     document.getElementById('form-id').value = '';
     document.getElementById('form-barras').value = '';
     document.getElementById('form-sku').value = '';
-    document.getElementById('form-sku').disabled = false; // Permitir asignación inicial
+    document.getElementById('form-sku').disabled = false;
     document.getElementById('form-nombre').value = '';
     document.getElementById('form-costo').value = '0.00';
     document.getElementById('form-ganancia').value = '0.0';
@@ -96,7 +92,7 @@ window.abrirModalEditar = (id) => {
     document.getElementById('form-id').value = prod.id;
     document.getElementById('form-barras').value = prod.barras || '';
     document.getElementById('form-sku').value = prod.sku || '';
-    document.getElementById('form-sku').disabled = true; // Bloqueado: Es la llave primaria del documento
+    document.getElementById('form-sku').disabled = true; 
     document.getElementById('form-nombre').value = prod.nombre || '';
     document.getElementById('form-costo').value = (prod.costo || 0).toFixed(2);
     document.getElementById('form-ganancia').value = (prod.ganancia || 0).toFixed(1);
@@ -112,7 +108,6 @@ window.cerrarModal = () => {
     document.getElementById('form-sku').disabled = false;
 };
 
-// --- OPERACIONES INTERNAS DE LA MODAL ---
 window.calcularPrecioModal = () => {
     const costo = parseFloat(document.getElementById('form-costo').value) || 0;
     const ganancia = parseFloat(document.getElementById('form-ganancia').value) || 0;
@@ -127,7 +122,6 @@ window.calcularGananciaModal = () => {
     }
 };
 
-// --- GUARDAR DESDE MODAL (CONSERVA INTEGRIDAD DEL SKU) ---
 window.guardarCambiosModal = async () => {
     const idExistente = document.getElementById('form-id').value;
     const nombre = document.getElementById('form-nombre').value.trim();
@@ -149,7 +143,6 @@ window.guardarCambiosModal = async () => {
     };
 
     try {
-        // Usa como ID del documento el ID original, el SKU escrito o las barras. Fallback automático seguro.
         const idDocumento = idExistente || sku || barras || doc(collection(db, "temp")).id;
         await setDoc(doc(db, "usuarios", USER_ID, "productos", idDocumento), datos, { merge: true });
         
@@ -161,7 +154,6 @@ window.guardarCambiosModal = async () => {
     }
 };
 
-// --- ACCIÓN: REMOVER REGISTRO COMPLETO ---
 window.eliminarProducto = async (id) => {
     if (!confirm("¿Seguro que deseas eliminar permanentemente este producto de la DB?")) return;
     try {
@@ -170,13 +162,11 @@ window.eliminarProducto = async (id) => {
     } catch(e) { console.error(e); }
 };
 
-// --- RE-CÁLCULO DINÁMICO POR CAMBIO DE TASA ---
 window.actualizarTasaTop = async () => {
     tasaActual = parseFloat(document.getElementById('tasaCambio').value) || 1.00;
     renderizarTabla(productosLocales);
 };
 
-// --- FILTRO DE ENTRADAS DESDE EL BUSCADOR ---
 window.filtrarProductos = () => {
     const busqueda = document.getElementById('buscador').value.toLowerCase();
     const filas = document.querySelectorAll('.fila-producto');
@@ -193,11 +183,9 @@ window.filtrarProductos = () => {
     });
 };
 
-// --- INTEGRACIÓN DE ATAJO DE TECLADO RÁPIDO F9 ---
 window.addEventListener('keydown', (e) => {
     if (e.key === 'F9') {
         const modal = document.getElementById('modalProducto');
-        // El atajo F9 solo se acciona si el usuario tiene abierta la ventana modal de edición/creación
         if (modal.style.display === 'flex') {
             e.preventDefault();
             window.guardarCambiosModal();
@@ -205,5 +193,4 @@ window.addEventListener('keydown', (e) => {
     }
 });
 
-// Lanzar ejecución al cargar el script
 inicializarInventario();
