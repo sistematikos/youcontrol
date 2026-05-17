@@ -35,7 +35,6 @@
             margin-bottom: 15px; 
         }
         
-        /* Tarjeta de Formulario */
         .compra-card { 
             background: white; 
             padding: 25px; 
@@ -85,10 +84,10 @@
             border-radius: 12px;
             border: 1px solid #CBD5E1;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            max-height: 250px;
+            max-height: 260px;
             overflow-y: auto;
             z-index: 100;
-            display: none; /* Se activa mediante JS */
+            display: none;
             padding: 6px 0;
         }
 
@@ -100,27 +99,14 @@
             cursor: pointer;
             transition: background 0.2s;
             font-size: 0.9rem;
+            border-bottom: 1px solid #F1F5F9;
         }
+        .search-item:last-child { border: none; }
+        .search-item:hover { background: #F1F5F9; }
 
-        .search-item:hover {
-            background: #F1F5F9;
-        }
-
-        .search-item .item-info {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .search-item .item-name {
-            font-weight: 600;
-            color: var(--text);
-        }
-
-        .search-item .item-meta {
-            font-size: 0.75rem;
-            color: #64748B;
-        }
-
+        .search-item .item-info { display: flex; flex-direction: column; }
+        .search-item .item-name { font-weight: 600; color: var(--text); }
+        .search-item .item-meta { font-size: 0.75rem; color: #64748B; }
         .search-item .item-stock {
             background: #E2E8F0;
             padding: 3px 8px;
@@ -129,20 +115,31 @@
             font-weight: 600;
         }
 
+        /* Botón/Aviso especial cuando no existe el producto */
+        .no-products-alert {
+            padding: 12px 15px;
+            text-align: center;
+            background: #FFF7ED;
+            color: #C2410C;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+        .no-products-alert:hover { background: #FFEDD5; }
+
         /* Grid del Formulario */
         .form-grid { 
             display: grid; 
             grid-template-columns: 1fr 1fr; 
             gap: 20px; 
         }
-        .form-group { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 6px; 
-        }
-        .form-group.full { 
-            grid-column: span 2; 
-        }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group.full { grid-column: span 2; }
         .form-group label { 
             font-size: 0.85rem; 
             font-weight: 600; 
@@ -171,7 +168,6 @@
             font-weight: 600; 
         }
 
-        /* Caja de precio en Bolívares */
         .precio-bs-box { 
             background: #ecfdf5; 
             border: 1px solid #a7f3d0; 
@@ -181,7 +177,6 @@
             text-align: center; 
         }
 
-        /* Botón de Procesado */
         .btn-save-compra { 
             background: var(--emerald); 
             color: white; 
@@ -200,15 +195,7 @@
             transition: 0.2s; 
             box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); 
         }
-        .btn-save-compra:hover { 
-            background: #059669; 
-            transform: translateY(-1px); 
-        }
-        .btn-save-compra:disabled { 
-            background: #cbd5e1; 
-            cursor: not-allowed; 
-            box-shadow: none; 
-        }
+        .btn-save-compra:hover { background: #059669; transform: translateY(-1px); }
         
         .btn-back { 
             border: none; 
@@ -223,7 +210,6 @@
             font-size: 0.9rem; 
         }
 
-        /* Barra de estado informativa superior */
         #status-bar-comp { 
             width: 100%; 
             padding: 10px; 
@@ -260,11 +246,10 @@
             <div class="search-wrapper">
                 <div class="search-box">
                     <i class="fas fa-magnifying-glass" style="font-size: 1.3rem; color: #64748B;"></i>
-                    <input type="text" id="buscador-dinamico" placeholder="Escanee código o busque por nombre de artículo..." oninput="window.filtrarProductosCompra?.(this.value)" onkeydown="window.buscarProductoCompra(event)">
+                    <input type="text" id="buscador-dinamico" placeholder="Escriba código de barras, SKU o nombre del producto...">
                 </div>
                 
-                <div id="dropdown-resultados" class="search-results-dropdown">
-                    </div>
+                <div id="dropdown-resultados" class="search-results-dropdown"></div>
             </div>
 
             <div class="form-grid">
@@ -282,15 +267,15 @@
                 </div>
                 <div class="form-group">
                     <label>Costo Unitario USD ($)</label>
-                    <input type="number" step="0.01" id="comp-costo" value="0.00" oninput="window.calcularPreciosCompra()">
+                    <input type="number" step="0.01" id="comp-costo" value="0.00">
                 </div>
                 <div class="form-group">
                     <label>% Ganancia Sugerido</label>
-                    <input type="number" step="0.1" id="comp-ganancia" value="0.0" oninput="window.calcularPreciosCompra()">
+                    <input type="number" step="0.1" id="comp-ganancia" value="0.0">
                 </div>
                 <div class="form-group">
                     <label>Precio de Venta USD ($)</label>
-                    <input type="number" step="0.01" id="comp-precio" value="0.00" oninput="window.calcularGananciaCompra()">
+                    <input type="number" step="0.01" id="comp-precio" value="0.00">
                 </div>
                 <div class="form-group">
                     <label>Precio de Venta Bolívares</label>
