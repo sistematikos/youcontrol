@@ -41,7 +41,7 @@ async function inicializarInventario() {
     mostrarStatusBar("⏳ Conectando con Cloud Firestore...", "loading");
     
     try {
-        // Consultar tasa de la sección de configuraciones
+        // Consultar tasa inicial de la sección de configuraciones
         const tasaSnap = await getDoc(doc(db, "usuarios", USER_ID, "configuracion", "tasa"));
         if (tasaSnap.exists()) {
             tasaActual = parseFloat(tasaSnap.data().valor) || 1.00;
@@ -125,7 +125,7 @@ function renderizarTabla(productos) {
 }
 
 // ==========================================
-// 3. BUSCADOR, CONTROL DE TASA Y RESET MANUEL
+// 3. BUSCADOR, CONTROL DE TASA Y ESCRITURA
 // ==========================================
 window.filtrarProductos = function() {
     const criterio = buscadorInput.value.trim().toLowerCase();
@@ -140,6 +140,7 @@ window.filtrarProductos = function() {
     renderizarTabla(filtrados);
 };
 
+// Modifica la tasa visualmente al escribir en el input
 window.actualizarTasaTop = function() {
     const valorTasa = parseFloat(tasaInput.value);
     if (!isNaN(valorTasa) && valorTasa > 0) {
@@ -148,19 +149,27 @@ window.actualizarTasaTop = function() {
     }
 };
 
-window.recargarBaseDatos = async function() {
-    mostrarStatusBar("🔄 Re-sincronizando inventario con Firestore...", "loading");
+// PERSISTENCIA: Guarda el valor actual en Firestore
+window.guardarTasaFirestore = async function() {
+    const valorTasa = parseFloat(tasaInput.value);
+    if (isNaN(valorTasa) || valorTasa <= 0) {
+        alert("Por favor, ingrese un valor de tasa válido y mayor a cero.");
+        return;
+    }
+
+    mostrarStatusBar("⏳ Guardando nueva tasa en Firestore...", "loading");
+    
     try {
-        const tasaSnap = await getDoc(doc(db, "usuarios", USER_ID, "configuracion", "tasa"));
-        if (tasaSnap.exists()) {
-            tasaActual = parseFloat(tasaSnap.data().valor) || 1.00;
-            if (tasaInput) tasaInput.value = tasaActual.toFixed(2);
-        }
-        window.filtrarProductos();
-        mostrarStatusBar("✅ Inventario actualizado y sincronizado.", "success");
+        const tasaDocRef = doc(db, "usuarios", USER_ID, "configuracion", "tasa");
+        // Escribe exactamente el campo 'valor' como lo lee tu módulo compras
+        await setDoc(tasaDocRef, { valor: valorTasa }, { merge: true });
+        
+        tasaActual = valorTasa;
+        window.filtrarProductos(); // Sincroniza la vista
+        mostrarStatusBar("✅ Tasa de cambio guardada con éxito.", "success");
     } catch (e) {
-        console.error("Error al re-sincronizar:", e);
-        mostrarStatusBar("❌ Error al intentar conectar con Firestore.", "loading");
+        console.error("Error al guardar la tasa:", e);
+        mostrarStatusBar("❌ Error al guardar la configuración en la DB.", "loading");
     }
 };
 
