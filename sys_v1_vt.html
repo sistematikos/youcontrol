@@ -24,16 +24,16 @@
             flex-direction: column;
         }
         
-        /* Navbar Superior con Alineación Perfecta */
+        /* Navbar Superior */
         .header-sales { 
-            background: var(--vibrant-blue); /* Ajustado al azul vivo continuo de tu captura */
+            background: var(--vibrant-blue); 
             color: white; 
             padding: 10px 20px; 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            height: 38px; /* Altura fija para control absoluto del contenedor inferior */
+            height: 38px; 
             flex-shrink: 0;
         }
         
@@ -65,7 +65,7 @@
             font-size: 11px;
         }
         
-        /* Contenedor Principal Adaptativo Sin Pérdida de Espacio */
+        /* Contenedor Principal */
         .pos-container { 
             display: grid; 
             grid-template-columns: 1fr 380px; 
@@ -73,11 +73,11 @@
             padding: 15px; 
             box-sizing: border-box;
             flex-grow: 1;
-            height: calc(100vh - 58px); /* Resta exacta de barra superior + padding */
+            height: calc(100vh - 58px); 
             overflow: hidden;
         }
         
-        /* Paneles de Trabajo Ajustados */
+        /* Paneles */
         .panel-left, .panel-cart { 
             background: white; 
             border-radius: 12px; 
@@ -85,11 +85,10 @@
             display: flex; 
             flex-direction: column; 
             box-shadow: 0 2px 8px rgba(0,0,0,0.04); 
-            overflow: hidden; /* Evita que el contenedor estire el layout */
+            overflow: hidden; 
             box-sizing: border-box;
         }
         
-        /* Buscador Ajustado al 100% del Ancho Interno */
         #inputBusqueda { 
             width: 100%; 
             padding: 10px 14px; 
@@ -112,7 +111,7 @@
             padding-right: 4px;
         }
         
-        /* Filas de Productos Estilo Lista Única */
+        /* --- AJUSTE IZQUIERDA: Separación de tipos de precios --- */
         .single-line-row { 
             display: flex; 
             justify-content: space-between; 
@@ -121,13 +120,33 @@
             border-bottom: 1px solid #f1f5f9; 
             cursor: pointer; 
         }
+
+        /* Fuerza un espacio prudente entre el precio en USD ($) y el precio en Bs. */
+        .single-line-row span[id*="precio"], 
+        .single-line-row span:text-contains("Bs") {
+            margin-left: 14px; 
+            display: inline-block;
+        }
+
+        /* En caso de que tu JS renderice los Bs dentro de un b pequeño o span secundario */
+        .single-line-row span + span {
+            margin-left: 12px;
+        }
         
         .item-selected { 
             background: #e0e7ff !important; 
             border-left: 5px solid var(--vibrant-blue); 
         }
         
-        /* Caja de Resumen Inferior Fija */
+        /* --- AJUSTE DERECHA: Recorte estricto del nombre en el Carrito --- */
+        #lista-carrito div, 
+        #lista-carrito .cart-item-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 170px; /* Ancho estimado para bloquear el texto a ~20 caracteres */
+        }
+        
         .summary-box { 
             background: #f1f7ff; 
             padding: 12px; 
@@ -144,7 +163,6 @@
             color: var(--vibrant-blue); 
         }
         
-        /* Botón de Pago que no se esconde */
         .btn-pay { 
             background: var(--vibrant-blue); 
             color: white; 
