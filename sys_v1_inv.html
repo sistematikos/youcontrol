@@ -21,6 +21,7 @@
             margin: 0; 
             padding-bottom: 50px; 
             color: var(--text); 
+            user-select: none; /* Protección básica contra copiado */
         }
         .container { 
             padding: 15px; 
@@ -228,7 +229,7 @@
             padding: 10px; 
             border: 1px solid var(--border); 
             border-radius: 8px; 
-            font-family: 'Poppins'; 
+            font-family: 'Poppins', sans-serif; 
             font-size: 0.9rem; 
         }
         .form-group input:focus { 
@@ -272,7 +273,7 @@
         }
         .status-loading { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
         .status-success { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
-        
+         
         .oculto { display: none; }
     </style>
 </head>
@@ -372,5 +373,28 @@
     </div>
 
     <script type="module" src="./js/sys_v1_inv.js"></script>
+
+    <script>
+        // Bloquear teclas de inspección (F12, Ctrl+Shift+I, etc.)
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F12' || 
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) || 
+                (e.ctrlKey && e.key === 'u')) {
+                e.preventDefault();
+                return false;
+            }
+            
+            // Atajo F9 para guardar si el modal está visible
+            if (e.key === 'F9') {
+                const modal = document.getElementById('modalProducto');
+                if (modal && modal.style.display === 'flex') {
+                    e.preventDefault();
+                    if (typeof window.guardarCambiosModal === 'function') {
+                        window.guardarCambiosModal();
+                    }
+                }
+            }
+        });
+    </script>
 </body>
 </html>
