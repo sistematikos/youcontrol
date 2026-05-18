@@ -30,11 +30,20 @@
             user-select: none;
         }
 
-        /* --- BANNER CONTENEDOR --- */
-        .banner-container {
+        /* --- ANCHURA GLOBAL SINCRONIZADA --- 
+           Encapsulamos la misma estructura exacta para el banner y para el contenido principal
+        */
+        .layout-width {
             width: 92%;
             max-width: 1200px;
-            margin: 15px auto 5px auto;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+
+        /* --- BANNER CONTENEDOR --- */
+        .banner-container {
+            margin-top: 15px;
+            margin-bottom: 5px;
             border-radius: 16px;
             overflow: hidden;
             box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
@@ -64,7 +73,7 @@
             font-weight: 600;
         }
 
-        /* --- BOTÓN VOLVER (Alineado y visible dentro del banner) --- */
+        /* --- BOTÓN VOLVER --- */
         .btn-back-float {
             position: absolute;
             top: 15px;
@@ -90,18 +99,15 @@
             transform: scale(1.03);
         }
 
-        /* --- CONTENEDOR GENERAL --- */
+        /* --- CONTENEDOR GENERAL (Alineación Perfecta con el Banner) --- */
         .menu-container {
-            max-width: 1200px;
-            width: 92%;
-            margin: 0 auto;
             padding: 10px 0;
             display: flex;
             flex-direction: column;
             gap: 15px;
         }
 
-        /* --- REJILLA REDUCIDA (Efecto Botón) --- */
+        /* --- REJILLA COMPACTA TIPO BOTÓN --- */
         .menu-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -113,7 +119,7 @@
             background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(10px);
             border-radius: 12px;
-            padding: 12px 14px; /* Relleno vertical reducido de 16px a 12px */
+            padding: 12px 14px;
             text-align: center;
             text-decoration: none;
             color: var(--text-dark);
@@ -121,9 +127,9 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center; /* Centrado absoluto del contenido */
+            justify-content: center;
             transition: all 0.23s cubic-bezier(0.4, 0, 0.2, 1);
-            min-height: 105px; /* Reducción drástica del tamaño vertical */
+            min-height: 105px;
             border: 2px solid transparent;
             box-sizing: border-box;
         }
@@ -150,11 +156,7 @@
         .card-gerencial i { color: var(--emerald); }
         .card-gerencial:hover { border-color: var(--emerald); box-shadow: 0 8px 16px -4px rgba(16, 185, 129, 0.15); }
 
-        .menu-card i { 
-            font-size: 1.5rem; /* Icono levemente más integrado */
-            margin-bottom: 6px; 
-        }
-        
+        .menu-card i { font-size: 1.5rem; margin-bottom: 6px; }
         .menu-card span {
             font-size: 0.82rem;
             font-weight: 700;
@@ -162,7 +164,6 @@
             letter-spacing: 0.3px;
             margin-bottom: 4px;
         }
-        
         .menu-card p {
             font-size: 0.7rem;
             color: var(--text-muted);
@@ -178,6 +179,8 @@
             padding: 18px;
             box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
             border: 1px solid #E2E8F0;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .gerencial-header {
@@ -219,7 +222,7 @@
         /* --- FOOTER --- */
         .footer-core {
             text-align: center;
-            padding: 10px 0 15px 0;
+            padding: 15px 0 20px 0;
             color: var(--text-muted);
             font-size: 0.75rem;
         }
@@ -237,7 +240,7 @@
 </head>
 <body oncontextmenu="return false">
 
-    <div style="width: 92%; max-width: 1200px; margin: 0 auto; position: relative;">
+    <div class="layout-width">
         <div class="banner-container">
             <a href="sys_v1_menu.html" class="btn-back-float">
                 <i class="fas fa-arrow-left"></i> VOLVER AL MENÚ
@@ -247,9 +250,9 @@
         </div>
     </div>
 
-    <main class="menu-container">
+    <main class="layout-width menu-container">
+        
         <div class="menu-grid">
-            
             <a href="sys_v4_cuadre.html" class="menu-card card-cuadre">
                 <i class="fas fa-cash-register"></i>
                 <span>Cuadre de Caja</span>
@@ -273,7 +276,6 @@
                 <span>Resumen</span>
                 <p>Consolidado total de inversión y rentabilidad activa.</p>
             </a>
-
         </div>
 
         <div class="gerencial-panel" id="resumen">
