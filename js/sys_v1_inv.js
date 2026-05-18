@@ -1,28 +1,28 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
  * Módulo de Gestión de Inventario General (sys_v1_inv.js)
- * Sincronizado al 100% con Cloud Firestore (Estructura de subcolecciones)
+ * Conectado y Sincronizado a Cloud Firestore
  */
 
-import { db } from './firebase-config.js'; // Tu misma configuración del módulo compras
+import { db } from './firebase-config.js'; 
 import { 
     collection, onSnapshot, doc, getDoc, setDoc, deleteDoc 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// ID de usuario exacto extraído del módulo de entrada de mercancía
+// ID de usuario compartido con el módulo de compras
 const USER_ID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
 
-// Estado Global de la pantalla
+// Estado Global
 let listaProductos = [];
 let tasaActual = 1.00;
 
-// Vinculaciones del DOM
+// Enlaces del DOM
 const cuerpoTabla = document.getElementById('cuerpo-tabla');
 const tasaInput = document.getElementById('tasaCambio');
 const buscadorInput = document.getElementById('buscador');
 const statusBar = document.getElementById('status-bar-inv');
 
-// Inputs del Modal
+// Enlaces del Formulario Modal
 const modal = document.getElementById('modalProducto');
 const modalTitulo = document.getElementById('modalTitulo');
 const formId = document.getElementById('form-id');
@@ -35,13 +35,13 @@ const formPrecio = document.getElementById('form-precio');
 const formStock = document.getElementById('form-stock');
 
 // ==========================================
-// 1. INICIALIZACIÓN Y ESCUCHA EN TIEMPO REAL
+// 1. INICIALIZACIÓN DE LA DATA (FIRESTORE)
 // ==========================================
 async function inicializarInventario() {
     mostrarStatusBar("⏳ Conectando con Cloud Firestore...", "loading");
     
     try {
-        // 1. Obtener la tasa de cambio de la configuración del usuario
+        // Consultar tasa de la sección de configuraciones
         const tasaSnap = await getDoc(doc(db, "usuarios", USER_ID, "configuracion", "tasa"));
         if (tasaSnap.exists()) {
             tasaActual = parseFloat(tasaSnap.data().valor) || 1.00;
@@ -50,7 +50,7 @@ async function inicializarInventario() {
             }
         }
 
-        // 2. Escuchar la colección exacta de productos del usuario en Firestore
+        // Listener en tiempo real de la subcolección de productos
         const productosCollection = collection(db, "usuarios", USER_ID, "productos");
         
         onSnapshot(productosCollection, (snapshot) => {
@@ -69,21 +69,20 @@ async function inicializarInventario() {
                 ocultarStatusBar();
             }
         }, (error) => {
-            console.error("Error en Snapshot de Firestore:", error);
-            mostrarStatusBar("❌ Error de permisos o lectura en Firestore.", "loading");
+            console.error("Error en Snapshot:", error);
+            mostrarStatusBar("❌ Error de permisos o lectura de base de datos.", "loading");
         });
 
     } catch (e) {
-        console.error("Error crítico al inicializar inventario:", e);
+        console.error("Error crítico inicializador:", e);
         mostrarStatusBar("❌ Error al establecer comunicación con Firestore.", "loading");
     }
 }
 
-// Ejecutar al cargar la página
 document.addEventListener('DOMContentLoaded', inicializarInventario);
 
 // ==========================================
-// 2. RENDERIZADO DE LA TABLA
+// 2. RENDERIZACIÓN DE FILAS Y BADGES
 // ==========================================
 function renderizarTabla(productos) {
     if (productos.length === 0) {
@@ -99,7 +98,7 @@ function renderizarTabla(productos) {
         const precioUSD = parseFloat(prod.precio || 0);
         const stock = parseInt(prod.stock || 0);
         
-        // Conversión en vivo basada en la tasa de la pantalla
+        // Operación matemática de conversión de divisa a tasa superior
         const precioBS = (precioUSD * tasaActual).toFixed(2);
 
         const fila = document.createElement('tr');
@@ -113,10 +112,10 @@ function renderizarTabla(productos) {
             <td><span class="badge-bs">Bs. ${precioBS.replace('.', ',')}</span></td>
             <td><span class="badge-stock" style="${stock <= 3 ? 'background: #FEE2E2; color: #EF4444; font-weight:700;' : ''}">${stock}</span></td>
             <td style="text-align: center;">
-                <button class="btn-edit" onclick="window.abrirModalEditar('${prod.id}')" title="Editar Producto">
+                <button class="btn-edit" onclick="window.abrirModalEditar('${prod.id}')" title="Editar">
                     <i class="fas fa-edit"></i>
                 </button>
-                <button class="btn-remove" onclick="window.eliminarProducto('${prod.id}', '${prod.nombre}')" title="Eliminar Producto">
+                <button class="btn-remove" onclick="window.eliminarProducto('${prod.id}', '${prod.nombre}')" title="Eliminar">
                     <i class="fas fa-trash-can"></i>
                 </button>
             </td>
@@ -126,7 +125,7 @@ function renderizarTabla(productos) {
 }
 
 // ==========================================
-// 3. BUSCADOR Y CONTROL DE TASA SUPERIOR
+// 3. BUSCADOR, CONTROL DE TASA Y RESET MANUEL
 // ==========================================
 window.filtrarProductos = function() {
     const criterio = buscadorInput.value.trim().toLowerCase();
@@ -145,12 +144,28 @@ window.actualizarTasaTop = function() {
     const valorTasa = parseFloat(tasaInput.value);
     if (!isNaN(valorTasa) && valorTasa > 0) {
         tasaActual = valorTasa;
-        window.filtrarProductos(); // Re-renderiza precios en bolívares al instante
+        window.filtrarProductos(); 
+    }
+};
+
+window.recargarBaseDatos = async function() {
+    mostrarStatusBar("🔄 Re-sincronizando inventario con Firestore...", "loading");
+    try {
+        const tasaSnap = await getDoc(doc(db, "usuarios", USER_ID, "configuracion", "tasa"));
+        if (tasaSnap.exists()) {
+            tasaActual = parseFloat(tasaSnap.data().valor) || 1.00;
+            if (tasaInput) tasaInput.value = tasaActual.toFixed(2);
+        }
+        window.filtrarProductos();
+        mostrarStatusBar("✅ Inventario actualizado y sincronizado.", "success");
+    } catch (e) {
+        console.error("Error al re-sincronizar:", e);
+        mostrarStatusBar("❌ Error al intentar conectar con Firestore.", "loading");
     }
 };
 
 // ==========================================
-// 4. LÓGICA DE MODALES (CREAR / EDITAR)
+// 4. CONTROL DE VENTANAS MODALES
 // ==========================================
 window.abrirModalNuevo = function() {
     modalTitulo.innerHTML = `<i class="fas fa-plus"></i> Nuevo Producto`;
@@ -190,7 +205,7 @@ window.cerrarModal = function() {
 };
 
 // ==========================================
-// 5. CÁLCULOS MATEMÁTICOS DEL MODAL
+// 5. CÁLCULOS MATEMÁTICOS COMERCIALES
 // ==========================================
 window.calcularPrecioModal = function() {
     const costo = parseFloat(formCosto.value) || 0;
@@ -212,7 +227,7 @@ window.calcularGananciaModal = function() {
 };
 
 // ==========================================
-// 6. OPERACIONES CRUD EN FIRESTORE
+// 6. OPERACIONES ESCRITURA Y ELIMINACIÓN (CRUD)
 // ==========================================
 window.guardarCambiosModal = async function() {
     const id = formId.value.trim();
@@ -239,8 +254,6 @@ window.guardarCambiosModal = async function() {
     };
 
     try {
-        // Si no hay ID de documento (porque es nuevo), definimos uno usando la regla de compras
-        // Usa el SKU, o las Barras, o genera un ID aleatorio si es una subcolección limpia
         let idDocumento = id;
         if (!idDocumento) {
             idDocumento = sku || barras || doc(collection(db, "temp")).id;
@@ -252,19 +265,19 @@ window.guardarCambiosModal = async function() {
         window.cerrarModal();
         mostrarStatusBar("✅ Producto guardado exitosamente.", "success");
     } catch (e) {
-        console.error("Error al escribir producto en Firestore:", e);
-        alert("Error crítico al guardar en la base de datos.");
+        console.error("Error al escribir producto:", e);
+        alert("Error crítico al guardar en Firestore.");
         ocultarStatusBar();
     }
 };
 
 window.eliminarProducto = async function(id, nombre) {
-    if (confirm(`¿Estás completamente seguro de eliminar permanentemente: "${nombre}"?`)) {
+    if (confirm(`¿Estás seguro de eliminar permanentemente: "${nombre}"?`)) {
         mostrarStatusBar("⏳ Eliminando de la base de datos...", "loading");
         try {
             const docRef = doc(db, "usuarios", USER_ID, "productos", id);
             await deleteDoc(docRef);
-            mostrarStatusBar("✅ Producto eliminado del inventario.", "success");
+            mostrarStatusBar("✅ Producto eliminado.", "success");
         } catch (e) {
             console.error("Error al remover de Firestore:", e);
             alert("No se pudo eliminar el registro.");
@@ -274,7 +287,7 @@ window.eliminarProducto = async function(id, nombre) {
 };
 
 // ==========================================
-// 7. MENSAJES DE ESTADO (STATUS BAR)
+// 7. ALERTAS Y RENDER VISUAL DE ESTADOS
 // ==========================================
 function mostrarStatusBar(mensaje, tipo) {
     if (!statusBar) return;
