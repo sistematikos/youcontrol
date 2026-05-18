@@ -21,7 +21,7 @@
             margin: 0; 
             padding-bottom: 50px; 
             color: var(--text); 
-            user-select: none; /* Protección básica contra copiado */
+            user-select: none;
         }
         .container { 
             padding: 15px; 
@@ -44,7 +44,7 @@
         /* Paneles Superiores */
         .top-panels { 
             display: grid; 
-            grid-template-columns: 1fr 2fr; 
+            grid-template-columns: 1.2fr 2fr; 
             gap: 15px; 
             margin-bottom: 10px; 
         }
@@ -63,10 +63,22 @@
             padding: 8px; 
             border-radius: 10px; 
             border: 2px solid var(--primary); 
-            width: 110px; 
+            width: 100px; 
             font-weight: 800; 
             font-size: 1.1rem; 
             text-align: center; 
+        }
+        .btn-sync {
+            background: #EFF6FF; 
+            color: var(--primary); 
+            border: none; 
+            padding: 10px 14px; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            transition: 0.2s ease;
+        }
+        .btn-sync:hover {
+            background: #DBEAFE;
         }
         .search-container { 
             display: flex; 
@@ -273,8 +285,6 @@
         }
         .status-loading { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
         .status-success { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
-         
-        .oculto { display: none; }
     </style>
 </head>
 <body oncontextmenu="return false">
@@ -295,6 +305,9 @@
             <div class="panel-card">
                 <label style="font-weight: 600;"><i class="fas fa-money-bill-wave" style="color: #10B981;"></i> TASA:</label>
                 <input type="number" id="tasaCambio" value="1.00" step="0.01" oninput="window.actualizarTasaTop()" class="tasa-input">
+                <button class="btn-sync" onclick="window.recargarBaseDatos()" title="Sincronizar Base de Datos Manualmente">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
             </div>
             <div class="panel-card" style="flex-grow: 1;">
                 <div class="search-container">
@@ -375,7 +388,6 @@
     <script type="module" src="./js/sys_v1_inv.js"></script>
 
     <script>
-        // Bloquear teclas de inspección (F12, Ctrl+Shift+I, etc.)
         document.addEventListener('keydown', function(e) {
             if (e.key === 'F12' || 
                 (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) || 
@@ -384,7 +396,6 @@
                 return false;
             }
             
-            // Atajo F9 para guardar si el modal está visible
             if (e.key === 'F9') {
                 const modal = document.getElementById('modalProducto');
                 if (modal && modal.style.display === 'flex') {
