@@ -36,6 +36,34 @@
             height: 38px; 
             flex-shrink: 0;
         }
+
+        /* Contenedor del Título y Botón de Regreso */
+        .header-brand-zone {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* Botón de Regresar Estilizado */
+        .btn-back-menu {
+            color: white;
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+
+        .btn-back-menu:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateX(-2px);
+        }
         
         .action-buttons { 
             display: flex; 
@@ -123,19 +151,15 @@
             border-left: 5px solid var(--vibrant-blue); 
         }
 
-        /* =======================================
-           SOLUCIÓN IZQUIERDA: SEPARAR LOS PRECIOS 
-           ======================================= */
-        /* Buscamos el texto de los Bs que genera dinámicamente tu script y lo separamos de la cifra en USD */
+        /* SOLUCIÓN IZQUIERDA: SEPARAR LOS PRECIOS */
         .single-line-row div:last-child,
         .single-line-row span:last-child {
             display: flex;
             align-items: center;
-            gap: 15px; /* Crea una separación limpia y fija de 15px entre el precio $ y los Bs. */
+            gap: 15px; 
             font-weight: bold;
         }
         
-        /* Si tu JS inyecta texto plano con los Bs pegados, esto forzará separación al texto secundario */
         .single-line-row font, 
         .single-line-row small, 
         .single-line-row span:contains("Bs") {
@@ -143,10 +167,7 @@
             color: #64748b;
         }
 
-        /* =======================================
-           SOLUCIÓN DERECHA: RECORTE SOLO AL TEXTO
-           ======================================= */
-        /* Forzamos que cada ítem del carrito sea un flexbox distribuido */
+        /* SOLUCIÓN DERECHA: RECORTE SOLO AL TEXTO */
         #lista-carrito > div {
             display: flex !important;
             justify-content: space-between !important;
@@ -157,19 +178,17 @@
             box-sizing: border-box;
         }
 
-        /* Aplicamos el límite de 20 caracteres ÚNICAMENTE al primer elemento de texto (el nombre) sin tocar los precios */
         #lista-carrito > div text,
         #lista-carrito > div span:first-child,
         #lista-carrito > div div:first-child {
             display: inline-block;
-            max-width: 170px; /* Límite para los ~20 caracteres */
+            max-width: 170px; 
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             flex-grow: 1;
         }
 
-        /* Asegura que el bloque de precios de la derecha se quede estático en su lugar original */
         #lista-carrito > div span:last-child,
         #lista-carrito > div b {
             white-space: nowrap !important;
@@ -257,7 +276,13 @@
 <body>
 
 <header class="header-sales">
-    <div style="font-weight: 800; font-size: 16px; letter-spacing: 0.5px;">YOU CONTROL - PUNTO DE VENTAS</div>
+    <div class="header-brand-zone">
+        <a href="sys_v1_menu.html" class="btn-back-menu">
+            <i class="fas fa-arrow-left"></i> Menú
+        </a>
+        <div style="font-weight: 800; font-size: 16px; letter-spacing: 0.5px;">YOU CONTROL - PUNTO DE VENTAS</div>
+    </div>
+    
     <div class="action-buttons">
         <button onclick="window.ejecutarF4()" class="btn-f"><span>F4</span> CANTIDAD</button>
         <button onclick="window.ejecutarF5()" class="btn-f"><span>F5</span> PRECIO</button>
