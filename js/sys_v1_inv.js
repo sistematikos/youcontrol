@@ -1,409 +1,271 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventario Pro | Sistematikos</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
-    <style>
-        :root { 
-            --bg: #F8FAFC; 
-            --primary: #3B82F6; 
-            --text: #1E293B; 
-            --border: #E2E8F0; 
-            --emerald: #10B981; 
-            --indigo: #6366F1;
-        }
-        body { 
-            font-family: 'Poppins', sans-serif; 
-            background: var(--bg); 
-            margin: 0; 
-            padding-bottom: 50px; 
-            color: var(--text); 
-        }
-        .container { 
-            padding: 15px; 
-            max-width: 1300px; 
-            margin: auto; 
+// Importar la configuración de Firebase compartida de tu proyecto
+import { db } from './sys_firebase_config.js'; 
+import { ref, onValue, set, push, remove, update } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+// Referencia a la tabla de productos en Firebase
+const productosRef = ref(db, 'productos');
+
+// Estado Global de la pantalla
+let listaProductos = [];
+let tasaActual = 1.00;
+
+// Elementos del DOM
+const cuerpoTabla = document.getElementById('cuerpo-tabla');
+const tasaInput = document.getElementById('tasaCambio');
+const buscadorInput = document.getElementById('buscador');
+const statusBar = document.getElementById('status-bar-inv');
+
+// Inputs del Modal
+const modal = document.getElementById('modalProducto');
+const modalTitulo = document.getElementById('modalTitulo');
+const formId = document.getElementById('form-id');
+const formBarras = document.getElementById('form-barras');
+const formSku = document.getElementById('form-sku');
+const formNombre = document.getElementById('form-nombre');
+const formCosto = document.getElementById('form-costo');
+const formGanancia = document.getElementById('form-ganancia');
+const formPrecio = document.getElementById('form-precio');
+const formStock = document.getElementById('form-stock');
+
+---
+
+## 📦 1. Inicialización y Escucha de Datos (Realtime)
+
+// Escuchar cambios en la base de datos de Firebase
+onValue(productosRef, (snapshot) => {
+    mostrarStatusBar("Cargando y sincronizando inventario...", "loading");
+    cuerpoTabla.innerHTML = '';
+    listaProductos = [];
+
+    if (snapshot.exists()) {
+        const datos = snapshot.val();
+        
+        // Mapeamos los datos con su respectivo ID de Firebase
+        for (let id in datos) {
+            listaProductos.push({ id, ...datos[id] });
         }
         
-        .header-table { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 15px; 
-        }
-        .header-actions { 
-            display: flex; 
-            gap: 10px; 
-            align-items: center; 
-        }
+        renderizarTabla(listaProductos);
+        mostrarStatusBar("Base de datos sincronizada con Firebase", "success");
+    } else {
+        cuerpoTabla.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:30px;">No hay productos registrados en el inventario.</td></tr>`;
+        ocultarStatusBar();
+    }
+}, (error) => {
+    console.error("Error de Firebase:", error);
+    mostrarStatusBar("Error al conectar con la base de datos", "error");
+});
+
+---
+
+## 🎨 2. Renderizado de la Tabla de Productos
+
+function renderizarTabla(productos) {
+    if (productos.length === 0) {
+        cuerpoTabla.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:30px;">No se encontraron productos coincidentes.</td></tr>`;
+        return;
+    }
+
+    cuerpoTabla.innerHTML = '';
+    
+    productos.forEach(prod => {
+        const costo = parseFloat(prod.costo || 0);
+        const ganancia = parseFloat(prod.ganancia || 0);
+        const precioUSD = parseFloat(prod.precio || 0);
+        const stock = parseInt(prod.stock || 0);
         
-        /* Paneles Superiores */
-        .top-panels { 
-            display: grid; 
-            grid-template-columns: auto 2fr; /* Se ajusta de forma exacta al contenido de la tasa */
-            gap: 15px; 
-            margin-bottom: 10px; 
-        }
-        .panel-card { 
-            background: white; 
-            padding: 15px; 
-            border-radius: 12px; 
-            border: 1px solid var(--border); 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
-            display: flex; 
-            align-items: center; 
-            gap: 12px; 
-        }
-        
-        .tasa-input { 
-            padding: 8px; 
-            border-radius: 10px; 
-            border: 2px solid var(--primary); 
-            width: 100px; 
-            font-weight: 800; 
-            font-size: 1.1rem; 
-            text-align: center; 
-            outline: none;
-        }
+        // Cálculo del precio en Bolívares en tiempo real en base a la tasa superior
+        const precioBS = (precioUSD * tasaActual).toFixed(2);
 
-        /* Botón de actualizar tasa al lado del input */
-        .btn-refresh-tasa {
-            background: var(--emerald);
-            color: white;
-            border: none;
-            padding: 10px 14px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
-            height: 42px; /* Alineación perfecta con el grosor del input */
-            box-sizing: border-box;
-        }
-
-        .btn-refresh-tasa:hover {
-            background: #059669;
-            transform: scale(1.03);
-        }
-
-        .btn-refresh-tasa:active {
-            transform: scale(0.97);
-        }
-
-        .search-container { 
-            display: flex; 
-            gap: 10px; 
-            width: 100%; 
-            align-items: center; 
-        }
-        .search-input { 
-            flex: 1; 
-            padding: 10px 15px; 
-            border-radius: 10px; 
-            border: 1px solid var(--border); 
-            font-size: 0.9rem; 
-            outline: none; 
-            transition: 0.3s; 
-        }
-        .search-input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-        
-        /* Estilos de la Tabla */
-        .table-responsive { 
-            overflow-x: auto; 
-            background: white; 
-            border-radius: 15px; 
-            border: 1px solid var(--border); 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
-        }
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            min-width: 1100px; 
-        }
-        th { 
-            background: #F1F5F9; 
-            padding: 14px; 
-            text-align: left; 
-            font-size: 0.75rem; 
-            text-transform: uppercase; 
-            color: #64748B; 
-            letter-spacing: 0.5px; 
-        }
-        td { 
-            padding: 12px 14px; 
-            border-bottom: 1px solid var(--border); 
-            font-size: 0.9rem; 
-        }
-        
-        .txt-bold { font-weight: 600; color: var(--text); }
-        .badge-bs { font-weight: 700; color: #059669; background: #ecfdf5; padding: 4px 8px; border-radius: 6px; }
-        .badge-stock { font-weight: 600; padding: 4px 8px; border-radius: 6px; background: #F1F5F9; }
-
-        /* Botones */
-        .btn-add { 
-            background: var(--primary); 
-            color: white; 
-            border: none; 
-            padding: 10px 18px; 
-            border-radius: 12px; 
-            cursor: pointer; 
-            font-weight: 600; 
-            display: flex; 
-            align-items: center; 
-            gap: 6px; 
-            font-size: 0.9rem;
-        }
-        .btn-compras { 
-            background: var(--indigo); 
-            color: white; 
-            border: none; 
-            padding: 10px 18px; 
-            border-radius: 12px; 
-            cursor: pointer; 
-            font-weight: 600; 
-            display: flex; 
-            align-items: center; 
-            gap: 6px; 
-            text-decoration: none; 
-            font-size: 0.9rem; 
-        }
-        .btn-edit { 
-            color: var(--primary); 
-            background: #EFF6FF; 
-            border: none; 
-            cursor: pointer; 
-            padding: 8px; 
-            border-radius: 8px; 
-            margin-right: 5px; 
-        }
-        .btn-remove { 
-            color: #EF4444; 
-            background: #FEE2E2; 
-            border: none; 
-            cursor: pointer; 
-            padding: 8px; 
-            border-radius: 8px; 
-        }
-        .btn-back { 
-            border: none; 
-            background: none; 
-            color: var(--primary); 
-            cursor: pointer; 
-            font-weight: bold; 
-            margin-bottom: 15px; 
-            display: flex; 
-            align-items: center; 
-            gap: 5px; 
-        }
-
-        /* Ventana Modal */
-        .modal { 
-            display: none; 
-            position: fixed; 
-            z-index: 1000; 
-            left: 0; 
-            top: 0; 
-            width: 100%; 
-            height: 100%; 
-            background: rgba(0,0,0,0.4); 
-            align-items: center; 
-            justify-content: center; 
-        }
-        .modal-content { 
-            background: white; 
-            padding: 25px; 
-            border-radius: 16px; 
-            width: 90%; 
-            max-width: 500px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
-        }
-        .modal-header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 20px; 
-            border-bottom: 1px solid var(--border); 
-            padding-bottom: 10px; 
-        }
-        .modal-grid { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 15px; 
-            margin-bottom: 15px; 
-        }
-        .form-group { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 5px; 
-        }
-        .form-group.full { 
-            grid-column: span 2; 
-        }
-        .form-group label { 
-            font-size: 0.8rem; 
-            font-weight: 600; 
-            color: #64748B; 
-        }
-        .form-group input { 
-            padding: 10px; 
-            border: 1px solid var(--border); 
-            border-radius: 8px; 
-            font-family: 'Poppins'; 
-            font-size: 0.9rem; 
-        }
-        .form-group input:focus { 
-            border-color: var(--primary); 
-            outline: none; 
-        }
-        .modal-footer { 
-            display: flex; 
-            gap: 10px; 
-            justify-content: flex-end; 
-            margin-top: 20px; 
-        }
-        .btn-modal-save { 
-            background: var(--emerald); 
-            color: white; 
-            border: none; 
-            padding: 10px 20px; 
-            border-radius: 10px; 
-            cursor: pointer; 
-            font-weight: 600; 
-        }
-        .btn-modal-close { 
-            background: #94A3B8; 
-            color: white; 
-            border: none; 
-            padding: 10px 20px; 
-            border-radius: 10px; 
-            cursor: pointer; 
-            font-weight: 600; 
-        }
-
-        #status-bar-inv { 
-            width: 100%; 
-            padding: 8px; 
-            border-radius: 10px; 
-            font-size: 13px; 
-            font-weight: 600; 
-            text-align: center; 
-            margin-bottom: 15px; 
-            display: none; 
-        }
-        .status-loading { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
-        .status-success { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
-        
-        .oculto { display: none; }
-    </style>
-</head>
-<body oncontextmenu="return false">
-    <div class="container">
-        <button class="btn-back" onclick="location.href='sys_v1_menu.html'">
-            <i class="fas fa-arrow-left"></i> VOLVER AL MENÚ
-        </button>
-
-        <div class="header-table">
-            <h3><i class="fas fa-boxes-stacked"></i> INVENTARIO GENERAL</h3>
-            <div class="header-actions">
-                <a href="sys_v3_comp.html" class="btn-compras"><i class="fas fa-cart-plus"></i> ENTRADA MERCANCÍA</a>
-                <button class="btn-add" onclick="window.abrirModalNuevo()"><i class="fas fa-plus"></i> NUEVO ITEM</button>
-            </div>
-        </div>
-
-        <div class="top-panels">
-            <div class="panel-card">
-                <label style="font-weight: 600;"><i class="fas fa-money-bill-wave" style="color: #10B981;"></i> TASA:</label>
-                <input type="number" id="tasaCambio" value="1.00" step="0.01" oninput="window.actualizarTasaTop()" class="tasa-input">
-                <button id="btnActualizarTasa" class="btn-refresh-tasa" title="Actualizar Tasa">
-                    <i class="fas fa-refresh"></i>
+        const fila = document.createElement('tr');
+        fila.innerHTML = `
+            <td class="txt-bold">${prod.barras || '—'}</td>
+            <td>${prod.sku || '—'}</td>
+            <td>${prod.nombre || 'Sin Descripción'}</td>
+            <td>$ ${costo.toFixed(2)}</td>
+            <td>${ganancia}%</td>
+            <td class="txt-bold">$ ${precioUSD.toFixed(2)}</td>
+            <td><span class="badge-bs">Bs. ${precioBS}</span></td>
+            <td><span class="badge-stock" style="${stock <= 5 ? 'background: #FEE2E2; color: #EF4444;' : ''}">${stock}</span></td>
+            <td style="text-align: center;">
+                <button class="btn-edit" onclick="window.abrirModalEditar('${prod.id}')" title="Editar">
+                    <i class="fas fa-edit"></i>
                 </button>
-            </div>
-            <div class="panel-card" style="flex-grow: 1;">
-                <div class="search-container">
-                    <i class="fas fa-search" style="color: #94A3B8;"></i>
-                    <input type="text" id="buscador" placeholder="Buscar por Nombre, SKU o Código de Barras..." onkeyup="window.filtrarProductos()" class="search-input">
-                </div>
-            </div>
-        </div>
+                <button class="btn-remove" onclick="window.eliminarProducto('${prod.id}', '${prod.nombre}')" title="Eliminar">
+                    <i class="fas fa-trash-can"></i>
+                </button>
+            </td>
+        `;
+        cuerpoTabla.appendChild(fila);
+    });
+}
 
-        <div id="status-bar-inv"></div>
+---
 
-        <div class="table-responsive">
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width: 12%;">Barras</th>
-                        <th style="width: 12%;">SKU</th>
-                        <th style="width: 30%;">Descripción</th>
-                        <th style="width: 10%;">Costo $</th>
-                        <th style="width: 8%;">% Gan.</th>
-                        <th style="width: 10%;">Precio $</th>
-                        <th style="width: 14%;">Precio BS</th>
-                        <th style="width: 8%;">Stock</th>
-                        <th style="width: 10%; text-align: center;">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="cuerpo-tabla">
-                    <tr><td colspan="9" style="text-align:center; padding:30px;">Cargando base de datos...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
+## 🔍 3. Buscador Dinámico y Control de Tasas
 
-    <div class="modal" id="modalProducto">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 id="modalTitulo"><i class="fas fa-box"></i> Editar Producto</h4>
-                <button style="border:none; background:none; font-size:1.2rem; cursor:pointer;" onclick="window.cerrarModal()">&times;</button>
-            </div>
-            <input type="hidden" id="form-id">
-            <div class="modal-grid">
-                <div class="form-group">
-                    <label>Código Barras</label>
-                    <input type="text" id="form-barras">
-                </div>
-                <div class="form-group">
-                    <label>SKU / Código Interno</label>
-                    <input type="text" id="form-sku">
-                </div>
-                <div class="form-group full">
-                    <label>Descripción del Producto</label>
-                    <input type="text" id="form-nombre" required>
-                </div>
-                <div class="form-group">
-                    <label>Costo USD ($)</label>
-                    <input type="number" step="0.01" id="form-costo" oninput="window.calcularPrecioModal()">
-                </div>
-                <div class="form-group">
-                    <label>% Ganancia</label>
-                    <input type="number" step="0.1" id="form-ganancia" oninput="window.calcularPrecioModal()">
-                </div>
-                <div class="form-group">
-                    <label>Precio USD ($)</label>
-                    <input type="number" step="0.01" id="form-precio" oninput="window.calcularGananciaModal()">
-                </div>
-                <div class="form-group">
-                    <label>Stock Actual</label>
-                    <input type="number" id="form-stock">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-modal-close" onclick="window.cerrarModal()">Cancelar</button>
-                <button class="btn-modal-save" onclick="window.guardarCambiosModal()">Guardar (F9)</button>
-            </div>
-        </div>
-    </div>
+// Filtrar productos en tiempo real por Nombre, SKU o Código de Barras
+window.filtrarProductos = function() {
+    const busqueda = buscadorInput.value.toLowerCase().trim();
+    
+    const productosFiltrados = listaProductos.filter(prod => {
+        const nombre = (prod.nombre || '').toLowerCase();
+        const sku = (prod.sku || '').toLowerCase();
+        const barras = (prod.barras || '').toLowerCase();
+        
+        return nombre.includes(busqueda) || sku.includes(busqueda) || barras.includes(busqueda);
+    });
+    
+    renderizarTabla(productosFiltrados);
+};
 
-    <script type="module" src="./js/sys_v1_inv.js"></script>
-</body>
-</html>
+// Actualizar los precios en BS de la tabla cuando cambia la tasa superior
+window.actualizarTasaTop = function() {
+    const valorTasa = parseFloat(tasaInput.value);
+    if (!isNaN(valorTasa) && valorTasa > 0) {
+        tasaActual = valorTasa;
+        // Re-renderiza con la lista actual o filtrada sin ir a la base de datos
+        window.filtrarProductos(); 
+    }
+};
+
+---
+
+## 🪟 4. Lógica de Ventanas Modales (Modo Crear / Editar)
+
+window.abrirModalNuevo = function() {
+    modalTitulo.innerHTML = `<i class="fas fa-plus"></i> Nuevo Producto`;
+    formId.value = '';
+    formBarras.value = '';
+    formSku.value = '';
+    formNombre.value = '';
+    formCosto.value = '';
+    formGanancia.value = '';
+    formPrecio.value = '';
+    formStock.value = '0';
+    
+    modal.style.display = 'flex';
+    formBarras.focus();
+};
+
+window.abrirModalEditar = function(id) {
+    const prod = listaProductos.find(p => p.id === id);
+    if (!prod) return;
+
+    modalTitulo.innerHTML = `<i class="fas fa-box"></i> Editar Producto`;
+    formId.value = prod.id;
+    formBarras.value = prod.barras || '';
+    formSku.value = prod.sku || '';
+    formNombre.value = prod.nombre || '';
+    formCosto.value = prod.costo || '';
+    formGanancia.value = prod.ganancia || '';
+    formPrecio.value = prod.precio || '';
+    formStock.value = prod.stock || '0';
+
+    modal.style.display = 'flex';
+    formNombre.focus();
+};
+
+window.cerrarModal = function() {
+    modal.style.display = 'none';
+};
+
+---
+
+## 🧮 5. Modelos Matemáticos del Formulario (Costos e Intereses)
+
+// Al escribir Costo o % Ganancia -> Calcula el Precio USD automáticamente
+window.calcularPrecioModal = function() {
+    const costo = parseFloat(formCosto.value) || 0;
+    const ganancia = parseFloat(formGanancia.value) || 0;
+    
+    const precioCalculado = costo + (costo * (ganancia / 100));
+    formPrecio.value = precioCalculado.toFixed(2);
+};
+
+// Al escribir directamente el Precio USD -> Recalcula el % de Ganancia obtenido
+window.calcularGananciaModal = function() {
+    const costo = parseFloat(formCosto.value) || 0;
+    const precio = parseFloat(formPrecio.value) || 0;
+    
+    if (costo > 0) {
+        const gananciaCalculada = ((precio - costo) / costo) * 100;
+        formGanancia.value = gananciaCalculada.toFixed(1);
+    } else {
+        formGanancia.value = '0';
+    }
+};
+
+---
+
+## 💾 6. Operaciones de Escritura y Borrado (C.R.U.D)
+
+window.guardarCambiosModal = function() {
+    const id = formId.value;
+    const nombre = formNombre.value.trim();
+    
+    if (!nombre) {
+        alert("La descripción del producto es obligatoria.");
+        return;
+    }
+
+    const productoData = {
+        barras: formBarras.value.trim(),
+        sku: formSku.value.trim(),
+        nombre: nombre,
+        costo: parseFloat(formCosto.value) || 0,
+        ganancia: parseFloat(formGanancia.value) || 0,
+        precio: parseFloat(formPrecio.value) || 0,
+        stock: parseInt(formStock.value) || 0
+    };
+
+    if (id) {
+        // Modo Edición: Actualizar registro existente
+        update(ref(db, `productos/${id}`), productoData)
+            .then(() => {
+                window.cerrarModal();
+                mostrarStatusBar("Producto actualizado correctamente", "success");
+            })
+            .catch(err => alert("Error al actualizar: " + err));
+    } else {
+        // Modo Nuevo: Generar ID único incremental o hash empujado por Firebase
+        const nuevoProductoRef = push(productosRef);
+        set(nuevoProductoRef, productoData)
+            .then(() => {
+                window.cerrarModal();
+                mostrarStatusBar("Nuevo producto registrado", "success");
+            })
+            .catch(err => alert("Error al registrar: " + err));
+    }
+};
+
+window.eliminarProducto = function(id, nombre) {
+    if (confirm(`¿Estás completamente seguro de eliminar el ítem: "${nombre}"?`)) {
+        remove(ref(db, `productos/${id}`))
+            .then(() => {
+                mostrarStatusBar("Producto eliminado con éxito", "success");
+            })
+            .catch(err => alert("Error al eliminar: " + err));
+    }
+};
+
+---
+
+## 📢 7. Utilidades de Interfaz de Usuario (Status Bar)
+
+function mostrarStatusBar(mensaje, tipo) {
+    statusBar.innerText = mensaje;
+    statusBar.className = ''; // Limpiar clases
+    statusBar.style.display = 'block';
+
+    if (tipo === 'loading') {
+        statusBar.classList.add('status-loading');
+    } else if (tipo === 'success') {
+        statusBar.classList.add('status-success');
+        setTimeout(ocultarStatusBar, 3500); // Auto-ocultar si todo sale bien
+    }
+}
+
+function ocultarStatusBar() {
+    statusBar.style.display = 'none';
+}
