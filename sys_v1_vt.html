@@ -98,12 +98,9 @@
             margin-bottom: 15px; 
             outline: none; 
             box-sizing: border-box;
-            transition: border-color 0.2s;
         }
         
-        #inputBusqueda:focus {
-            border-color: var(--vibrant-blue);
-        }
+        #inputBusqueda:focus { border-color: var(--vibrant-blue); }
         
         .product-grid { 
             overflow-y: auto; 
@@ -111,7 +108,7 @@
             padding-right: 4px;
         }
         
-        /* --- AJUSTE IZQUIERDA: Separación de tipos de precios --- */
+        /* Estructura base de las filas */
         .single-line-row { 
             display: flex; 
             justify-content: space-between; 
@@ -120,33 +117,68 @@
             border-bottom: 1px solid #f1f5f9; 
             cursor: pointer; 
         }
-
-        /* Fuerza un espacio prudente entre el precio en USD ($) y el precio en Bs. */
-        .single-line-row span[id*="precio"], 
-        .single-line-row span:text-contains("Bs") {
-            margin-left: 14px; 
-            display: inline-block;
-        }
-
-        /* En caso de que tu JS renderice los Bs dentro de un b pequeño o span secundario */
-        .single-line-row span + span {
-            margin-left: 12px;
-        }
         
         .item-selected { 
             background: #e0e7ff !important; 
             border-left: 5px solid var(--vibrant-blue); 
         }
+
+        /* =======================================
+           SOLUCIÓN IZQUIERDA: SEPARAR LOS PRECIOS 
+           ======================================= */
+        /* Buscamos el texto de los Bs que genera dinámicamente tu script y lo separamos de la cifra en USD */
+        .single-line-row div:last-child,
+        .single-line-row span:last-child {
+            display: flex;
+            align-items: center;
+            gap: 15px; /* Crea una separación limpia y fija de 15px entre el precio $ y los Bs. */
+            font-weight: bold;
+        }
         
-        /* --- AJUSTE DERECHA: Recorte estricto del nombre en el Carrito --- */
-        #lista-carrito div, 
-        #lista-carrito .cart-item-name {
+        /* Si tu JS inyecta texto plano con los Bs pegados, esto forzará separación al texto secundario */
+        .single-line-row font, 
+        .single-line-row small, 
+        .single-line-row span:contains("Bs") {
+            margin-left: 15px !important;
+            color: #64748b;
+        }
+
+        /* =======================================
+           SOLUCIÓN DERECHA: RECORTE SOLO AL TEXTO
+           ======================================= */
+        /* Forzamos que cada ítem del carrito sea un flexbox distribuido */
+        #lista-carrito > div {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            width: 100% !important;
+            padding: 8px 4px;
+            border-bottom: 1px solid #f1f5f9;
+            box-sizing: border-box;
+        }
+
+        /* Aplicamos el límite de 20 caracteres ÚNICAMENTE al primer elemento de texto (el nombre) sin tocar los precios */
+        #lista-carrito > div text,
+        #lista-carrito > div span:first-child,
+        #lista-carrito > div div:first-child {
+            display: inline-block;
+            max-width: 170px; /* Límite para los ~20 caracteres */
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 170px; /* Ancho estimado para bloquear el texto a ~20 caracteres */
+            flex-grow: 1;
+        }
+
+        /* Asegura que el bloque de precios de la derecha se quede estático en su lugar original */
+        #lista-carrito > div span:last-child,
+        #lista-carrito > div b {
+            white-space: nowrap !important;
+            overflow: visible !important;
+            flex-shrink: 0;
+            margin-left: 10px;
         }
         
+        /* Caja de Resumen */
         .summary-box { 
             background: #f1f7ff; 
             padding: 12px; 
@@ -175,12 +207,9 @@
             margin-top: 10px; 
             cursor: pointer; 
             flex-shrink: 0;
-            transition: background 0.2s;
         }
         
-        .btn-pay:hover {
-            background: #0056d4;
-        }
+        .btn-pay:hover { background: #0056d4; }
         
         /* Modales */
         .modal { 
