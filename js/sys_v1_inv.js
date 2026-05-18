@@ -1,15 +1,22 @@
-// Importar la configuración de Firebase compartida de tu proyecto
-import { db } from './sys_firebase_config.js'; 
-import { ref, onValue, set, push, remove, update } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+/**
+ * YOU CONTROL - SISTEMATIKOS
+ * Módulo de Gestión de Inventario General (sys_v1_inv.js)
+ * Sincronizado al 100% con Cloud Firestore (Estructura de subcolecciones)
+ */
 
-// Referencia a la tabla de productos en Firebase
-const productosRef = ref(db, 'productos');
+import { db } from './firebase-config.js'; // Tu misma configuración del módulo compras
+import { 
+    collection, onSnapshot, doc, getDoc, setDoc, deleteDoc 
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+// ID de usuario exacto extraído del módulo de entrada de mercancía
+const USER_ID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
 
 // Estado Global de la pantalla
 let listaProductos = [];
 let tasaActual = 1.00;
 
-// Elementos del DOM
+// Vinculaciones del DOM
 const cuerpoTabla = document.getElementById('cuerpo-tabla');
 const tasaInput = document.getElementById('tasaCambio');
 const buscadorInput = document.getElementById('buscador');
@@ -27,42 +34,60 @@ const formGanancia = document.getElementById('form-ganancia');
 const formPrecio = document.getElementById('form-precio');
 const formStock = document.getElementById('form-stock');
 
----
-
-## 📦 1. Inicialización y Escucha de Datos (Realtime)
-
-// Escuchar cambios en la base de datos de Firebase
-onValue(productosRef, (snapshot) => {
-    mostrarStatusBar("Cargando y sincronizando inventario...", "loading");
-    cuerpoTabla.innerHTML = '';
-    listaProductos = [];
-
-    if (snapshot.exists()) {
-        const datos = snapshot.val();
-        
-        // Mapeamos los datos con su respectivo ID de Firebase
-        for (let id in datos) {
-            listaProductos.push({ id, ...datos[id] });
+// ==========================================
+// 1. INICIALIZACIÓN Y ESCUCHA EN TIEMPO REAL
+// ==========================================
+async function inicializarInventario() {
+    mostrarStatusBar("⏳ Conectando con Cloud Firestore...", "loading");
+    
+    try {
+        // 1. Obtener la tasa de cambio de la configuración del usuario
+        const tasaSnap = await getDoc(doc(db, "usuarios", USER_ID, "configuracion", "tasa"));
+        if (tasaSnap.exists()) {
+            tasaActual = parseFloat(tasaSnap.data().valor) || 1.00;
+            if (tasaInput) {
+                tasaInput.value = tasaActual.toFixed(2);
+            }
         }
+
+        // 2. Escuchar la colección exacta de productos del usuario en Firestore
+        const productosCollection = collection(db, "usuarios", USER_ID, "productos");
         
-        renderizarTabla(listaProductos);
-        mostrarStatusBar("Base de datos sincronizada con Firebase", "success");
-    } else {
-        cuerpoTabla.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:30px;">No hay productos registrados en el inventario.</td></tr>`;
-        ocultarStatusBar();
+        onSnapshot(productosCollection, (snapshot) => {
+            listaProductos = [];
+            cuerpoTabla.innerHTML = '';
+
+            if (!snapshot.empty) {
+                snapshot.forEach(doc => {
+                    listaProductos.push({ id: doc.id, ...doc.data() });
+                });
+                
+                renderizarTabla(listaProductos);
+                mostrarStatusBar("✅ Base de datos sincronizada correctamente.", "success");
+            } else {
+                cuerpoTabla.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:30px;">No hay productos en el inventario.</td></tr>`;
+                ocultarStatusBar();
+            }
+        }, (error) => {
+            console.error("Error en Snapshot de Firestore:", error);
+            mostrarStatusBar("❌ Error de permisos o lectura en Firestore.", "loading");
+        });
+
+    } catch (e) {
+        console.error("Error crítico al inicializar inventario:", e);
+        mostrarStatusBar("❌ Error al establecer comunicación con Firestore.", "loading");
     }
-}, (error) => {
-    console.error("Error de Firebase:", error);
-    mostrarStatusBar("Error al conectar con la base de datos", "error");
-});
+}
 
----
+// Ejecutar al cargar la página
+document.addEventListener('DOMContentLoaded', inicializarInventario);
 
-## 🎨 2. Renderizado de la Tabla de Productos
-
+// ==========================================
+// 2. RENDERIZADO DE LA TABLA
+// ==========================================
 function renderizarTabla(productos) {
     if (productos.length === 0) {
-        cuerpoTabla.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:30px;">No se encontraron productos coincidentes.</td></tr>`;
+        cuerpoTabla.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:30px;">No se encontraron resultados en la búsqueda.</td></tr>`;
         return;
     }
 
@@ -74,7 +99,7 @@ function renderizarTabla(productos) {
         const precioUSD = parseFloat(prod.precio || 0);
         const stock = parseInt(prod.stock || 0);
         
-        // Cálculo del precio en Bolívares en tiempo real en base a la tasa superior
+        // Conversión en vivo basada en la tasa de la pantalla
         const precioBS = (precioUSD * tasaActual).toFixed(2);
 
         const fila = document.createElement('tr');
@@ -85,13 +110,13 @@ function renderizarTabla(productos) {
             <td>$ ${costo.toFixed(2)}</td>
             <td>${ganancia}%</td>
             <td class="txt-bold">$ ${precioUSD.toFixed(2)}</td>
-            <td><span class="badge-bs">Bs. ${precioBS}</span></td>
-            <td><span class="badge-stock" style="${stock <= 5 ? 'background: #FEE2E2; color: #EF4444;' : ''}">${stock}</span></td>
+            <td><span class="badge-bs">Bs. ${precioBS.replace('.', ',')}</span></td>
+            <td><span class="badge-stock" style="${stock <= 3 ? 'background: #FEE2E2; color: #EF4444; font-weight:700;' : ''}">${stock}</span></td>
             <td style="text-align: center;">
-                <button class="btn-edit" onclick="window.abrirModalEditar('${prod.id}')" title="Editar">
+                <button class="btn-edit" onclick="window.abrirModalEditar('${prod.id}')" title="Editar Producto">
                     <i class="fas fa-edit"></i>
                 </button>
-                <button class="btn-remove" onclick="window.eliminarProducto('${prod.id}', '${prod.nombre}')" title="Eliminar">
+                <button class="btn-remove" onclick="window.eliminarProducto('${prod.id}', '${prod.nombre}')" title="Eliminar Producto">
                     <i class="fas fa-trash-can"></i>
                 </button>
             </td>
@@ -100,48 +125,42 @@ function renderizarTabla(productos) {
     });
 }
 
----
-
-## 🔍 3. Buscador Dinámico y Control de Tasas
-
-// Filtrar productos en tiempo real por Nombre, SKU o Código de Barras
+// ==========================================
+// 3. BUSCADOR Y CONTROL DE TASA SUPERIOR
+// ==========================================
 window.filtrarProductos = function() {
-    const busqueda = buscadorInput.value.toLowerCase().trim();
+    const criterio = buscadorInput.value.trim().toLowerCase();
     
-    const productosFiltrados = listaProductos.filter(prod => {
-        const nombre = (prod.nombre || '').toLowerCase();
-        const sku = (prod.sku || '').toLowerCase();
-        const barras = (prod.barras || '').toLowerCase();
-        
-        return nombre.includes(busqueda) || sku.includes(busqueda) || barras.includes(busqueda);
+    const filtrados = listaProductos.filter(p => {
+        const barras = (p.barras || '').toLowerCase();
+        const sku = (p.sku || '').toLowerCase();
+        const nombre = (p.nombre || '').toLowerCase();
+        return barras.includes(criterio) || sku.includes(criterio) || nombre.includes(criterio);
     });
     
-    renderizarTabla(productosFiltrados);
+    renderizarTabla(filtrados);
 };
 
-// Actualizar los precios en BS de la tabla cuando cambia la tasa superior
 window.actualizarTasaTop = function() {
     const valorTasa = parseFloat(tasaInput.value);
     if (!isNaN(valorTasa) && valorTasa > 0) {
         tasaActual = valorTasa;
-        // Re-renderiza con la lista actual o filtrada sin ir a la base de datos
-        window.filtrarProductos(); 
+        window.filtrarProductos(); // Re-renderiza precios en bolívares al instante
     }
 };
 
----
-
-## 🪟 4. Lógica de Ventanas Modales (Modo Crear / Editar)
-
+// ==========================================
+// 4. LÓGICA DE MODALES (CREAR / EDITAR)
+// ==========================================
 window.abrirModalNuevo = function() {
     modalTitulo.innerHTML = `<i class="fas fa-plus"></i> Nuevo Producto`;
     formId.value = '';
     formBarras.value = '';
     formSku.value = '';
     formNombre.value = '';
-    formCosto.value = '';
-    formGanancia.value = '';
-    formPrecio.value = '';
+    formCosto.value = '0.00';
+    formGanancia.value = '0.0';
+    formPrecio.value = '0.00';
     formStock.value = '0';
     
     modal.style.display = 'flex';
@@ -157,9 +176,9 @@ window.abrirModalEditar = function(id) {
     formBarras.value = prod.barras || '';
     formSku.value = prod.sku || '';
     formNombre.value = prod.nombre || '';
-    formCosto.value = prod.costo || '';
-    formGanancia.value = prod.ganancia || '';
-    formPrecio.value = prod.precio || '';
+    formCosto.value = (prod.costo || 0).toFixed(2);
+    formGanancia.value = (prod.ganancia || 0).toFixed(1);
+    formPrecio.value = (prod.precio || 0).toFixed(2);
     formStock.value = prod.stock || '0';
 
     modal.style.display = 'flex';
@@ -170,20 +189,16 @@ window.cerrarModal = function() {
     modal.style.display = 'none';
 };
 
----
-
-## 🧮 5. Modelos Matemáticos del Formulario (Costos e Intereses)
-
-// Al escribir Costo o % Ganancia -> Calcula el Precio USD automáticamente
+// ==========================================
+// 5. CÁLCULOS MATEMÁTICOS DEL MODAL
+// ==========================================
 window.calcularPrecioModal = function() {
     const costo = parseFloat(formCosto.value) || 0;
     const ganancia = parseFloat(formGanancia.value) || 0;
-    
     const precioCalculado = costo + (costo * (ganancia / 100));
     formPrecio.value = precioCalculado.toFixed(2);
 };
 
-// Al escribir directamente el Precio USD -> Recalcula el % de Ganancia obtenido
 window.calcularGananciaModal = function() {
     const costo = parseFloat(formCosto.value) || 0;
     const precio = parseFloat(formPrecio.value) || 0;
@@ -192,80 +207,89 @@ window.calcularGananciaModal = function() {
         const gananciaCalculada = ((precio - costo) / costo) * 100;
         formGanancia.value = gananciaCalculada.toFixed(1);
     } else {
-        formGanancia.value = '0';
+        formGanancia.value = '0.0';
     }
 };
 
----
-
-## 💾 6. Operaciones de Escritura y Borrado (C.R.U.D)
-
-window.guardarCambiosModal = function() {
-    const id = formId.value;
+// ==========================================
+// 6. OPERACIONES CRUD EN FIRESTORE
+// ==========================================
+window.guardarCambiosModal = async function() {
+    const id = formId.value.trim();
     const nombre = formNombre.value.trim();
-    
+    const sku = formSku.value.trim();
+    const barras = formBarras.value.trim();
+
     if (!nombre) {
         alert("La descripción del producto es obligatoria.");
         return;
     }
 
+    mostrarStatusBar("⏳ Guardando cambios en Firestore...", "loading");
+
     const productoData = {
-        barras: formBarras.value.trim(),
-        sku: formSku.value.trim(),
+        sku: sku,
+        barras: barras,
         nombre: nombre,
         costo: parseFloat(formCosto.value) || 0,
         ganancia: parseFloat(formGanancia.value) || 0,
         precio: parseFloat(formPrecio.value) || 0,
-        stock: parseInt(formStock.value) || 0
+        stock: parseInt(formStock.value) || 0,
+        ultima_actualizacion: new Date().toISOString().split('T')[0]
     };
 
-    if (id) {
-        // Modo Edición: Actualizar registro existente
-        update(ref(db, `productos/${id}`), productoData)
-            .then(() => {
-                window.cerrarModal();
-                mostrarStatusBar("Producto actualizado correctamente", "success");
-            })
-            .catch(err => alert("Error al actualizar: " + err));
-    } else {
-        // Modo Nuevo: Generar ID único incremental o hash empujado por Firebase
-        const nuevoProductoRef = push(productosRef);
-        set(nuevoProductoRef, productoData)
-            .then(() => {
-                window.cerrarModal();
-                mostrarStatusBar("Nuevo producto registrado", "success");
-            })
-            .catch(err => alert("Error al registrar: " + err));
+    try {
+        // Si no hay ID de documento (porque es nuevo), definimos uno usando la regla de compras
+        // Usa el SKU, o las Barras, o genera un ID aleatorio si es una subcolección limpia
+        let idDocumento = id;
+        if (!idDocumento) {
+            idDocumento = sku || barras || doc(collection(db, "temp")).id;
+        }
+
+        const docRef = doc(db, "usuarios", USER_ID, "productos", idDocumento);
+        await setDoc(docRef, productoData, { merge: true });
+
+        window.cerrarModal();
+        mostrarStatusBar("✅ Producto guardado exitosamente.", "success");
+    } catch (e) {
+        console.error("Error al escribir producto en Firestore:", e);
+        alert("Error crítico al guardar en la base de datos.");
+        ocultarStatusBar();
     }
 };
 
-window.eliminarProducto = function(id, nombre) {
-    if (confirm(`¿Estás completamente seguro de eliminar el ítem: "${nombre}"?`)) {
-        remove(ref(db, `productos/${id}`))
-            .then(() => {
-                mostrarStatusBar("Producto eliminado con éxito", "success");
-            })
-            .catch(err => alert("Error al eliminar: " + err));
+window.eliminarProducto = async function(id, nombre) {
+    if (confirm(`¿Estás completamente seguro de eliminar permanentemente: "${nombre}"?`)) {
+        mostrarStatusBar("⏳ Eliminando de la base de datos...", "loading");
+        try {
+            const docRef = doc(db, "usuarios", USER_ID, "productos", id);
+            await deleteDoc(docRef);
+            mostrarStatusBar("✅ Producto eliminado del inventario.", "success");
+        } catch (e) {
+            console.error("Error al remover de Firestore:", e);
+            alert("No se pudo eliminar el registro.");
+            ocultarStatusBar();
+        }
     }
 };
 
----
-
-## 📢 7. Utilidades de Interfaz de Usuario (Status Bar)
-
+// ==========================================
+// 7. MENSAJES DE ESTADO (STATUS BAR)
+// ==========================================
 function mostrarStatusBar(mensaje, tipo) {
+    if (!statusBar) return;
     statusBar.innerText = mensaje;
-    statusBar.className = ''; // Limpiar clases
+    statusBar.className = ''; 
     statusBar.style.display = 'block';
 
     if (tipo === 'loading') {
         statusBar.classList.add('status-loading');
     } else if (tipo === 'success') {
         statusBar.classList.add('status-success');
-        setTimeout(ocultarStatusBar, 3500); // Auto-ocultar si todo sale bien
+        setTimeout(ocultarStatusBar, 3000);
     }
 }
 
 function ocultarStatusBar() {
-    statusBar.style.display = 'none';
+    if (statusBar) statusBar.style.display = 'none';
 }
