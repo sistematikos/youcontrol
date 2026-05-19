@@ -2,6 +2,7 @@
  * YOU CONTROL - SISTEMATIKOS
  * Módulo de Gestión de Inventario General (sys_v1_inv.js)
  * Conectado y Sincronizado a Cloud Firestore
+ * Optimización: Calculadora de porcentaje integrada en tiempo real en el campo de Costo.
  */
 
 import { db } from './firebase-config.js'; 
@@ -73,6 +74,9 @@ async function inicializarInventario() {
             mostrarStatusBar("❌ Error de permisos o lectura de base de datos.", "loading");
         });
 
+        // Configurar el procesamiento matemático del campo costo al inicializar
+        inicializarCalculadoraCosto();
+
     } catch (e) {
         console.error("Error crítico inicializador:", e);
         mostrarStatusBar("❌ Error al establecer comunicación con Firestore.", "loading");
@@ -80,6 +84,67 @@ async function inicializarInventario() {
 }
 
 document.addEventListener('DOMContentLoaded', inicializarInventario);
+
+// ==========================================
+// OPTIMIZACIÓN: MOTOR DE EVALUACIÓN DE PORCENTAJES
+// ==========================================
+function inicializarCalculadoraCosto() {
+    if (!formCosto) return;
+
+    // Cambiamos el tipo a 'text' temporalmente si estuviera en 'number', para permitir escribir símbolos como '+' o '%'
+    formCosto.type = "text";
+
+    formCosto.addEventListener('change', () => {
+        let expresion = formCosto.value.trim().replace(/\s+/g, ''); // Elimina espacios en blanco
+        
+        if (!expresion) return;
+
+        // Evalúa expresiones con formato número + porcentaje (ej: 1.04+30%)
+        // Captura: grupo1 (base), grupo2 (operador + o -), grupo3 (porcentaje)
+        const regexPorcentaje = /^([0-9.]+)([\+\-])([0-9.]+)%$/;
+        const coincidencia = expresion.match(regexPorcentaje);
+
+        if (coincidencia) {
+            const base = parseFloat(coincidencia[1]);
+            const operador = coincidencia[2];
+            const porcentaje = parseFloat(coincidencia[3]);
+
+            if (!isNaN(base) && !isNaN(porcentaje)) {
+                let resultado = base;
+                const factorValor = base * (porcentaje / 100);
+
+                if (operador === '+') {
+                    resultado = base + factorValor;
+                } else if (operador === '-') {
+                    resultado = base - factorValor;
+                }
+
+                formCosto.value = resultado.toFixed(2);
+            }
+        } else {
+            // Evaluador secundario: Por si escriben sumas aritméticas simples sin porcentaje (ej: 1.04+0.5)
+            try {
+                // Validación básica de caracteres seguros para evitar inyecciones de código
+                if (/^[0-9\+\-\*\/\.\(\)]+$/.test(expresion)) {
+                    // Executa de manera segura la aritmética plana
+                    const calculoPlano = Function(`"use strict"; return (${expresion})`)();
+                    if (!isNaN(calculoPlano)) {
+                        formCosto.value = parseFloat(calculoPlano).toFixed(2);
+                    }
+                }
+            } catch (e) {
+                // Si no es una ecuación válida, dejamos el valor como está o intentamos un float limpio
+                const valorLimpio = parseFloat(expresion);
+                formCosto.value = !isNaN(valorLimpio) ? valorLimpio.toFixed(2) : "0.00";
+            }
+        }
+
+        // Ejecuta automáticamente la actualización de precios y ganancias del modal
+        if (typeof window.calcularPrecioModal === "function") {
+            window.calcularPrecioModal();
+        }
+    });
+}
 
 // ==========================================
 // 2. RENDERIZACIÓN DE FILAS Y BADGES
