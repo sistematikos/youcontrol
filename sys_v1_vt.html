@@ -81,4 +81,394 @@
             font-size: 12px;
             font-weight: 700;
             cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.0
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .tasa-bcv-badge {
+            background: #1e293b;
+            color: #51ff00;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            font-family: monospace;
+        }
+
+        /* CONTENIDO PRINCIPAL EN DOS COLUMNAS */
+        .main-layout {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            padding: 15px;
+            gap: 15px;
+        }
+
+        /* COLUMNA IZQUIERDA: BÚSQUEDA Y VISTA CENTRAL */
+        .left-panel {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .search-box-container {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        /* Contenedor relativo crítico para el buscador flotante */
+        .buscador-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .buscador-wrapper input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .buscador-wrapper input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .grid-productos-view {
+            flex: 1;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            overflow-y: auto;
+        }
+
+        /* COLUMNA DERECHA: FACTURACIÓN / CARRO */
+        .right-panel {
+            flex: 1;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            overflow: hidden;
+        }
+
+        .panel-section {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        /* Buscador flotante de clientes */
+        .cliente-search-wrapper {
+            position: relative;
+        }
+
+        .input-with-action {
+            display: flex;
+            align-items: center;
+            border: 1.5px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0 10px;
+            background: #fff;
+        }
+
+        .input-with-action input {
+            flex: 1;
+            border: none;
+            padding: 10px 5px;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .btn-clear-input {
+            color: var(--text-muted);
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+        }
+
+        .resultados-flotantes {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+            margin-top: 4px;
+        }
+
+        /* LISTA DEL CARRITO */
+        .cart-items-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 15px;
+        }
+
+        .single-line-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f5f9;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .single-line-row:hover {
+            background-color: #f8fafc;
+        }
+
+        .item-selected {
+            background-color: #eff6ff !important;
+            border-left: 3px solid var(--primary-color);
+            padding-left: 5px;
+        }
+
+        .price-group {
+            text-align: right;
+        }
+
+        .price-group b {
+            display: block;
+            color: var(--text-dark);
+        }
+
+        .price-group small {
+            color: var(--text-muted);
+            font-size: 11px;
+        }
+
+        /* TOTALES DE VENTA */
+        .totals-section {
+            background: #f8fafc;
+            padding: 20px 15px;
+            text-align: center;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .totals-section h2 {
+            font-size: 32px;
+            color: var(--primary-color);
+            font-weight: 800;
+        }
+
+        .totals-section p {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        .btn-pay-action {
+            width: 100%;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-pay-action:hover {
+            background: var(--primary-hover);
+        }
+
+        /* DIALOGO MODAL COBRO (PASARELA) */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 999999;
+        }
+
+        .modal-card {
+            background: white;
+            border-radius: 12px;
+            width: 480px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+        }
+
+        .modal-header {
+            background: #1e293b;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .gateway-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .form-group input {
+            padding: 10px;
+            border: 1.5px solid var(--border-color);
+            border-radius: 6px;
+            outline: none;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="navbar-brand">
+            <button class="btn-menu-top" onclick="location.href='index_menu.html'"><i class="fas fa-arrow-left"></i> Menú</button>
+            <span>YOU CONTROL - PUNTO DE VENTAS</span>
+        </div>
+        <div class="shortcuts-container">
+            <button class="btn-shortcut" onclick="window.ejecutarF4()">F4 CANTIDAD</button>
+            <button class="btn-shortcut" onclick="window.ejecutarF5()">F5 PRECIO</button>
+            <button class="btn-shortcut" onclick="window.ejecutarF6()">F6 ELIMINAR</button>
+            <button class="btn-shortcut" onclick="window.abrirModalCobro()">F9 COBRAR</button>
+            <div class="tasa-bcv-badge">BCV: <span id="txt-tasa">1,00</span> Bs.</div>
+        </div>
+    </header>
+
+    <main class="main-layout">
+        
+        <section class="left-panel">
+            <div class="search-box-container">
+                <div class="buscador-wrapper">
+                    <input type="text" id="buscar-producto-pos" placeholder="Buscar artículo o código (F2)..." autocomplete="off">
+                    <div id="resultados-producto-pos" style="position: absolute; left: 0; right: 0; background: #FFFFFF; border: 2px solid var(--primary-color); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); max-height: 280px; overflow-y: auto; z-index: 99999; display: none; margin-top: 5px;"></div>
+                </div>
+            </div>
+            
+            <div class="grid-productos-view" id="grid-productos">
+                </div>
+        </section>
+
+        <section class="right-panel">
+            <select id="select-cliente" style="display: none;">
+                <option value="casual" selected>CONSUMIDOR FINAL (CASUAL)</option>
+            </select>
+
+            <div class="panel-section">
+                <div class="section-title">Asignar Cliente</div>
+                <div class="cliente-search-wrapper">
+                    <div class="input-with-action">
+                        <i class="fas fa-search" style="color: var(--text-muted); margin-right: 5px;"></i>
+                        <input type="text" id="buscar-cliente-pos" placeholder="Buscar nombre o identificación..." autocomplete="off">
+                        <div class="btn-clear-input" id="btn-limpiar-cliente"><i class="fas fa-times-circle"></i></div>
+                    </div>
+                    <div class="resultados-flotantes" id="resultados-cliente-pos"></div>
+                </div>
+            </div>
+
+            <div class="cart-items-container" id="lista-carrito">
+                </div>
+
+            <div class="totals-section">
+                <h2 id="total-usd">$ 0.00</h2>
+                <p id="total-bs">0,00 Bs.</p>
+            </div>
+            <button class="btn-pay-action" onclick="window.abrirModalCobro()">PAGAR [F9]</button>
+        </section>
+    </main>
+
+    <div class="modal-overlay" id="modalPago">
+        <div class="modal-card">
+            <div class="modal-header">
+                <span style="font-weight: 700; font-size: 15px;"><i class="fas fa-cash-register"></i> Registrar Pago de Venta</span>
+                <i class="fas fa-times" style="cursor: pointer;" onclick="document.getElementById('modalPago').style.display='none'"></i>
+            </div>
+            <div class="modal-body">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h1 id="totalModalUSD" style="font-size: 38px; color: var(--primary-color); font-weight: 800;">$ 0.00</h1>
+                    <p id="totalModalBS" style="font-size: 14px; color: var(--text-muted); font-weight: 700;"></p>
+                </div>
+
+                <div class="form-group">
+                    <label>Nro. de Control / Factura</label>
+                    <input type="text" id="in-nro-factura" placeholder="Generando correlativo automático...">
+                </div>
+
+                <div class="gateway-grid">
+                    <div class="form-group">
+                        <label>Punto de Venta (Bs.)</label>
+                        <input type="number" id="in-punto-bs" value="0" step="any" oninput="window.calcularRestante()" onclick="window.autoCompletarPago(this)">
+                    </div>
+                    <div class="form-group">
+                        <label>Pago Móvil (Bs.)</label>
+                        <input type="number" id="in-pagomovil-bs" value="0" step="any" oninput="window.calcularRestante()" onclick="window.autoCompletarPago(this)">
+                    </div>
+                    <div class="form-group">
+                        <label>Efectivo (Bs.)</label>
+                        <input type="number" id="in-efectivo-bs" value="0" step="any" oninput="window.calcularRestante()" onclick="window.autoCompletarPago(this)">
+                    </div>
+                    <div class="form-group">
+                        <label>Divisas ($)</label>
+                        <input type="number" id="in-divisas-usd" value="0" step="any" oninput="window.calcularRestante()" onclick="window.autoCompletarPago(this)">
+                    </div>
+                </div>
+
+                <button id="btnConfirmarVenta" class="btn-pay-action" style="margin-top: 25px; border-radius: 8px;" onclick="window.registrarVenta()" disabled>
+                    CONFIRMAR VENTA
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/pos-core.js"></script>
+</body>
+</html>
