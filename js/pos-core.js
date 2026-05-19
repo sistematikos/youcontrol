@@ -1,7 +1,7 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
  * Módulo de Facturación y Ventas Completo (pos-core.js)
- * Optimización Express: Navegación por teclado (Flechas + Enter) en buscadores y límite de 30 caracteres.
+ * Optimización: Acceso directo a registro de clientes en sys_v2_clt.html si no existe.
  */
 
 import { db } from './firebase-config.js';
@@ -19,7 +19,6 @@ let tasaActual = 1;
 
 window.clientesMaster = [];
 
-// Variables auxiliares para el control de enfoque en las listas flotantes
 let indexFocoCliente = -1;
 let indexFocoProducto = -1;
 
@@ -90,10 +89,25 @@ function inicializarBuscadorClientes() {
         );
 
         if (filtrados.length === 0) {
+            // MEJORADO: Tarjeta interactiva para crear un cliente nuevo si no se encuentra
             listaResultados.innerHTML = `
-                <div style="padding: 12px; color: #94A3B8; font-size: 13px; font-weight: 600; text-align: center; background: white;">
-                    <i class="fas fa-exclamation-circle"></i> No encontrado
+                <div style="padding: 15px; text-align: center; background: white;">
+                    <p style="color: #64748B; font-size: 13px; margin-bottom: 8px; font-weight: 500;">
+                        <i class="fas fa-user-slash" style="color: #CBD5E1;"></i> Cliente no registrado
+                    </p>
+                    <button id="btn-crear-cliente-express" class="item-cl-nav" data-crear="true" style="width: 100%; background: #006aff; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.2s;">
+                        <i class="fas fa-user-plus"></i> Registrar Nuevo Cliente
+                    </button>
                 </div>`;
+                
+            indexFocoCliente = 0; // Enfocar el botón de creación por defecto para usar Enter rápido
+
+            const btnCrear = document.getElementById('btn-crear-cliente-express');
+            if (btnCrear) {
+                btnCrear.addEventListener('click', () => abrirRegistroClientes());
+                btnCrear.addEventListener('mouseover', () => btnCrear.style.backgroundColor = '#0056d4');
+                btnCrear.addEventListener('mouseout', () => btnCrear.style.backgroundColor = '#006aff');
+            }
         } else {
             listaResultados.innerHTML = filtrados.map((c, i) => `
                 <div class="opcion-item-desplegable item-cl-nav" data-index="${i}" data-id="${c.id}" data-nombre="${c.nombre}" style="padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #F1F5F9; font-size: 13px; background: white; transition: background 0.1s;">
@@ -106,12 +120,17 @@ function inicializarBuscadorClientes() {
                 item.addEventListener('click', function() {
                     seleccionarClienteDesdeLista(this);
                 });
+                item.addEventListener('mouseover', function() {
+                    indexFocoCliente = parseInt(this.getAttribute('data-index'));
+                    const allItems = listaResultados.querySelectorAll('.item-cl-nav');
+                    resaltarItemEnLista(allItems, indexFocoCliente);
+                });
             });
         }
         listaResultados.style.display = 'block';
     });
 
-    // Escuchador de teclas para Clientes
+    // Escuchador de teclas para Clientes (Navegación + Enter)
     inputBuscarCl.addEventListener('keydown', (e) => {
         const items = listaResultados.querySelectorAll('.item-cl-nav');
         if (!items.length || listaResultados.style.display === 'none') return;
@@ -125,9 +144,14 @@ function inicializarBuscadorClientes() {
             indexFocoCliente = (indexFocoCliente - 1 + items.length) % items.length;
             resaltarItemEnLista(items, indexFocoCliente);
         } else if (e.key === "Enter") {
+            e.preventDefault();
             if (indexFocoCliente >= 0 && indexFocoCliente < items.length) {
-                e.preventDefault();
-                seleccionarClienteDesdeLista(items[indexFocoCliente]);
+                const itemEnfocado = items[indexFocoCliente];
+                if (itemEnfocado.getAttribute('data-crear') === "true") {
+                    abrirRegistroClientes();
+                } else {
+                    seleccionarClienteDesdeLista(itemEnfocado);
+                }
             }
         }
     });
@@ -138,6 +162,12 @@ function inicializarBuscadorClientes() {
         inputBuscarCl.style.backgroundColor = "#eff6ff";
         listaResultados.style.display = 'none';
         sincronizarConSelectOriginal(elemento.getAttribute('data-id'));
+    }
+
+    function abrirRegistroClientes() {
+        listaResultados.style.display = 'none';
+        // Abre el módulo en una pestaña nueva para no romper la cola de ventas activa
+        window.open('sys_v2_clt.html', '_blank');
     }
 
     if (btnLimpiarCl) {
@@ -223,7 +253,6 @@ function inicializarBuscadorProductos() {
         listaResultadosProd.style.display = 'block';
     });
 
-    // Escuchador de teclas para Productos
     inputBuscarProd.addEventListener('keydown', (e) => {
         const items = listaResultadosProd.querySelectorAll('.item-prod-nav');
         if (!items.length || listaResultadosProd.style.display === 'none') return;
@@ -258,13 +287,20 @@ function inicializarBuscadorProductos() {
     });
 }
 
-// Función compartida para mover el foco visual
 function resaltarItemEnLista(itemsArray, indexResaltar) {
     itemsArray.forEach(item => {
-        item.style.backgroundColor = '#FFFFFF';
+        if(item.getAttribute('data-crear') === "true") {
+            item.style.backgroundColor = '#006aff'; // Mantiene su color base de acción
+        } else {
+            item.style.backgroundColor = '#FFFFFF';
+        }
     });
     if (indexResaltar >= 0 && indexResaltar < itemsArray.length) {
-        itemsArray[indexResaltar].style.backgroundColor = '#F1F5F9';
+        if(itemsArray[indexResaltar].getAttribute('data-crear') === "true") {
+            itemsArray[indexResaltar].style.backgroundColor = '#0056d4'; // Hover de acción
+        } else {
+            itemsArray[indexResaltar].style.backgroundColor = '#F1F5F9';
+        }
         itemsArray[indexResaltar].scrollIntoView({ block: 'nearest' });
     }
 }
@@ -289,7 +325,6 @@ function inicializarProductos() {
     });
 }
 
-// MODIFICACIÓN COMPACTA: Máximo de 30 caracteres para el nombre en la fila
 window.actualizarCarritoUI = () => {
     const list = document.getElementById('lista-carrito');
     let total = 0;
@@ -300,7 +335,6 @@ window.actualizarCarritoUI = () => {
         const subBS = (subUSD * tasaActual).toFixed(2).replace('.', ',');
         total += subUSD;
         
-        // CORRECCIÓN SOLICITADA: Límite extendido a 30 caracteres
         const nombreCorto = c.nombre.length > 30 ? c.nombre.substring(0, 30) + "..." : c.nombre;
 
         return `
@@ -329,7 +363,7 @@ window.ejecutarF4 = () => {
 
 window.ejecutarF5 = () => {
     if (itemSeleccionadoIndex === -1) return;
-    const p = prompt("Nuevo Precio ($):", carrito[itemSeleccion==Index].precio);
+    const p = prompt("Nuevo Precio ($):", carrito[itemSeleccionadoIndex].precio);
     if (p && !isNaN(p)) { carrito[itemSeleccionadoIndex].precio = parseFloat(p); window.actualizarCarritoUI(); }
 };
 
