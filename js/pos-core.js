@@ -1,7 +1,7 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
  * Módulo de Facturación y Ventas Completo (pos-core.js)
- * Sincronización e Inyección de Motores de Búsqueda de Clientes y Productos
+ * Buscadores Predictivos con Menú Desplegable Flotante para Clientes y Productos
  */
 
 import { db } from './firebase-config.js';
@@ -12,16 +12,15 @@ import {
 const USER_ID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12"; 
 
 let productosMaster = [];
-let clientesMaster = []; // Lista en memoria para búsquedas reactivas
+let clientesMaster = []; 
 let carrito = [];
 let itemSeleccionadoIndex = -1;
 let tasaActual = 1;
 
-// Compartir de forma segura en el entorno global de la ventana
 window.clientesMaster = [];
 
 // ==========================================
-// 1. INICIALIZACIÓN Y CARGA DE CONFIGURACIÓN
+// 1. INICIALIZACIÓN Y CONFIGURACIÓN
 // ==========================================
 async function cargarTasa() {
     try {
@@ -31,13 +30,12 @@ async function cargarTasa() {
             tasaActual = parseFloat(tasaSnap.data().valor) || 1;
             const txtTasa = document.getElementById('txt-tasa');
             if (txtTasa) txtTasa.innerText = tasaActual.toFixed(2).replace('.', ',');
-            renderizarProductos(productosMaster);
+            renderizarProductosListaFija(productosMaster);
             window.actualizarCarritoUI();
         }
     } catch (e) { console.error("Error cargando tasa:", e); }
 }
 
-// Escuchar Clientes en tiempo real desde Cloud Firestore
 function inicializarClientes() {
     const clientesRef = collection(db, "usuarios", USER_ID, "clientes");
     onSnapshot(clientesRef, (snapshot) => {
@@ -45,12 +43,8 @@ function inicializarClientes() {
         snapshot.forEach(docSnap => {
             clientesMaster.push({ id: docSnap.id, ...docSnap.data() });
         });
-        // Orden alfabético
         clientesMaster.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
-        
-        // Sincronizar el puntero global por si la UI lo requiere externamente
         window.clientesMaster = clientesMaster;
-        
         poblarSelectorClientes();
     });
 }
@@ -58,7 +52,6 @@ function inicializarClientes() {
 function poblarSelectorClientes() {
     const selectOriginal = document.getElementById('select-cliente');
     if (!selectOriginal) return;
-
     selectOriginal.innerHTML = `<option value="casual" selected>CONSUMIDOR FINAL (CASUAL)</option>`;
     clientesMaster.forEach(c => {
         selectOriginal.innerHTML += `<option value="${c.id}">${c.nombre} ${c.rif ? `[${c.rif}]` : ''}</option>`;
@@ -66,7 +59,7 @@ function poblarSelectorClientes() {
 }
 
 // ==========================================
-// 2. MOTOR DE BÚSQUEDA DE CLIENTES
+// 2. MOTOR DE BÚSQUEDA FLOTANTE DE CLIENTES
 // ==========================================
 function inicializarBuscadorClientes() {
     const inputBuscarCl = document.getElementById('buscar-cliente-pos');
@@ -87,7 +80,6 @@ function inicializarBuscadorClientes() {
 
         if (btnLimpiarCl) btnLimpiarCl.style.display = 'flex';
 
-        // Filtrado predictivo sobre la memoria persistente
         const filtrados = clientesMaster.filter(c => 
             (c.nombre || '').toLowerCase().includes(query) || 
             (c.rif || '').toLowerCase().includes(query)
@@ -100,33 +92,22 @@ function inicializarBuscadorClientes() {
                 </div>`;
         } else {
             listaResultados.innerHTML = filtrados.map(c => `
-                <div class="opcion-cliente-item" 
-                     data-id="${c.id}" 
-                     data-nombre="${c.nombre}"
-                     style="padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #F1F5F9; font-size: 13px; transition: background 0.15s ease;">
+                <div class="opcion-item-desplegable" data-id="${c.id}" data-nombre="${c.nombre}" style="padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #F1F5F9; font-size: 13px;">
                     <b style="color: #1E293B; display: block; margin: 0;">${c.nombre}</b>
                     <small style="color: #006aff; font-family: monospace; font-weight: 700;">${c.rif || 'SIN IDENTIFICACIÓN'}</small>
                 </div>
             `).join('');
 
-            listaResultados.querySelectorAll('.opcion-cliente-item').forEach(item => {
+            listaResultados.querySelectorAll('.opcion-item-desplegable').forEach(item => {
                 item.addEventListener('click', function() {
-                    const idSelected = this.getAttribute('data-id');
-                    const nombreSelected = this.getAttribute('data-nombre');
-                    
-                    inputBuscarCl.value = nombreSelected;
+                    inputBuscarCl.value = this.getAttribute('data-nombre');
                     inputBuscarCl.style.borderColor = "#006aff";
                     inputBuscarCl.style.backgroundColor = "#eff6ff";
                     listaResultados.style.display = 'none';
-                    
-                    sincronizarConSelectOriginal(idSelected);
+                    sincronizarConSelectOriginal(this.getAttribute('data-id'));
                 });
-                
-                item.addEventListener('mouseover', () => item.style.backgroundColor = '#f1f5f9');
-                item.addEventListener('mouseout', () => item.style.backgroundColor = 'transparent');
             });
         }
-        
         listaResultados.style.display = 'block';
     });
 
@@ -157,47 +138,108 @@ function sincronizarConSelectOriginal(id) {
 }
 
 // ==========================================
-// 3. MOTOR DE BÚSQUEDA DE PRODUCTOS
+// 3. NUEVO MOTOR: BUSCADOR DESPLEGABLE DE PRODUCTOS
 // ==========================================
 function inicializarBuscadorProductos() {
-    // Vinculación automática usando los dos IDs posibles de tu HTML
+    // Captura la barra superior ("PIST") usando el ID de tu código original
     const inputBuscarProd = document.getElementById('buscar-producto-pos') || document.getElementById('search-input');
-    if (!inputBuscarProd) return;
+    
+    // IMPORTANTE: Creamos dinámicamente el contenedor flotante para los productos si no existe en el HTML
+    let listaResultadosProd = document.getElementById('resultados-producto-pos');
+    if (inputBuscarProd && !listaResultadosProd) {
+        listaResultadosProd = document.createElement('div');
+        listaResultadosProd.id = 'resultados-producto-pos';
+        // Estilos CSS incrustados para que flote perfectamente idéntico al de clientes
+        Object.assign(listaResultadosProd.style, {
+            position: 'absolute',
+            backgroundColor: '#FFFFFF',
+            border: '1px solid #E2E8F0',
+            borderRadius: '8px',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+            maxHeight: '250px',
+            overflowY: 'auto',
+            zIndex: '9999',
+            width: inputBuscarProd.offsetWidth + 'px',
+            display: 'none'
+        });
+        // Insertar el contenedor justo debajo de la barra de búsqueda
+        inputBuscarProd.parentNode.style.position = 'relative';
+        inputBuscarProd.parentNode.appendChild(listaResultadosProd);
+    }
 
+    if (!inputBuscarProd || !listaResultadosProd) return;
+
+    // Escuchar la escritura del cajero en tiempo real
     inputBuscarProd.addEventListener('input', (e) => {
         const query = e.target.value.toLowerCase().trim();
         
-        // Si el cajero borra la búsqueda, restauramos toda la lista desde memoria
+        // Ajustar ancho dinámicamente por si cambia la pantalla
+        listaResultadosProd.style.width = inputBuscarProd.offsetWidth + 'px';
+
         if (query === "") {
-            renderizarProductos(productosMaster);
+            listaResultadosProd.style.display = 'none';
             return;
         }
 
-        // Filtrado inmediato por Nombre o Código
-        const productosFiltrados = productosMaster.filter(p => 
+        // Filtrar sobre el arreglo en memoria local
+        const filtrados = productosMaster.filter(p => 
             (p.nombre || '').toLowerCase().includes(query) ||
             (p.codigo || '').toLowerCase().includes(query)
         );
 
-        renderizarProductos(productosFiltrados);
+        if (filtrados.length === 0) {
+            listaResultadosProd.innerHTML = `
+                <div style="padding: 12px; color: #94A3B8; font-size: 13px; font-weight: 600; text-align: center;">
+                    <i class="fas fa-box-open"></i> Producto no registrado
+                </div>`;
+        } else {
+            // Estructura limpia e interactiva para el menú desplegable del producto buscado
+            listaResultadosProd.innerHTML = filtrados.map(p => {
+                const pUSD = parseFloat(p.precio) || 0;
+                const pBS = (pUSD * tasaActual).toFixed(2).replace('.', ',');
+                return `
+                    <div class="opcion-item-desplegable" data-id="${p.id}" style="padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #F1F5F9; display: flex; justify-content: space-between; align-items: center; font-size: 13px;">
+                        <span style="color: #1E293B; font-weight: 600;">${p.nombre}</span>
+                        <div style="text-align: right;">
+                            <b style="color: #006aff; display: block;">$${pUSD.toFixed(2)}</b>
+                            <small style="color: #64748B; font-size: 11px;">${pBS} Bs.</small>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Manejar la selección e inyección directa al carrito
+            listaResultadosProd.querySelectorAll('.opcion-item-desplegable').forEach(item => {
+                item.addEventListener('click', function() {
+                    const prodId = this.getAttribute('data-id');
+                    
+                    // 1. Agregar inmediatamente al carrito de ventas
+                    window.agregarCarrito(prodId);
+                    
+                    // 2. Limpiar el buscador superior y ocultar el menú desplegable flotante
+                    inputBuscarProd.value = "";
+                    listaResultadosProd.style.display = 'none';
+                    inputBuscarProd.focus();
+                });
+            });
+        }
+        listaResultadosProd.style.display = 'block';
+    });
+
+    // Cerrar el cuadro flotante si hacen clic en cualquier otra parte del POS
+    document.addEventListener('click', (e) => {
+        if (!inputBuscarProd.contains(e.target) && !listaResultadosProd.contains(e.target)) {
+            listaResultadosProd.style.display = 'none';
+        }
     });
 }
 
 // ==========================================
-// 4. RENDERIZACIÓN DE PRODUCTOS Y CARRITO
+// 4. RENDERIZACIÓN DE LA LISTA FIJA Y CARRITO
 // ==========================================
-function renderizarProductos(lista) {
+function renderizarProductosListaFija(lista) {
     const container = document.getElementById('grid-productos');
     if (!container) return;
-
-    if (lista.length === 0) {
-        container.innerHTML = `
-            <div style="grid-column: 1 / -1; padding: 40px 20px; text-align: center; color: #94A3B8; font-size: 13px; font-weight: 600;">
-                <i class="fas fa-box-open" style="font-size: 26px; display: block; margin-bottom: 8px; color: #CBD5E1;"></i>
-                No se encontraron artículos coincidentes
-            </div>`;
-        return;
-    }
 
     container.innerHTML = lista.map(p => {
         const pUSD = parseFloat(p.precio) || 0;
@@ -214,22 +256,13 @@ function renderizarProductos(lista) {
     }).join('');
 }
 
-// Escuchar la colección raíz exacta de tus productos de forma limpia
 function inicializarProductos() {
     const productosRef = collection(db, "usuarios", USER_ID, "productos");
     onSnapshot(productosRef, (snapshot) => {
         productosMaster = [];
         snapshot.forEach(doc => productosMaster.push({ id: doc.id, ...doc.data() }));
-        
-        // Evitamos que Firebase rompa lo que el cajero está buscando en caliente
-        const inputBuscarProd = document.getElementById('buscar-producto-pos') || document.getElementById('search-input');
-        if (inputBuscarProd && inputBuscarProd.value.trim() !== "") {
-            const query = inputBuscarProd.value.toLowerCase().trim();
-            const filtrados = productosMaster.filter(p => (p.nombre || '').toLowerCase().includes(query));
-            renderizarProductos(filtrados);
-        } else {
-            renderizarProductos(productosMaster);
-        }
+        // La lista principal de abajo se mantiene intacta y estable
+        renderizarProductosListaFija(productosMaster);
     });
 }
 
@@ -242,13 +275,10 @@ window.actualizarCarritoUI = () => {
         const subUSD = c.precio * c.cantidad;
         const subBS = (subUSD * tasaActual).toFixed(2).replace('.', ',');
         total += subUSD;
-        
         const nombreCorto = c.nombre.length > 22 ? c.nombre.substring(0, 22) + "..." : c.nombre;
 
         return `
-            <div class="single-line-row ${index === itemSeleccionadoIndex ? 'item-selected' : ''}" 
-                 onclick="window.seleccionarItem(${index})"
-                 style="padding: 12px 0;">
+            <div class="single-line-row ${index === itemSeleccionadoIndex ? 'item-selected' : ''}" onclick="window.seleccionarItem(${index})" style="padding: 12px 0;">
                 <span style="flex: 1; margin-right: 15px;">${c.cantidad}x ${nombreCorto}</span>
                 <div class="price-group">
                     <b>$${subUSD.toFixed(2)}</b>
@@ -296,22 +326,18 @@ window.agregarCarrito = (id) => {
 window.seleccionarItem = (i) => { itemSeleccionadoIndex = i; window.actualizarCarritoUI(); };
 
 // ==========================================
-// 6. PASARELA DE COBRO Y PERSISTENCIA (CRUD)
+// 6. PASARELA DE COBRO Y PERSISTENCIA
 // ==========================================
 window.abrirModalCobro = () => {
     if (carrito.length === 0) return;
     document.getElementById('totalModalUSD').innerText = `$ ${window.totalVentaUSD.toFixed(2)}`;
-    
     const totalModalBS = document.getElementById('totalModalBS');
-    if (totalModalBS) {
-        totalModalBS.innerText = `Total: ${(window.totalVentaUSD * tasaActual).toFixed(2).replace('.', ',')} Bs.`;
-    }
+    if (totalModalBS) totalModalBS.innerText = `Total: ${(window.totalVentaUSD * tasaActual).toFixed(2).replace('.', ',')} Bs.`;
     
     const inputFactura = document.getElementById('in-nro-factura');
     if (inputFactura && !inputFactura.value) {
         inputFactura.value = "FAC-" + Math.floor(100000 + Math.random() * 900000); 
     }
-
     document.getElementById('modalPago').style.display = 'flex';
     window.calcularRestante();
 };
@@ -368,44 +394,34 @@ window.registrarVenta = async () => {
         
         alert("✅ Venta registrada bajo Factura Nro: " + nroFactura);
         
-        // Limpieza absoluta de la sesión actual de venta
         carrito = []; 
         window.actualizarCarritoUI();
         if(document.getElementById('in-nro-factura')) document.getElementById('in-nro-factura').value = '';
         
-        // Reiniciar visualmente el buscador de clientes
+        // Resetear buscador cliente
         const inputBuscarCl = document.getElementById('buscar-cliente-pos');
         if (inputBuscarCl) {
             inputBuscarCl.value = "";
             inputBuscarCl.style.borderColor = "#e2e8f0";
             inputBuscarCl.style.backgroundColor = "#FFFFFF";
-            const btnLimpiarCl = document.getElementById('btn-limpiar-cliente');
-            if (btnLimpiarCl) btnLimpiarCl.style.display = 'none';
             sincronizarConSelectOriginal("casual");
         }
 
-        // Vaciar la caja de búsqueda de productos y restablecer la vista completa
+        // Resetear buscador productos
         const inputBuscarProd = document.getElementById('buscar-producto-pos') || document.getElementById('search-input');
-        if (inputBuscarProd) {
-            inputBuscarProd.value = "";
-            renderizarProductos(productosMaster);
-        }
+        if (inputBuscarProd) inputBuscarProd.value = "";
         
         document.getElementById('modalPago').style.display = 'none';
-    } catch (e) { 
-        alert("Error: " + e.message); 
-    }
+    } catch (e) { alert("Error: " + e.message); }
     btn.innerText = "CONFIRMAR VENTA";
 };
 
 // ==========================================
-// 7. CONTROL DE TECLADO INTERACTIVO
+// 7. CONTROL DE TECLADO
 // ==========================================
 window.addEventListener('keydown', (e) => {
     const modalActivo = document.getElementById('modalPago').style.display === 'flex';
-
     if (e.ctrlKey && e.key === "F5") return;
-
     if (e.key === "F4") { e.preventDefault(); if (!modalActivo) window.ejecutarF4(); }
     if (e.key === "F5") { e.preventDefault(); if (!modalActivo) window.ejecutarF5(); }
     if (e.key === "F6") { e.preventDefault(); if (!modalActivo) window.ejecutarF6(); }
@@ -416,7 +432,7 @@ window.addEventListener('keydown', (e) => {
     if (e.key === "Escape") document.getElementById('modalPago').style.display = 'none';
 });
 
-// Lanzamiento sincronizado al cargar el script
+// Lanzamiento secuencial
 cargarTasa();
 inicializarClientes();
 inicializarProductos();
