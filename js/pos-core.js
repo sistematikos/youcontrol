@@ -1,12 +1,12 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
  * Módulo de Facturación y Ventas Completo (pos-core.js)
- * Optimización: Acceso directo a registro de clientes en sys_v2_clt.html si no existe.
+ * Optimización: Factura numérica incremental automática (000001) sincronizada en vivo con Badge lateral.
  */
 
 import { db } from './firebase-config.js';
 import { 
-    collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc 
+    collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc, query, orderBy, limit 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const USER_ID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12"; 
@@ -16,6 +16,7 @@ let clientesMaster = [];
 let carrito = [];
 let itemSeleccionadoIndex = -1;
 let tasaActual = 1;
+let proximoNumeroFacturaStr = "000001"; // Control dinámico secuencial
 
 window.clientesMaster = [];
 
@@ -23,7 +24,7 @@ let indexFocoCliente = -1;
 let indexFocoProducto = -1;
 
 // ==========================================
-// 1. INICIALIZACIÓN Y CONFIGURACIÓN
+// 1. INICIALIZACIÓN, TASA Y FACTURA AUTOMÁTICA
 // ==========================================
 async function cargarTasa() {
     try {
@@ -36,6 +37,36 @@ async function cargarTasa() {
             window.actualizarCarritoUI();
         }
     } catch (e) { console.error("Error cargando tasa:", e); }
+}
+
+// Escucha en tiempo real la última venta para calcular el consecutivo numérico puro
+function escucharUltimaFactura() {
+    const ventasRef = collection(db, "usuarios", USER_ID, "ventas");
+    const q = query(ventasRef, orderBy("fecha", "desc"), limit(1));
+    
+    onSnapshot(q, (snapshot) => {
+        let ultimoNumero = 0;
+        
+        snapshot.forEach(docSnap => {
+            const data = docSnap.data();
+            if (data.nro_factura) {
+                // Filtra solo los números por si hay algún prefijo viejo y extrae el valor entero
+                const limpio = data.nro_factura.replace(/\D/g, "");
+                const num = parseInt(limpio);
+                if (!isNaN(num) && num > ultimoNumero) {
+                    ultimoNumero = num;
+                }
+            }
+        });
+        
+        // Suma 1 para el siguiente documento y lo formatea a 6 dígitos con ceros (ej: 000001)
+        const siguiente = ultimoNumero + 1;
+        proximoNumeroFacturaStr = String(siguiente).padStart(6, '0');
+        
+        // Lo renderiza directo en el cuadro al lado de la lista del carrito
+        const lblBadge = document.getElementById('lbl-nro-factura');
+        if (lblBadge) lblBadge.innerText = proximoNumeroFacturaStr;
+    });
 }
 
 function inicializarClientes() {
@@ -61,7 +92,7 @@ function poblarSelectorClientes() {
 }
 
 // ==========================================
-// 2. MOTOR DE BÚSQUEDA Y CONTROL TECLADO - CLIENTES
+// 2. MOTOR DE BÚSQUEDA - CLIENTES
 // ==========================================
 function inicializarBuscadorClientes() {
     const inputBuscarCl = document.getElementById('buscar-cliente-pos');
@@ -89,7 +120,6 @@ function inicializarBuscadorClientes() {
         );
 
         if (filtrados.length === 0) {
-            // MEJORADO: Tarjeta interactiva para crear un cliente nuevo si no se encuentra
             listaResultados.innerHTML = `
                 <div style="padding: 15px; text-align: center; background: white;">
                     <p style="color: #64748B; font-size: 13px; margin-bottom: 8px; font-weight: 500;">
@@ -100,13 +130,11 @@ function inicializarBuscadorClientes() {
                     </button>
                 </div>`;
                 
-            indexFocoCliente = 0; // Enfocar el botón de creación por defecto para usar Enter rápido
+            indexFocoCliente = 0;
 
             const btnCrear = document.getElementById('btn-crear-cliente-express');
             if (btnCrear) {
                 btnCrear.addEventListener('click', () => abrirRegistroClientes());
-                btnCrear.addEventListener('mouseover', () => btnCrear.style.backgroundColor = '#0056d4');
-                btnCrear.addEventListener('mouseout', () => btnCrear.style.backgroundColor = '#006aff');
             }
         } else {
             listaResultados.innerHTML = filtrados.map((c, i) => `
@@ -130,7 +158,6 @@ function inicializarBuscadorClientes() {
         listaResultados.style.display = 'block';
     });
 
-    // Escuchador de teclas para Clientes (Navegación + Enter)
     inputBuscarCl.addEventListener('keydown', (e) => {
         const items = listaResultados.querySelectorAll('.item-cl-nav');
         if (!items.length || listaResultados.style.display === 'none') return;
@@ -166,7 +193,6 @@ function inicializarBuscadorClientes() {
 
     function abrirRegistroClientes() {
         listaResultados.style.display = 'none';
-        // Abre el módulo en una pestaña nueva para no romper la cola de ventas activa
         window.open('sys_v2_clt.html', '_blank');
     }
 
@@ -197,7 +223,7 @@ function sincronizarConSelectOriginal(id) {
 }
 
 // ==========================================
-// 3. MOTOR DE BÚSQUEDA Y CONTROL TECLADO - PRODUCTOS
+// 3. MOTOR DE BÚSQUEDA - PRODUCTOS
 // ==========================================
 function inicializarBuscadorProductos() {
     const inputBuscarProd = document.getElementById('buscar-producto-pos') || document.getElementById('search-input');
@@ -290,14 +316,14 @@ function inicializarBuscadorProductos() {
 function resaltarItemEnLista(itemsArray, indexResaltar) {
     itemsArray.forEach(item => {
         if(item.getAttribute('data-crear') === "true") {
-            item.style.backgroundColor = '#006aff'; // Mantiene su color base de acción
+            item.style.backgroundColor = '#006aff';
         } else {
             item.style.backgroundColor = '#FFFFFF';
         }
     });
     if (indexResaltar >= 0 && indexResaltar < itemsArray.length) {
         if(itemsArray[indexResaltar].getAttribute('data-crear') === "true") {
-            itemsArray[indexResaltar].style.backgroundColor = '#0056d4'; // Hover de acción
+            itemsArray[indexResaltar].style.backgroundColor = '#0056d4';
         } else {
             itemsArray[indexResaltar].style.backgroundColor = '#F1F5F9';
         }
@@ -306,7 +332,7 @@ function resaltarItemEnLista(itemsArray, indexResaltar) {
 }
 
 // ==========================================
-// 4. PERSISTENCIA EN TIEMPO REAL (FIREBASE)
+// 4. PERSISTENCIA EN TIEMPO REAL
 // ==========================================
 function inicializarProductos() {
     const productosRef = collection(db, "usuarios", USER_ID, "productos");
@@ -386,7 +412,7 @@ window.agregarCarrito = (id) => {
 window.seleccionarItem = (i) => { itemSeleccionadoIndex = i; window.actualizarCarritoUI(); };
 
 // ==========================================
-// 6. CIERRE DE VENTA (MODAL)
+// 6. CIERRE DE VENTA (MODAL COBRO)
 // ==========================================
 window.abrirModalCobro = () => {
     if (carrito.length === 0) return;
@@ -394,10 +420,10 @@ window.abrirModalCobro = () => {
     const totalModalBS = document.getElementById('totalModalBS');
     if (totalModalBS) totalModalBS.innerText = `Total: ${(window.totalVentaUSD * tasaActual).toFixed(2).replace('.', ',')} Bs.`;
     
+    // Vincula automáticamente el consecutivo numérico actual al input del modal (Bloqueado para edición)
     const inputFactura = document.getElementById('in-nro-factura');
-    if (inputFactura && !inputFactura.value) {
-        inputFactura.value = "FAC-" + Math.floor(100000 + Math.random() * 900000); 
-    }
+    if (inputFactura) inputFactura.value = proximoNumeroFacturaStr;
+
     document.getElementById('modalPago').style.display = 'flex';
     window.calcularRestante();
 };
@@ -428,7 +454,6 @@ window.registrarVenta = async () => {
     const btn = document.getElementById('btnConfirmarVenta');
     if (!btn || btn.disabled) return;
     
-    const nroFactura = document.getElementById('in-nro-factura').value.trim() || "S/N";
     const selectCliente = document.getElementById('select-cliente');
     const clienteId = selectCliente ? selectCliente.value : "casual";
     const clienteNombre = selectCliente ? selectCliente.options[selectCliente.selectedIndex].text : "CONSUMIDOR FINAL (CASUAL)";
@@ -438,7 +463,7 @@ window.registrarVenta = async () => {
     try {
         await addDoc(collection(db, "usuarios", USER_ID, "ventas"), {
             fecha: serverTimestamp(),
-            nro_factura: nroFactura,
+            nro_factura: proximoNumeroFacturaStr, // Guarda el número secuencial limpio
             cliente_id: clienteId,
             cliente_nombre: clienteNombre,
             total_usd: window.totalVentaUSD,
@@ -452,11 +477,9 @@ window.registrarVenta = async () => {
             items: carrito.map(i => ({ nombre: i.nombre, cant: i.cantidad, precio: i.precio }))
         });
         
-        alert("✅ Venta registrada bajo Factura Nro: " + nroFactura);
+        alert("✅ Venta registrada bajo Factura Nro: " + proximoNumeroFacturaStr);
         carrito = []; 
         window.actualizarCarritoUI();
-        
-        if(document.getElementById('in-nro-factura')) document.getElementById('in-nro-factura').value = '';
         
         const inputBuscarCl = document.getElementById('buscar-cliente-pos');
         if (inputBuscarCl) {
@@ -492,6 +515,7 @@ window.addEventListener('keydown', (e) => {
 
 // Inicialización
 cargarTasa();
+escucharUltimaFactura(); // Inicia el motor secuencial automático
 inicializarClientes();
 inicializarProductos();
 inicializarBuscadorClientes();
