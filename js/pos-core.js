@@ -1,6 +1,7 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
  * Módulo de Facturación y Ventas Completo (pos-core.js)
+ * Sincronización e Inyección de Motores de Búsqueda de Clientes y Productos
  */
 
 import { db } from './firebase-config.js';
@@ -11,12 +12,12 @@ import {
 const USER_ID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12"; 
 
 let productosMaster = [];
-let clientesMaster = []; // Lista global de clientes sincronizados
+let clientesMaster = []; // Lista en memoria para búsquedas reactivas
 let carrito = [];
 let itemSeleccionadoIndex = -1;
 let tasaActual = 1;
 
-// Exponer variables críticas al objeto window para interactuar de forma segura con el DOM
+// Compartir de forma segura en el entorno global de la ventana
 window.clientesMaster = [];
 
 // ==========================================
@@ -36,7 +37,7 @@ async function cargarTasa() {
     } catch (e) { console.error("Error cargando tasa:", e); }
 }
 
-// Escuchar Clientes en tiempo real para poblar los selectores del sistema
+// Escuchar Clientes en tiempo real desde Cloud Firestore
 function inicializarClientes() {
     const clientesRef = collection(db, "usuarios", USER_ID, "clientes");
     onSnapshot(clientesRef, (snapshot) => {
@@ -44,10 +45,10 @@ function inicializarClientes() {
         snapshot.forEach(docSnap => {
             clientesMaster.push({ id: docSnap.id, ...docSnap.data() });
         });
-        // Ordenar alfabéticamente por nombre
+        // Orden alfabético
         clientesMaster.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
         
-        // Sincronizar con el objeto global window para el buscador reactivo
+        // Sincronizar el puntero global por si la UI lo requiere externamente
         window.clientesMaster = clientesMaster;
         
         poblarSelectorClientes();
@@ -55,17 +56,17 @@ function inicializarClientes() {
 }
 
 function poblarSelectorClientes() {
-    const selectCliente = document.getElementById('select-cliente');
-    if (!selectCliente) return;
+    const selectOriginal = document.getElementById('select-cliente');
+    if (!selectOriginal) return;
 
-    selectCliente.innerHTML = `<option value="casual" selected>CONSUMIDOR FINAL (CASUAL)</option>`;
+    selectOriginal.innerHTML = `<option value="casual" selected>CONSUMIDOR FINAL (CASUAL)</option>`;
     clientesMaster.forEach(c => {
-        selectCliente.innerHTML += `<option value="${c.id}">${c.nombre} ${c.rif ? `[${c.rif}]` : ''}</option>`;
+        selectOriginal.innerHTML += `<option value="${c.id}">${c.nombre} ${c.rif ? `[${c.rif}]` : ''}</option>`;
     });
 }
 
 // ==========================================
-// MOTOR DE BÚSQUEDA DE CLIENTES (SISTEMATIKOS)
+// 2. MOTOR DE BÚSQUEDA DE CLIENTES
 // ==========================================
 function inicializarBuscadorClientes() {
     const inputBuscarCl = document.getElementById('buscar-cliente-pos');
@@ -86,6 +87,7 @@ function inicializarBuscadorClientes() {
 
         if (btnLimpiarCl) btnLimpiarCl.style.display = 'flex';
 
+        // Filtrado predictivo sobre la memoria persistente
         const filtrados = clientesMaster.filter(c => 
             (c.nombre || '').toLowerCase().includes(query) || 
             (c.rif || '').toLowerCase().includes(query)
@@ -155,36 +157,34 @@ function sincronizarConSelectOriginal(id) {
 }
 
 // ==========================================
-// MOTOR DE BÚSQUEDA DE PRODUCTOS (NUEVO CONECTOR)
+// 3. MOTOR DE BÚSQUEDA DE PRODUCTOS
 // ==========================================
 function inicializarBuscadorProductos() {
-    // Apunta al input de búsqueda de productos (asegúrate de que tu HTML tenga este ID o cámbialo por el tuyo)
+    // Vinculación automática usando los dos IDs posibles de tu HTML
     const inputBuscarProd = document.getElementById('buscar-producto-pos') || document.getElementById('search-input');
-    
     if (!inputBuscarProd) return;
 
     inputBuscarProd.addEventListener('input', (e) => {
         const query = e.target.value.toLowerCase().trim();
         
-        // Si la barra está vacía, volvemos a listar todos los productos
+        // Si el cajero borra la búsqueda, restauramos toda la lista desde memoria
         if (query === "") {
             renderizarProductos(productosMaster);
             return;
         }
 
-        // Filtrar productos master en memoria por nombre o código si aplica
+        // Filtrado inmediato por Nombre o Código
         const productosFiltrados = productosMaster.filter(p => 
             (p.nombre || '').toLowerCase().includes(query) ||
             (p.codigo || '').toLowerCase().includes(query)
         );
 
-        // Renderizar la cuadrícula únicamente con las coincidencias
         renderizarProductos(productosFiltrados);
     });
 }
 
 // ==========================================
-// 2. RENDERIZACIÓN DE PRODUCTOS Y CARRITO
+// 4. RENDERIZACIÓN DE PRODUCTOS Y CARRITO
 // ==========================================
 function renderizarProductos(lista) {
     const container = document.getElementById('grid-productos');
@@ -192,9 +192,9 @@ function renderizarProductos(lista) {
 
     if (lista.length === 0) {
         container.innerHTML = `
-            <div style="grid-column: 1 / -1; padding: 30px; text-align: center; color: #94A3B8; font-size: 14px;">
-                <i class="fas fa-search" style="font-size: 24px; display: block; margin-bottom: 10px;"></i>
-                No se encontraron productos coincidentes
+            <div style="grid-column: 1 / -1; padding: 40px 20px; text-align: center; color: #94A3B8; font-size: 13px; font-weight: 600;">
+                <i class="fas fa-box-open" style="font-size: 26px; display: block; margin-bottom: 8px; color: #CBD5E1;"></i>
+                No se encontraron artículos coincidentes
             </div>`;
         return;
     }
@@ -214,13 +214,14 @@ function renderizarProductos(lista) {
     }).join('');
 }
 
+// Escuchar la colección raíz exacta de tus productos de forma limpia
 function inicializarProductos() {
     const productosRef = collection(db, "usuarios", USER_ID, "productos");
     onSnapshot(productosRef, (snapshot) => {
         productosMaster = [];
         snapshot.forEach(doc => productosMaster.push({ id: doc.id, ...doc.data() }));
         
-        // Al recibir actualización de Firebase, respetamos si el usuario ya está escribiendo un filtro
+        // Evitamos que Firebase rompa lo que el cajero está buscando en caliente
         const inputBuscarProd = document.getElementById('buscar-producto-pos') || document.getElementById('search-input');
         if (inputBuscarProd && inputBuscarProd.value.trim() !== "") {
             const query = inputBuscarProd.value.toLowerCase().trim();
@@ -262,7 +263,7 @@ window.actualizarCarritoUI = () => {
 };
 
 // ==========================================
-// 3. LOGICA Y TECLAS EXPRESS (F4, F5, F6)
+// 5. LÓGICA Y TECLAS EXPRESS (F4, F5, F6)
 // ==========================================
 window.ejecutarF4 = () => {
     if (itemSeleccionadoIndex === -1) return;
@@ -287,7 +288,7 @@ window.agregarCarrito = (id) => {
     const p = productosMaster.find(x => x.id === id);
     if (!p) return;
     const item = carrito.find(c => c.id === id);
-    if (item) { item.cantidad++; } else { carrito.push({ ...p, quantity: 1, cantidad: 1 }); }
+    if (item) { item.cantidad++; } else { carrito.push({ ...p, cantidad: 1 }); }
     itemSeleccionadoIndex = carrito.length - 1;
     window.actualizarCarritoUI();
 };
@@ -295,7 +296,7 @@ window.agregarCarrito = (id) => {
 window.seleccionarItem = (i) => { itemSeleccionadoIndex = i; window.actualizarCarritoUI(); };
 
 // ==========================================
-// 4. PASARELA DE COBRO Y PERSISTENCIA (CRUD)
+// 6. PASARELA DE COBRO Y PERSISTENCIA (CRUD)
 // ==========================================
 window.abrirModalCobro = () => {
     if (carrito.length === 0) return;
@@ -367,12 +368,12 @@ window.registrarVenta = async () => {
         
         alert("✅ Venta registrada bajo Factura Nro: " + nroFactura);
         
-        // Limpieza del POS
+        // Limpieza absoluta de la sesión actual de venta
         carrito = []; 
         window.actualizarCarritoUI();
         if(document.getElementById('in-nro-factura')) document.getElementById('in-nro-factura').value = '';
         
-        // Limpiar buscador de clientes
+        // Reiniciar visualmente el buscador de clientes
         const inputBuscarCl = document.getElementById('buscar-cliente-pos');
         if (inputBuscarCl) {
             inputBuscarCl.value = "";
@@ -383,9 +384,12 @@ window.registrarVenta = async () => {
             sincronizarConSelectOriginal("casual");
         }
 
-        // Limpiar buscador de productos
+        // Vaciar la caja de búsqueda de productos y restablecer la vista completa
         const inputBuscarProd = document.getElementById('buscar-producto-pos') || document.getElementById('search-input');
-        if (inputBuscarProd) inputBuscarProd.value = "";
+        if (inputBuscarProd) {
+            inputBuscarProd.value = "";
+            renderizarProductos(productosMaster);
+        }
         
         document.getElementById('modalPago').style.display = 'none';
     } catch (e) { 
@@ -395,7 +399,7 @@ window.registrarVenta = async () => {
 };
 
 // ==========================================
-// 5. CONTROL DE TECLADO INTERACTIVO
+// 7. CONTROL DE TECLADO INTERACTIVO
 // ==========================================
 window.addEventListener('keydown', (e) => {
     const modalActivo = document.getElementById('modalPago').style.display === 'flex';
@@ -407,4 +411,14 @@ window.addEventListener('keydown', (e) => {
     if (e.key === "F6") { e.preventDefault(); if (!modalActivo) window.ejecutarF6(); }
     if (e.key === "F9") { 
         e.preventDefault(); 
-        if (!modalActivo) { window.abrirModalCobro(); } else { window.registrarVenta(); }
+        if (!modalActivo) { window.abrirModalCobro(); } else { window.registrarVenta(); } 
+    }
+    if (e.key === "Escape") document.getElementById('modalPago').style.display = 'none';
+});
+
+// Lanzamiento sincronizado al cargar el script
+cargarTasa();
+inicializarClientes();
+inicializarProductos();
+inicializarBuscadorClientes();
+inicializarBuscadorProductos();
