@@ -271,6 +271,65 @@
             color: var(--vibrant-blue); 
             outline: none; 
         }
+
+        /* ESTILOS DEL BUSCADOR PREDICTIVO DE CLIENTES */
+        .search-client-container {
+            margin-bottom: 15px;
+            position: relative;
+            flex-shrink: 0;
+        }
+        .search-client-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .search-client-wrapper i.fa-search {
+            position: absolute;
+            left: 12px;
+            color: #94a3b8;
+            font-size: 14px;
+        }
+        #buscar-cliente-pos {
+            width: 100%;
+            padding: 10px 35px 10px 35px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        #buscar-cliente-pos:focus {
+            border-color: var(--vibrant-blue);
+        }
+        #btn-limpiar-cliente {
+            position: absolute;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 16px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+        #resultados-cliente-pos {
+            display: none;
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 100%;
+            background: white;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            z-index: 99;
+            max-height: 180px;
+            overflow-y: auto;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -301,6 +360,21 @@
     </div>
     
     <div class="panel-cart">
+        <div class="search-client-container">
+            <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">Asignar Cliente</div>
+            <div class="search-client-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="text" id="buscar-cliente-pos" placeholder="Filtrar por Nombre o RIF..." autocomplete="off">
+                <button type="button" id="btn-limpiar-cliente" title="Remover cliente"><i class="fas fa-times-circle"></i></button>
+            </div>
+            <div id="resultados-cliente-pos"></div>
+        </div>
+
+        <select id="select-cliente" style="display: none;">
+            <option value="casual" selected>CONSUMIDOR FINAL (CASUAL)</option>
+        </select>
+        <input type="hidden" id="in-nro-factura" value="">
+
         <div style="font-size: 12px; font-weight: 700; color: var(--text-dark); text-transform: uppercase; margin-bottom: 10px; letter-spacing: 0.5px;">Resumen de Venta</div>
         <div id="lista-carrito" style="flex-grow: 1; overflow-y: auto; padding-right: 4px;"></div>
         
