@@ -1,6 +1,6 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * Módulo de Facturación y Ventas con Nro de Factura, Clientes y Productos Fijos (pos-core.js)
+ * Módulo de Facturación y Ventas Completo (pos-core.js)
  */
 
 import { db } from './firebase-config.js';
@@ -65,7 +65,7 @@ function poblarSelectorClientes() {
 }
 
 // ==========================================
-// MOTOR DE BÚSQUEDA PREDICTIVA (SISTEMATIKOS)
+// MOTOR DE BÚSQUEDA DE CLIENTES (SISTEMATIKOS)
 // ==========================================
 function inicializarBuscadorClientes() {
     const inputBuscarCl = document.getElementById('buscar-cliente-pos');
@@ -74,7 +74,6 @@ function inicializarBuscadorClientes() {
 
     if (!inputBuscarCl || !listaResultados) return;
 
-    // Escuchar la escritura del cajero en tiempo real
     inputBuscarCl.addEventListener('input', (e) => {
         const query = e.target.value.toLowerCase().trim();
         
@@ -87,7 +86,6 @@ function inicializarBuscadorClientes() {
 
         if (btnLimpiarCl) btnLimpiarCl.style.display = 'flex';
 
-        // Filtrar la cartera local en memoria por Nombre o RIF/Cédula
         const filtrados = clientesMaster.filter(c => 
             (c.nombre || '').toLowerCase().includes(query) || 
             (c.rif || '').toLowerCase().includes(query)
@@ -109,7 +107,6 @@ function inicializarBuscadorClientes() {
                 </div>
             `).join('');
 
-            // Asignar eventos de clic a las opciones inyectadas
             listaResultados.querySelectorAll('.opcion-cliente-item').forEach(item => {
                 item.addEventListener('click', function() {
                     const idSelected = this.getAttribute('data-id');
@@ -117,13 +114,12 @@ function inicializarBuscadorClientes() {
                     
                     inputBuscarCl.value = nombreSelected;
                     inputBuscarCl.style.borderColor = "#006aff";
-                    inputBuscarCl.style.backgroundColor = "#eff6ff"; // Feedback visual azul tenue
+                    inputBuscarCl.style.backgroundColor = "#eff6ff";
                     listaResultados.style.display = 'none';
                     
                     sincronizarConSelectOriginal(idSelected);
                 });
                 
-                // Efecto hover nativo sin depender de CSS externo
                 item.addEventListener('mouseover', () => item.style.backgroundColor = '#f1f5f9');
                 item.addEventListener('mouseout', () => item.style.backgroundColor = 'transparent');
             });
@@ -132,7 +128,6 @@ function inicializarBuscadorClientes() {
         listaResultados.style.display = 'block';
     });
 
-    // Evento para limpiar el cliente seleccionado y restablecer el estado inicial
     if (btnLimpiarCl) {
         btnLimpiarCl.addEventListener('click', () => {
             inputBuscarCl.value = "";
@@ -144,7 +139,6 @@ function inicializarBuscadorClientes() {
         });
     }
 
-    // Ocultar flotante si hacen clic fuera del componente
     document.addEventListener('click', (e) => {
         if (!inputBuscarCl.contains(e.target) && !listaResultados.contains(e.target)) {
             listaResultados.style.display = 'none';
@@ -152,7 +146,6 @@ function inicializarBuscadorClientes() {
     });
 }
 
-// Sincroniza el ID seleccionado del buscador predictivo con el elemento estructurado nativo
 function sincronizarConSelectOriginal(id) {
     const selectOriginal = document.getElementById('select-cliente');
     if (selectOriginal) {
@@ -162,11 +155,50 @@ function sincronizarConSelectOriginal(id) {
 }
 
 // ==========================================
+// MOTOR DE BÚSQUEDA DE PRODUCTOS (NUEVO CONECTOR)
+// ==========================================
+function inicializarBuscadorProductos() {
+    // Apunta al input de búsqueda de productos (asegúrate de que tu HTML tenga este ID o cámbialo por el tuyo)
+    const inputBuscarProd = document.getElementById('buscar-producto-pos') || document.getElementById('search-input');
+    
+    if (!inputBuscarProd) return;
+
+    inputBuscarProd.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        
+        // Si la barra está vacía, volvemos a listar todos los productos
+        if (query === "") {
+            renderizarProductos(productosMaster);
+            return;
+        }
+
+        // Filtrar productos master en memoria por nombre o código si aplica
+        const productosFiltrados = productosMaster.filter(p => 
+            (p.nombre || '').toLowerCase().includes(query) ||
+            (p.codigo || '').toLowerCase().includes(query)
+        );
+
+        // Renderizar la cuadrícula únicamente con las coincidencias
+        renderizarProductos(productosFiltrados);
+    });
+}
+
+// ==========================================
 // 2. RENDERIZACIÓN DE PRODUCTOS Y CARRITO
 // ==========================================
 function renderizarProductos(lista) {
     const container = document.getElementById('grid-productos');
     if (!container) return;
+
+    if (lista.length === 0) {
+        container.innerHTML = `
+            <div style="grid-column: 1 / -1; padding: 30px; text-align: center; color: #94A3B8; font-size: 14px;">
+                <i class="fas fa-search" style="font-size: 24px; display: block; margin-bottom: 10px;"></i>
+                No se encontraron productos coincidentes
+            </div>`;
+        return;
+    }
+
     container.innerHTML = lista.map(p => {
         const pUSD = parseFloat(p.precio) || 0;
         const pBS = (pUSD * tasaActual).toFixed(2).replace('.', ',');
@@ -182,13 +214,21 @@ function renderizarProductos(lista) {
     }).join('');
 }
 
-// ESCUCHA DE PRODUCTOS CORREGIDA (Apunta a la subcolección interna real de tu FireStore)
 function inicializarProductos() {
     const productosRef = collection(db, "usuarios", USER_ID, "productos");
     onSnapshot(productosRef, (snapshot) => {
         productosMaster = [];
         snapshot.forEach(doc => productosMaster.push({ id: doc.id, ...doc.data() }));
-        renderizarProductos(productosMaster);
+        
+        // Al recibir actualización de Firebase, respetamos si el usuario ya está escribiendo un filtro
+        const inputBuscarProd = document.getElementById('buscar-producto-pos') || document.getElementById('search-input');
+        if (inputBuscarProd && inputBuscarProd.value.trim() !== "") {
+            const query = inputBuscarProd.value.toLowerCase().trim();
+            const filtrados = productosMaster.filter(p => (p.nombre || '').toLowerCase().includes(query));
+            renderizarProductos(filtrados);
+        } else {
+            renderizarProductos(productosMaster);
+        }
     });
 }
 
@@ -247,7 +287,7 @@ window.agregarCarrito = (id) => {
     const p = productosMaster.find(x => x.id === id);
     if (!p) return;
     const item = carrito.find(c => c.id === id);
-    if (item) { item.cantidad++; } else { carrito.push({ ...p, cantidad: 1 }); }
+    if (item) { item.cantidad++; } else { carrito.push({ ...p, quantity: 1, cantidad: 1 }); }
     itemSeleccionadoIndex = carrito.length - 1;
     window.actualizarCarritoUI();
 };
@@ -327,11 +367,12 @@ window.registrarVenta = async () => {
         
         alert("✅ Venta registrada bajo Factura Nro: " + nroFactura);
         
-        // Limpieza y reseteo completo del POS
+        // Limpieza del POS
         carrito = []; 
         window.actualizarCarritoUI();
         if(document.getElementById('in-nro-factura')) document.getElementById('in-nro-factura').value = '';
         
+        // Limpiar buscador de clientes
         const inputBuscarCl = document.getElementById('buscar-cliente-pos');
         if (inputBuscarCl) {
             inputBuscarCl.value = "";
@@ -341,6 +382,10 @@ window.registrarVenta = async () => {
             if (btnLimpiarCl) btnLimpiarCl.style.display = 'none';
             sincronizarConSelectOriginal("casual");
         }
+
+        // Limpiar buscador de productos
+        const inputBuscarProd = document.getElementById('buscar-producto-pos') || document.getElementById('search-input');
+        if (inputBuscarProd) inputBuscarProd.value = "";
         
         document.getElementById('modalPago').style.display = 'none';
     } catch (e) { 
@@ -362,13 +407,4 @@ window.addEventListener('keydown', (e) => {
     if (e.key === "F6") { e.preventDefault(); if (!modalActivo) window.ejecutarF6(); }
     if (e.key === "F9") { 
         e.preventDefault(); 
-        if (!modalActivo) { window.abrirModalCobro(); } else { window.registrarVenta(); } 
-    }
-    if (e.key === "Escape") document.getElementById('modalPago').style.display = 'none';
-});
-
-// Inicializar todos los procesos del core en orden correcto
-cargarTasa();
-inicializarClientes();
-inicializarProductos();
-inicializarBuscadorClientes();
+        if (!modalActivo) { window.abrirModalCobro(); } else { window.registrarVenta(); }
