@@ -1,7 +1,7 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
  * Módulo de Facturación y Ventas Completo (pos-core.js)
- * Optimización: Solución definitiva de capas visuales (z-index) para el buscador flotante.
+ * Optimización Express: Navegación por teclado (Flechas + Enter) en buscadores y límite de 30 caracteres.
  */
 
 import { db } from './firebase-config.js';
@@ -9,8 +9,7 @@ import {
     collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// ID verificado de tu base de datos Cloud Firestore
-const USER_ID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
+const USER_ID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12"; 
 
 let productosMaster = [];
 let clientesMaster = []; 
@@ -19,6 +18,10 @@ let itemSeleccionadoIndex = -1;
 let tasaActual = 1;
 
 window.clientesMaster = [];
+
+// Variables auxiliares para el control de enfoque en las listas flotantes
+let indexFocoCliente = -1;
+let indexFocoProducto = -1;
 
 // ==========================================
 // 1. INICIALIZACIÓN Y CONFIGURACIÓN
@@ -59,7 +62,7 @@ function poblarSelectorClientes() {
 }
 
 // ==========================================
-// 2. MOTOR DE BÚSQUEDA FLOTANTE DE CLIENTES
+// 2. MOTOR DE BÚSQUEDA Y CONTROL TECLADO - CLIENTES
 // ==========================================
 function inicializarBuscadorClientes() {
     const inputBuscarCl = document.getElementById('buscar-cliente-pos');
@@ -70,6 +73,7 @@ function inicializarBuscadorClientes() {
 
     inputBuscarCl.addEventListener('input', (e) => {
         const query = e.target.value.toLowerCase().trim();
+        indexFocoCliente = -1; 
         
         if (query === "") {
             listaResultados.style.display = 'none';
@@ -91,8 +95,8 @@ function inicializarBuscadorClientes() {
                     <i class="fas fa-exclamation-circle"></i> No encontrado
                 </div>`;
         } else {
-            listaResultados.innerHTML = filtrados.map(c => `
-                <div class="opcion-item-desplegable" data-id="${c.id}" data-nombre="${c.nombre}" style="padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #F1F5F9; font-size: 13px; background: white;">
+            listaResultados.innerHTML = filtrados.map((c, i) => `
+                <div class="opcion-item-desplegable item-cl-nav" data-index="${i}" data-id="${c.id}" data-nombre="${c.nombre}" style="padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #F1F5F9; font-size: 13px; background: white; transition: background 0.1s;">
                     <b style="color: #1E293B; display: block; margin: 0;">${c.nombre}</b>
                     <small style="color: #006aff; font-family: monospace; font-weight: 700;">${c.rif || 'SIN IDENTIFICACIÓN'}</small>
                 </div>
@@ -100,16 +104,41 @@ function inicializarBuscadorClientes() {
 
             listaResultados.querySelectorAll('.opcion-item-desplegable').forEach(item => {
                 item.addEventListener('click', function() {
-                    inputBuscarCl.value = this.getAttribute('data-nombre');
-                    inputBuscarCl.style.borderColor = "#006aff";
-                    inputBuscarCl.style.backgroundColor = "#eff6ff";
-                    listaResultados.style.display = 'none';
-                    sincronizarConSelectOriginal(this.getAttribute('data-id'));
+                    seleccionarClienteDesdeLista(this);
                 });
             });
         }
         listaResultados.style.display = 'block';
     });
+
+    // Escuchador de teclas para Clientes
+    inputBuscarCl.addEventListener('keydown', (e) => {
+        const items = listaResultados.querySelectorAll('.item-cl-nav');
+        if (!items.length || listaResultados.style.display === 'none') return;
+
+        if (e.key === "ArrowDown") {
+            e.preventDefault();
+            indexFocoCliente = (indexFocoCliente + 1) % items.length;
+            resaltarItemEnLista(items, indexFocoCliente);
+        } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            indexFocoCliente = (indexFocoCliente - 1 + items.length) % items.length;
+            resaltarItemEnLista(items, indexFocoCliente);
+        } else if (e.key === "Enter") {
+            if (indexFocoCliente >= 0 && indexFocoCliente < items.length) {
+                e.preventDefault();
+                seleccionarClienteDesdeLista(items[indexFocoCliente]);
+            }
+        }
+    });
+
+    function seleccionarClienteDesdeLista(elemento) {
+        inputBuscarCl.value = elemento.getAttribute('data-nombre');
+        inputBuscarCl.style.borderColor = "#006aff";
+        inputBuscarCl.style.backgroundColor = "#eff6ff";
+        listaResultados.style.display = 'none';
+        sincronizarConSelectOriginal(elemento.getAttribute('data-id'));
+    }
 
     if (btnLimpiarCl) {
         btnLimpiarCl.addEventListener('click', () => {
@@ -138,10 +167,9 @@ function sincronizarConSelectOriginal(id) {
 }
 
 // ==========================================
-// 3. MOTOR DE BÚSQUEDA FLOTANTE DE PRODUCTOS (CORREGIDO DE CAPAS)
+// 3. MOTOR DE BÚSQUEDA Y CONTROL TECLADO - PRODUCTOS
 // ==========================================
 function inicializarBuscadorProductos() {
-    // Intenta capturar por ID personalizado o el ID estándar de búsqueda
     const inputBuscarProd = document.getElementById('buscar-producto-pos') || document.getElementById('search-input');
     const listaResultadosProd = document.getElementById('resultados-producto-pos');
 
@@ -149,13 +177,13 @@ function inicializarBuscadorProductos() {
 
     inputBuscarProd.addEventListener('input', (e) => {
         const query = e.target.value.toLowerCase().trim();
+        indexFocoProducto = -1;
 
         if (query === "") {
             listaResultadosProd.style.display = 'none';
             return;
         }
 
-        // Filtrado en tiempo real desde el arreglo maestro cacheado
         const filtrados = productosMaster.filter(p => 
             (p.nombre || '').toLowerCase().includes(query) ||
             (p.codigo || '').toLowerCase().includes(query)
@@ -167,11 +195,11 @@ function inicializarBuscadorProductos() {
                     <i class="fas fa-box-open" style="color: #CBD5E1; display: block; margin-bottom: 4px; font-size: 16px;"></i> No hay repuestos con ese nombre
                 </div>`;
         } else {
-            listaResultadosProd.innerHTML = filtrados.map(p => {
+            listaResultadosProd.innerHTML = filtrados.map((p, i) => {
                 const pUSD = parseFloat(p.precio) || 0;
                 const pBS = (pUSD * tasaActual).toFixed(2).replace('.', ',');
                 return `
-                    <div class="opcion-item-desplegable-prod" data-id="${p.id}" style="padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #F1F5F9; display: flex; justify-content: space-between; align-items: center; font-size: 14px; background: #FFFFFF; transition: background 0.2s;">
+                    <div class="opcion-item-desplegable-prod item-prod-nav" data-index="${i}" data-id="${p.id}" style="padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #F1F5F9; display: flex; justify-content: space-between; align-items: center; font-size: 14px; background: #FFFFFF; transition: background 0.1s;">
                         <span style="color: #1E293B; font-weight: 600; text-align: left; pointer-events: none;">${p.nombre}</span>
                         <div style="text-align: right; margin-left: 15px; flex-shrink: 0; pointer-events: none;">
                             <b style="color: #006aff; display: block; font-size: 14px;">$${pUSD.toFixed(2)}</b>
@@ -181,34 +209,64 @@ function inicializarBuscadorProductos() {
                 `;
             }).join('');
 
-            // Asignar los clics a cada ítem del menú flotante
             listaResultadosProd.querySelectorAll('.opcion-item-desplegable-prod').forEach(item => {
                 item.addEventListener('click', function() {
-                    const prodId = this.getAttribute('data-id');
-                    window.agregarCarrito(prodId);
-                    
-                    // Limpiar barra y ocultar menú flotante
-                    inputBuscarProd.value = "";
-                    listaResultadosProd.style.display = 'none';
-                    inputBuscarProd.focus();
+                    ejecutarSeleccionProducto(this.getAttribute('data-id'));
                 });
-
-                // Efecto hover profesional al pasar el mouse
-                item.addEventListener('mouseover', () => item.style.backgroundColor = '#F8FAFC');
-                item.addEventListener('mouseout', () => item.style.backgroundColor = '#FFFFFF');
+                item.addEventListener('mouseover', function() {
+                    indexFocoProducto = parseInt(this.getAttribute('data-index'));
+                    const allItems = listaResultadosProd.querySelectorAll('.item-prod-nav');
+                    resaltarItemEnLista(allItems, indexFocoProducto);
+                });
             });
         }
-        
-        // Mostrar explícitamente el contenedor flotante
         listaResultadosProd.style.display = 'block';
     });
 
-    // Cerrar el buscador si el usuario hace clic afuera de la barra o del menú
+    // Escuchador de teclas para Productos
+    inputBuscarProd.addEventListener('keydown', (e) => {
+        const items = listaResultadosProd.querySelectorAll('.item-prod-nav');
+        if (!items.length || listaResultadosProd.style.display === 'none') return;
+
+        if (e.key === "ArrowDown") {
+            e.preventDefault();
+            indexFocoProducto = (indexFocoProducto + 1) % items.length;
+            resaltarItemEnLista(items, indexFocoProducto);
+        } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            indexFocoProducto = (indexFocoProducto - 1 + items.length) % items.length;
+            resaltarItemEnLista(items, indexFocoProducto);
+        } else if (e.key === "Enter") {
+            if (indexFocoProducto >= 0 && indexFocoProducto < items.length) {
+                e.preventDefault();
+                ejecutarSeleccionProducto(items[indexFocoProducto].getAttribute('data-id'));
+            }
+        }
+    });
+
+    function ejecutarSeleccionProducto(prodId) {
+        window.agregarCarrito(prodId);
+        inputBuscarProd.value = "";
+        listaResultadosProd.style.display = 'none';
+        inputBuscarProd.focus();
+    }
+
     document.addEventListener('click', (e) => {
         if (!inputBuscarProd.contains(e.target) && !listaResultadosProd.contains(e.target)) {
             listaResultadosProd.style.display = 'none';
         }
     });
+}
+
+// Función compartida para mover el foco visual
+function resaltarItemEnLista(itemsArray, indexResaltar) {
+    itemsArray.forEach(item => {
+        item.style.backgroundColor = '#FFFFFF';
+    });
+    if (indexResaltar >= 0 && indexResaltar < itemsArray.length) {
+        itemsArray[indexResaltar].style.backgroundColor = '#F1F5F9';
+        itemsArray[indexResaltar].scrollIntoView({ block: 'nearest' });
+    }
 }
 
 // ==========================================
@@ -220,7 +278,6 @@ function inicializarProductos() {
         productosMaster = [];
         snapshot.forEach(doc => productosMaster.push({ id: doc.id, ...doc.data() }));
         
-        // Dejar el contenedor central limpio con el aviso descriptivo
         const container = document.getElementById('grid-productos');
         if (container) {
             container.innerHTML = `
@@ -232,6 +289,7 @@ function inicializarProductos() {
     });
 }
 
+// MODIFICACIÓN COMPACTA: Máximo de 30 caracteres para el nombre en la fila
 window.actualizarCarritoUI = () => {
     const list = document.getElementById('lista-carrito');
     let total = 0;
@@ -241,11 +299,13 @@ window.actualizarCarritoUI = () => {
         const subUSD = c.precio * c.cantidad;
         const subBS = (subUSD * tasaActual).toFixed(2).replace('.', ',');
         total += subUSD;
-        const nombreCorto = c.nombre.length > 22 ? c.nombre.substring(0, 22) + "..." : c.nombre;
+        
+        // CORRECCIÓN SOLICITADA: Límite extendido a 30 caracteres
+        const nombreCorto = c.nombre.length > 30 ? c.nombre.substring(0, 30) + "..." : c.nombre;
 
         return `
             <div class="single-line-row ${index === itemSeleccionadoIndex ? 'item-selected' : ''}" onclick="window.seleccionarItem(${index})" style="padding: 12px 0;">
-                <span style="flex: 1; margin-right: 15px;">${c.cantidad}x ${nombreCorto}</span>
+                <span style="flex: 1; margin-right: 15px; font-weight: 600;">${c.cantidad}x ${nombreCorto}</span>
                 <div class="price-group">
                     <b>$${subUSD.toFixed(2)}</b>
                     <small>${subBS} Bs.</small>
@@ -259,7 +319,7 @@ window.actualizarCarritoUI = () => {
 };
 
 // ==========================================
-// 5. BOTONES EXPRESS Y REGLAS DE TECLADO (F4, F5, F6)
+// 5. BOTONES EXPRESS Y REGLAS DE TECLADO
 // ==========================================
 window.ejecutarF4 = () => {
     if (itemSeleccionadoIndex === -1) return;
@@ -269,7 +329,7 @@ window.ejecutarF4 = () => {
 
 window.ejecutarF5 = () => {
     if (itemSeleccionadoIndex === -1) return;
-    const p = prompt("Nuevo Precio ($):", carrito[itemSeleccionadoIndex].precio);
+    const p = prompt("Nuevo Precio ($):", carrito[itemSeleccion==Index].precio);
     if (p && !isNaN(p)) { carrito[itemSeleccionadoIndex].precio = parseFloat(p); window.actualizarCarritoUI(); }
 };
 
@@ -352,7 +412,7 @@ window.registrarVenta = async () => {
             pagos: {
                 punto: parseFloat(document.getElementById('in-punto-bs').value) || 0,
                 movil: parseFloat(document.getElementById('in-pagomovil-bs').value) || 0,
-                efective: parseFloat(document.getElementById('in-efectivo-bs').value) || 0,
+                efectivo: parseFloat(document.getElementById('in-efectivo-bs').value) || 0,
                 divisas: parseFloat(document.getElementById('in-divisas-usd').value) || 0
             },
             items: carrito.map(i => ({ nombre: i.nombre, cant: i.cantidad, precio: i.precio }))
@@ -364,7 +424,6 @@ window.registrarVenta = async () => {
         
         if(document.getElementById('in-nro-factura')) document.getElementById('in-nro-factura').value = '';
         
-        // Resetear inputs
         const inputBuscarCl = document.getElementById('buscar-cliente-pos');
         if (inputBuscarCl) {
             inputBuscarCl.value = "";
@@ -397,7 +456,7 @@ window.addEventListener('keydown', (e) => {
     if (e.key === "Escape") document.getElementById('modalPago').style.display = 'none';
 });
 
-// Lanzamiento de triggers
+// Inicialización
 cargarTasa();
 inicializarClientes();
 inicializarProductos();
