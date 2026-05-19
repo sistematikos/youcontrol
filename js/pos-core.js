@@ -1,7 +1,7 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
  * Módulo de Facturación y Ventas Completo (pos-core.js)
- * Optimizaciones: Interfaz limpia al inicio y buscador desplegable flotante exclusivo.
+ * CORRECCIÓN REVENTADA: ID de Firestore sincronizado con la base de datos real.
  */
 
 import { db } from './firebase-config.js';
@@ -9,6 +9,7 @@ import {
     collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+// ID CORREGIDO EXACTAMENTE COMO EN TU CAPTURA DE PANTALLA:
 const USER_ID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12"; 
 
 let productosMaster = [];
@@ -86,12 +87,12 @@ function inicializarBuscadorClientes() {
 
         if (filtrados.length === 0) {
             listaResultados.innerHTML = `
-                <div style="padding: 12px; color: #94A3B8; font-size: 13px; font-weight: 600; text-align: center;">
+                <div style="padding: 12px; color: #94A3B8; font-size: 13px; font-weight: 600; text-align: center; background: white;">
                     <i class="fas fa-exclamation-circle"></i> No encontrado
                 </div>`;
         } else {
             listaResultados.innerHTML = filtrados.map(c => `
-                <div class="opcion-item-desplegable" data-id="${c.id}" data-nombre="${c.nombre}" style="padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #F1F5F9; font-size: 13px;">
+                <div class="opcion-item-desplegable" data-id="${c.id}" data-nombre="${c.nombre}" style="padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #F1F5F9; font-size: 13px; background: white;">
                     <b style="color: #1E293B; display: block; margin: 0;">${c.nombre}</b>
                     <small style="color: #006aff; font-family: monospace; font-weight: 700;">${c.rif || 'SIN IDENTIFICACIÓN'}</small>
                 </div>
@@ -137,7 +138,7 @@ function sincronizarConSelectOriginal(id) {
 }
 
 // ==========================================
-// 3. MOTOR DE BÚSQUEDA EXCLUSIVO EN DESPLEGABLE FLOTANTE
+// 3. MOTOR DE BÚSQUEDA EXCLUSIVO DE PRODUCTOS (FLOTANTE CORREGIDO)
 // ==========================================
 function inicializarBuscadorProductos() {
     const inputBuscarProd = document.getElementById('buscar-producto-pos') || document.getElementById('search-input');
@@ -149,14 +150,15 @@ function inicializarBuscadorProductos() {
         Object.assign(listaResultadosProd.style, {
             position: 'absolute',
             backgroundColor: '#FFFFFF',
-            border: '1px solid #E2E8F0',
+            border: '2px solid #006aff',
             borderRadius: '8px',
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.15)',
             maxHeight: '280px',
             overflowY: 'auto',
-            zIndex: '9999',
+            zIndex: '99999',
             width: inputBuscarProd.offsetWidth + 'px',
-            display: 'none'
+            display: 'none',
+            marginTop: '4px'
         });
         inputBuscarProd.parentNode.style.position = 'relative';
         inputBuscarProd.parentNode.appendChild(listaResultadosProd);
@@ -173,7 +175,7 @@ function inicializarBuscadorProductos() {
             return;
         }
 
-        // Búsqueda inteligente sobre la memoria cacheada
+        // Filtrado sobre el array maestro alimentado por el ID correcto
         const filtrados = productosMaster.filter(p => 
             (p.nombre || '').toLowerCase().includes(query) ||
             (p.codigo || '').toLowerCase().includes(query)
@@ -181,15 +183,15 @@ function inicializarBuscadorProductos() {
 
         if (filtrados.length === 0) {
             listaResultadosProd.innerHTML = `
-                <div style="padding: 12px; color: #94A3B8; font-size: 13px; font-weight: 600; text-align: center;">
-                    <i class="fas fa-box-open"></i> Producto no registrado
+                <div style="padding: 15px; color: #64748B; font-size: 13px; font-weight: 600; text-align: center; background: #FFFFFF;">
+                    <i class="fas fa-box-open" style="color: #CBD5E1; display:block; margin-bottom:4px;"></i> Producto no registrado
                 </div>`;
         } else {
             listaResultadosProd.innerHTML = filtrados.map(p => {
                 const pUSD = parseFloat(p.precio) || 0;
                 const pBS = (pUSD * tasaActual).toFixed(2).replace('.', ',');
                 return `
-                    <div class="opcion-item-desplegable" data-id="${p.id}" style="padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #F1F5F9; display: flex; justify-content: space-between; align-items: center; font-size: 13px;">
+                    <div class="opcion-item-desplegable" data-id="${p.id}" style="padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #F1F5F9; display: flex; justify-content: space-between; align-items: center; font-size: 13px; background: #FFFFFF;">
                         <span style="color: #1E293B; font-weight: 600; text-align: left;">${p.nombre}</span>
                         <div style="text-align: right; margin-left: 15px; flex-shrink: 0;">
                             <b style="color: #006aff; display: block;">$${pUSD.toFixed(2)}</b>
@@ -208,6 +210,8 @@ function inicializarBuscadorProductos() {
                     listaResultadosProd.style.display = 'none';
                     inputBuscarProd.focus();
                 });
+                item.addEventListener('mouseover', () => item.style.backgroundColor = '#F8FAFC');
+                item.addEventListener('mouseout', () => item.style.backgroundColor = '#FFFFFF');
             });
         }
         listaResultadosProd.style.display = 'block';
@@ -221,7 +225,7 @@ function inicializarBuscadorProductos() {
 }
 
 // ==========================================
-// 4. PERSISTENCIA EN TIEMPO REAL DESDE FIREBASE
+// 4. PERSISTENCIA DESDE FIREBASE CON EL ID CORRECTO
 // ==========================================
 function inicializarProductos() {
     const productosRef = collection(db, "usuarios", USER_ID, "productos");
@@ -229,14 +233,12 @@ function inicializarProductos() {
         productosMaster = [];
         snapshot.forEach(doc => productosMaster.push({ id: doc.id, ...doc.data() }));
         
-        // CORRECCIÓN CLAVE: Dejamos limpio el contenedor fijo de la cuadrícula.
-        // Ya no renderizamos la lista completa al cargar.
         const container = document.getElementById('grid-productos');
         if (container) {
             container.innerHTML = `
                 <div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: #94A3B8; font-size: 14px; font-weight: 500;">
                     <i class="fas fa-search" style="font-size: 24px; display: block; margin-bottom: 10px; color: #CBD5E1;"></i>
-                    Use la barra superior para buscar y añadir repuestos
+                    Escriba arriba para buscar y añadir repuestos al carro
                 </div>`;
         }
     });
@@ -374,7 +376,6 @@ window.registrarVenta = async () => {
         window.actualizarCarritoUI();
         if(document.getElementById('in-nro-factura')) document.getElementById('in-nro-factura').value = '';
         
-        // Resetear buscador cliente
         const inputBuscarCl = document.getElementById('buscar-cliente-pos');
         if (inputBuscarCl) {
             inputBuscarCl.value = "";
@@ -383,7 +384,6 @@ window.registrarVenta = async () => {
             sincronizarConSelectOriginal("casual");
         }
 
-        // Resetear buscador productos
         const inputBuscarProd = document.getElementById('buscar-producto-pos') || document.getElementById('search-input');
         if (inputBuscarProd) inputBuscarProd.value = "";
         
