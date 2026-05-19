@@ -1,7 +1,7 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
  * Módulo de Facturación y Ventas Completo (pos-core.js)
- * CORRECCIÓN REVENTADA: ID de Firestore sincronizado con la base de datos real.
+ * Optimización: Solución definitiva de capas visuales (z-index) para el buscador flotante.
  */
 
 import { db } from './firebase-config.js';
@@ -9,8 +9,8 @@ import {
     collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// ID CORREGIDO EXACTAMENTE COMO EN TU CAPTURA DE PANTALLA:
-const USER_ID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12"; 
+// ID verificado de tu base de datos Cloud Firestore
+const USER_ID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
 
 let productosMaster = [];
 let clientesMaster = []; 
@@ -138,44 +138,24 @@ function sincronizarConSelectOriginal(id) {
 }
 
 // ==========================================
-// 3. MOTOR DE BÚSQUEDA EXCLUSIVO DE PRODUCTOS (FLOTANTE CORREGIDO)
+// 3. MOTOR DE BÚSQUEDA FLOTANTE DE PRODUCTOS (CORREGIDO DE CAPAS)
 // ==========================================
 function inicializarBuscadorProductos() {
+    // Intenta capturar por ID personalizado o el ID estándar de búsqueda
     const inputBuscarProd = document.getElementById('buscar-producto-pos') || document.getElementById('search-input');
-    
-    let listaResultadosProd = document.getElementById('resultados-producto-pos');
-    if (inputBuscarProd && !listaResultadosProd) {
-        listaResultadosProd = document.createElement('div');
-        listaResultadosProd.id = 'resultados-producto-pos';
-        Object.assign(listaResultadosProd.style, {
-            position: 'absolute',
-            backgroundColor: '#FFFFFF',
-            border: '2px solid #006aff',
-            borderRadius: '8px',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.15)',
-            maxHeight: '280px',
-            overflowY: 'auto',
-            zIndex: '99999',
-            width: inputBuscarProd.offsetWidth + 'px',
-            display: 'none',
-            marginTop: '4px'
-        });
-        inputBuscarProd.parentNode.style.position = 'relative';
-        inputBuscarProd.parentNode.appendChild(listaResultadosProd);
-    }
+    const listaResultadosProd = document.getElementById('resultados-producto-pos');
 
     if (!inputBuscarProd || !listaResultadosProd) return;
 
     inputBuscarProd.addEventListener('input', (e) => {
         const query = e.target.value.toLowerCase().trim();
-        listaResultadosProd.style.width = inputBuscarProd.offsetWidth + 'px';
 
         if (query === "") {
             listaResultadosProd.style.display = 'none';
             return;
         }
 
-        // Filtrado sobre el array maestro alimentado por el ID correcto
+        // Filtrado en tiempo real desde el arreglo maestro cacheado
         const filtrados = productosMaster.filter(p => 
             (p.nombre || '').toLowerCase().includes(query) ||
             (p.codigo || '').toLowerCase().includes(query)
@@ -184,39 +164,46 @@ function inicializarBuscadorProductos() {
         if (filtrados.length === 0) {
             listaResultadosProd.innerHTML = `
                 <div style="padding: 15px; color: #64748B; font-size: 13px; font-weight: 600; text-align: center; background: #FFFFFF;">
-                    <i class="fas fa-box-open" style="color: #CBD5E1; display:block; margin-bottom:4px;"></i> Producto no registrado
+                    <i class="fas fa-box-open" style="color: #CBD5E1; display: block; margin-bottom: 4px; font-size: 16px;"></i> No hay repuestos con ese nombre
                 </div>`;
         } else {
             listaResultadosProd.innerHTML = filtrados.map(p => {
                 const pUSD = parseFloat(p.precio) || 0;
                 const pBS = (pUSD * tasaActual).toFixed(2).replace('.', ',');
                 return `
-                    <div class="opcion-item-desplegable" data-id="${p.id}" style="padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #F1F5F9; display: flex; justify-content: space-between; align-items: center; font-size: 13px; background: #FFFFFF;">
-                        <span style="color: #1E293B; font-weight: 600; text-align: left;">${p.nombre}</span>
-                        <div style="text-align: right; margin-left: 15px; flex-shrink: 0;">
-                            <b style="color: #006aff; display: block;">$${pUSD.toFixed(2)}</b>
-                            <small style="color: #64748B; font-size: 11px;">${pBS} Bs.</small>
+                    <div class="opcion-item-desplegable-prod" data-id="${p.id}" style="padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #F1F5F9; display: flex; justify-content: space-between; align-items: center; font-size: 14px; background: #FFFFFF; transition: background 0.2s;">
+                        <span style="color: #1E293B; font-weight: 600; text-align: left; pointer-events: none;">${p.nombre}</span>
+                        <div style="text-align: right; margin-left: 15px; flex-shrink: 0; pointer-events: none;">
+                            <b style="color: #006aff; display: block; font-size: 14px;">$${pUSD.toFixed(2)}</b>
+                            <small style="color: #64748B; font-size: 11px; font-weight: 600;">${pBS} Bs.</small>
                         </div>
                     </div>
                 `;
             }).join('');
 
-            listaResultadosProd.querySelectorAll('.opcion-item-desplegable').forEach(item => {
+            // Asignar los clics a cada ítem del menú flotante
+            listaResultadosProd.querySelectorAll('.opcion-item-desplegable-prod').forEach(item => {
                 item.addEventListener('click', function() {
                     const prodId = this.getAttribute('data-id');
                     window.agregarCarrito(prodId);
                     
+                    // Limpiar barra y ocultar menú flotante
                     inputBuscarProd.value = "";
                     listaResultadosProd.style.display = 'none';
                     inputBuscarProd.focus();
                 });
+
+                // Efecto hover profesional al pasar el mouse
                 item.addEventListener('mouseover', () => item.style.backgroundColor = '#F8FAFC');
                 item.addEventListener('mouseout', () => item.style.backgroundColor = '#FFFFFF');
             });
         }
+        
+        // Mostrar explícitamente el contenedor flotante
         listaResultadosProd.style.display = 'block';
     });
 
+    // Cerrar el buscador si el usuario hace clic afuera de la barra o del menú
     document.addEventListener('click', (e) => {
         if (!inputBuscarProd.contains(e.target) && !listaResultadosProd.contains(e.target)) {
             listaResultadosProd.style.display = 'none';
@@ -225,7 +212,7 @@ function inicializarBuscadorProductos() {
 }
 
 // ==========================================
-// 4. PERSISTENCIA DESDE FIREBASE CON EL ID CORRECTO
+// 4. PERSISTENCIA EN TIEMPO REAL (FIREBASE)
 // ==========================================
 function inicializarProductos() {
     const productosRef = collection(db, "usuarios", USER_ID, "productos");
@@ -233,11 +220,12 @@ function inicializarProductos() {
         productosMaster = [];
         snapshot.forEach(doc => productosMaster.push({ id: doc.id, ...doc.data() }));
         
+        // Dejar el contenedor central limpio con el aviso descriptivo
         const container = document.getElementById('grid-productos');
         if (container) {
             container.innerHTML = `
-                <div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: #94A3B8; font-size: 14px; font-weight: 500;">
-                    <i class="fas fa-search" style="font-size: 24px; display: block; margin-bottom: 10px; color: #CBD5E1;"></i>
+                <div style="grid-column: 1 / -1; padding: 60px 20px; text-align: center; color: #94A3B8; font-size: 14px; font-weight: 500;">
+                    <i class="fas fa-search" style="font-size: 28px; display: block; margin-bottom: 12px; color: #CBD5E1;"></i>
                     Escriba arriba para buscar y añadir repuestos al carro
                 </div>`;
         }
@@ -271,7 +259,7 @@ window.actualizarCarritoUI = () => {
 };
 
 // ==========================================
-// 5. LÓGICA Y TECLAS EXPRESS (F4, F5, F6)
+// 5. BOTONES EXPRESS Y REGLAS DE TECLADO (F4, F5, F6)
 // ==========================================
 window.ejecutarF4 = () => {
     if (itemSeleccionadoIndex === -1) return;
@@ -304,7 +292,7 @@ window.agregarCarrito = (id) => {
 window.seleccionarItem = (i) => { itemSeleccionadoIndex = i; window.actualizarCarritoUI(); };
 
 // ==========================================
-// 6. PASARELA DE COBRO Y PERSISTENCIA (CRUD)
+// 6. CIERRE DE VENTA (MODAL)
 // ==========================================
 window.abrirModalCobro = () => {
     if (carrito.length === 0) return;
@@ -364,18 +352,19 @@ window.registrarVenta = async () => {
             pagos: {
                 punto: parseFloat(document.getElementById('in-punto-bs').value) || 0,
                 movil: parseFloat(document.getElementById('in-pagomovil-bs').value) || 0,
-                efectivo: parseFloat(document.getElementById('in-efectivo-bs').value) || 0,
+                efective: parseFloat(document.getElementById('in-efectivo-bs').value) || 0,
                 divisas: parseFloat(document.getElementById('in-divisas-usd').value) || 0
             },
             items: carrito.map(i => ({ nombre: i.nombre, cant: i.cantidad, precio: i.precio }))
         });
         
         alert("✅ Venta registrada bajo Factura Nro: " + nroFactura);
-        
         carrito = []; 
         window.actualizarCarritoUI();
+        
         if(document.getElementById('in-nro-factura')) document.getElementById('in-nro-factura').value = '';
         
+        // Resetear inputs
         const inputBuscarCl = document.getElementById('buscar-cliente-pos');
         if (inputBuscarCl) {
             inputBuscarCl.value = "";
@@ -393,7 +382,7 @@ window.registrarVenta = async () => {
 };
 
 // ==========================================
-// 7. CONTROL DE TECLADO
+// 7. EVENTOS DE TECLADO GENERAL
 // ==========================================
 window.addEventListener('keydown', (e) => {
     const modalActivo = document.getElementById('modalPago').style.display === 'flex';
@@ -408,7 +397,7 @@ window.addEventListener('keydown', (e) => {
     if (e.key === "Escape") document.getElementById('modalPago').style.display = 'none';
 });
 
-// Inicialización de módulos
+// Lanzamiento de triggers
 cargarTasa();
 inicializarClientes();
 inicializarProductos();
