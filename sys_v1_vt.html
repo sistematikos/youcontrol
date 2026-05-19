@@ -3,401 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>You Control - Punto de Ventas</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>YOU CONTROL - Punto de Ventas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { 
-            --royal-blue: #0052d4; 
-            --vibrant-blue: #006aff; 
-            --bg-light: #f8fafc; 
-            --text-dark: #1e293b; 
+        :root {
+            --primary-color: #006aff;
+            --primary-hover: #0056d4;
+            --bg-main: #f8fafc;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
         }
-        
-        body { 
-            font-family: 'Segoe UI', sans-serif; 
-            background: var(--bg-light); 
-            margin: 0; 
-            color: var(--text-dark); 
-            overflow: hidden; 
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-dark);
             height: 100vh;
             display: flex;
             flex-direction: column;
-        }
-        
-        /* Navbar Superior */
-        .header-sales { 
-            background: var(--vibrant-blue); 
-            color: white; 
-            padding: 10px 20px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            height: 38px; 
-            flex-shrink: 0;
+            overflow: hidden;
         }
 
-        /* Contenedor del Título y Botón de Regreso */
-        .header-brand-zone {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        /* Botón de Regresar Estilizado */
-        .btn-back-menu {
+        /* NAVBAR SUPERIOR */
+        .navbar {
+            background-color: var(--primary-color);
             color: white;
-            text-decoration: none;
-            background: rgba(255, 255, 255, 0.15);
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
             display: flex;
             align-items: center;
-            gap: 6px;
-            transition: all 0.2s ease;
-            border: 1px solid rgba(255, 255, 255, 0.25);
+            gap: 10px;
         }
 
-        .btn-back-menu:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateX(-2px);
-        }
-        
-        .action-buttons { 
-            display: flex; 
-            gap: 10px; 
-        }
-        
-        .btn-f { 
-            background: white; 
-            border: none; 
-            padding: 6px 14px; 
-            border-radius: 20px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            color: var(--vibrant-blue); 
-            font-size: 12px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.08); 
-            display: flex;
-            align-items: center;
-        }
-        
-        .btn-f span { 
-            background: var(--vibrant-blue); 
-            color: white; 
-            padding: 2px 6px; 
-            border-radius: 6px; 
-            margin-right: 6px; 
-            font-size: 11px;
-        }
-        
-        /* Contenedor Principal */
-        .pos-container { 
-            display: grid; 
-            grid-template-columns: 1fr 380px; 
-            gap: 15px; 
-            padding: 15px; 
-            box-sizing: border-box;
-            flex-grow: 1;
-            height: calc(100vh - 58px); 
-            overflow: hidden;
-        }
-        
-        /* Paneles */
-        .panel-left, .panel-cart { 
-            background: white; 
-            border-radius: 12px; 
-            padding: 15px; 
-            display: flex; 
-            flex-direction: column; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04); 
-            overflow: hidden; 
-            box-sizing: border-box;
-        }
-        
-        #inputBusqueda { 
-            width: 100%; 
-            padding: 10px 14px; 
-            border: 2px solid #e2e8f0; 
-            border-radius: 8px; 
-            font-size: 15px; 
-            margin-bottom: 15px; 
-            outline: none; 
-            box-sizing: border-box;
-        }
-        
-        #inputBusqueda:focus { border-color: var(--vibrant-blue); }
-        
-        .product-grid { 
-            overflow-y: auto; 
-            flex-grow: 1; 
-            padding-right: 4px;
-        }
-        
-        /* Estructura base de las filas */
-        .single-line-row { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 10px 8px; 
-            border-bottom: 1px solid #f1f5f9; 
-            cursor: pointer; 
-        }
-        
-        .item-selected { 
-            background: #e0e7ff !important; 
-            border-left: 5px solid var(--vibrant-blue); 
-        }
-
-        /* SOLUCIÓN IZQUIERDA: SEPARAR LOS PRECIOS */
-        .single-line-row div:last-child,
-        .single-line-row span:last-child {
-            display: flex;
-            align-items: center;
-            gap: 15px; 
-            font-weight: bold;
-        }
-        
-        .single-line-row font, 
-        .single-line-row small, 
-        .single-line-row span:contains("Bs") {
-            margin-left: 15px !important;
-            color: #64748b;
-        }
-
-        /* SOLUCIÓN DERECHA: RECORTE SOLO AL TEXTO */
-        #lista-carrito > div {
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            width: 100% !important;
-            padding: 8px 4px;
-            border-bottom: 1px solid #f1f5f9;
-            box-sizing: border-box;
-        }
-
-        #lista-carrito > div text,
-        #lista-carrito > div span:first-child,
-        #lista-carrito > div div:first-child {
-            display: inline-block;
-            max-width: 170px; 
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            flex-grow: 1;
-        }
-
-        #lista-carrito > div span:last-child,
-        #lista-carrito > div b {
-            white-space: nowrap !important;
-            overflow: visible !important;
-            flex-shrink: 0;
-            margin-left: 10px;
-        }
-        
-        /* Caja de Resumen */
-        .summary-box { 
-            background: #f1f7ff; 
-            padding: 12px; 
-            border-radius: 10px; 
-            text-align: center; 
-            margin-top: 10px; 
-            flex-shrink: 0;
-        }
-        
-        #total-usd { 
-            display: block; 
-            font-size: 28px; 
-            font-weight: 800; 
-            color: var(--vibrant-blue); 
-        }
-        
-        .btn-pay { 
-            background: var(--vibrant-blue); 
-            color: white; 
-            border: none; 
-            width: 100%; 
-            padding: 12px; 
-            border-radius: 10px; 
-            font-size: 16px; 
-            font-weight: bold; 
-            margin-top: 10px; 
-            cursor: pointer; 
-            flex-shrink: 0;
-        }
-        
-        .btn-pay:hover { background: #0056d4; }
-        
-        /* Modales */
-        .modal { 
-            position: fixed; 
-            inset: 0; 
-            background: rgba(0,0,0,0.5); 
-            display: none; 
-            align-items: center; 
-            justify-content: center; 
-            z-index: 100; 
-        }
-        
-        .modal-content { 
-            background: white; 
-            padding: 25px; 
-            border-radius: 16px; 
-            width: 380px; 
-            text-align: center; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-        }
-        
-        .pago-row { 
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between; 
-            margin-bottom: 10px; 
-            background: #f8fafc; 
-            padding: 10px; 
-            border-radius: 8px; 
-            border: 1px solid #e2e8f0; 
-        }
-        
-        .pago-row input { 
-            width: 50%; 
-            border: none; 
-            background: transparent; 
-            text-align: right; 
-            font-size: 18px; 
-            font-weight: bold; 
-            color: var(--vibrant-blue); 
-            outline: none; 
-        }
-
-        /* ESTILOS DEL BUSCADOR PREDICTIVO DE CLIENTES */
-        .search-client-container {
-            margin-bottom: 15px;
-            position: relative;
-            flex-shrink: 0;
-        }
-        .search-client-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-        .search-client-wrapper i.fa-search {
-            position: absolute;
-            left: 12px;
-            color: #94a3b8;
-            font-size: 14px;
-        }
-        #buscar-cliente-pos {
-            width: 100%;
-            padding: 10px 35px 10px 35px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            outline: none;
-            transition: all 0.2s ease;
-        }
-        #buscar-cliente-pos:focus {
-            border-color: var(--vibrant-blue);
-        }
-        #btn-limpiar-cliente {
-            position: absolute;
-            right: 10px;
-            background: none;
+        .btn-menu-top {
+            background: rgba(255, 255, 255, 0.2);
             border: none;
-            color: #94a3b8;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 16px;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 0;
+            font-weight: 600;
+            font-size: 13px;
+            transition: background 0.2s;
         }
-        #resultados-cliente-pos {
-            display: none;
-            position: absolute;
-            left: 0;
-            right: 0;
-            top: 100%;
-            background: white;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            z-index: 99;
-            max-height: 180px;
-            overflow-y: auto;
-            margin-top: 5px;
+
+        .btn-menu-top:hover {
+            background: rgba(255, 255, 255, 0.3);
         }
-    </style>
-</head>
-<body>
 
-<header class="header-sales">
-    <div class="header-brand-zone">
-        <a href="sys_v1_menu.html" class="btn-back-menu">
-            <i class="fas fa-arrow-left"></i> Menú
-        </a>
-        <div style="font-weight: 800; font-size: 16px; letter-spacing: 0.5px;">YOU CONTROL - PUNTO DE VENTAS</div>
-    </div>
-    
-    <div class="action-buttons">
-        <button onclick="window.ejecutarF4()" class="btn-f"><span>F4</span> CANTIDAD</button>
-        <button onclick="window.ejecutarF5()" class="btn-f"><span>F5</span> PRECIO</button>
-        <button onclick="window.ejecutarF6()" class="btn-f"><span>F6</span> ELIMINAR</button>
-        <button onclick="window.abrirModalCobro()" class="btn-f"><span>F9</span> COBRAR</button>
-    </div>
-    <div style="background: rgba(255,255,255,0.2); padding: 4px 14px; border-radius: 20px; font-weight: bold; font-size: 13px;">
-        BCV: <span id="txt-tasa">36.50</span>
-    </div>
-</header>
+        .shortcuts-container {
+            display: flex;
+            gap: 10px;
+        }
 
-<div class="pos-container">
-    <div class="panel-left">
-        <input type="text" id="inputBusqueda" placeholder="Buscar artículo o código (F2)..." autofocus>
-        <div id="grid-productos" class="product-grid"></div>
-    </div>
-    
-    <div class="panel-cart">
-        <div class="search-client-container">
-            <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">Asignar Cliente</div>
-            <div class="search-client-wrapper">
-                <i class="fas fa-search"></i>
-                <input type="text" id="buscar-cliente-pos" placeholder="Filtrar por Nombre o RIF..." autocomplete="off">
-                <button type="button" id="btn-limpiar-cliente" title="Remover cliente"><i class="fas fa-times-circle"></i></button>
-            </div>
-            <div id="resultados-cliente-pos"></div>
-        </div>
-
-        <select id="select-cliente" style="display: none;">
-            <option value="casual" selected>CONSUMIDOR FINAL (CASUAL)</option>
-        </select>
-        <input type="hidden" id="in-nro-factura" value="">
-
-        <div style="font-size: 12px; font-weight: 700; color: var(--text-dark); text-transform: uppercase; margin-bottom: 10px; letter-spacing: 0.5px;">Resumen de Venta</div>
-        <div id="lista-carrito" style="flex-grow: 1; overflow-y: auto; padding-right: 4px;"></div>
-        
-        <div class="summary-box">
-            <span id="total-usd">$ 0.00</span>
-            <span id="total-bs" style="color: #64748b; font-size: 14px; font-weight: 600;">0.00 Bs</span>
-        </div>
-        <button class="btn-pay" onclick="window.abrirModalCobro()">PAGAR [F9]</button>
-    </div>
-</div>
-
-<div id="modalPago" class="modal">
-    <div class="modal-content">
-        <h2 id="totalModalUSD" style="font-size: 32px; margin-bottom: 20px; color: var(--text-dark);">$ 0.00</h2>
-        <div class="pago-row"><label>Punto (Bs)</label><input type="number" id="in-punto-bs" oninput="window.calcularRestante()" onclick="window.autoCompletarPago(this)"></div>
-        <div class="pago-row"><label>Pago Móvil (Bs)</label><input type="number" id="in-pagomovil-bs" oninput="window.calcularRestante()" onclick="window.autoCompletarPago(this)"></div>
-        <div class="pago-row"><label>Efectivo (Bs)</label><input type="number" id="in-efectivo-bs" oninput="window.calcularRestante()" onclick="window.autoCompletarPago(this)"></div>
-        <div class="pago-row" style="border-color: var(--vibrant-blue);"><label>Divisas ($)</label><input type="number" id="in-divisas-usd" oninput="window.calcularRestante()" onclick="window.autoCompletarPago(this)"></div>
-        <button id="btnConfirmarVenta" class="btn-pay" onclick="window.registrarVenta()" disabled>CONFIRMAR VENTA</button>
-        <button onclick="document.getElementById('modalPago').style.display='none'" style="margin-top:12px; background:none; border:none; color:gray; cursor:pointer; font-weight: 600; font-size: 13px;">Cancelar (ESC)</button>
-    </div>
-</div>
-
-<script type="module" src="./js/pos-core.js"></script>
-</body>
-</html>
+        .btn-shortcut {
+            background: #ffffff;
+            color: var(--primary-color);
+            border: none;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.0
