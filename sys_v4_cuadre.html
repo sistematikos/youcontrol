@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOU CONTROL | Cuadre de Caja</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-vivo: #0284C7;         
+            --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
+            --emerald: #10B981;
+            --sky: #0EA5E9;
+            --indigo: #6366F1;
+            --purple: #a855f7;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg-gradient);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            color: var(--text-dark);
+            user-select: none;
+        }
+
+        /* --- ANCHURA GLOBAL SINCRONIZADA --- */
+        .layout-width {
+            width: 92%;
+            max-width: 1200px;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+
+        /* --- HEADER / CONTROL SUPERIOR --- */
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            margin-bottom: 15px;
+        }
+
+        .btn-back {
+            background: #ffffff;
+            color: var(--text-dark);
+            padding: 8px 16px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 700;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+            border: 1px solid #E2E8F0;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-back:hover {
+            background: var(--text-dark);
+            color: #ffffff;
+        }
+
+        .date-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #ffffff;
+            padding: 6px 12px;
+            border-radius: 12px;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+        }
+        .date-selector input {
+            border: none;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            outline: none;
+        }
+
+        /* --- GRID DE MÉTODOS DE PAGO --- */
+        .payment-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .pay-card {
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 14px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+            border-left: 5px solid transparent;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card-efec-dolar { border-left-color: var(--emerald); }
+        .card-efec-bs { border-left-color: var(--sky); }
+        .card-punto { border-left-color: var(--indigo); }
+        .card-pago-movil { border-left-color: var(--purple); }
+
+        .pay-info .p-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            display: block;
+        }
+        .pay-info .p-val {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--text-dark);
+        }
+        .pay-card i { font-size: 1.6rem; opacity: 0.8; }
+        .card-efec-dolar i { color: var(--emerald); }
+        .card-efec-bs i { color: var(--sky); }
+        .card-punto i { color: var(--indigo); }
+        .card-pago-movil i { color: var(--purple); }
+
+        /* --- TABLA DE LOG DE TRANSACCIONES --- */
+        .table-panel {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 18px;
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
+            border: 1px solid #E2E8F0;
+            flex-grow: 1;
+            margin-bottom: 20px;
+        }
+
+        .table-header-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #F1F5F9;
+        }
+        .table-header-box h3 {
+            margin: 0;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.8rem;
+        }
+
+        th {
+            background: #F8FAFC;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.68rem;
+            padding: 10px 12px;
+            border-bottom: 1px solid #E2E8F0;
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #F1F5F9;
+            font-weight: 500;
+        }
+
+        tr:hover td {
+            background: #F8FAFC;
+        }
+
+        /* Badges de métodos */
+        .badge {
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            display: inline-block;
+        }
+        .b-dolar { background: #ECFDF5; color: #065F46; }
+        .b-efec-bs { background: #E0F2FE; color: #0369A1; }
+        .b-punto { background: #EEF2FF; color: #3730A3; }
+        .b-pmovil { background: #F3E8FF; color: #6B21A8; }
+
+        /* --- FOOTER --- */
+        .footer-core {
+            text-align: center;
+            padding: 15px 0;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body oncontextmenu="return false">
+
+    <main class="layout-width">
+        
+        <div class="report-header">
+            <a href="sys_v4_reportes.html" class="btn-back">
+                <i class="fas fa-arrow-left"></i> VOLVER
+            </a>
+            <div class="date-selector">
+                <i class="fas fa-calendar-day" style="color: var(--text-muted);"></i>
+                <input type="date" id="filtro-fecha">
+            </div>
+        </div>
+
+        <div class="payment-grid">
+            <div class="pay-card card-efec-dolar">
+                <div class="pay-info">
+                    <span class="p-label">Efectivo Divisas</span>
+                    <span class="p-val" id="tot-dolar">$ 0.00</span>
+                </div>
+                <i class="fas fa-dollar-sign"></i>
+            </div>
+
+            <div class="pay-card card-efec-bs">
+                <div class="pay-info">
+                    <span class="p-label">Efectivo Bolívares</span>
+                    <span class="p-val" id="tot-efec-bs">Bs. 0,00</span>
+                </div>
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+
+            <div class="pay-card card-punto">
+                <div class="pay-info">
+                    <span class="p-label">Punto de Venta</span>
+                    <span class="p-val" id="tot-punto">Bs. 0,00</span>
+                </div>
+                <i class="fas fa-credit-card"></i>
+            </div>
+
+            <div class="pay-card card-pago-movil">
+                <div class="pay-info">
+                    <span class="p-label">Pago Móvil</span>
+                    <span class="p-val" id="tot-pmovil">Bs. 0,00</span>
+                </div>
+                <i class="fas fa-mobile-screen-button"></i>
+            </div>
+        </div>
+
+        <div class="table-panel">
+            <div class="table-header-box">
+                <h3><i class="fas fa-receipt" style="color: var(--bg-vivo); margin-right: 6px;"></i> Facturas Procesadas</h3>
+                <div id="tot-venta-dia" style="font-weight: 700; font-size: 0.9rem; color: var(--emerald);">Venta Total: $ 0.00</div>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Hora</th>
+                            <th>Ref/Factura</th>
+                            <th>Método Utilizado</th>
+                            <th>Monto USD</th>
+                            <th>Monto Cambiado (Bs.)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-cuerpo">
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: var(--text-muted);">Seleccione una fecha o cargando datos...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="footer-core">
+        Desarrollado por Sistematikos - Frank Hernandez &copy; 2026
+    </footer>
+
+    <script type="module" src="./js/sys_v4_cuadre.js"></script>
+</body>
+</html>
