@@ -1,6 +1,6 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * Módulo de Facturación y Ventas con Nro de Factura y Clientes (sys_v2_ventas.js)
+ * Módulo de Facturación y Ventas con Nro de Factura y Clientes (pos-core.js)
  */
 
 import { db } from './firebase-config.js';
@@ -41,7 +41,7 @@ function inicializarClientes() {
         snapshot.forEach(docSnap => {
             clientesMaster.push({ id: docSnap.id, ...docSnap.data() });
         });
-        // Ordenar alfabéticamente por nombre de la empresa o cliente
+        // Ordenar alfabéticamente por nombre
         clientesMaster.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
         poblarSelectorClientes();
     });
@@ -154,10 +154,10 @@ window.abrirModalCobro = () => {
     document.getElementById('totalModalUSD').innerText = `$ ${window.totalVentaUSD.toFixed(2)}`;
     document.getElementById('totalModalBS').innerText = `Total: ${(window.totalVentaUSD * tasaActual).toFixed(2).replace('.', ',')} Bs.`;
     
-    // Limpieza o autocompletado opcional de factura al abrir modal
+    // Sugerencia de correlativo aleatorio para factura (puedes cambiarlo luego por correlativo exacto)
     const inputFactura = document.getElementById('in-nro-factura');
     if (inputFactura && !inputFactura.value) {
-        inputFactura.value = "FAC-" + Math.floor(100000 + Math.random() * 900000); // Sugerencia de correlativo aleatorio editable
+        inputFactura.value = "FAC-" + Math.floor(100000 + Math.random() * 900000); 
     }
 
     document.getElementById('modalPago').style.display = 'flex';
@@ -190,7 +190,7 @@ window.registrarVenta = async () => {
     const btn = document.getElementById('btnConfirmarVenta');
     if (!btn || btn.disabled) return;
     
-    // Captura de los nuevos anexos solicitados
+    // Captura de los campos anexados
     const nroFactura = document.getElementById('in-nro-factura').value.trim() || "S/N";
     const selectCliente = document.getElementById('select-cliente');
     const clienteId = selectCliente ? selectCliente.value : "casual";
@@ -244,6 +244,6 @@ window.addEventListener('keydown', (e) => {
     if (e.key === "Escape") document.getElementById('modalPago').style.display = 'none';
 });
 
-// Arrancar procesos
+// Inicializar procesos de pos-core.js
 cargarTasa();
 inicializarClientes();
