@@ -1,6 +1,7 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
  * Controlador de Existencia Valorizada en Tiempo Real (sys_v4_exist.js)
+ * Sincronizado exactamente con los campos nativos de la base de datos
  */
 
 import { db } from './firebase-config.js';
@@ -39,20 +40,25 @@ function inicializarExistencia() {
 
         snapshot.forEach((docSnap) => {
             const p = docSnap.data();
+            // Mapeo adaptado con exactitud a los nombres de campos de sys_v1_inv.js
             arrayProductosGlobal.push({
-                codigo: p.codigo || "S/C",
-                nombre: p.nombre || "Producto sin nombre",
-                stock: parseFloat(p.stock || 0),
-                stock_min: parseFloat(p.stock_minimo || 2),
-                costo: parseFloat(p.precio_costo || 0),
-                pvp: parseFloat(p.precio_venta || 0)
+                codigo: p.sku || p.barras || "S/C",
+                nombre: p.nombre || "Producto sin descripción",
+                stock: parseInt(p.stock || 0),
+                stock_min: 3, // Umbral de alerta idéntico al módulo de inventario base
+                costo: parseFloat(p.costo || 0),
+                pvp: parseFloat(p.precio || 0)
             });
         });
 
+        // Ordenación alfabética ejecutiva
         arrayProductosGlobal.sort((a, b) => a.nombre.localeCompare(b.nombre));
+        
+        // Procesar cálculos y pintar en pantalla
         procesarYFiltrarInventario();
     });
 
+    // Filtro reactivo en el input
     inputBusqueda.addEventListener('input', () => {
         procesarYFiltrarInventario();
     });
@@ -65,6 +71,7 @@ function procesarYFiltrarInventario() {
     const filtro = inputBusqueda.value.toLowerCase().trim();
     tablaExistencia.innerHTML = "";
 
+    // Los acumuladores se calculan sobre TODO el universo de ítems de la empresa
     let globalCosto = 0;
     let globalPvp = 0;
     let globalAlertas = 0;
@@ -74,11 +81,13 @@ function procesarYFiltrarInventario() {
         globalCosto += invTotalItem;
         globalPvp += (p.stock * p.pvp);
 
+        // Si el stock actual es menor o igual al umbral crítico, se cuenta como alerta
         if (p.stock <= p.stock_min) {
             globalAlertas++;
         }
     });
 
+    // Filtro por coincidencia de texto
     const productosFiltrados = arrayProductosGlobal.filter(p => {
         return p.nombre.toLowerCase().includes(filtro) || p.codigo.toLowerCase().includes(filtro);
     });
@@ -91,6 +100,7 @@ function procesarYFiltrarInventario() {
         return;
     }
 
+    // Dibujar renglones dinámicos
     productosFiltrados.forEach(p => {
         const totalInversionItem = p.stock * p.costo;
         
