@@ -16,6 +16,9 @@ let carrito = [];
 let itemSeleccionadoIndex = -1;
 let tasaActual = 1;
 
+// Exponer variables críticas al objeto window para interactuar de forma segura con el DOM
+window.clientesMaster = [];
+
 // ==========================================
 // 1. INICIALIZACIÓN Y CARGA DE CONFIGURACIÓN
 // ==========================================
@@ -43,6 +46,10 @@ function inicializarClientes() {
         });
         // Ordenar alfabéticamente por nombre
         clientesMaster.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
+        
+        // Sincronizar con el objeto global window para el buscador reactivo
+        window.clientesMaster = clientesMaster;
+        
         poblarSelectorClientes();
     });
 }
@@ -51,10 +58,107 @@ function poblarSelectorClientes() {
     const selectCliente = document.getElementById('select-cliente');
     if (!selectCliente) return;
 
-    selectCliente.innerHTML = `<option value="casual">CONSUMIDOR FINAL (CASUAL)</option>`;
+    selectCliente.innerHTML = `<option value="casual" selected>CONSUMIDOR FINAL (CASUAL)</option>`;
     clientesMaster.forEach(c => {
         selectCliente.innerHTML += `<option value="${c.id}">${c.nombre} ${c.rif ? `[${c.rif}]` : ''}</option>`;
     });
+}
+
+// ==========================================
+// MOTOR DE BÚSQUEDA PREDICTIVA (SISTEMATIKOS)
+// ==========================================
+function inicializarBuscadorClientes() {
+    const inputBuscarCl = document.getElementById('buscar-cliente-pos');
+    const listaResultados = document.getElementById('resultados-cliente-pos');
+    const btnLimpiarCl = document.getElementById('btn-limpiar-cliente');
+
+    if (!inputBuscarCl || !listaResultados) return;
+
+    // Escuchar la escritura del cajero en tiempo real
+    inputBuscarCl.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        
+        if (query === "") {
+            listaResultados.style.display = 'none';
+            if (btnLimpiarCl) btnLimpiarCl.style.display = 'none';
+            sincronizarConSelectOriginal("casual");
+            return;
+        }
+
+        if (btnLimpiarCl) btnLimpiarCl.style.display = 'flex';
+
+        // Filtrar la cartera local en memoria por Nombre o RIF/Cédula
+        const filtrados = clientesMaster.filter(c => 
+            (c.nombre || '').toLowerCase().includes(query) || 
+            (c.rif || '').toLowerCase().includes(query)
+        );
+
+        if (filtrados.length === 0) {
+            listaResultados.innerHTML = `
+                <div style="padding: 12px; color: #94A3B8; font-size: 13px; font-weight: 600; text-align: center;">
+                    <i class="fas fa-exclamation-circle"></i> No encontrado en la cartera
+                </div>`;
+        } else {
+            listaResultados.innerHTML = filtrados.map(c => `
+                <div class="opcion-cliente-item" 
+                     data-id="${c.id}" 
+                     data-nombre="${c.nombre}"
+                     style="padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #F1F5F9; font-size: 13px; transition: background 0.15s ease;">
+                    <b style="color: #1E293B; display: block; margin: 0;">${c.nombre}</b>
+                    <small style="color: var(--vibrant-blue); font-family: monospace; font-weight: 700;">${c.rif || 'SIN IDENTIFICACIÓN'}</small>
+                </div>
+            `).join('');
+
+            // Asignar eventos de clic a las opciones inyectadas
+            listaResultados.querySelectorAll('.opcion-cliente-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const idSelected = this.getAttribute('data-id');
+                    const nombreSelected = this.getAttribute('data-nombre');
+                    
+                    inputBuscarCl.value = nombreSelected;
+                    inputBuscarCl.style.borderColor = "var(--vibrant-blue)";
+                    inputBuscarCl.style.backgroundColor = "#eff6ff"; // Feedback visual azul tenue
+                    listaResultados.style.display = 'none';
+                    
+                    sincronizarConSelectOriginal(idSelected);
+                });
+                
+                // Efecto hover nativo sin depender de CSS externo
+                item.addEventListener('mouseover', () => item.style.backgroundColor = '#f1f5f9');
+                item.addEventListener('mouseout', () => item.style.backgroundColor = 'transparent');
+            });
+        }
+        
+        listaResultados.style.display = 'block';
+    });
+
+    // Evento para limpiar el cliente seleccionado y restablecer el estado inicial
+    if (btnLimpiarCl) {
+        btnLimpiarCl.addEventListener('click', () => {
+            inputBuscarCl.value = "";
+            inputBuscarCl.style.borderColor = "#e2e8f0";
+            inputBuscarCl.style.backgroundColor = "#FFFFFF";
+            listaResultados.style.display = 'none';
+            btnLimpiarCl.style.display = 'none';
+            sincronizarConSelectOriginal("casual");
+        });
+    }
+
+    // Ocultar flotante si hacen clic fuera del componente
+    document.addEventListener('click', (e) => {
+        if (!inputBuscarCl.contains(e.target) && !listaResultados.contains(e.target)) {
+            listaResultados.style.display = 'none';
+        }
+    });
+}
+
+// Sincroniza el ID seleccionado del buscador predictivo con el elemento estructurado nativo
+function sincronizarConSelectOriginal(id) {
+    const selectOriginal = document.getElementById('select-cliente');
+    if (selectOriginal) {
+        selectOriginal.value = id;
+        selectOriginal.dispatchEvent(new Event('change'));
+    }
 }
 
 // ==========================================
@@ -136,114 +240,4 @@ window.ejecutarF6 = () => {
 };
 
 window.agregarCarrito = (id) => {
-    const p = productosMaster.find(x => x.id === id);
-    if (!p) return;
-    const item = carrito.find(c => c.id === id);
-    if (item) { item.cantidad++; } else { carrito.push({ ...p, cantidad: 1 }); }
-    itemSeleccionadoIndex = carrito.length - 1;
-    window.actualizarCarritoUI();
-};
-
-window.seleccionarItem = (i) => { itemSeleccionadoIndex = i; window.actualizarCarritoUI(); };
-
-// ==========================================
-// 4. PASARELA DE COBRO Y PERSISTENCIA (CRUD)
-// ==========================================
-window.abrirModalCobro = () => {
-    if (carrito.length === 0) return;
-    document.getElementById('totalModalUSD').innerText = `$ ${window.totalVentaUSD.toFixed(2)}`;
-    document.getElementById('totalModalBS').innerText = `Total: ${(window.totalVentaUSD * tasaActual).toFixed(2).replace('.', ',')} Bs.`;
-    
-    // Sugerencia de correlativo aleatorio para factura (puedes cambiarlo luego por correlativo exacto)
-    const inputFactura = document.getElementById('in-nro-factura');
-    if (inputFactura && !inputFactura.value) {
-        inputFactura.value = "FAC-" + Math.floor(100000 + Math.random() * 900000); 
-    }
-
-    document.getElementById('modalPago').style.display = 'flex';
-    window.calcularRestante();
-};
-
-window.autoCompletarPago = (input) => {
-    const p = parseFloat(document.getElementById('in-punto-bs').value) || 0;
-    const pm = parseFloat(document.getElementById('in-pagomovil-bs').value) || 0;
-    const ef = parseFloat(document.getElementById('in-efectivo-bs').value) || 0;
-    const dv = parseFloat(document.getElementById('in-divisas-usd').value) || 0;
-    const pagadoUSD = dv + ((p + pm + ef) / tasaActual);
-    const faltaUSD = window.totalVentaUSD - pagadoUSD;
-    if (faltaUSD <= 0) return;
-    input.value = (input.id === 'in-divisas-usd') ? faltaUSD.toFixed(2) : (faltaUSD * tasaActual).toFixed(2);
-    window.calcularRestante();
-};
-
-window.calcularRestante = () => {
-    const p = parseFloat(document.getElementById('in-punto-bs').value) || 0;
-    const pm = parseFloat(document.getElementById('in-pagomovil-bs').value) || 0;
-    const ef = parseFloat(document.getElementById('in-efectivo-bs').value) || 0;
-    const dv = parseFloat(document.getElementById('in-divisas-usd').value) || 0;
-    const pagadoUSD = dv + ((p + pm + ef) / tasaActual);
-    const btn = document.getElementById('btnConfirmarVenta');
-    if(btn) btn.disabled = (window.totalVentaUSD - pagadoUSD) > 0.01;
-};
-
-window.registrarVenta = async () => {
-    const btn = document.getElementById('btnConfirmarVenta');
-    if (!btn || btn.disabled) return;
-    
-    // Captura de los campos anexados
-    const nroFactura = document.getElementById('in-nro-factura').value.trim() || "S/N";
-    const selectCliente = document.getElementById('select-cliente');
-    const clienteId = selectCliente ? selectCliente.value : "casual";
-    const clienteNombre = selectCliente ? selectCliente.options[selectCliente.selectedIndex].text : "CONSUMIDOR FINAL (CASUAL)";
-
-    btn.innerText = "GUARDANDO..."; btn.disabled = true;
-    
-    try {
-        await addDoc(collection(db, "usuarios", USER_ID, "ventas"), {
-            fecha: serverTimestamp(),
-            nro_factura: nroFactura,
-            cliente_id: clienteId,
-            cliente_nombre: clienteNombre,
-            total_usd: window.totalVentaUSD,
-            tasa: tasaActual,
-            pagos: {
-                punto: parseFloat(document.getElementById('in-punto-bs').value) || 0,
-                movil: parseFloat(document.getElementById('in-pagomovil-bs').value) || 0,
-                efectivo: parseFloat(document.getElementById('in-efectivo-bs').value) || 0,
-                divisas: parseFloat(document.getElementById('in-divisas-usd').value) || 0
-            },
-            items: carrito.map(i => ({ nombre: i.nombre, cant: i.cantidad, precio: i.precio }))
-        });
-        
-        alert("✅ Venta registrada bajo Factura Nro: " + nroFactura);
-        carrito = []; 
-        window.actualizarCarritoUI();
-        if(document.getElementById('in-nro-factura')) document.getElementById('in-nro-factura').value = '';
-        document.getElementById('modalPago').style.display = 'none';
-    } catch (e) { 
-        alert("Error: " + e.message); 
-    }
-    btn.innerText = "CONFIRMAR VENTA";
-};
-
-// ==========================================
-// 5. CONTROL DE TECLADO INTERACTIVO
-// ==========================================
-window.addEventListener('keydown', (e) => {
-    const modalActivo = document.getElementById('modalPago').style.display === 'flex';
-
-    if (e.ctrlKey && e.key === "F5") return;
-
-    if (e.key === "F4") { e.preventDefault(); if (!modalActivo) window.ejecutarF4(); }
-    if (e.key === "F5") { e.preventDefault(); if (!modalActivo) window.ejecutarF5(); }
-    if (e.key === "F6") { e.preventDefault(); if (!modalActivo) window.ejecutarF6(); }
-    if (e.key === "F9") { 
-        e.preventDefault(); 
-        if (!modalActivo) { window.abrirModalCobro(); } else { window.registrarVenta(); } 
-    }
-    if (e.key === "Escape") document.getElementById('modalPago').style.display = 'none';
-});
-
-// Inicializar procesos de pos-core.js
-cargarTasa();
-inicializarClientes();
+    const
