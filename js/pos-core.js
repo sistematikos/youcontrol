@@ -1,6 +1,6 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * Módulo de Facturación y Ventas con Nro de Factura y Clientes (pos-core.js)
+ * Módulo de Facturación y Ventas con Nro de Factura, Clientes y Productos Fijos (pos-core.js)
  */
 
 import { db } from './firebase-config.js';
@@ -105,7 +105,7 @@ function inicializarBuscadorClientes() {
                      data-nombre="${c.nombre}"
                      style="padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #F1F5F9; font-size: 13px; transition: background 0.15s ease;">
                     <b style="color: #1E293B; display: block; margin: 0;">${c.nombre}</b>
-                    <small style="color: var(--vibrant-blue); font-family: monospace; font-weight: 700;">${c.rif || 'SIN IDENTIFICACIÓN'}</small>
+                    <small style="color: #006aff; font-family: monospace; font-weight: 700;">${c.rif || 'SIN IDENTIFICACIÓN'}</small>
                 </div>
             `).join('');
 
@@ -116,7 +116,7 @@ function inicializarBuscadorClientes() {
                     const nombreSelected = this.getAttribute('data-nombre');
                     
                     inputBuscarCl.value = nombreSelected;
-                    inputBuscarCl.style.borderColor = "var(--vibrant-blue)";
+                    inputBuscarCl.style.borderColor = "#006aff";
                     inputBuscarCl.style.backgroundColor = "#eff6ff"; // Feedback visual azul tenue
                     listaResultados.style.display = 'none';
                     
@@ -182,11 +182,15 @@ function renderizarProductos(lista) {
     }).join('');
 }
 
-onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
-    productosMaster = [];
-    snapshot.forEach(doc => productosMaster.push({ id: doc.id, ...doc.data() }));
-    renderizarProductos(productosMaster);
-});
+// ESCUCHA DE PRODUCTOS CORREGIDA (Apunta a la subcolección interna real de tu FireStore)
+function inicializarProductos() {
+    const productosRef = collection(db, "usuarios", USER_ID, "productos");
+    onSnapshot(productosRef, (snapshot) => {
+        productosMaster = [];
+        snapshot.forEach(doc => productosMaster.push({ id: doc.id, ...doc.data() }));
+        renderizarProductos(productosMaster);
+    });
+}
 
 window.actualizarCarritoUI = () => {
     const list = document.getElementById('lista-carrito');
@@ -240,4 +244,131 @@ window.ejecutarF6 = () => {
 };
 
 window.agregarCarrito = (id) => {
-    const
+    const p = productosMaster.find(x => x.id === id);
+    if (!p) return;
+    const item = carrito.find(c => c.id === id);
+    if (item) { item.cantidad++; } else { carrito.push({ ...p, cantidad: 1 }); }
+    itemSeleccionadoIndex = carrito.length - 1;
+    window.actualizarCarritoUI();
+};
+
+window.seleccionarItem = (i) => { itemSeleccionadoIndex = i; window.actualizarCarritoUI(); };
+
+// ==========================================
+// 4. PASARELA DE COBRO Y PERSISTENCIA (CRUD)
+// ==========================================
+window.abrirModalCobro = () => {
+    if (carrito.length === 0) return;
+    document.getElementById('totalModalUSD').innerText = `$ ${window.totalVentaUSD.toFixed(2)}`;
+    
+    const totalModalBS = document.getElementById('totalModalBS');
+    if (totalModalBS) {
+        totalModalBS.innerText = `Total: ${(window.totalVentaUSD * tasaActual).toFixed(2).replace('.', ',')} Bs.`;
+    }
+    
+    const inputFactura = document.getElementById('in-nro-factura');
+    if (inputFactura && !inputFactura.value) {
+        inputFactura.value = "FAC-" + Math.floor(100000 + Math.random() * 900000); 
+    }
+
+    document.getElementById('modalPago').style.display = 'flex';
+    window.calcularRestante();
+};
+
+window.autoCompletarPago = (input) => {
+    const p = parseFloat(document.getElementById('in-punto-bs').value) || 0;
+    const pm = parseFloat(document.getElementById('in-pagomovil-bs').value) || 0;
+    const ef = parseFloat(document.getElementById('in-efectivo-bs').value) || 0;
+    const dv = parseFloat(document.getElementById('in-divisas-usd').value) || 0;
+    const pagadoUSD = dv + ((p + pm + ef) / tasaActual);
+    const faltaUSD = window.totalVentaUSD - pagadoUSD;
+    if (faltaUSD <= 0) return;
+    input.value = (input.id === 'in-divisas-usd') ? faltaUSD.toFixed(2) : (faltaUSD * tasaActual).toFixed(2);
+    window.calcularRestante();
+};
+
+window.calcularRestante = () => {
+    const p = parseFloat(document.getElementById('in-punto-bs').value) || 0;
+    const pm = parseFloat(document.getElementById('in-pagomovil-bs').value) || 0;
+    const ef = parseFloat(document.getElementById('in-efectivo-bs').value) || 0;
+    const dv = parseFloat(document.getElementById('in-divisas-usd').value) || 0;
+    const pagadoUSD = dv + ((p + pm + ef) / tasaActual);
+    const btn = document.getElementById('btnConfirmarVenta');
+    if(btn) btn.disabled = (window.totalVentaUSD - pagadoUSD) > 0.01;
+};
+
+window.registrarVenta = async () => {
+    const btn = document.getElementById('btnConfirmarVenta');
+    if (!btn || btn.disabled) return;
+    
+    const nroFactura = document.getElementById('in-nro-factura').value.trim() || "S/N";
+    const selectCliente = document.getElementById('select-cliente');
+    const clienteId = selectCliente ? selectCliente.value : "casual";
+    const clienteNombre = selectCliente ? selectCliente.options[selectCliente.selectedIndex].text : "CONSUMIDOR FINAL (CASUAL)";
+
+    btn.innerText = "GUARDANDO..."; btn.disabled = true;
+    
+    try {
+        await addDoc(collection(db, "usuarios", USER_ID, "ventas"), {
+            fecha: serverTimestamp(),
+            nro_factura: nroFactura,
+            cliente_id: clienteId,
+            cliente_nombre: clienteNombre,
+            total_usd: window.totalVentaUSD,
+            tasa: tasaActual,
+            pagos: {
+                punto: parseFloat(document.getElementById('in-punto-bs').value) || 0,
+                movil: parseFloat(document.getElementById('in-pagomovil-bs').value) || 0,
+                efectivo: parseFloat(document.getElementById('in-efectivo-bs').value) || 0,
+                divisas: parseFloat(document.getElementById('in-divisas-usd').value) || 0
+            },
+            items: carrito.map(i => ({ nombre: i.nombre, cant: i.cantidad, precio: i.precio }))
+        });
+        
+        alert("✅ Venta registrada bajo Factura Nro: " + nroFactura);
+        
+        // Limpieza y reseteo completo del POS
+        carrito = []; 
+        window.actualizarCarritoUI();
+        if(document.getElementById('in-nro-factura')) document.getElementById('in-nro-factura').value = '';
+        
+        const inputBuscarCl = document.getElementById('buscar-cliente-pos');
+        if (inputBuscarCl) {
+            inputBuscarCl.value = "";
+            inputBuscarCl.style.borderColor = "#e2e8f0";
+            inputBuscarCl.style.backgroundColor = "#FFFFFF";
+            const btnLimpiarCl = document.getElementById('btn-limpiar-cliente');
+            if (btnLimpiarCl) btnLimpiarCl.style.display = 'none';
+            sincronizarConSelectOriginal("casual");
+        }
+        
+        document.getElementById('modalPago').style.display = 'none';
+    } catch (e) { 
+        alert("Error: " + e.message); 
+    }
+    btn.innerText = "CONFIRMAR VENTA";
+};
+
+// ==========================================
+// 5. CONTROL DE TECLADO INTERACTIVO
+// ==========================================
+window.addEventListener('keydown', (e) => {
+    const modalActivo = document.getElementById('modalPago').style.display === 'flex';
+
+    if (e.ctrlKey && e.key === "F5") return;
+
+    if (e.key === "F4") { e.preventDefault(); if (!modalActivo) window.ejecutarF4(); }
+    if (e.key === "F5") { e.preventDefault(); if (!modalActivo) window.ejecutarF5(); }
+    if (e.key === "F6") { e.preventDefault(); if (!modalActivo) window.ejecutarF6(); }
+    if (e.key === "F9") { 
+        e.preventDefault(); 
+        if (!modalActivo) { window.abrirModalCobro(); } else { window.registrarVenta(); } 
+    }
+    if (e.key === "Escape") document.getElementById('modalPago').style.display = 'none';
+});
+
+// Inicializar todos los procesos del core en orden correcto
+cargarTasa();
+inicializarClientes();
+inicializarProductos();
+inicializarBuscadorClientes();
