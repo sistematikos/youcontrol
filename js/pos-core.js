@@ -1,7 +1,7 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
  * Módulo de Facturación y Ventas Completo (pos-core.js)
- * Buscadores Predictivos con Menú Desplegable Flotante para Clientes y Productos
+ * Optimizaciones: Interfaz limpia al inicio y buscador desplegable flotante exclusivo.
  */
 
 import { db } from './firebase-config.js';
@@ -30,7 +30,6 @@ async function cargarTasa() {
             tasaActual = parseFloat(tasaSnap.data().valor) || 1;
             const txtTasa = document.getElementById('txt-tasa');
             if (txtTasa) txtTasa.innerText = tasaActual.toFixed(2).replace('.', ',');
-            renderizarProductosListaFija(productosMaster);
             window.actualizarCarritoUI();
         }
     } catch (e) { console.error("Error cargando tasa:", e); }
@@ -88,7 +87,7 @@ function inicializarBuscadorClientes() {
         if (filtrados.length === 0) {
             listaResultados.innerHTML = `
                 <div style="padding: 12px; color: #94A3B8; font-size: 13px; font-weight: 600; text-align: center;">
-                    <i class="fas fa-exclamation-circle"></i> No encontrado en la cartera
+                    <i class="fas fa-exclamation-circle"></i> No encontrado
                 </div>`;
         } else {
             listaResultados.innerHTML = filtrados.map(c => `
@@ -138,42 +137,35 @@ function sincronizarConSelectOriginal(id) {
 }
 
 // ==========================================
-// 3. NUEVO MOTOR: BUSCADOR DESPLEGABLE DE PRODUCTOS
+// 3. MOTOR DE BÚSQUEDA EXCLUSIVO EN DESPLEGABLE FLOTANTE
 // ==========================================
 function inicializarBuscadorProductos() {
-    // Captura la barra superior ("PIST") usando el ID de tu código original
     const inputBuscarProd = document.getElementById('buscar-producto-pos') || document.getElementById('search-input');
     
-    // IMPORTANTE: Creamos dinámicamente el contenedor flotante para los productos si no existe en el HTML
     let listaResultadosProd = document.getElementById('resultados-producto-pos');
     if (inputBuscarProd && !listaResultadosProd) {
         listaResultadosProd = document.createElement('div');
         listaResultadosProd.id = 'resultados-producto-pos';
-        // Estilos CSS incrustados para que flote perfectamente idéntico al de clientes
         Object.assign(listaResultadosProd.style, {
             position: 'absolute',
             backgroundColor: '#FFFFFF',
             border: '1px solid #E2E8F0',
             borderRadius: '8px',
             boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-            maxHeight: '250px',
+            maxHeight: '280px',
             overflowY: 'auto',
             zIndex: '9999',
             width: inputBuscarProd.offsetWidth + 'px',
             display: 'none'
         });
-        // Insertar el contenedor justo debajo de la barra de búsqueda
         inputBuscarProd.parentNode.style.position = 'relative';
         inputBuscarProd.parentNode.appendChild(listaResultadosProd);
     }
 
     if (!inputBuscarProd || !listaResultadosProd) return;
 
-    // Escuchar la escritura del cajero en tiempo real
     inputBuscarProd.addEventListener('input', (e) => {
         const query = e.target.value.toLowerCase().trim();
-        
-        // Ajustar ancho dinámicamente por si cambia la pantalla
         listaResultadosProd.style.width = inputBuscarProd.offsetWidth + 'px';
 
         if (query === "") {
@@ -181,7 +173,7 @@ function inicializarBuscadorProductos() {
             return;
         }
 
-        // Filtrar sobre el arreglo en memoria local
+        // Búsqueda inteligente sobre la memoria cacheada
         const filtrados = productosMaster.filter(p => 
             (p.nombre || '').toLowerCase().includes(query) ||
             (p.codigo || '').toLowerCase().includes(query)
@@ -193,14 +185,13 @@ function inicializarBuscadorProductos() {
                     <i class="fas fa-box-open"></i> Producto no registrado
                 </div>`;
         } else {
-            // Estructura limpia e interactiva para el menú desplegable del producto buscado
             listaResultadosProd.innerHTML = filtrados.map(p => {
                 const pUSD = parseFloat(p.precio) || 0;
                 const pBS = (pUSD * tasaActual).toFixed(2).replace('.', ',');
                 return `
                     <div class="opcion-item-desplegable" data-id="${p.id}" style="padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #F1F5F9; display: flex; justify-content: space-between; align-items: center; font-size: 13px;">
-                        <span style="color: #1E293B; font-weight: 600;">${p.nombre}</span>
-                        <div style="text-align: right;">
+                        <span style="color: #1E293B; font-weight: 600; text-align: left;">${p.nombre}</span>
+                        <div style="text-align: right; margin-left: 15px; flex-shrink: 0;">
                             <b style="color: #006aff; display: block;">$${pUSD.toFixed(2)}</b>
                             <small style="color: #64748B; font-size: 11px;">${pBS} Bs.</small>
                         </div>
@@ -208,15 +199,11 @@ function inicializarBuscadorProductos() {
                 `;
             }).join('');
 
-            // Manejar la selección e inyección directa al carrito
             listaResultadosProd.querySelectorAll('.opcion-item-desplegable').forEach(item => {
                 item.addEventListener('click', function() {
                     const prodId = this.getAttribute('data-id');
-                    
-                    // 1. Agregar inmediatamente al carrito de ventas
                     window.agregarCarrito(prodId);
                     
-                    // 2. Limpiar el buscador superior y ocultar el menú desplegable flotante
                     inputBuscarProd.value = "";
                     listaResultadosProd.style.display = 'none';
                     inputBuscarProd.focus();
@@ -226,7 +213,6 @@ function inicializarBuscadorProductos() {
         listaResultadosProd.style.display = 'block';
     });
 
-    // Cerrar el cuadro flotante si hacen clic en cualquier otra parte del POS
     document.addEventListener('click', (e) => {
         if (!inputBuscarProd.contains(e.target) && !listaResultadosProd.contains(e.target)) {
             listaResultadosProd.style.display = 'none';
@@ -235,34 +221,24 @@ function inicializarBuscadorProductos() {
 }
 
 // ==========================================
-// 4. RENDERIZACIÓN DE LA LISTA FIJA Y CARRITO
+// 4. PERSISTENCIA EN TIEMPO REAL DESDE FIREBASE
 // ==========================================
-function renderizarProductosListaFija(lista) {
-    const container = document.getElementById('grid-productos');
-    if (!container) return;
-
-    container.innerHTML = lista.map(p => {
-        const pUSD = parseFloat(p.precio) || 0;
-        const pBS = (pUSD * tasaActual).toFixed(2).replace('.', ',');
-        return `
-            <div class="single-line-row" onclick="window.agregarCarrito('${p.id}')">
-                <span style="flex: 1; margin-right: 15px;"><b>${p.nombre}</b></span>
-                <div class="price-group">
-                    <b>$${pUSD.toFixed(2)}</b>
-                    <small>${pBS} Bs.</small>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
 function inicializarProductos() {
     const productosRef = collection(db, "usuarios", USER_ID, "productos");
     onSnapshot(productosRef, (snapshot) => {
         productosMaster = [];
         snapshot.forEach(doc => productosMaster.push({ id: doc.id, ...doc.data() }));
-        // La lista principal de abajo se mantiene intacta y estable
-        renderizarProductosListaFija(productosMaster);
+        
+        // CORRECCIÓN CLAVE: Dejamos limpio el contenedor fijo de la cuadrícula.
+        // Ya no renderizamos la lista completa al cargar.
+        const container = document.getElementById('grid-productos');
+        if (container) {
+            container.innerHTML = `
+                <div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: #94A3B8; font-size: 14px; font-weight: 500;">
+                    <i class="fas fa-search" style="font-size: 24px; display: block; margin-bottom: 10px; color: #CBD5E1;"></i>
+                    Use la barra superior para buscar y añadir repuestos
+                </div>`;
+        }
     });
 }
 
@@ -326,7 +302,7 @@ window.agregarCarrito = (id) => {
 window.seleccionarItem = (i) => { itemSeleccionadoIndex = i; window.actualizarCarritoUI(); };
 
 // ==========================================
-// 6. PASARELA DE COBRO Y PERSISTENCIA
+// 6. PASARELA DE COBRO Y PERSISTENCIA (CRUD)
 // ==========================================
 window.abrirModalCobro = () => {
     if (carrito.length === 0) return;
@@ -432,7 +408,7 @@ window.addEventListener('keydown', (e) => {
     if (e.key === "Escape") document.getElementById('modalPago').style.display = 'none';
 });
 
-// Lanzamiento secuencial
+// Inicialización de módulos
 cargarTasa();
 inicializarClientes();
 inicializarProductos();
