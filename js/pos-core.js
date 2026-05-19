@@ -1,3 +1,8 @@
+/**
+ * YOU CONTROL - SISTEMATIKOS
+ * Módulo de Facturación y Ventas con Nro de Factura y Clientes (sys_v2_ventas.js)
+ */
+
 import { db } from './firebase-config.js';
 import { 
     collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc 
@@ -6,10 +11,14 @@ import {
 const USER_ID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12"; 
 
 let productosMaster = [];
+let clientesMaster = []; // Lista global de clientes sincronizados
 let carrito = [];
 let itemSeleccionadoIndex = -1;
 let tasaActual = 1;
 
+// ==========================================
+// 1. INICIALIZACIÓN Y CARGA DE CONFIGURACIÓN
+// ==========================================
 async function cargarTasa() {
     try {
         const tasaRef = doc(db, "usuarios", USER_ID, "configuracion", "tasa");
@@ -24,6 +33,33 @@ async function cargarTasa() {
     } catch (e) { console.error("Error cargando tasa:", e); }
 }
 
+// Escuchar Clientes en tiempo real para poblar los selectores del sistema
+function inicializarClientes() {
+    const clientesRef = collection(db, "usuarios", USER_ID, "clientes");
+    onSnapshot(clientesRef, (snapshot) => {
+        clientesMaster = [];
+        snapshot.forEach(docSnap => {
+            clientesMaster.push({ id: docSnap.id, ...docSnap.data() });
+        });
+        // Ordenar alfabéticamente por nombre de la empresa o cliente
+        clientesMaster.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
+        poblarSelectorClientes();
+    });
+}
+
+function poblarSelectorClientes() {
+    const selectCliente = document.getElementById('select-cliente');
+    if (!selectCliente) return;
+
+    selectCliente.innerHTML = `<option value="casual">CONSUMIDOR FINAL (CASUAL)</option>`;
+    clientesMaster.forEach(c => {
+        selectCliente.innerHTML += `<option value="${c.id}">${c.nombre} ${c.rif ? `[${c.rif}]` : ''}</option>`;
+    });
+}
+
+// ==========================================
+// 2. RENDERIZACIÓN DE PRODUCTOS Y CARRITO
+// ==========================================
 function renderizarProductos(lista) {
     const container = document.getElementById('grid-productos');
     if (!container) return;
@@ -48,7 +84,6 @@ onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
     renderizarProductos(productosMaster);
 });
 
-// ACTUALIZACIÓN UI CON LÍMITE DE 22 CARACTERES
 window.actualizarCarritoUI = () => {
     const list = document.getElementById('lista-carrito');
     let total = 0;
@@ -59,7 +94,6 @@ window.actualizarCarritoUI = () => {
         const subBS = (subUSD * tasaActual).toFixed(2).replace('.', ',');
         total += subUSD;
         
-        // Limitar nombre a 22 caracteres
         const nombreCorto = c.nombre.length > 22 ? c.nombre.substring(0, 22) + "..." : c.nombre;
 
         return `
@@ -79,7 +113,9 @@ window.actualizarCarritoUI = () => {
     window.totalVentaUSD = total;
 };
 
-// FUNCIONES DE TECLAS (REPARADAS)
+// ==========================================
+// 3. LOGICA Y TECLAS EXPRESS (F4, F5, F6)
+// ==========================================
 window.ejecutarF4 = () => {
     if (itemSeleccionadoIndex === -1) return;
     const n = prompt("Nueva Cantidad:", carrito[itemSeleccionadoIndex].cantidad);
@@ -110,10 +146,20 @@ window.agregarCarrito = (id) => {
 
 window.seleccionarItem = (i) => { itemSeleccionadoIndex = i; window.actualizarCarritoUI(); };
 
+// ==========================================
+// 4. PASARELA DE COBRO Y PERSISTENCIA (CRUD)
+// ==========================================
 window.abrirModalCobro = () => {
     if (carrito.length === 0) return;
     document.getElementById('totalModalUSD').innerText = `$ ${window.totalVentaUSD.toFixed(2)}`;
     document.getElementById('totalModalBS').innerText = `Total: ${(window.totalVentaUSD * tasaActual).toFixed(2).replace('.', ',')} Bs.`;
+    
+    // Limpieza o autocompletado opcional de factura al abrir modal
+    const inputFactura = document.getElementById('in-nro-factura');
+    if (inputFactura && !inputFactura.value) {
+        inputFactura.value = "FAC-" + Math.floor(100000 + Math.random() * 900000); // Sugerencia de correlativo aleatorio editable
+    }
+
     document.getElementById('modalPago').style.display = 'flex';
     window.calcularRestante();
 };
@@ -143,10 +189,21 @@ window.calcularRestante = () => {
 window.registrarVenta = async () => {
     const btn = document.getElementById('btnConfirmarVenta');
     if (!btn || btn.disabled) return;
+    
+    // Captura de los nuevos anexos solicitados
+    const nroFactura = document.getElementById('in-nro-factura').value.trim() || "S/N";
+    const selectCliente = document.getElementById('select-cliente');
+    const clienteId = selectCliente ? selectCliente.value : "casual";
+    const clienteNombre = selectCliente ? selectCliente.options[selectCliente.selectedIndex].text : "CONSUMIDOR FINAL (CASUAL)";
+
     btn.innerText = "GUARDANDO..."; btn.disabled = true;
+    
     try {
         await addDoc(collection(db, "usuarios", USER_ID, "ventas"), {
             fecha: serverTimestamp(),
+            nro_factura: nroFactura,
+            cliente_id: clienteId,
+            cliente_nombre: clienteNombre,
             total_usd: window.totalVentaUSD,
             tasa: tasaActual,
             pagos: {
@@ -157,18 +214,24 @@ window.registrarVenta = async () => {
             },
             items: carrito.map(i => ({ nombre: i.nombre, cant: i.cantidad, precio: i.precio }))
         });
-        alert("✅ Venta registrada");
-        carrito = []; window.actualizarCarritoUI();
+        
+        alert("✅ Venta registrada bajo Factura Nro: " + nroFactura);
+        carrito = []; 
+        window.actualizarCarritoUI();
+        if(document.getElementById('in-nro-factura')) document.getElementById('in-nro-factura').value = '';
         document.getElementById('modalPago').style.display = 'none';
-    } catch (e) { alert("Error: " + e.message); }
+    } catch (e) { 
+        alert("Error: " + e.message); 
+    }
     btn.innerText = "CONFIRMAR VENTA";
 };
 
-// CONTROL DE TECLADO REPARADO
+// ==========================================
+// 5. CONTROL DE TECLADO INTERACTIVO
+// ==========================================
 window.addEventListener('keydown', (e) => {
     const modalActivo = document.getElementById('modalPago').style.display === 'flex';
 
-    // Permitir Ctrl + F5 para refrescar
     if (e.ctrlKey && e.key === "F5") return;
 
     if (e.key === "F4") { e.preventDefault(); if (!modalActivo) window.ejecutarF4(); }
@@ -181,4 +244,6 @@ window.addEventListener('keydown', (e) => {
     if (e.key === "Escape") document.getElementById('modalPago').style.display = 'none';
 });
 
+// Arrancar procesos
 cargarTasa();
+inicializarClientes();
