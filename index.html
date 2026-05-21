@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <link rel="manifest" href="./manifest.json">
+    <link rel="shortcut icon" href="./assets/logo_512.png" type="image/png">
     <meta name="theme-color" content="#001432">
 
     <style>
@@ -56,7 +57,6 @@
             overflow: hidden;
         }
 
-        /* Ajuste para tu imagen */
         .brand-logo img {
             width: 100%;
             height: 100%;
@@ -130,15 +130,18 @@
         const btnInstall = document.getElementById('btnInstallPWA');
         const btnEnter = document.getElementById('btnEnterSystem');
 
+        // Registro de Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./sw.js');
         }
 
+        // Intercepción del prompt de instalación
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
         });
 
+        // Lógica de instalación
         btnInstall.addEventListener('click', () => {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
@@ -148,10 +151,11 @@
                     }
                 });
             } else {
-                alert("El software ya está listo o ya fue instalado.");
+                alert("El software ya está listo o no está disponible para instalar en este navegador.");
             }
         });
 
+        // Detectar si la app ya se instaló
         window.addEventListener('appinstalled', () => {
             activarIngreso();
         });
