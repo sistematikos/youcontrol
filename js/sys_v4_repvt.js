@@ -1,7 +1,7 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
  * Módulo de Auditoría y Reportes de Ventas por Fechas (sys_v4_repvt.js)
- * Optimización: Tolerancia bilingüe para propiedades de ítems (cant/cantidad), pagos y nro_factura.
+ * Optimización: Muestra el desglose de artículos comprados en lugar del costo total.
  */
 
 import { db } from './firebase-config.js';
@@ -60,7 +60,6 @@ window.cargarReporteVentas = async () => {
     try {
         const ventasRef = collection(db, "usuarios", USER_ID, "ventas");
         
-        // Firestore filtra nativamente gracias al formato YYYY-MM-DD
         const q = query(
             ventasRef,
             where("fecha", ">=", desde),
@@ -81,44 +80,50 @@ window.cargarReporteVentas = async () => {
             return;
         }
 
+        // Modificamos también los encabezados de la tabla dinámicamente si es necesario, 
+        // o puedes asegurar que tu HTML coincida con estas 5 columnas: 
+        // ID VENTA / FECHA | CLIENTE / TIPO | ARTÍCULOS DETALLE | CANT. TOTAL | TOTAL VENTA ($)
         tablaReporte.innerHTML = '';
 
         querySnapshot.forEach((docSnap) => {
             const venta = docSnap.data();
             const idVenta = docSnap.id;
 
-            // RESPALDO SEGURO: Si nro_factura existe en Firebase se usa, si no, se toman los primeros 8 dígitos del ID
             const identificadorFactura = venta.nro_factura ? venta.nro_factura : `#${idVenta.substring(0, 8).toUpperCase()}`;
 
             let totalVentaDolar = 0;
             let totalCostoDolar = 0;
             let totalUnidadesVenta = 0;
+            let listaArticulosHTML = "";
 
-            // BLINDAJE CRÍTICO: Leer correctamente sin importar si el POS guardó 'cant' o 'cantidad'
+            // Procesar ítems y armar el bloque de texto con los nombres de productos
             if (Array.isArray(venta.items)) {
                 venta.items.forEach(prod => {
                     const cant = parseFloat(prod.cantidad) || parseFloat(prod.cant) || 0;
                     const precio = parseFloat(prod.precio) || 0;
                     const costo = parseFloat(prod.costo) || 0;
+                    const descripcion = prod.descripcion || prod.nombre || "Artículo sin nombre";
 
                     totalVentaDolar += (cant * precio);
                     totalCostoDolar += (cant * costo);
                     totalUnidadesVenta += cant;
+
+                    // Construimos una lista limpia y compacta de los productos comprados
+                    listaArticulosHTML += `<div style="font-size: 0.85rem; color: #334155; margin-bottom: 2px;">• ${descripcion} <b style="color:#64748B;">(x${cant})</b></div>`;
                 });
             } 
             
-            // Si por algún motivo la sumatoria interna da 0, usamos los totales del documento raíz
             if (totalVentaDolar === 0) {
                 totalVentaDolar = parseFloat(venta.total_usd) || 0;
                 totalCostoDolar = parseFloat(venta.total_costo_usd) || 0;
                 totalUnidadesVenta = parseInt(venta.total_items) || 0;
+                listaArticulosHTML = `<span style="color:#94A3B8; font-style:italic; font-size:0.85rem;">Ver detalle en POS</span>`;
             }
 
             acumTotalFacturado += totalVentaDolar;
             acumTotalCosto += totalCostoDolar;
             acumArticulosVendidos += totalUnidadesVenta;
 
-            // Determinar método de pago predominante de forma segura
             let metodoPago = "Efectivo/Otros";
             if (venta.pagos) {
                 const p = venta.pagos;
@@ -132,8 +137,8 @@ window.cargarReporteVentas = async () => {
             fila.innerHTML = `
                 <td><b>${identificadorFactura}</b><br><small style="color:#64748B;">${venta.fecha_completa || venta.fecha}</small></td>
                 <td>${venta.cliente_nombre || 'Consumidor Final'}<br><small style="color:#006aff; font-weight:600;">${metodoPago}</small></td>
+                <td style="text-align: left; padding-left: 10px;">${listaArticulosHTML}</td>
                 <td style="text-align: center; font-weight: 600;">${totalUnidadesVenta}</td>
-                <td style="text-align: right; color:#64748B;">$ ${totalCostoDolar.toFixed(2)}</td>
                 <td style="text-align: right; font-weight: 800; color: #1E293B;">$ ${totalVentaDolar.toFixed(2)}</td>
             `;
             tablaReporte.appendChild(fila);
