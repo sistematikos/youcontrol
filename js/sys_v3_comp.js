@@ -90,12 +90,6 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             window.procesarCompraCompleta();
         }
-        
-        // Ejecutar agregarItem solo si no estamos navegando en el dropdown predictivo
-        if (e.key === 'Enter' && document.activeElement === inputCantidad) {
-            e.preventDefault();
-            window.agregarItemALista();
-        }
     });
 
     inicializarEntradaMercancia();
@@ -146,7 +140,7 @@ if (buscador) {
         } else if (e.key === 'Enter') {
             if (indexFocus > -1 && items[indexFocus]) {
                 e.preventDefault();
-                items[indexFocus].click(); // Ejecuta la selección
+                items[indexFocus].click(); // Carga los valores a la izquierda
                 indexFocus = -1;
             }
         }
@@ -154,9 +148,13 @@ if (buscador) {
 }
 
 function actualizarFocoItems(items) {
-    items.forEach((item, index) => {
+    items.forEach((index, item) => { // Corrección interna de firma forEach estándar
+    });
+    // Ajuste directo del bucle iterable para consistencia
+    const itemsLista = dropdown.querySelectorAll('.search-item');
+    itemsLista.forEach((item, index) => {
         if (index === indexFocus) {
-            item.style.backgroundColor = '#F1F5F9'; // Resaltado visual
+            item.style.backgroundColor = '#F1F5F9'; 
             item.scrollIntoView({ block: 'nearest' });
         } else {
             item.style.backgroundColor = '#FFFFFF';
@@ -285,7 +283,6 @@ window.agregarItemALista = () => {
         return;
     }
 
-    // Verificar si el artículo ya se encuentra listado en esta sesión de carga
     const indexExistente = listaCompraActual.findIndex(item => (sku && item.sku === sku) || (barras && item.barras === barras));
 
     const itemDatos = {
@@ -302,7 +299,6 @@ window.agregarItemALista = () => {
     };
 
     if (indexExistente > -1) {
-        // Si ya está en la lista, actualizamos valores sumando las cantidades
         listaCompraActual[indexExistente].cantidad += itemDatos.cantidad;
         listaCompraActual[indexExistente].nuevoStockTotal = listaCompraActual[indexExistente].stockViejo + listaCompraActual[indexExistente].cantidad;
         listaCompraActual[indexExistente].costo = itemDatos.costo;
@@ -374,13 +370,10 @@ window.procesarCompraCompleta = async () => {
     }
 
     mostrarEstado("⏳ Procesando lote de compras en Firestore...", "loading");
-    
-    // Instanciamos el Batch para guardar múltiples documentos de forma atómica
     const batch = writeBatch(db);
 
     try {
         listaCompraActual.forEach(item => {
-            // Buscamos si el artículo ya existía previamente en el almacén persistente
             const prodExistente = productosLocales.find(p => (item.sku && p.sku === item.sku) || (item.barras && p.barras === item.barras));
             const idDocumento = prodExistente ? prodExistente.id : (item.sku || item.barras || doc(collection(db, "temp")).id);
 
@@ -393,14 +386,13 @@ window.procesarCompraCompleta = async () => {
                 costo: item.costo,
                 ganancia: item.ganancia,
                 precio: item.precio,
-                stock: item.nuevoStockTotal, // Guardamos la sumatoria acumulada final
+                stock: item.nuevoStockTotal,
                 ultima_actualizacion: inputFecha.value
             };
 
             batch.set(docRef, payload, { merge: true });
         });
 
-        // Ejecución definitiva de la transacción por lote en el servidor
         await batch.commit();
 
         mostrarEstado(`✅ Compra guardada exitosamente. ${listaCompraActual.length} ítems procesados.`, "success");
