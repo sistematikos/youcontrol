@@ -36,10 +36,10 @@
             margin-bottom: 15px; 
         }
         
-        /* Layout de dos columnas para optimizar espacio */
+        /* Layout de dos columnas optimizado y flexible */
         .workspace-grid {
             display: grid;
-            grid-template-columns: 480px 1fr;
+            grid-template-columns: minmax(360px, 460px) 1fr;
             gap: 20px;
             align-items: start;
         }
@@ -56,12 +56,14 @@
             border-radius: 16px; 
             border: 1px solid var(--border); 
             box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+            box-sizing: border-box;
         }
         
         /* Contenedor relativo del Buscador Avanzado */
         .search-wrapper {
             position: relative;
             margin-bottom: 20px;
+            box-sizing: border-box;
         }
 
         .search-box { 
@@ -72,6 +74,7 @@
             align-items: center; 
             gap: 12px; 
             border: 1px solid #CBD5E1; 
+            box-sizing: border-box;
         }
         .search-box input { 
             flex: 1; 
@@ -82,6 +85,8 @@
             font-size: 1rem; 
             outline: none; 
             font-weight: 600; 
+            box-sizing: border-box;
+            width: 100%;
         }
         .search-box input:focus { 
             border-color: var(--indigo); 
@@ -154,7 +159,7 @@
             grid-template-columns: 1fr 1fr; 
             gap: 15px; 
         }
-        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; box-sizing: border-box; }
         .form-group.full { grid-column: span 2; }
         .form-group label { 
             font-size: 0.80rem; 
@@ -171,6 +176,7 @@
             background: #F8FAFC; 
             color: var(--text); 
             box-sizing: border-box; 
+            width: 100%; /* Obliga al input a quedarse dentro de la celda */
         }
         .form-grid .form-group input:focus { 
             border-color: var(--primary); 
@@ -210,6 +216,7 @@
             justify-content: center;
             gap: 8px;
             transition: 0.2s;
+            box-sizing: border-box;
         }
         .btn-add-item:hover { background: #4f46e5; }
 
@@ -230,6 +237,7 @@
             gap: 10px; 
             transition: 0.2s; 
             box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); 
+            box-sizing: border-box;
         }
         .btn-save-compra:hover { background: #059669; transform: translateY(-1px); }
         
