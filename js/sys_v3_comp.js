@@ -1,16 +1,17 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * Módulo Integrado de Entrada de Mercancía (sys_v3_comp.js)
+ * Módulo Integrado de Entrada de Mercancía Masiva (sys_v3_comp.js)
  * Sincronizado al 100% con Cloud Firestore de Inventario Pro
  */
 
 import { db } from './firebase-config.js';
 import { 
-    collection, onSnapshot, doc, getDoc, setDoc 
+    collection, onSnapshot, doc, getDoc, writeBatch 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const USER_ID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
 let productosLocales = [];
+let listaCompraActual = []; // Estructura en memoria para acumular los ítems de la compra
 let tasaActual = 1.00;
 
 // Vinculaciones del DOM
@@ -30,7 +31,10 @@ const inputCantidad = document.getElementById('comp-cantidad');
 const inputFecha = document.getElementById('comp-fecha');
 const statusBar = document.getElementById('status-bar-comp');
 
-// Mensajes de Alerta (Misma estética You Control)
+// Contenedor visual para la lista de productos precargados
+const tablaCompra = document.getElementById('tabla-items-compra'); 
+
+// Mensajes de Alerta
 function mostrarEstado(mensaje, tipo) {
     if (!statusBar) return;
     statusBar.className = `status-${tipo}`;
@@ -47,7 +51,6 @@ function mostrarEstado(mensaje, tipo) {
 async function inicializarEntradaMercancia() {
     mostrarEstado("⏳ Conectando con el inventario...", "loading");
     try {
-        // Leer la tasa exacta desde tu configuración de Firestore
         const tasaSnap = await getDoc(doc(db, "usuarios", USER_ID, "configuracion", "tasa"));
         if (tasaSnap.exists()) {
             tasaActual = parseFloat(tasaSnap.data().valor) || 1.00;
@@ -56,7 +59,6 @@ async function inicializarEntradaMercancia() {
             }
         }
 
-        // Escucha en tiempo real de la colección exacta de tus productos
         onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
             productosLocales = [];
             snapshot.forEach(doc => {
@@ -71,7 +73,6 @@ async function inicializarEntradaMercancia() {
     }
 }
 
-// Inicializadores de interfaz
 document.addEventListener('DOMContentLoaded', () => {
     const hoy = new Date().toISOString().split('T')[0];
     if (inputFecha) inputFecha.value = hoy;
@@ -80,11 +81,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (inputGanancia) inputGanancia.addEventListener('input', window.calcularPreciosCompra);
     if (inputPrecio) inputPrecio.addEventListener('input', window.calcularGananciaCompra);
 
-    // Atajo F9 para procesar la entrada
+    // Atajos de teclado del módulo
     document.addEventListener('keydown', (e) => {
         if (e.key === 'F9') {
             e.preventDefault();
-            window.procesarIngresoMercancia();
+            window.procesarCompraCompleta();
+        }
+        if (e.key === 'Enter' && document.activeElement === inputCantidad) {
+            e.preventDefault();
+            window.agregarItemALista();
         }
     });
 
@@ -104,7 +109,6 @@ if (buscador) {
             return;
         }
 
-        // Filtro cruzado sobre los mismos campos de tu tabla
         const filtrados = productosLocales.filter(p => {
             const barras = (p.barras || '').toLowerCase();
             const sku = (p.sku || '').toLowerCase();
@@ -123,7 +127,7 @@ function renderizarDropdown(productos, textoBuscado) {
     if (productos.length === 0) {
         dropdown.innerHTML = `
             <div class="no-products-alert" onclick="window.prepararNuevoProducto('${textoBuscado}')">
-                <i class="fas fa-plus-circle"></i> El producto no existe en la DB. ¿Deseas crearlo?
+                <i class="fas fa-plus-circle"></i> El producto no existe en la DB. ¿Deseas crearlo en esta compra?
             </div>
         `;
     } else {
@@ -135,7 +139,7 @@ function renderizarDropdown(productos, textoBuscado) {
                     <span class="item-name">${p.nombre || 'Sin descripción'}</span>
                     <span class="item-meta">SKU: ${p.sku || 'N/A'} | Barras: ${p.barras || 'Sin código'}</span>
                 </div>
-                <span class="item-stock">Stock: ${p.stock || 0}</span>
+                <span class="item-stock">Stock Actual: ${p.stock || 0}</span>
             `;
             item.onclick = () => seleccionarProducto(p);
             dropdown.appendChild(item);
@@ -153,7 +157,7 @@ function seleccionarProducto(producto) {
     inputPrecio.value = (producto.precio || 0).toFixed(2);
     inputStockViejo.value = producto.stock || 0;
     
-    inputCantidad.value = '0';
+    inputCantidad.value = '1';
     inputCantidad.focus();
     inputCantidad.select();
 
@@ -183,7 +187,6 @@ window.prepararNuevoProducto = function(textoBuscado) {
     inputSku.focus();
 };
 
-// Ocultar dropdown si se hace click fuera
 document.addEventListener('click', (e) => {
     if (dropdown && !e.target.closest('.search-wrapper')) {
         dropdown.style.display = 'none';
@@ -216,9 +219,9 @@ window.calcularGananciaCompra = function() {
 };
 
 // ==========================================
-// 4. PROCESAR ENTRADA (SETDOC EN FIRESTORE)
+// 4. GESTIÓN DE LA LISTA EN MEMORIA (CARRITO)
 // ==========================================
-window.procesarIngresoMercancia = async () => {
+window.agregarItemALista = () => {
     const sku = inputSku.value.trim();
     const nombre = inputNombre.value.trim();
     const barras = inputBarras.value.trim();
@@ -226,48 +229,77 @@ window.procesarIngresoMercancia = async () => {
     const stockViejo = parseInt(inputStockViejo.value) || 0;
 
     if (!nombre) { 
-        mostrarEstado("❌ La descripción del producto es obligatoria.", "loading"); 
+        mostrarEstado("❌ El campo descripción es requerido.", "loading"); 
         return; 
     }
     if (cantidadEntrante <= 0) {
-        mostrarEstado("❌ Ingrese una cantidad entrante mayor a cero.", "loading");
+        mostrarEstado("❌ Cantidad debe ser mayor a cero.", "loading");
         inputCantidad.focus();
         return;
     }
 
-    mostrarEstado("⏳ Registrando entrada en Firestore...", "loading");
+    // Verificar si el artículo ya se encuentra listado en esta sesión de carga
+    const indexExistente = listaCompraActual.findIndex(item => (sku && item.sku === sku) || (barras && item.barras === barras));
 
-    const nuevoStockTotal = stockViejo + cantidadEntrante;
-
-    const datos = {
+    const itemDatos = {
         sku: sku,
         barras: barras,
         nombre: nombre,
         costo: parseFloat(inputCosto.value) || 0,
         ganancia: parseFloat(inputGanancia.value) || 0,
         precio: parseFloat(inputPrecio.value) || 0,
-        stock: nuevoStockTotal,
-        ultima_actualizacion: inputFecha.value
+        stockViejo: stockViejo,
+        cantidad: cantidadEntrante,
+        nuevoStockTotal: stockViejo + cantidadEntrante
     };
 
-    try {
-        // Determinamos el ID del documento usando tu misma regla exacta de sys_v1_inv
-        // Busca si ya existía por id analizando el array de productosLocales
-        const prodExistente = productosLocales.find(p => p.sku === sku || (barras && p.barras === barras));
-        const idDocumento = prodExistente ? prodExistente.id : (sku || barras || doc(collection(db, "temp")).id);
-
-        // Escritura limpia y directa en tu colección real de usuarios
-        await setDoc(doc(db, "usuarios", USER_ID, "productos", idDocumento), datos, { merge: true });
-        
-        mostrarEstado(`✅ Entrada exitosa. Nuevo Stock: ${nuevoStockTotal}`, "success");
-        limpiarFormulario();
-    } catch (e) {
-        console.error("Error al asentar la entrada:", e);
-        mostrarEstado("❌ Error crítico: No se pudo actualizar el inventario.", "loading");
+    if (indexExistente > -1) {
+        // Si ya está en la lista, actualizamos valores sumando las cantidades
+        listaCompraActual[indexExistente].cantidad += itemDatos.cantidad;
+        listaCompraActual[indexExistente].nuevoStockTotal = listaCompraActual[indexExistente].stockViejo + listaCompraActual[indexExistente].cantidad;
+        listaCompraActual[indexExistente].costo = itemDatos.costo;
+        listaCompraActual[indexExistente].precio = itemDatos.precio;
+    } else {
+        listaCompraActual.push(itemDatos);
     }
+
+    actualizarTablaInterfaz();
+    limpiarCamposFicha();
 };
 
-function limpiarFormulario() {
+window.eliminarItemDeLista = (index) => {
+    listaCompraActual.splice(index, 1);
+    actualizarTablaInterfaz();
+};
+
+function actualizarTablaInterfaz() {
+    if (!tablaCompra) return;
+    tablaCompra.innerHTML = '';
+
+    if (listaCompraActual.length === 0) {
+        tablaCompra.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:20px;">No hay artículos agregados a la entrada.</td></tr>`;
+        return;
+    }
+
+    listaCompraActual.forEach((item, index) => {
+        const fila = document.createElement('tr');
+        fila.innerHTML = `
+            <td><b>${item.sku || 'N/A'}</b><br><small style="color:var(--text-muted);">${item.barras || ''}</small></td>
+            <td>${item.nombre}</td>
+            <td style="text-align: center;">${item.cantidad}</td>
+            <td style="text-align: right;">$ ${item.costo.toFixed(2)}</td>
+            <td style="text-align: right;">$ ${item.precio.toFixed(2)}</td>
+            <td style="text-align: center;">
+                <button class="btn-action-delete" onclick="window.eliminarItemDeLista(${index})" style="background:none; border:none; color:#ef4444; cursor:pointer;">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </td>
+        `;
+        tablaCompra.appendChild(fila);
+    });
+}
+
+function limpiarCamposFicha() {
     inputSku.value = '';
     inputBarras.value = '';
     inputNombre.value = '';
@@ -282,3 +314,53 @@ function limpiarFormulario() {
         buscador.focus();
     }
 }
+
+// ==========================================
+// 5. ASENTAMIENTO MASIVO EN FIRESTORE (BATCH)
+// ==========================================
+window.procesarCompraCompleta = async () => {
+    if (listaCompraActual.length === 0) {
+        mostrarEstado("❌ No hay artículos en la lista para procesar.", "loading");
+        return;
+    }
+
+    mostrarEstado("⏳ Procesando lote de compras en Firestore...", "loading");
+    
+    // Instanciamos el Batch para guardar múltiples documentos de forma atómica
+    const batch = writeBatch(db);
+
+    try {
+        listaCompraActual.forEach(item => {
+            // Buscamos si el artículo ya existía previamente en el almacén persistente
+            const prodExistente = productosLocales.find(p => (item.sku && p.sku === item.sku) || (item.barras && p.barras === item.barras));
+            const idDocumento = prodExistente ? prodExistente.id : (item.sku || item.barras || doc(collection(db, "temp")).id);
+
+            const docRef = doc(db, "usuarios", USER_ID, "productos", idDocumento);
+            
+            const payload = {
+                sku: item.sku,
+                barras: item.barras,
+                nombre: item.nombre,
+                costo: item.costo,
+                ganancia: item.ganancia,
+                precio: item.precio,
+                stock: item.nuevoStockTotal, // Guardamos la sumatoria acumulada final
+                ultima_actualizacion: inputFecha.value
+            };
+
+            batch.set(docRef, payload, { merge: true });
+        });
+
+        // Ejecución definitiva de la transacción por lote en el servidor
+        await batch.commit();
+
+        mostrarEstado(`✅ Compra guardada exitosamente. ${listaCompraActual.length} ítems procesados.`, "success");
+        listaCompraActual = [];
+        actualizarTablaInterfaz();
+        limpiarCamposFicha();
+
+    } catch (e) {
+        console.error("Error al ejecutar el lote de la compra:", e);
+        mostrarEstado("❌ Error crítico: No se pudo asentar la compra masiva.", "loading");
+    }
+};
