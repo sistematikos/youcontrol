@@ -139,6 +139,9 @@
                         await updateDoc(docRef, { equipos: [...dbData.equipos, hwID] });
                     }
 
+                    // SE GUARDA EL ID DE LA EMPRESA DINÁMICAMENTE ANTES DE REDIRECCIONAR
+                    localStorage.setItem('youcontrol_empresa_id', data.activation_id);
+
                     // LICENCIA VÁLIDA: Saltamos directo al Menú del Sistema
                     location.href = "sys_v1_menu.html";
                 } else {
@@ -170,7 +173,10 @@
                     });
                 }
 
+                // SE GUARDA EL TOKEN DE LICENCIA Y EL ID DE LA EMPRESA EN LA ACTIVACIÓN INICIAL
                 localStorage.setItem('licencia_youcontrol', rawToken);
+                localStorage.setItem('youcontrol_empresa_id', data.activation_id);
+                
                 location.reload();
             } catch (e) {
                 document.getElementById('msgError').style.display = 'block';
@@ -185,6 +191,7 @@
 
         function bloquearAcceso() {
             localStorage.removeItem('licencia_youcontrol');
+            localStorage.removeItem('youcontrol_empresa_id');
             mostrarInterfazActivacion();
         }
 
