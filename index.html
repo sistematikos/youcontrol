@@ -6,8 +6,11 @@
     <title>Sistematikos | You Control v4</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#001432">
+
     <style>
-        /* Paleta de colores Sistematikos */
         :root {
             --bg: #F0F4F8;
             --primary: #002D72; 
@@ -38,7 +41,6 @@
             max-width: 800px;
         }
 
-        /* Sección Ejecutiva (Branding) */
         .brand-header {
             display: flex;
             align-items: center;
@@ -77,7 +79,6 @@
             font-size: 0.9rem;
         }
 
-        /* Sección de Activación (Proceso Seguro) */
         .activation-panel {
             background: var(--white);
             padding: 30px;
@@ -130,7 +131,6 @@
             margin-bottom: 5px;
         }
 
-        /* Botones de Acción */
         .btn-act {
             padding: 14px;
             border-radius: 12px;
@@ -143,16 +143,11 @@
             box-sizing: border-box;
         }
 
-        .btn-act i {
-            margin-right: 8px;
-        }
+        .btn-act i { margin-right: 8px; }
 
-        /* Botón de Descarga */
         .btn-download {
             background: var(--primary);
             color: var(--white);
-            text-decoration: none;
-            display: block;
         }
 
         .btn-download:hover {
@@ -160,30 +155,20 @@
             transform: translateY(-2px);
         }
 
-        /* Botón de Ingreso (Por defecto bloqueado) */
         .btn-entry {
             background: #CBD5E1;
             color: #FFFFFF;
-            border: 1px solid var(--border);
             cursor: not-allowed;
         }
 
-        .btn-entry i {
-            opacity: 0.6;
-        }
-
-        /* Botón de Ingreso (Activado tras descarga) */
         .btn-entry.active {
             background: var(--emerald);
             color: var(--white);
             cursor: pointer;
-            border: none;
             animation: successPulse 1s alternate infinite;
         }
 
-        .btn-entry.active:hover {
-            background: #0D9466;
-        }
+        .btn-entry.active:hover { background: #0D9466; }
 
         @keyframes successPulse {
             0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
@@ -196,9 +181,6 @@
             color: #64748B;
             font-weight: 500;
         }
-
-        /* Estado Oculto */
-        .oculto { display: none !important; }
     </style>
 </head>
 <body oncontextmenu="return false">
@@ -216,26 +198,26 @@
 
         <div class="activation-panel">
             <div class="activation-flow">
-
+                
                 <div class="flow-step">
                     <div class="step-header">
-                        <span class="number">1</span> Descargar Software
+                        <span class="number">1</span> Crear Acceso Directo
                     </div>
-                    <p class="desc">Haz clic en el botón inferior para descargar el instalador ejecutable de You Control v4 en tu computadora.</p>
-
-                    <a href="URL_DEL_SOFTWARE_AQUI" id="btnDownloadSoftware" class="btn-act btn-download">
-                        <i class="fas fa-cloud-arrow-down"></i> DESCARGAR SOFTWARE
-                    </a>
+                    <p class="desc">Para ejecutar la aplicación de forma segura y aislada, haz clic abajo para instalar el acceso directo en tu escritorio.</p>
+                    
+                    <button id="btnInstallPWA" class="btn-act btn-download">
+                        <i class="fas fa-desktop"></i> INSTALAR EN ESCRITORIO
+                    </button>
                 </div>
 
                 <div class="flow-step">
                     <div class="step-header">
                         <span class="number">2</span> Ingresar al Sistema
                     </div>
-                    <p class="desc">Una vez finalizada la descarga, el software estará habilitado en tu equipo y este botón se activará para permitirte el ingreso.</p>
-
+                    <p class="desc">Una vez creado el acceso directo o detectada la instalación en el equipo, este botón se desbloqueará automáticamente.</p>
+                    
                     <button id="btnEnterSystem" class="btn-act btn-entry" disabled>
-                        <i class="fas fa-key"></i> INGRESAR AL SISTEMA
+                        <i class="fas fa-key"></i> INGRESO BLOQUEADO
                     </button>
                 </div>
 
@@ -248,72 +230,74 @@
     </footer>
 
     <script>
-        /**
-         * SISTEMATIKOS - YOU CONTROL v4
-         * Lógica de seguridad para forzar la descarga del software antes de permitir el ingreso.
-         */
+        // Registrar el Service Worker (Requisito obligatorio PWA)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
-            const btnDownload = document.getElementById('btnDownloadSoftware');
+            const btnInstall = document.getElementById('btnInstallPWA');
             const btnEnter = document.getElementById('btnEnterSystem');
+            let deferredPrompt;
 
-            // Usamos localStorage como token de auditoría para el terminal actual.
-            // Verifica si la descarga ya fue completada anteriormente por este usuario.
-            const downloadCompleted = localStorage.getItem('youcontrol_software_descargado');
+            // 1. Verificar si ya se está ejecutando como App Instalada (Acceso directo abierto)
+            const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
-            if (downloadCompleted === 'true') {
-                // Si ya se descargó, activamos el botón de ingreso inmediatamente.
-                activarBotonIngreso();
+            if (isPWA) {
+                // Si ya está abierto desde el acceso directo, habilitar ingreso de una vez
+                marcarComoInstalado();
             }
 
-            // Evento 1: Detectar clic en el botón de descarga corporativo.
-            btnDownload.addEventListener('click', (e) => {
-                // Prevenir comportamiento por defecto para asegurar la auditoría de seguridad
-                e.preventDefault(); 
-                console.log('⏳ Registrando auditoría de descarga...');
-
-                // 1. Ejecutar la descarga en segundo plano.
-                // Obtenemos la URL del enlace actual
-                const downloadUrl = btnDownload.getAttribute('href');
-
-                // Verificación de seguridad de URL
-                if (downloadUrl === '#' || downloadUrl === 'URL_DEL_SOFTWARE_AQUI') {
-                    alert("❌ Error: La URL de descarga del software no ha sido configurada.");
-                    console.error('La URL del software es inválida o no configurada.');
-                    return;
+            // 2. Capturar la orden de instalación del navegador
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                
+                // Si la app no está instalada, nos aseguramos de pedir la instalación primero
+                if (!isPWA) {
+                    btnInstall.innerText = "INSTALAR EN ESCRITORIO";
+                    btnInstall.disabled = false;
                 }
-
-                // Forzar descarga nativa usando un enlace temporal
-                const tempLink = document.createElement('a');
-                tempLink.href = downloadUrl;
-                tempLink.setAttribute('download', 'Software_YouControl_v4.exe'); // Nombre de archivo corporativo
-                document.body.appendChild(tempLink);
-                tempLink.click();
-                document.body.removeChild(tempLink);
-
-                // 2. Registrar en auditoría local (Token de Terminal) tras confirmar el clic exitoso.
-                localStorage.setItem('youcontrol_software_descargado', 'true');
-                console.log('✅ Descarga registrada exitosamente.');
-
-                // 3. Activar el botón de ingreso tras un pequeño delay (ej: simulando fin de descarga)
-                btnDownload.innerText = "DESCARGA REGISTRADA ✅";
-                btnDownload.classList.remove('btn-download');
-                btnDownload.classList.add('oculto'); // Ocultar botón de descarga
-
-                setTimeout(activarBotonIngreso, 1000); // 1 segundo de retraso para el efecto visual
             });
 
-            // Función ejecutiva para activar el estado de éxito en el botón de ingreso.
-            function activarBotonIngreso() {
-                // Quitar estado deshabilitado
-                btnEnter.classList.remove('oculto');
-                btnEnter.disabled = false;
-                btnEnter.classList.add('active'); // Aplicar estilo de éxito (esmeralda con pulso)
-                btnEnter.innerText = "SISTEMA DESCARGADO - INGRESAR";
+            // 3. Acción al presionar el botón de instalación
+            btnInstall.addEventListener('click', async () => {
+                if (!deferredPrompt) {
+                    // Si el navegador ya la tiene instalada o no soporta el prompt directo
+                    marcarComoInstalado();
+                    return;
+                }
+                
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                
+                if (outcome === 'accepted') {
+                    console.log('El usuario instaló el acceso directo.');
+                    marcarComoInstalado();
+                }
+                deferredPrompt = null;
+            });
 
-                // Evento 2: El botón ahora redirige a sys_lic.html para validar la licencia de You Control.
-                btnEnter.addEventListener('click', () => {
+            // 4. Si el navegador detecta que se completó con éxito la instalación
+            window.addEventListener('appinstalled', () => {
+                marcarComoInstalado();
+            });
+
+            function marcarComoInstalado() {
+                btnInstall.innerText = "¡INSTALADO CON ÉXITO! ✅";
+                btnInstall.style.background = "#64748B";
+                btnInstall.disabled = true;
+
+                // Desbloquear el botón de entrada real
+                btnEnter.disabled = false;
+                btnEnter.classList.add('active');
+                btnEnter.innerText = "INGRESAR AL SISTEMA";
+                
+                btnEnter.onclick = () => {
                     location.href = "sys_lic.html";
-                });
+                };
             }
         });
     </script>
