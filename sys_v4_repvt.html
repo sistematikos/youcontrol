@@ -8,14 +8,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { 
-            --bg: #F8FAFC; 
-            --primary: #3B82F6; 
-            --text: #1E293B; 
-            --border: #E2E8F0; 
-            --emerald: #10B981; 
-            --indigo: #6366F1; 
-            --slate-dark: #0F172A;
-            --text-muted: #64748B;
+            var(--bg): #F8FAFC; 
+            var(--primary): #3B82F6; 
+            var(--text): #1E293B; 
+            var(--border): #E2E8F0; 
+            var(--emerald): #10B981; 
+            var(--indigo): #6366F1; 
+            var(--slate-dark): #0F172A;
+            var(--text-muted): #64748B;
         }
         body { 
             font-family: 'Poppins', sans-serif; 
@@ -234,10 +234,10 @@
             <table class="table-report">
                 <thead>
                     <tr>
-                        <th>ID Venta / Fecha</th>
+                        <th>Nro. Factura / Fecha</th>
                         <th>Cliente / Tipo</th>
-                        <th style="text-align: center;">Artículos</th>
-                        <th style="text-align: right;">Costo Total</th>
+                        <th style="text-align: left; padding-left: 10px;">Artículos Comprados</th>
+                        <th style="text-align: center;">Cant. Total</th>
                         <th style="text-align: right;">Total Venta ($)</th>
                     </tr>
                 </thead>
