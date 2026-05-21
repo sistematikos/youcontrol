@@ -14,6 +14,9 @@ let productosLocales = [];
 let listaCompraActual = []; // Estructura en memoria para acumular los ítems de la compra
 let tasaActual = 1.00;
 
+// Variables de control para la navegación con teclado
+let indexFocus = -1;
+
 // Vinculaciones del DOM
 const buscador = document.getElementById('buscador-dinamico');
 const dropdown = document.getElementById('dropdown-resultados');
@@ -87,6 +90,8 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             window.procesarCompraCompleta();
         }
+        
+        // Ejecutar agregarItem solo si no estamos navegando en el dropdown predictivo
         if (e.key === 'Enter' && document.activeElement === inputCantidad) {
             e.preventDefault();
             window.agregarItemALista();
@@ -98,11 +103,12 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// 2. BUSCADOR DINÁMICO PREDICTIVO
+// 2. BUSCADOR DINÁMICO PREDICTIVO Y NAVEGACIÓN
 // ==========================================
 if (buscador) {
     buscador.addEventListener('input', (e) => {
         const criterio = e.target.value.trim().toLowerCase();
+        indexFocus = -1; // Resetear foco al escribir
         
         if (!criterio) {
             dropdown.style.display = 'none';
@@ -117,6 +123,44 @@ if (buscador) {
         });
 
         renderizarDropdown(filtrados, e.target.value);
+    });
+
+    // Escuchador exclusivo para las flechas y Enter dentro del buscador
+    buscador.addEventListener('keydown', (e) => {
+        const items = dropdown.querySelectorAll('.search-item');
+        
+        if (dropdown.style.display === 'none' || items.length === 0) {
+            return;
+        }
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            indexFocus++;
+            if (indexFocus >= items.length) indexFocus = 0;
+            actualizarFocoItems(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            indexFocus--;
+            if (indexFocus < 0) indexFocus = items.length - 1;
+            actualizarFocoItems(items);
+        } else if (e.key === 'Enter') {
+            if (indexFocus > -1 && items[indexFocus]) {
+                e.preventDefault();
+                items[indexFocus].click(); // Ejecuta la selección
+                indexFocus = -1;
+            }
+        }
+    });
+}
+
+function actualizarFocoItems(items) {
+    items.forEach((item, index) => {
+        if (index === indexFocus) {
+            item.style.backgroundColor = '#F1F5F9'; // Resaltado visual
+            item.scrollIntoView({ block: 'nearest' });
+        } else {
+            item.style.backgroundColor = '#FFFFFF';
+        }
     });
 }
 
@@ -163,6 +207,7 @@ function seleccionarProducto(producto) {
 
     dropdown.style.display = 'none';
     if (buscador) buscador.value = '';
+    indexFocus = -1;
     
     window.calcularPreciosCompra();
 }
@@ -183,6 +228,7 @@ window.prepararNuevoProducto = function(textoBuscado) {
     
     dropdown.style.display = 'none';
     if (buscador) buscador.value = '';
+    indexFocus = -1;
     
     inputSku.focus();
 };
@@ -190,6 +236,7 @@ window.prepararNuevoProducto = function(textoBuscado) {
 document.addEventListener('click', (e) => {
     if (dropdown && !e.target.closest('.search-wrapper')) {
         dropdown.style.display = 'none';
+        indexFocus = -1;
     }
 });
 
@@ -249,6 +296,7 @@ window.agregarItemALista = () => {
         ganancia: parseFloat(inputGanancia.value) || 0,
         precio: parseFloat(inputPrecio.value) || 0,
         stockViejo: stockViejo,
+        amount: cantidadEntrante,
         cantidad: cantidadEntrante,
         nuevoStockTotal: stockViejo + cantidadEntrante
     };
@@ -313,6 +361,7 @@ function limpiarCamposFicha() {
         buscador.value = '';
         buscador.focus();
     }
+    indexFocus = -1;
 }
 
 // ==========================================
