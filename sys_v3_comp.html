@@ -14,6 +14,7 @@
             --border: #E2E8F0; 
             --emerald: #10B981; 
             --indigo: #6366F1; 
+            --slate-dark: #0F172A;
         }
         body { 
             font-family: 'Poppins', sans-serif; 
@@ -24,7 +25,7 @@
         }
         .container { 
             padding: 15px; 
-            max-width: 800px; 
+            max-width: 1300px; 
             margin: auto; 
         }
         
@@ -35,13 +36,26 @@
             margin-bottom: 15px; 
         }
         
+        /* Layout de dos columnas para optimizar espacio */
+        .workspace-grid {
+            display: grid;
+            grid-template-columns: 480px 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        @media (max-width: 992px) {
+            .workspace-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .compra-card { 
             background: white; 
-            padding: 25px; 
+            padding: 22px; 
             border-radius: 16px; 
             border: 1px solid var(--border); 
             box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
-            margin-top: 15px; 
         }
         
         /* Contenedor relativo del Buscador Avanzado */
@@ -52,7 +66,7 @@
 
         .search-box { 
             background: #EEF2F6; 
-            padding: 15px; 
+            padding: 12px; 
             border-radius: 12px; 
             display: flex; 
             align-items: center; 
@@ -74,7 +88,7 @@
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); 
         }
 
-        /* Lista de sugerencias predictivas flotante (Capa Oca Sólida) */
+        /* Lista de sugerencias predictivas flotante */
         .search-results-dropdown {
             position: absolute;
             top: 102%;
@@ -86,7 +100,7 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.15);
             max-height: 260px;
             overflow-y: auto;
-            z-index: 9999; /* Posicionado por encima de todo el formulario */
+            z-index: 9999; 
             display: none;
             padding: 0;
         }
@@ -138,18 +152,18 @@
         .form-grid { 
             display: grid; 
             grid-template-columns: 1fr 1fr; 
-            gap: 20px; 
+            gap: 15px; 
         }
         .form-group { display: flex; flex-direction: column; gap: 6px; }
         .form-group.full { grid-column: span 2; }
         .form-group label { 
-            font-size: 0.85rem; 
+            font-size: 0.80rem; 
             font-weight: 600; 
             color: #64748B; 
             text-transform: uppercase; 
         }
         .form-group input { 
-            padding: 11px 14px; 
+            padding: 10px 12px; 
             border: 1px solid var(--border); 
             border-radius: 10px; 
             font-family: 'Poppins'; 
@@ -175,21 +189,41 @@
             border: 1px solid #a7f3d0; 
             color: #065f46; 
             font-weight: 800; 
-            font-size: 1.1rem; 
+            font-size: 1.05rem; 
             text-align: center; 
         }
+
+        /* Botones de acción */
+        .btn-add-item {
+            background: var(--indigo);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            width: 100%;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+        .btn-add-item:hover { background: #4f46e5; }
 
         .btn-save-compra { 
             background: var(--emerald); 
             color: white; 
             border: none; 
-            padding: 15px; 
+            padding: 14px; 
             border-radius: 12px; 
             cursor: pointer; 
             font-weight: 800; 
             font-size: 1.1rem; 
             width: 100%; 
-            margin-top: 25px; 
+            margin-top: 20px; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
@@ -210,6 +244,45 @@
             align-items: center; 
             gap: 5px; 
             font-size: 0.9rem; 
+        }
+
+        /* Estilos de la Tabla de Ítems en cola */
+        .table-container {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+            width: 100%;
+        }
+        
+        .table-review {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        
+        .table-review th {
+            background: #F1F5F9;
+            color: #475569;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 12px 10px;
+            text-align: left;
+            border-bottom: 2px solid var(--border);
+        }
+        
+        .table-review td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #F1F5F9;
+            color: var(--text);
+            vertical-align: middle;
+        }
+
+        .table-review tr:last-child td {
+            border: none;
         }
 
         #status-bar-comp { 
@@ -235,7 +308,7 @@
         </button>
 
         <div class="header-table">
-            <h3><i class="fas fa-cart-plus" style="color: var(--indigo);"></i> ENTRADA DE MERCANCÍA</h3>
+            <h3><i class="fas fa-boxes-stacked" style="color: var(--indigo);"></i> ENTRADA MASIVA DE MERCANCÍA</h3>
             <span style="font-size: 0.85rem; color: #64748B; font-weight: 600; background: #E2E8F0; padding: 4px 10px; border-radius: 6px;">
                 Tasa de hoy: <span id="txt-tasa">1,00</span> Bs.
             </span>
@@ -243,63 +316,95 @@
 
         <div id="status-bar-comp"></div>
 
-        <div class="compra-card">
+        <div class="workspace-grid">
             
-            <div class="search-wrapper">
-                <div class="search-box">
-                    <i class="fas fa-magnifying-glass" style="font-size: 1.3rem; color: #64748B;"></i>
-                    <input type="text" id="buscador-dinamico" placeholder="Escriba código de barras, SKU o descripción del producto...">
+            <div class="compra-card">
+                <div class="search-wrapper">
+                    <div class="search-box">
+                        <i class="fas fa-magnifying-glass" style="font-size: 1.2rem; color: #64748B;"></i>
+                        <input type="text" id="buscador-dinamico" placeholder="Buscar código, SKU o descripción...">
+                    </div>
+                    <div id="dropdown-resultados" class="search-results-dropdown"></div>
                 </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>SKU / Código Interno</label>
+                        <input type="text" id="comp-sku" placeholder="Ej: PIÑ-01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Código de Barras</label>
+                        <input type="text" id="comp-barras" placeholder="Código de barras...">
+                    </div>
+                    <div class="form-group full">
+                        <label>Descripción del Producto</label>
+                        <input type="text" id="comp-nombre" placeholder="Descripción completa del artículo..." required>
+                    </div>
+                    <div class="form-group">
+                        <label>Costo USD ($)</label>
+                        <input type="number" step="0.01" id="comp-costo" value="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>% Ganancia</label>
+                        <input type="number" step="0.1" id="comp-ganancia" value="0.0">
+                    </div>
+                    <div class="form-group">
+                        <label>Precio USD ($)</label>
+                        <input type="number" step="0.01" id="comp-precio" value="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Precio Venta Bs.</label>
+                        <input type="text" id="comp-precio-bs" class="precio-bs-box" value="0,00 Bs." readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Stock Actual</label>
+                        <input type="number" id="comp-stock-viejo" value="0" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label style="color: var(--indigo); font-weight: 800;">Cantidad Entrante</label>
+                        <input type="number" id="comp-cantidad" value="0" style="border: 2px solid var(--indigo); font-weight: bold; background: #F5F3FF;">
+                    </div>
+                    <div class="form-group full">
+                        <label>Fecha de Registro</label>
+                        <input type="date" id="comp-fecha">
+                    </div>
+                </div>
+
+                <button class="btn-add-item" type="button" onclick="window.agregarItemALista()">
+                    <i class="fas fa-plus-circle"></i> AGREGAR A LA LISTA (Enter)
+                </button>
+            </div>
+
+            <div class="table-container">
+                <h4 style="margin-top: 0; margin-bottom: 15px; color: var(--slate-dark); font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-list-check" style="color: var(--primary);"></i> Artículos en esta Entrada
+                </h4>
                 
-                <div id="dropdown-resultados" class="search-results-dropdown"></div>
+                <table class="table-review">
+                    <thead>
+                        <tr>
+                            <th>Código / SKU</th>
+                            <th>Descripción</th>
+                            <th style="text-align: center;">Cant.</th>
+                            <th style="text-align: right;">Costo U.</th>
+                            <th style="text-align: right;">P. Venta</th>
+                            <th style="text-align: center;">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-items-compra">
+                        <tr>
+                            <td colspan="6" style="text-align:center; color:#64748B; padding:20px;">
+                                No hay artículos agregados a la entrada.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <button class="btn-save-compra" id="btnGuardarCompra" onclick="window.procesarCompraCompleta()">
+                    <i class="fas fa-cloud-arrow-up"></i> GUARDAR COMPRETA (F9)
+                </button>
             </div>
 
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>SKU / Código Interno</label>
-                    <input type="text" id="comp-sku" placeholder="Ej: PIÑ-01" required>
-                </div>
-                <div class="form-group">
-                    <label>Código de Barras</label>
-                    <input type="text" id="comp-barras" placeholder="Código de barras leído...">
-                </div>
-                <div class="form-group full">
-                    <label>Descripción del Producto</label>
-                    <input type="text" id="comp-nombre" placeholder="Descripción completa del artículo..." required>
-                </div>
-                <div class="form-group">
-                    <label>Costo USD ($)</label>
-                    <input type="number" step="0.01" id="comp-costo" value="0.00">
-                </div>
-                <div class="form-group">
-                    <label>% Ganancia</label>
-                    <input type="number" step="0.1" id="comp-ganancia" value="0.0">
-                </div>
-                <div class="form-group">
-                    <label>Precio USD ($)</label>
-                    <input type="number" step="0.01" id="comp-precio" value="0.00">
-                </div>
-                <div class="form-group">
-                    <label>Precio de Venta Bolívares</label>
-                    <input type="text" id="comp-precio-bs" class="precio-bs-box" value="0,00 Bs." readonly>
-                </div>
-                <div class="form-group">
-                    <label>Stock Actual</label>
-                    <input type="number" id="comp-stock-viejo" value="0" readonly>
-                </div>
-                <div class="form-group">
-                    <label style="color: var(--indigo); font-weight: 800;">Cantidad Entrante (+)</label>
-                    <input type="number" id="comp-cantidad" value="0" style="border: 2px solid var(--indigo); font-weight: bold; background: #F5F3FF;">
-                </div>
-                <div class="form-group full">
-                    <label>Fecha de Registro</label>
-                    <input type="date" id="comp-fecha">
-                </div>
-            </div>
-
-            <button class="btn-save-compra" id="btnGuardarCompra" onclick="window.procesarIngresoMercancia()">
-                <i class="fas fa-boxes-stacked"></i> PROCESAR ENTRADA (F9)
-            </button>
         </div>
     </div>
 
