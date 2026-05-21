@@ -1,7 +1,7 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
  * Módulo de Auditoría y Reportes de Ventas por Fechas (sys_v4_repvt.js)
- * Optimización: Tolerancia bilingüe para propiedades de ítems (cant/cantidad) y pagos.
+ * Optimización: Tolerancia bilingüe para propiedades de ítems (cant/cantidad), pagos y nro_factura.
  */
 
 import { db } from './firebase-config.js';
@@ -87,6 +87,9 @@ window.cargarReporteVentas = async () => {
             const venta = docSnap.data();
             const idVenta = docSnap.id;
 
+            // RESPALDO SEGURO: Si nro_factura existe en Firebase se usa, si no, se toman los primeros 8 dígitos del ID
+            const identificadorFactura = venta.nro_factura ? venta.nro_factura : `#${idVenta.substring(0, 8).toUpperCase()}`;
+
             let totalVentaDolar = 0;
             let totalCostoDolar = 0;
             let totalUnidadesVenta = 0;
@@ -127,7 +130,7 @@ window.cargarReporteVentas = async () => {
 
             const fila = document.createElement('tr');
             fila.innerHTML = `
-                <td><b>#${idVenta.substring(0, 8).toUpperCase()}</b><br><small style="color:#64748B;">${venta.fecha_completa || venta.fecha}</small></td>
+                <td><b>${identificadorFactura}</b><br><small style="color:#64748B;">${venta.fecha_completa || venta.fecha}</small></td>
                 <td>${venta.cliente_nombre || 'Consumidor Final'}<br><small style="color:#006aff; font-weight:600;">${metodoPago}</small></td>
                 <td style="text-align: center; font-weight: 600;">${totalUnidadesVenta}</td>
                 <td style="text-align: right; color:#64748B;">$ ${totalCostoDolar.toFixed(2)}</td>
