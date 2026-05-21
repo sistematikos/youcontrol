@@ -3,181 +3,242 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistematikos | You Control PWA</title>
+    <title>Sistematikos | You Control v4</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <link rel="manifest" href="./manifest.json">
-    <meta name="theme-color" content="#001432">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="https://via.placeholder.com/192/002D72/FFFFFF?text=YC">
-
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
+        /* Paleta de colores Sistematikos */
         :root {
-            --bg-dark: #001432;
-            --primary-blue: #002D72;
-            --electric-blue: #0052D4;
-            --text-light: #F8FAFC;
-            --text-muted: #94A3B8;
+            --bg: #F0F4F8;
+            --primary: #002D72; 
+            --primary-hov: #0040A0;
+            --emerald: #10B981;
+            --text: #1E293B;
+            --border: #E2E8F0;
+            --white: #FFFFFF;
         }
 
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: var(--bg-dark);
-            color: var(--text-light);
-            margin: 0;
-            min-height: 100vh;
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background: var(--bg); 
+            margin: 0; 
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text);
+        }
+
+        .main-container {
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
             align-items: center;
-            overflow-x: hidden;
+            gap: 20px;
+            width: 90%;
+            max-width: 800px;
         }
 
-        .hero-container {
+        /* Sección Ejecutiva (Branding) */
+        .brand-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: var(--white);
+            padding: 20px 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .brand-logo {
+            width: 80px;
+            height: 80px;
+            background: var(--primary);
+            color: var(--white);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+        }
+
+        .brand-text h1 {
+            margin: 0;
+            color: var(--primary);
+            font-weight: 800;
+            font-size: 1.8rem;
+        }
+
+        .brand-text p {
+            margin: 0;
+            color: var(--text);
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        /* Sección de Activación (Proceso Seguro) */
+        .activation-panel {
+            background: var(--white);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            box-sizing: border-box;
+            border-top: 5px solid var(--primary);
+        }
+
+        .activation-flow {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .flow-step {
             flex: 1;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 90%;
-            max-width: 500px;
-            text-align: center;
-            padding: 40px 20px;
-            box-sizing: border-box;
+            gap: 15px;
         }
 
-        .pwa-logo {
-            width: 90px;
-            height: 90px;
-            background: linear-gradient(135deg, var(--electric-blue), var(--primary-blue));
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .step-header .number {
+            width: 30px;
+            height: 30px;
+            border-radius: 15px;
+            background: var(--primary);
             color: white;
-            border-radius: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2.8rem;
-            margin-bottom: 25px;
-            box-shadow: 0 10px 25px rgba(0, 82, 212, 0.3);
-            animation: pulse 2s infinite alternate;
+            font-weight: bold;
+            font-size: 0.9rem;
         }
 
-        @keyframes pulse {
-            0% { transform: scale(1); box-shadow: 0 10px 25px rgba(0, 82, 212, 0.3); }
-            100% { transform: scale(1.04); box-shadow: 0 15px 35px rgba(0, 82, 212, 0.5); }
+        .desc {
+            font-size: 0.85rem;
+            line-height: 1.4;
+            color: var(--text);
+            opacity: 0.8;
+            margin-bottom: 5px;
         }
 
-        h1 {
-            font-size: 2.2rem;
+        /* Botones de Acción */
+        .btn-act {
+            padding: 14px;
+            border-radius: 12px;
             font-weight: 800;
-            margin: 0;
-            letter-spacing: -0.03em;
-            background: linear-gradient(to right, #FFFFFF, #93C5FD);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .tagline {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            margin: 8px 0 35px 0;
-            line-height: 1.5;
-        }
-
-        .action-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 24px;
-            padding: 30px 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            border: none;
             width: 100%;
             box-sizing: border-box;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
         }
 
-        .btn-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
+        .btn-act i {
+            margin-right: 8px;
         }
 
-        .btn-main {
-            background: linear-gradient(135deg, var(--electric-blue), #0041a8);
-            color: white;
+        /* Botón de Descarga */
+        .btn-download {
+            background: var(--primary);
+            color: var(--white);
             text-decoration: none;
-            padding: 16px;
-            border-radius: 14px;
-            font-weight: 700;
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            transition: all 0.2s;
-            box-shadow: 0 4px 15px rgba(0, 82, 212, 0.3);
-            border: none;
-            cursor: pointer;
+            display: block;
         }
 
-        .btn-main:hover {
+        .btn-download:hover {
+            background: var(--primary-hov);
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 82, 212, 0.4);
         }
 
-        /* Botón de instalación dinámico */
-        .btn-install {
-            background: rgba(255, 255, 255, 0.08);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            padding: 14px;
-            border-radius: 14px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
+        /* Botón de Ingreso (Por defecto bloqueado) */
+        .btn-entry {
+            background: #CBD5E1;
+            color: #FFFFFF;
+            border: 1px solid var(--border);
+            cursor: not-allowed;
+        }
+
+        .btn-entry i {
+            opacity: 0.6;
+        }
+
+        /* Botón de Ingreso (Activado tras descarga) */
+        .btn-entry.active {
+            background: var(--emerald);
+            color: var(--white);
             cursor: pointer;
-            transition: all 0.2s;
+            border: none;
+            animation: successPulse 1s alternate infinite;
         }
 
-        .btn-install:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.3);
+        .btn-entry.active:hover {
+            background: #0D9466;
         }
 
-        .oculto { display: none !important; }
+        @keyframes successPulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            100% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+        }
 
         footer {
             padding: 20px;
             font-size: 0.75rem;
-            color: rgba(255,255,255,0.3);
-            text-align: center;
+            color: #64748B;
             font-weight: 500;
-            letter-spacing: 0.02em;
         }
+
+        /* Estado Oculto */
+        .oculto { display: none !important; }
     </style>
 </head>
 <body oncontextmenu="return false">
 
-    <div class="hero-container">
-        <div class="pwa-logo">
-            <i class="fas fa-cubes"></i>
+    <div class="main-container">
+        <div class="brand-header">
+            <div class="brand-logo">
+                <i class="fas fa-cubes"></i>
+            </div>
+            <div class="brand-text">
+                <h1>You Control v4</h1>
+                <p>Módulo de Auditoría y Gestión Comercial Inteligente</p>
+            </div>
         </div>
 
-        <h1>You Control</h1>
-        <p class="tagline">Plataforma de Gestión Comercial Inteligente y Auditoría de Ventas</p>
+        <div class="activation-panel">
+            <div class="activation-flow">
 
-        <div class="action-card">
-            <div class="btn-panel">
-                <a href="./sys_lic.html" class="btn-main">
-                    <i class="fas fa-right-to-bracket"></i> INGRESAR AL SISTEMA
-                </a>
+                <div class="flow-step">
+                    <div class="step-header">
+                        <span class="number">1</span> Descargar Software
+                    </div>
+                    <p class="desc">Haz clic en el botón inferior para descargar el instalador ejecutable de You Control v4 en tu computadora.</p>
 
-                <button id="btnPWAInstall" class="btn-install oculto">
-                    <i class="fas fa-cloud-arrow-down"></i> DESCARGAR APLICACIÓN WEB
-                </button>
+                    <a href="URL_DEL_SOFTWARE_AQUI" id="btnDownloadSoftware" class="btn-act btn-download">
+                        <i class="fas fa-cloud-arrow-down"></i> DESCARGAR SOFTWARE
+                    </a>
+                </div>
+
+                <div class="flow-step">
+                    <div class="step-header">
+                        <span class="number">2</span> Ingresar al Sistema
+                    </div>
+                    <p class="desc">Una vez finalizada la descarga, el software estará habilitado en tu equipo y este botón se activará para permitirte el ingreso.</p>
+
+                    <button id="btnEnterSystem" class="btn-act btn-entry" disabled>
+                        <i class="fas fa-key"></i> INGRESAR AL SISTEMA
+                    </button>
+                </div>
+
             </div>
         </div>
     </div>
@@ -187,42 +248,73 @@
     </footer>
 
     <script>
-        // Registrar el Service Worker indispensable para PWA
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('PWA Service Worker registrado con éxito', reg.scope))
-                    .catch(err => console.error('Error al registrar Service Worker', err));
+        /**
+         * SISTEMATIKOS - YOU CONTROL v4
+         * Lógica de seguridad para forzar la descarga del software antes de permitir el ingreso.
+         */
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnDownload = document.getElementById('btnDownloadSoftware');
+            const btnEnter = document.getElementById('btnEnterSystem');
+
+            // Usamos localStorage como token de auditoría para el terminal actual.
+            // Verifica si la descarga ya fue completada anteriormente por este usuario.
+            const downloadCompleted = localStorage.getItem('youcontrol_software_descargado');
+
+            if (downloadCompleted === 'true') {
+                // Si ya se descargó, activamos el botón de ingreso inmediatamente.
+                activarBotonIngreso();
+            }
+
+            // Evento 1: Detectar clic en el botón de descarga corporativo.
+            btnDownload.addEventListener('click', (e) => {
+                // Prevenir comportamiento por defecto para asegurar la auditoría de seguridad
+                e.preventDefault(); 
+                console.log('⏳ Registrando auditoría de descarga...');
+
+                // 1. Ejecutar la descarga en segundo plano.
+                // Obtenemos la URL del enlace actual
+                const downloadUrl = btnDownload.getAttribute('href');
+
+                // Verificación de seguridad de URL
+                if (downloadUrl === '#' || downloadUrl === 'URL_DEL_SOFTWARE_AQUI') {
+                    alert("❌ Error: La URL de descarga del software no ha sido configurada.");
+                    console.error('La URL del software es inválida o no configurada.');
+                    return;
+                }
+
+                // Forzar descarga nativa usando un enlace temporal
+                const tempLink = document.createElement('a');
+                tempLink.href = downloadUrl;
+                tempLink.setAttribute('download', 'Software_YouControl_v4.exe'); // Nombre de archivo corporativo
+                document.body.appendChild(tempLink);
+                tempLink.click();
+                document.body.removeChild(tempLink);
+
+                // 2. Registrar en auditoría local (Token de Terminal) tras confirmar el clic exitoso.
+                localStorage.setItem('youcontrol_software_descargado', 'true');
+                console.log('✅ Descarga registrada exitosamente.');
+
+                // 3. Activar el botón de ingreso tras un pequeño delay (ej: simulando fin de descarga)
+                btnDownload.innerText = "DESCARGA REGISTRADA ✅";
+                btnDownload.classList.remove('btn-download');
+                btnDownload.classList.add('oculto'); // Ocultar botón de descarga
+
+                setTimeout(activarBotonIngreso, 1000); // 1 segundo de retraso para el efecto visual
             });
-        }
 
-        // Capturar el evento de instalación nativo del navegador
-        let deferredPrompt;
-        const btnInstall = document.getElementById('btnPWAInstall');
+            // Función ejecutiva para activar el estado de éxito en el botón de ingreso.
+            function activarBotonIngreso() {
+                // Quitar estado deshabilitado
+                btnEnter.classList.remove('oculto');
+                btnEnter.disabled = false;
+                btnEnter.classList.add('active'); // Aplicar estilo de éxito (esmeralda con pulso)
+                btnEnter.innerText = "SISTEMA DESCARGADO - INGRESAR";
 
-        window.addEventListener('beforeinstallprompt', (e) => {
-            // Previene que Chrome/Edge muestren su banner por defecto
-            e.preventDefault();
-            deferredPrompt = e;
-            // Revela nuestro botón corporativo personalizado
-            btnInstall.classList.remove('oculto');
-        });
-
-        btnInstall.addEventListener('click', async () => {
-            if (!deferredPrompt) return;
-            // Desplegar diálogo oficial de instalación
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            console.log(`Respuesta del usuario para la instalación: ${outcome}`);
-            deferredPrompt = null;
-            // Ocultar el botón una vez aceptado o rechazado
-            btnInstall.classList.add('oculto');
-        });
-
-        // Ocultar el botón si la app ya está instalada y corriendo de forma nativa
-        window.addEventListener('appinstalled', () => {
-            console.log('You Control PWA instalada exitosamente por el usuario.');
-            btnInstall.classList.add('oculto');
+                // Evento 2: El botón ahora redirige a sys_lic.html para validar la licencia de You Control.
+                btnEnter.addEventListener('click', () => {
+                    location.href = "sys_lic.html";
+                });
+            }
         });
     </script>
 </body>
