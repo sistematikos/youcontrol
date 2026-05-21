@@ -1,22 +1,15 @@
 {
-  "name": "You Control PWA",
+  "name": "You Control v4",
   "short_name": "YouControl",
-  "description": "Sistema de Gestión Comercial y Auditoría",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#001432",
   "theme_color": "#001432",
-  "orientation": "portrait",
   "icons": [
     {
-      "src": "https://via.placeholder.com/192/002D72/FFFFFF?text=YC",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "https://via.placeholder.com/512/002D72/FFFFFF?text=YouControl",
-      "type": "image/png",
-      "sizes": "512x512"
+      "src": "https://img.icons8.com/color/512/business.png", 
+      "sizes": "512x512",
+      "type": "image/png"
     }
   ]
 }
