@@ -1,104 +1,258 @@
-<script type="module">
-    import { db } from './js/firebase-config.js';
-    import { doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-    const getHardwareID = () => btoa(navigator.userAgent + screen.width + navigator.language);
-
-    async function verificarLicenciaGlobal() {
-        const token = localStorage.getItem('licencia_youcontrol');
-        
-        if (!token) {
-            mostrarInterfazActivacion();
-            return;
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>You Control | Validación de Licencia</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #002D72; 
+            --electric-blue: #0052D4;
+            --bg: #001432;
+            --text-muted: #64748B;
+            --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
         }
 
-        try {
-            const data = JSON.parse(atob(token));
-            const hwID = getHardwareID();
-            const docRef = doc(db, "licencias", data.activation_id);
-            const snap = await getDoc(docRef);
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background: var(--bg); 
+            margin: 0; 
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
 
-            if (snap.exists()) {
-                const dbData = snap.data();
-                if (!dbData.equipos.includes(hwID)) {
-                    if (dbData.equipos.length >= dbData.limite) {
-                        alert("Límite de equipos excedido.");
-                        bloquearAcceso();
-                        return;
+        .licencia-modal {
+            background: white; 
+            padding: 40px 35px; 
+            border-radius: 24px; 
+            width: 90%; 
+            max-width: 440px;
+            text-align: center; 
+            box-shadow: var(--card-shadow);
+            box-sizing: border-box;
+        }
+
+        .brand-logo {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, var(--electric-blue), var(--primary-blue));
+            color: white;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto 20px auto;
+            box-shadow: 0 8px 16px rgba(0, 82, 212, 0.25);
+        }
+
+        .licencia-modal h2 {
+            color: var(--primary-blue);
+            font-weight: 800;
+            font-size: 1.6rem;
+            margin: 0;
+            letter-spacing: -0.02em;
+        }
+
+        .licencia-modal p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin: 6px 0 20px 0;
+        }
+
+        textarea {
+            width: 100%; 
+            height: 110px; 
+            border-radius: 14px; 
+            padding: 14px;
+            border: 2px solid #E2E8F0; 
+            font-family: monospace; 
+            font-size: 0.85rem;
+            resize: none; 
+            margin-bottom: 20px;
+            box-sizing: border-box;
+            background: #F8FAFC;
+            color: #1E293B;
+            transition: all 0.2s;
+        }
+
+        textarea:focus {
+            border-color: var(--electric-blue);
+            background: white;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(0, 82, 212, 0.1);
+        }
+
+        .btn-act {
+            background: var(--electric-blue); 
+            color: white; 
+            border: none;
+            padding: 15px 30px; 
+            border-radius: 14px; 
+            font-weight: 700; 
+            font-size: 0.95rem;
+            cursor: pointer; 
+            width: 100%;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(0, 82, 212, 0.25);
+            letter-spacing: 0.02em;
+        }
+
+        .btn-act:hover {
+            background: #0041a8;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(0, 82, 212, 0.35);
+        }
+
+        .loading-screen {
+            color: white;
+            text-align: center;
+        }
+
+        .loading-screen i {
+            font-size: 3.5rem;
+            color: var(--electric-blue);
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .oculto { display: none !important; }
+    </style>
+</head>
+<body oncontextmenu="return false">
+
+    <div id="pantallaCarga" class="loading-screen">
+        <i class="fas fa-circle-notch"></i>
+        <h2 style="font-weight: 600; font-size: 1.4rem; margin: 0 0 6px 0;">Verificando Licencia de Uso...</h2>
+        <p style="opacity: 0.5; margin: 0; font-size: 0.85rem; letter-spacing: 0.05em;">Sistematikos • You Control</p>
+    </div>
+
+    <div id="capaSeguridad" class="oculto">
+        <div class="licencia-modal">
+            <div class="brand-logo">
+                <i class="fas fa-shield-halved"></i>
+            </div>
+            <h2>You Control</h2>
+            <p>Introduce tu clave de activación corporativa</p>
+            
+            <textarea id="tokenInput" placeholder="Pega tu token de licencia aquí..."></textarea>
+            
+            <button class="btn-act" onclick="window.procesarActivacion()">ACTIVAR SISTEMA</button>
+            
+            <p id="msgError" style="color: #EF4444; display: none; margin: 15px 0 0 0; font-size: 0.85rem; font-weight: 600;">
+                <i class="fas fa-circle-exclamation"></i> Token inválido o límite de terminales alcanzado.
+            </p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { db } from './js/firebase-config.js';
+        import { doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const getHardwareID = () => btoa(navigator.userAgent + screen.width + navigator.language);
+
+        async function verificarLicenciaGlobal() {
+            const token = localStorage.getItem('licencia_youcontrol');
+            
+            if (!token) {
+                mostrarInterfazActivacion();
+                return;
+            }
+
+            try {
+                const data = JSON.parse(atob(token));
+                const hwID = getHardwareID();
+                const docRef = doc(db, "licencias", data.activation_id);
+                const snap = await getDoc(docRef);
+
+                if (snap.exists()) {
+                    const dbData = snap.data();
+                    if (!dbData.equipos.includes(hwID)) {
+                        if (dbData.equipos.length >= dbData.limite) {
+                            alert("Límite de equipos excedido.");
+                            bloquearAcceso();
+                            return;
+                        }
+                        await updateDoc(docRef, { equipos: [...dbData.equipos, hwID] });
                     }
-                    await updateDoc(docRef, { equipos: [...dbData.equipos, hwID] });
+                    localStorage.setItem('youcontrol_empresa_id', data.activation_id);
+                    window.location.href = "sys_v1_menu.html";
+                } else {
+                    bloquearAcceso();
                 }
-                // Si todo está bien, saltamos directo
-                localStorage.setItem('youcontrol_empresa_id', data.activation_id);
-                window.location.href = "sys_v1_menu.html";
-            } else {
+            } catch (e) {
                 bloquearAcceso();
             }
-        } catch (e) {
-            bloquearAcceso();
         }
-    }
 
-    window.procesarActivacion = async () => {
-        const rawToken = document.getElementById('tokenInput').value.trim();
-        const btn = document.querySelector('.btn-act');
-        const errorLabel = document.getElementById('msgError');
-        
-        if (!rawToken) return;
-        
-        errorLabel.style.display = 'none';
-        btn.disabled = true;
-        btn.innerText = "VERIFICANDO...";
-        
-        try {
-            const data = JSON.parse(atob(rawToken));
-            const hwID = getHardwareID();
-            const docRef = doc(db, "licencias", data.activation_id);
-            const snap = await getDoc(docRef);
+        window.procesarActivacion = async () => {
+            const rawToken = document.getElementById('tokenInput').value.trim();
+            const btn = document.querySelector('.btn-act');
+            const errorLabel = document.getElementById('msgError');
+            
+            if (!rawToken) return;
+            
+            errorLabel.style.display = 'none';
+            btn.disabled = true;
+            btn.innerText = "VERIFICANDO...";
+            
+            try {
+                const data = JSON.parse(atob(rawToken));
+                const hwID = getHardwareID();
+                const docRef = doc(db, "licencias", data.activation_id);
+                const snap = await getDoc(docRef);
 
-            // Lógica de registro en Firebase
-            if (!snap.exists()) {
-                await setDoc(docRef, {
-                    cliente: data.n || "Cliente Registrado",
-                    limite: data.l || 3,
-                    equipos: [hwID],
-                    fecha: new Date().toISOString()
-                });
-            } else {
-                const dbData = snap.data();
-                if (!dbData.equipos.includes(hwID) && dbData.equipos.length >= dbData.limite) {
-                    throw new Error("Límite superado");
+                if (!snap.exists()) {
+                    await setDoc(docRef, {
+                        cliente: data.n || "Cliente Registrado",
+                        limite: data.l || 3,
+                        equipos: [hwID],
+                        fecha: new Date().toISOString()
+                    });
+                } else {
+                    const dbData = snap.data();
+                    if (!dbData.equipos.includes(hwID) && dbData.equipos.length >= dbData.limite) {
+                        throw new Error("Límite superado");
+                    }
+                    if (!dbData.equipos.includes(hwID)) {
+                        await updateDoc(docRef, { equipos: [...dbData.equipos, hwID] });
+                    }
                 }
-                if (!dbData.equipos.includes(hwID)) {
-                    await updateDoc(docRef, { equipos: [...dbData.equipos, hwID] });
-                }
+
+                localStorage.setItem('licencia_youcontrol', rawToken);
+                localStorage.setItem('youcontrol_empresa_id', data.activation_id);
+                window.location.href = "sys_v1_menu.html";
+                
+            } catch (e) {
+                console.error("Fallo de validación:", e);
+                errorLabel.style.display = 'block';
+                btn.disabled = false;
+                btn.innerText = "ACTIVAR SISTEMA";
             }
+        };
 
-            // GUARDADO Y SALTO DIRECTO (sin reload)
-            localStorage.setItem('licencia_youcontrol', rawToken);
-            localStorage.setItem('youcontrol_empresa_id', data.activation_id);
-            
-            // Redirección inmediata al menú
-            window.location.href = "sys_v1_menu.html";
-            
-        } catch (e) {
-            console.error("Fallo:", e);
-            errorLabel.style.display = 'block';
-            btn.disabled = false;
-            btn.innerText = "ACTIVAR SISTEMA";
+        function mostrarInterfazActivacion() {
+            document.getElementById('pantallaCarga').classList.add('oculto');
+            document.getElementById('capaSeguridad').classList.remove('oculto');
         }
-    };
 
-    function mostrarInterfazActivacion() {
-        document.getElementById('pantallaCarga').classList.add('oculto');
-        document.getElementById('capaSeguridad').classList.remove('oculto');
-    }
+        function bloquearAcceso() {
+            localStorage.removeItem('licencia_youcontrol');
+            localStorage.removeItem('youcontrol_empresa_id');
+            mostrarInterfazActivacion();
+        }
 
-    function bloquearAcceso() {
-        localStorage.removeItem('licencia_youcontrol');
-        localStorage.removeItem('youcontrol_empresa_id');
-        mostrarInterfazActivacion();
-    }
-
-    verificarLicenciaGlobal();
-</script>
+        verificarLicenciaGlobal();
+    </script>
+</body>
+</html>
