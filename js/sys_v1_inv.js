@@ -2,7 +2,7 @@
  * YOU CONTROL - SISTEMATIKOS
  * Módulo de Gestión de Inventario General (sys_v1_inv.js)
  * Conectado y Sincronizado a Cloud Firestore
- * Optimización: Calculadora de porcentaje integrada en tiempo real en el campo de Costo.
+ * Optimización: Calculadora de costo integrada y lectura de ID de Empresa Dinámico.
  */
 
 import { db } from './firebase-config.js'; 
@@ -10,8 +10,8 @@ import {
     collection, onSnapshot, doc, getDoc, setDoc, deleteDoc 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// ID de usuario compartido con el módulo de compras
-const USER_ID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
+// CAMBIO CRÍTICO: ID dinámico basado en la activación de la licencia de la empresa
+const USER_ID = localStorage.getItem('youcontrol_empresa_id') || "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
 
 // Estado Global
 let listaProductos = [];
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', inicializarInventario);
 function inicializarCalculadoraCosto() {
     if (!formCosto) return;
 
-    // Cambiamos el tipo a 'text' temporalmente si estuviera en 'number', para permitir escribir símbolos como '+' o '%'
+    // Cambiamos el tipo a 'text' para permitir escribir símbolos como '+' o '%'
     formCosto.type = "text";
 
     formCosto.addEventListener('change', () => {
@@ -100,7 +100,6 @@ function inicializarCalculadoraCosto() {
         if (!expresion) return;
 
         // Evalúa expresiones con formato número + porcentaje (ej: 1.04+30%)
-        // Captura: grupo1 (base), grupo2 (operador + o -), grupo3 (porcentaje)
         const regexPorcentaje = /^([0-9.]+)([\+\-])([0-9.]+)%$/;
         const coincidencia = expresion.match(regexPorcentaje);
 
@@ -122,18 +121,15 @@ function inicializarCalculadoraCosto() {
                 formCosto.value = resultado.toFixed(2);
             }
         } else {
-            // Evaluador secundario: Por si escriben sumas aritméticas simples sin porcentaje (ej: 1.04+0.5)
+            // Evaluador secundario para sumas aritméticas simples sin porcentaje (ej: 1.04+0.5)
             try {
-                // Validación básica de caracteres seguros para evitar inyecciones de código
                 if (/^[0-9\+\-\*\/\.\(\)]+$/.test(expresion)) {
-                    // Executa de manera segura la aritmética plana
                     const calculoPlano = Function(`"use strict"; return (${expresion})`)();
                     if (!isNaN(calculoPlano)) {
                         formCosto.value = parseFloat(calculoPlano).toFixed(2);
                     }
                 }
             } catch (e) {
-                // Si no es una ecuación válida, dejamos el valor como está o intentamos un float limpio
                 const valorLimpio = parseFloat(expresion);
                 formCosto.value = !isNaN(valorLimpio) ? valorLimpio.toFixed(2) : "0.00";
             }
@@ -205,7 +201,6 @@ window.filtrarProductos = function() {
     renderizarTabla(filtrados);
 };
 
-// Modifica la tasa visualmente al escribir en el input
 window.actualizarTasaTop = function() {
     const valorTasa = parseFloat(tasaInput.value);
     if (!isNaN(valorTasa) && valorTasa > 0) {
@@ -214,7 +209,6 @@ window.actualizarTasaTop = function() {
     }
 };
 
-// PERSISTENCIA: Guarda el valor actual en Firestore
 window.guardarTasaFirestore = async function() {
     const valorTasa = parseFloat(tasaInput.value);
     if (isNaN(valorTasa) || valorTasa <= 0) {
@@ -226,11 +220,10 @@ window.guardarTasaFirestore = async function() {
     
     try {
         const tasaDocRef = doc(db, "usuarios", USER_ID, "configuracion", "tasa");
-        // Escribe exactamente el campo 'valor' como lo lee tu módulo compras
         await setDoc(tasaDocRef, { valor: valorTasa }, { merge: true });
         
         tasaActual = valorTasa;
-        window.filtrarProductos(); // Sincroniza la vista
+        window.filtrarProductos(); 
         mostrarStatusBar("✅ Tasa de cambio guardada con éxito.", "success");
     } catch (e) {
         console.error("Error al guardar la tasa:", e);
