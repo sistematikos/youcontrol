@@ -7,7 +7,7 @@
 
 import { db } from './firebase-config.js';
 import { 
-    collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc, query, orderBy, limit 
+    collection, onSnapshot, addDoc, doc, getDoc, query, orderBy, limit 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // CAMBIO CRÍTICO: Lee dinámicamente la empresa activa. Si no existe, usa tu ID de desarrollo predeterminado.
@@ -44,6 +44,7 @@ async function cargarTasa() {
 // Escucha en tiempo real la última venta para calcular el consecutivo numérico puro
 function escucharUltimaFactura() {
     const ventsRef = collection(db, "usuarios", USER_ID, "ventas");
+    // Ordenamos por el campo de texto indexable estándar para evitar colisiones
     const q = query(ventsRef, orderBy("fecha", "desc"), limit(1));
     
     onSnapshot(q, (snapshot) => {
@@ -462,21 +463,49 @@ window.registrarVenta = async () => {
 
     btn.innerText = "GUARDANDO..."; btn.disabled = true;
     
+    // Solución del Formato de Fecha: Generación limpia local de YYYY-MM-DD
+    const hoy = new Date();
+    const anio = hoy.getFullYear();
+    const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+    const dia = String(hoy.getDate()).padStart(2, '0');
+    const fechaISO = `${anio}-${mes}-${dia}`; // Formato indexable: "2026-05-21"
+
+    // Guardamos la versión detallada con hora por si requieres imprimirla en un ticket
+    const fechaCompletaString = hoy.toLocaleDateString('es-ES', {
+        day: 'numeric', month: 'long', year: 'numeric'
+    }) + " a las " + hoy.toLocaleTimeString('es-ES');
+
+    // Cálculo dinámico del total de costo acumulado e ítems en el carrito
+    let totalCostoVenta = 0;
+    let totalItemsCantidad = 0;
+    carrito.forEach(i => {
+        totalCostoVenta += ((parseFloat(i.costo) || 0) * i.cantidad);
+        totalItemsCantidad += i.cantidad;
+    });
+
     try {
         await addDoc(collection(db, "usuarios", USER_ID, "ventas"), {
-            fecha: serverTimestamp(),
-            nro_factura: proximoNumeroFacturaStr, // Guarda el número secuencial limpio
+            fecha: fechaISO,                  // <-- NUEVO CAMBIO CLAVE: "YYYY-MM-DD" para filtros perfectos
+            fecha_completa: fechaCompletaString, // <-- Guardado de auditoría legible con hora
+            nro_factura: proximoNumeroFacturaStr, 
             cliente_id: clienteId,
             cliente_nombre: clienteNombre,
             total_usd: window.totalVentaUSD,
+            total_costo_usd: totalCostoVenta, 
+            total_items: totalItemsCantidad,   
             tasa: tasaActual,
             pagos: {
-                punto: parseFloat(document.getElementById('in-punto-bs').value) || 0,
+                point: parseFloat(document.getElementById('in-punto-bs').value) || 0,
                 movil: parseFloat(document.getElementById('in-pagomovil-bs').value) || 0,
                 efectivo: parseFloat(document.getElementById('in-efectivo-bs').value) || 0,
                 divisas: parseFloat(document.getElementById('in-divisas-usd').value) || 0
             },
-            items: carrito.map(i => ({ nombre: i.nombre, cant: i.cantidad, precio: i.precio }))
+            items: carrito.map(i => ({ 
+                nombre: i.nombre, 
+                cantidad: i.cantidad, 
+                precio: parseFloat(i.precio) || 0,
+                costo: parseFloat(i.costo) || 0 
+            }))
         });
         
         alert("✅ Venta registrada bajo Factura Nro: " + proximoNumeroFacturaStr);
@@ -517,7 +546,7 @@ window.addEventListener('keydown', (e) => {
 
 // Inicialización
 cargarTasa();
-escucharUltimaFactura(); // Inicia el motor secuencial automático
+escucharUltimaFactura(); 
 inicializarClientes();
 inicializarProductos();
 inicializarBuscadorClientes();
