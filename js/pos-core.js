@@ -2,6 +2,7 @@
  * YOU CONTROL - SISTEMATIKOS
  * Módulo de Facturación y Ventas Completo (pos-core.js)
  * Optimización: Factura numérica incremental automática (000001) sincronizada en vivo con Badge lateral.
+ * Adaptación Multi-Empresa: Lectura de ID mediante localStorage sembrado en la activación.
  */
 
 import { db } from './firebase-config.js';
@@ -9,7 +10,8 @@ import {
     collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc, query, orderBy, limit 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const USER_ID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12"; 
+// CAMBIO CRÍTICO: Lee dinámicamente la empresa activa. Si no existe, usa tu ID de desarrollo predeterminado.
+const USER_ID = localStorage.getItem('youcontrol_empresa_id') || "sUhfZI9Fy3M9UlInTYw2wFWZmB12"; 
 
 let productosMaster = [];
 let clientesMaster = []; 
@@ -41,8 +43,8 @@ async function cargarTasa() {
 
 // Escucha en tiempo real la última venta para calcular el consecutivo numérico puro
 function escucharUltimaFactura() {
-    const ventasRef = collection(db, "usuarios", USER_ID, "ventas");
-    const q = query(ventasRef, orderBy("fecha", "desc"), limit(1));
+    const ventsRef = collection(db, "usuarios", USER_ID, "ventas");
+    const q = query(ventsRef, orderBy("fecha", "desc"), limit(1));
     
     onSnapshot(q, (snapshot) => {
         let ultimoNumero = 0;
