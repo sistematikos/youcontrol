@@ -11,6 +11,16 @@
     <link rel="shortcut icon" href="./assets/logo_512.png" type="image/png">
     <meta name="theme-color" content="#001432">
 
+    <script>
+        // --- GUARD DE AUTENTICACIÓN ---
+        // Si el usuario ya activó la licencia, lo enviamos directo al menú
+        (function() {
+            if (localStorage.getItem('licencia_validada') === 'true') {
+                window.location.replace('sys_v1_menu.html');
+            }
+        })();
+    </script>
+
     <style>
         :root {
             --bg-dark: #001432;
@@ -20,88 +30,16 @@
             --text-muted: #94A3B8;
         }
 
-        body { 
-            font-family: 'Poppins', sans-serif; 
-            background: var(--bg-dark); 
-            margin: 0; 
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-light);
-        }
-
-        .main-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 25px;
-            width: 90%;
-            max-width: 600px;
-        }
-
-        .brand-header {
-            text-align: center;
-        }
-
-        .brand-logo {
-            width: 100px;
-            height: 100px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 25px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 15px auto;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-        }
-
-        .brand-logo img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .activation-panel {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 40px;
-            border-radius: 30px;
-            width: 100%;
-            box-sizing: border-box;
-            text-align: center;
-        }
-
-        .btn-act {
-            padding: 18px 25px;
-            border-radius: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            border: none;
-            width: 100%;
-            margin-bottom: 15px;
-            transition: all 0.3s;
-            font-size: 1rem;
-        }
-
-        .btn-download {
-            background: var(--electric-blue);
-            color: white;
-        }
-
-        .btn-entry {
-            background: rgba(255, 255, 255, 0.05);
-            color: var(--text-muted);
-            cursor: not-allowed;
-        }
-
-        .btn-entry.active {
-            background: #10B981;
-            color: white;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
-        }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-dark); margin: 0; height: 100vh; display: flex; align-items: center; justify-content: center; color: var(--text-light); }
+        .main-container { display: flex; flex-direction: column; align-items: center; gap: 25px; width: 90%; max-width: 600px; }
+        .brand-header { text-align: center; }
+        .brand-logo { width: 100px; height: 100px; background: rgba(255, 255, 255, 0.05); border-radius: 25px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); overflow: hidden; }
+        .brand-logo img { width: 100%; height: 100%; object-fit: cover; }
+        .activation-panel { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); padding: 40px; border-radius: 30px; width: 100%; box-sizing: border-box; text-align: center; }
+        .btn-act { padding: 18px 25px; border-radius: 16px; font-weight: 700; cursor: pointer; border: none; width: 100%; margin-bottom: 15px; transition: all 0.3s; font-size: 1rem; }
+        .btn-download { background: var(--electric-blue); color: white; }
+        .btn-entry { background: rgba(255, 255, 255, 0.05); color: var(--text-muted); cursor: not-allowed; }
+        .btn-entry.active { background: #10B981; color: white; cursor: pointer; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
     </style>
 </head>
 <body>
@@ -130,35 +68,25 @@
         const btnInstall = document.getElementById('btnInstallPWA');
         const btnEnter = document.getElementById('btnEnterSystem');
 
-        // Registro de Service Worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js');
-        }
+        if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
 
-        // Intercepción del prompt de instalación
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
         });
 
-        // Lógica de instalación
         btnInstall.addEventListener('click', () => {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
                 deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        activarIngreso();
-                    }
+                    if (choiceResult.outcome === 'accepted') activarIngreso();
                 });
             } else {
-                alert("El software ya está listo o no está disponible para instalar en este navegador.");
+                alert("El software ya está instalado o no disponible.");
             }
         });
 
-        // Detectar si la app ya se instaló
-        window.addEventListener('appinstalled', () => {
-            activarIngreso();
-        });
+        window.addEventListener('appinstalled', () => activarIngreso());
 
         function activarIngreso() {
             btnInstall.disabled = true;
@@ -168,7 +96,11 @@
             btnEnter.disabled = false;
             btnEnter.classList.add('active');
             btnEnter.innerHTML = '<i class="fas fa-unlock"></i> INGRESAR AL SISTEMA';
-            btnEnter.onclick = () => location.href = "sys_lic.html";
+            
+            // MODIFICACIÓN AQUÍ: Redirección inteligente
+            btnEnter.onclick = () => {
+                location.href = "sys_lic.html";
+            };
         }
     </script>
 </body>
