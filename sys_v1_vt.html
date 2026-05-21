@@ -70,6 +70,7 @@
         .shortcuts-container {
             display: flex;
             gap: 10px;
+            align-items: center;
         }
 
         .btn-shortcut {
@@ -82,9 +83,15 @@
             font-weight: 700;
             cursor: pointer;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
         }
 
-        /* MODIFICACIÓN: Tasa con letras en Amarillo */
+        .btn-shortcut:hover {
+            background: #f1f5f9;
+            transform: translateY(-1px);
+        }
+
+        /* Tasa con letras en Amarillo */
         .tasa-bcv-badge {
             background: #1e293b;
             color: #ffffff;
@@ -96,7 +103,7 @@
         }
 
         .tasa-bcv-badge span {
-            color: #facc15; /* Amarillo vibrante para la tasa */
+            color: #facc15; 
             font-weight: 800;
         }
 
@@ -169,6 +176,10 @@
             height: 20px;
         }
 
+        .btn-clear-input:hover {
+            color: #ef4444;
+        }
+
         .buscador-wrapper input {
             width: 100%;
             padding: 11px 14px;
@@ -228,7 +239,7 @@
             align-items: center;
         }
 
-        /* MODIFICACIÓN: Botón azul con letras blancas para la Factura */
+        /* Botón azul con letras blancas para la Factura */
         .factura-live-badge {
             background: var(--primary-color);
             color: #ffffff;
@@ -236,14 +247,13 @@
             border-radius: 6px;
             font-size: 13px;
             font-weight: 800;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             letter-spacing: 0.5px;
             box-shadow: 0 2px 4px rgba(0, 106, 255, 0.2);
             border: none;
         }
 
         .factura-live-badge span {
-            color: #ffffff; /* Texto del número de factura también en blanco */
+            color: #ffffff;
             font-family: 'Courier New', Courier, monospace;
             font-size: 14px;
             margin-left: 3px;
@@ -332,6 +342,12 @@
             background: var(--primary-hover);
         }
 
+        .btn-pay-action:disabled {
+            background: #cbd5e1;
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
+
         /* DIALOGO MODAL COBRO */
         .modal-overlay {
             position: fixed;
@@ -403,7 +419,9 @@
 
     <header class="navbar">
         <div class="navbar-brand">
-            <button class="btn-menu-top" onclick="location.href='sys_v1_menu.html'"><i class="fas fa-arrow-left"></i> Menú</button>
+            <button class="btn-menu-top" onclick="location.href='sys_v1_menu.html'">
+                <i class="fas fa-arrow-left"></i> Menú
+            </button>
             <span>YOU CONTROL - PUNTO DE VENTAS</span>
         </div>
         <div class="shortcuts-container">
