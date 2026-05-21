@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistematikos | You Control PWA</title>
+    <title>Sistematikos | You Control v4</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
@@ -17,7 +17,6 @@
             --electric-blue: #0052D4;
             --text-light: #F8FAFC;
             --text-muted: #94A3B8;
-            --emerald: #10B981;
         }
 
         body { 
@@ -29,7 +28,6 @@
             align-items: center;
             justify-content: center;
             color: var(--text-light);
-            overflow: hidden;
         }
 
         .main-container {
@@ -38,286 +36,131 @@
             align-items: center;
             gap: 25px;
             width: 90%;
-            max-width: 750px;
+            max-width: 600px;
         }
 
-        /* Encabezado de la Marca */
         .brand-header {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 24px 30px;
-            border-radius: 24px;
-            width: 100%;
-            box-sizing: border-box;
-            backdrop-filter: blur(10px);
+            text-align: center;
         }
 
         .brand-logo {
-            width: 75px;
-            height: 75px;
+            width: 90px;
+            height: 90px;
             background: linear-gradient(135deg, var(--electric-blue), var(--primary-blue));
-            color: white;
-            border-radius: 20px;
+            border-radius: 25px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2.4rem;
-            box-shadow: 0 8px 20px rgba(0, 82, 212, 0.3);
+            font-size: 3rem;
+            margin: 0 auto 15px auto;
+            box-shadow: 0 10px 30px rgba(0, 82, 212, 0.4);
         }
 
-        .brand-text h1 {
-            margin: 0;
-            font-weight: 800;
-            font-size: 1.8rem;
-            letter-spacing: -0.02em;
-            background: linear-gradient(to right, #FFFFFF, #93C5FD);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .brand-text p {
-            margin: 4px 0 0 0;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        /* Panel de Pasos de Activación */
         .activation-panel {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 35px 30px;
-            border-radius: 24px;
+            padding: 40px;
+            border-radius: 30px;
             width: 100%;
             box-sizing: border-box;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-        }
-
-        .activation-flow {
-            display: flex;
-            gap: 30px;
-        }
-
-        .flow-step {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            gap: 15px;
-        }
-
-        .step-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-weight: 600;
-            font-size: 1.1rem;
-            letter-spacing: -0.01em;
-        }
-
-        .step-header .number {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--electric-blue), var(--primary-blue));
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 0.9rem;
-            box-shadow: 0 4px 10px rgba(0, 82, 212, 0.2);
-        }
-
-        .desc {
-            font-size: 0.85rem;
-            line-height: 1.5;
-            color: var(--text-muted);
-            margin: 0 0 10px 0;
-        }
-
-        /* Estilo Único de Botones */
-        .btn-act {
-            padding: 16px;
-            border-radius: 14px;
-            font-weight: 700;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: all 0.25s;
             text-align: center;
+        }
+
+        .btn-act {
+            padding: 18px 25px;
+            border-radius: 16px;
+            font-weight: 700;
+            cursor: pointer;
             border: none;
             width: 100%;
-            box-sizing: border-box;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            letter-spacing: 0.02em;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+            font-size: 1rem;
         }
 
-        /* Botón de Instalación */
         .btn-download {
-            background: rgba(255, 255, 255, 0.08);
+            background: var(--electric-blue);
             color: white;
-            border: 1px solid rgba(255, 255, 255, 0.15);
         }
 
-        .btn-download:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.3);
-            transform: translateY(-1px);
-        }
-
-        /* Botón de Ingreso (Bloqueado) */
         .btn-entry {
-            background: rgba(255, 255, 255, 0.03);
-            color: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
             cursor: not-allowed;
         }
 
-        /* Botón de Ingreso (Activado por PWA) */
         .btn-entry.active {
-            background: linear-gradient(135deg, var(--electric-blue), #0041a8);
+            background: #10B981;
             color: white;
             cursor: pointer;
-            border: none;
-            box-shadow: 0 4px 15px rgba(0, 82, 212, 0.3);
-            animation: successPulse 1.5s alternate infinite;
-        }
-
-        .btn-entry.active:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 82, 212, 0.4);
-        }
-
-        @keyframes successPulse {
-            0% { box-shadow: 0 0 0 0 rgba(0, 82, 212, 0.4); }
-            100% { box-shadow: 0 0 0 12px rgba(0, 82, 212, 0); }
-        }
-
-        footer {
-            padding: 10px;
-            font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.3);
-            font-weight: 500;
-            letter-spacing: 0.02em;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
         }
     </style>
 </head>
-<body oncontextmenu="return false">
+<body>
 
     <div class="main-container">
         <div class="brand-header">
-            <div class="brand-logo">
-                <i class="fas fa-cubes"></i>
-            </div>
-            <div class="brand-text">
-                <h1>You Control v4</h1>
-                <p>Sistema Administrativo y Gestión Comercial Inteligente</p>
-            </div>
+            <div class="brand-logo"><i class="fas fa-cubes"></i></div>
+            <h1>You Control v4</h1>
+            <p style="color: var(--text-muted)">Sistema de Gestión Inteligente</p>
         </div>
 
         <div class="activation-panel">
-            <div class="activation-flow">
-                
-                <div class="flow-step">
-                    <div class="step-header">
-                        <span class="number">1</span> Crear Acceso Directo
-                    </div>
-                    <p class="desc">Para ejecutar la plataforma de forma segura e independiente, instala el acceso directo corporativo en tu escritorio.</p>
-                    
-                    <button id="btnInstallPWA" class="btn-act btn-download">
-                        <i class="fas fa-desktop"></i> INSTALAR SOFTWARE
-                    </button>
-                </div>
-
-                <div class="flow-step">
-                    <div class="step-header">
-                        <span class="number">2</span> Acceso Autorizado
-                    </div>
-                    <p class="desc">Una vez creado el acceso directo o verificado el entorno aislado en este terminal, la entrada se desbloqueará de inmediato.</p>
-                    
-                    <button id="btnEnterSystem" class="btn-act btn-entry" disabled>
-                        <i class="fas fa-lock"></i> ACCESO BLOQUEADO
-                    </button>
-                </div>
-
-            </div>
+            <button id="btnInstallPWA" class="btn-act btn-download">
+                <i class="fas fa-download"></i> INSTALAR SOFTWARE EN ESCRITORIO
+            </button>
+            <button id="btnEnterSystem" class="btn-act btn-entry" disabled>
+                <i class="fas fa-lock"></i> ACCESO BLOQUEADO
+            </button>
         </div>
     </div>
 
     <script>
-        // Registrar el Service Worker indispensable para habilitar la PWA
+        let deferredPrompt;
+        const btnInstall = document.getElementById('btnInstallPWA');
+        const btnEnter = document.getElementById('btnEnterSystem');
+
+        // Registro de Service Worker
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
-            });
+            navigator.serviceWorker.register('./sw.js');
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const btnInstall = document.getElementById('btnInstallPWA');
-            const btnEnter = document.getElementById('btnEnterSystem');
-            let deferredPrompt;
+        // Captura del evento de instalación
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+        });
 
-            // Detectar si ya se está ejecutando desde la ventana de acceso directo instalada
-            const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-
-            if (isPWA) {
-                marcarComoInstalado();
-            }
-
-            // Escuchar la señal de instalación nativa del navegador
-            window.addEventListener('beforeinstallprompt', (e) => {
-                e.preventDefault();
-                deferredPrompt = e;
-                
-                if (!isPWA) {
-                    btnInstall.innerHTML = '<i class="fas fa-desktop"></i> INSTALAR EN ESCRITORIO';
-                    btnInstall.disabled = false;
-                }
-            });
-
-            btnInstall.addEventListener('click', async () => {
-                if (!deferredPrompt) {
-                    marcarComoInstalado();
-                    return;
-                }
-                
+        // Disparar instalación al hacer clic
+        btnInstall.addEventListener('click', () => {
+            if (deferredPrompt) {
                 deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                
-                if (outcome === 'accepted') {
-                    marcarComoInstalado();
-                }
-                deferredPrompt = null;
-            });
-
-            window.addEventListener('appinstalled', () => {
-                marcarComoInstalado();
-            });
-
-            function marcarComoInstalado() {
-                btnInstall.innerHTML = '<i class="fas fa-circle-check"></i> ENTORNO PREPARADO';
-                btnInstall.style.background = "rgba(255,255,255,0.05)";
-                btnInstall.style.borderColor = "rgba(255,255,255,0.1)";
-                btnInstall.style.color = "var(--text-muted)";
-                btnInstall.style.transform = "none";
-                btnInstall.disabled = true;
-
-                // Desbloqueo y animación ejecutiva del botón de ingreso
-                btnEnter.disabled = false;
-                btnEnter.classList.add('active');
-                btnEnter.innerHTML = '<i class="fas fa-right-to-bracket"></i> INGRESAR AL SISTEMA';
-                
-                btnEnter.onclick = () => {
-                    location.href = "sys_lic.html";
-                };
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        activarIngreso();
+                    }
+                });
+            } else {
+                alert("El software ya está listo o ya fue instalado.");
             }
         });
+
+        // Activar al detectar instalación
+        window.addEventListener('appinstalled', () => {
+            activarIngreso();
+        });
+
+        function activarIngreso() {
+            btnInstall.disabled = true;
+            btnInstall.innerHTML = '<i class="fas fa-check"></i> SOFTWARE INSTALADO';
+            btnInstall.style.opacity = "0.5";
+            
+            btnEnter.disabled = false;
+            btnEnter.classList.add('active');
+            btnEnter.innerHTML = '<i class="fas fa-unlock"></i> INGRESAR AL SISTEMA';
+            btnEnter.onclick = () => location.href = "sys_lic.html";
+        }
     </script>
 </body>
 </html>
