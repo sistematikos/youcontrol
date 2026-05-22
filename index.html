@@ -11,15 +11,15 @@
     <link rel="shortcut icon" href="./assets/logo_512.png" type="image/png">
     <meta name="theme-color" content="#001432">
 
-    <script>
-        // --- GUARD DE AUTENTICACIÓN ---
-        // Si el usuario ya activó la licencia, lo enviamos directo al menú
-        (function() {
-            if (localStorage.getItem('licencia_validada') === 'true') {
-                window.location.replace('sys_v1_menu.html');
-            }
-        })();
-    </script>
+   <script>
+    // --- GUARD DE AUTENTICACIÓN ---
+    // Esto se ejecuta antes de mostrar cualquier cosa en pantalla
+    (function() {
+        if (localStorage.getItem('licencia_validada') === 'true') {
+            window.location.replace('sys_v1_menu.html');
+        }
+    })();
+</script>
 
     <style>
         :root {
