@@ -95,35 +95,35 @@ window.registrarVenta = async () => {
 };
 
 // ==========================================
-// 4. LÓGICA DE VISUALIZACIÓN DE RESULTADOS
+// 4. INTEGRACIÓN UI: BÚSQUEDA DE CLIENTES
 // ==========================================
-
 const inputCliente = document.getElementById('buscar-cliente-pos');
-const divResultadosCliente = document.getElementById('resultados-cliente-pos');
+const divResultados = document.getElementById('resultados-cliente-pos');
 
-inputCliente.addEventListener('input', (e) => {
-    const texto = e.target.value;
-    const resultados = window.buscarCliente(texto);
-    
-    if (resultados.length > 0 && texto.length > 0) {
-        divResultadosCliente.style.display = 'block';
-        divResultadosCliente.innerHTML = resultados.map(c => `
-            <div class="resultado-item" 
-                 style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;"
-                 onclick="window.seleccionarCliente('${c.id}', '${c.nombre || 'Sin nombre'}')">
-                <strong>${c.id}</strong> - ${c.nombre || 'Sin nombre'}
-            </div>
-        `).join('');
-    } else {
-        divResultadosCliente.style.display = 'none';
-    }
-});
+if (inputCliente) {
+    inputCliente.addEventListener('input', (e) => {
+        const resultados = window.buscarCliente(e.target.value);
+        
+        if (resultados.length > 0 && e.target.value.trim() !== "") {
+            divResultados.style.display = 'block';
+            divResultados.innerHTML = resultados.map(c => `
+                <div class="resultado-item" 
+                     style="padding: 10px; cursor: pointer; border-bottom: 1px solid #f1f5f9;"
+                     onclick="window.seleccionarCliente('${c.id}', '${c.nombre}')">
+                     <strong>${c.id}</strong> - ${c.nombre}
+                </div>
+            `).join('');
+        } else {
+            divResultados.style.display = 'none';
+        }
+    });
+}
 
-// Función para cuando haces clic en un cliente de la lista
 window.seleccionarCliente = (id, nombre) => {
-    inputCliente.value = id; // O puedes poner el nombre si prefieres
-    divResultadosCliente.style.display = 'none';
-    console.log("Cliente seleccionado:", id, nombre);
+    inputCliente.value = nombre; // Pone el nombre en el input
+    divResultados.style.display = 'none';
+    // Opcional: Guardar el ID en una variable global para la factura
+    window.clienteSeleccionadoID = id; 
 };
 
 // ==========================================
