@@ -204,28 +204,34 @@ window.actualizarCarritoUI = () => {
 };
 
 // ==========================================
-// 8. COMANDOS RÁPIDOS DE TECLADO (F4, F5, F6, F9)
+// 8.1 DEFINICIÓN DE FUNCIONES DE COMANDOS (Necesario para que no den error)
 // ==========================================
-document.addEventListener('keydown', (event) => {
-    switch(event.key) {
-        case 'F4':
-            event.preventDefault(); // Evita el comportamiento por defecto del navegador
-            window.ejecutarF4();
-            break;
-        case 'F5':
-            event.preventDefault();
-            window.ejecutarF5();
-            break;
-        case 'F6':
-            event.preventDefault();
-            window.ejecutarF6();
-            break;
-        case 'F9':
-            event.preventDefault();
-            window.abrirModalCobro();
-            break;
+window.ejecutarF4 = () => { 
+    console.log("F4: Función de cantidad activada"); 
+    // Aquí iría tu lógica para cambiar cantidad
+};
+
+window.ejecutarF5 = () => { 
+    console.log("F5: Función de precio activada"); 
+    // Aquí iría tu lógica para cambiar precio
+};
+
+window.ejecutarF6 = () => { 
+    console.log("F6: Eliminando último item");
+    if (carrito.length > 0) {
+        carrito.pop();
+        window.actualizarCarritoUI();
     }
-});
+};
+
+window.abrirModalCobro = () => {
+    const modal = document.getElementById('modalPago');
+    if (modal) {
+        modal.style.display = 'flex';
+        // Opcional: enfocar el input de pago
+        document.getElementById('in-divisas-usd')?.focus();
+    }
+};
 
 // ==========================================
 // INICIALIZACIÓN GLOBAL
