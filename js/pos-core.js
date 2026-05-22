@@ -127,38 +127,23 @@ window.seleccionarCliente = (id, nombre) => {
 };
 
 // ==========================================
-// 5. INTEGRACIÓN UI: BÚSQUEDA DE PRODUCTOS
+// 5. INTEGRACIÓN UI: SELECCIÓN DE PRODUCTO
 // ==========================================
-const inputProducto = document.getElementById('buscar-producto-pos');
-const divResultadosProd = document.getElementById('resultados-producto-pos');
-
-if (inputProducto) {
-    inputProducto.addEventListener('input', (e) => {
-        const resultados = window.buscarProducto(e.target.value);
-        
-        if (resultados.length > 0 && e.target.value.trim() !== "") {
-            divResultadosProd.style.display = 'block';
-            divResultadosProd.innerHTML = resultados.map(p => `
-                <div class="resultado-item" 
-                     style="padding: 10px; cursor: pointer; border-bottom: 1px solid #f1f5f9;"
-                     onclick="window.seleccionarProducto('${p.id}')">
-                     <strong>${p.id}</strong> - ${p.nombre} 
-                     <span style="float: right; color: var(--primary-color); font-weight: bold;">$${p.precio || '0.00'}</span>
-                </div>
-            `).join('');
-        } else {
-            divResultadosProd.style.display = 'none';
-        }
-    });
-}
 
 window.seleccionarProducto = (id) => {
-    // Llama a tu función original para agregar al carrito
+    // 1. Agregamos el producto al carrito usando tu función existente
     window.agregarCarrito(id);
-    // Limpia el input y oculta los resultados
+    
+    // 2. Limpiamos el input de búsqueda
     inputProducto.value = '';
+    
+    // 3. Ocultamos el menú desplegable de resultados
     divResultadosProd.style.display = 'none';
+    
+    // 4. Devolvemos el foco al input para que puedas seguir escaneando rápido
     inputProducto.focus();
+    
+    console.log("Producto agregado al carrito:", id);
 };
 
 // ==========================================
