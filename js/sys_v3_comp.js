@@ -1,50 +1,34 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * Módulo Integrado de Entrada de Mercancía (sys_v3_comp.js)
- * Versión Corregida con UI y Funcionalidad Integrada
+ * Módulo de Entrada de Mercancía (sys_v3_comp.js)
+ * Corrección de eventos y cálculos en tiempo real
  */
 
 import { db } from './firebase-config.js';
-import { 
-    collection, onSnapshot, doc, getDoc, setDoc 
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, onSnapshot, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// --- MOTOR DE DETECCIÓN DINÁMICA ---
+// --- CONFIGURACIÓN DINÁMICA ---
 const USER_ID = localStorage.getItem('youcontrol_empresa_id') || "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
-
 let productosLocales = [];
 let tasaActual = 1.00;
-let listaCompra = []; // Lista temporal en memoria
 
-// Vinculaciones del DOM
-const buscador = document.getElementById('buscador-dinamico');
-const dropdown = document.getElementById('dropdown-resultados');
-const tablaItems = document.getElementById('tabla-items-compra');
-const statusBar = document.getElementById('status-bar-comp');
-
-// Inputs
-const inputs = {
-    sku: document.getElementById('comp-sku'),
-    barras: document.getElementById('comp-barras'),
-    nombre: document.getElementById('comp-nombre'),
+// --- ELEMENTOS DEL DOM ---
+const el = {
+    buscador: document.getElementById('buscador-dinamico'),
+    dropdown: document.getElementById('dropdown-resultados'),
+    tabla: document.getElementById('tabla-items-compra'),
     costo: document.getElementById('comp-costo'),
     ganancia: document.getElementById('comp-ganancia'),
     precio: document.getElementById('comp-precio'),
     precioBs: document.getElementById('comp-precio-bs'),
-    stockViejo: document.getElementById('comp-stock-viejo'),
-    cantidad: document.getElementById('comp-cantidad')
+    nombre: document.getElementById('comp-nombre'),
+    sku: document.getElementById('comp-sku'),
+    barras: document.getElementById('comp-barras'),
+    cantidad: document.getElementById('comp-cantidad'),
+    stockViejo: document.getElementById('comp-stock-viejo')
 };
 
-function mostrarEstado(msg, tipo) {
-    if (!statusBar) return;
-    statusBar.innerText = msg;
-    statusBar.style.display = 'block';
-    statusBar.style.backgroundColor = (tipo === 'error') ? '#fee2e2' : '#dcfce7';
-}
-
-// ==========================================
-// 1. INICIALIZACIÓN Y LÓGICA DE BUSQUEDA
-// ==========================================
+// --- 1. INICIALIZACIÓN ---
 async function inicializar() {
     const tasaSnap = await getDoc(doc(db, "usuarios", USER_ID, "configuracion", "tasa"));
     if (tasaSnap.exists()) tasaActual = parseFloat(tasaSnap.data().valor) || 1.00;
@@ -55,103 +39,72 @@ async function inicializar() {
     });
 }
 
-// BUSCADOR
-if (buscador) {
-    buscador.addEventListener('input', (e) => {
+// --- 2. CÁLCULOS AUTOMÁTICOS ---
+window.calcularPrecios = () => {
+    const costo = parseFloat(el.costo.value) || 0;
+    const ganancia = parseFloat(el.ganancia.value) || 0;
+    const pUsd = costo + (costo * (ganancia / 100));
+    el.precio.value = pUsd.toFixed(2);
+    el.precioBs.value = (pUsd * tasaActual).toFixed(2) + " Bs.";
+};
+
+// --- 3. BUSCADOR Y SELECCIÓN ---
+if (el.buscador) {
+    el.buscador.addEventListener('input', (e) => {
         const val = e.target.value.toLowerCase();
-        if (!val) { dropdown.style.display = 'none'; return; }
-        const filtrados = productosLocales.filter(p => 
-            (p.nombre || '').toLowerCase().includes(val) || 
-            (p.sku || '').toLowerCase().includes(val)
-        );
+        if (!val) { el.dropdown.style.display = 'none'; return; }
         
-        dropdown.innerHTML = filtrados.map(p => `
-            <div class="search-item" onclick="window.seleccionarProducto('${p.id}')">
-                ${p.nombre} (Stock: ${p.stock})
-            </div>
-        `).join('') || `<div class="search-item" onclick="window.prepararNuevoProducto('${val}')">Crear: ${val}</div>`;
-        dropdown.style.display = 'block';
+        const filtrados = productosLocales.filter(p => 
+            p.nombre?.toLowerCase().includes(val) || p.sku?.toLowerCase().includes(val)
+        );
+
+        el.dropdown.innerHTML = filtrados.map(p => `
+            <div class="search-item" onclick="window.cargarProducto('${p.id}')">${p.nombre}</div>
+        `).join('') || `<div class="search-item" onclick="window.nuevoProducto('${val}')">Crear: ${val}</div>`;
+        el.dropdown.style.display = 'block';
     });
 }
 
-// ==========================================
-// 2. FUNCIONES DE INTERFAZ (EXPUESTAS A WINDOW)
-// ==========================================
-window.seleccionarProducto = (id) => {
+window.cargarProducto = (id) => {
     const p = productosLocales.find(x => x.id === id);
-    if (!p) return;
-    inputs.sku.value = p.sku || '';
-    inputs.nombre.value = p.nombre || '';
-    inputs.costo.value = p.costo || 0;
-    inputs.ganancia.value = p.ganancia || 0;
-    inputs.precio.value = p.precio || 0;
-    inputs.stockViejo.value = p.stock || 0;
-    dropdown.style.display = 'none';
+    el.nombre.value = p.nombre; el.sku.value = p.sku; el.costo.value = p.costo;
+    el.ganancia.value = p.ganancia; el.precio.value = p.precio; el.stockViejo.value = p.stock;
+    el.dropdown.style.display = 'none';
+    window.calcularPrecios();
 };
 
-window.prepararNuevoProducto = (val) => {
-    inputs.nombre.value = val;
-    inputs.sku.value = '';
-    inputs.stockViejo.value = '0';
-    dropdown.style.display = 'none';
+window.nuevoProducto = (val) => {
+    el.nombre.value = val; el.costo.value = '0'; el.ganancia.value = '0';
+    el.precio.value = '0'; el.stockViejo.value = '0';
+    el.dropdown.style.display = 'none';
 };
 
+// --- 4. LISTA Y GUARDADO ---
 window.agregarALista = () => {
-    if (!inputs.nombre.value) { mostrarEstado("Nombre requerido", "error"); return; }
-    
-    const item = {
-        nombre: inputs.nombre.value,
-        sku: inputs.sku.value,
-        cantidad: parseInt(inputs.cantidad.value) || 0,
-        costo: parseFloat(inputs.costo.value) || 0,
-        precio: parseFloat(inputs.precio.value) || 0
-    };
-    
-    listaCompra.push(item);
-    renderizarTabla();
-    limpiarFormulario();
+    const fila = `<tr>
+        <td>${el.sku.value || 'N/A'}</td>
+        <td>${el.nombre.value}</td>
+        <td>${el.cantidad.value}</td>
+        <td>$${el.precio.value}</td>
+        <td><button onclick="this.parentElement.parentElement.remove()">X</button></td>
+    </tr>`;
+    el.tabla.innerHTML += fila;
 };
 
-function renderizarTabla() {
-    if (!tablaItems) return;
-    tablaItems.innerHTML = listaCompra.map((item, i) => `
-        <tr>
-            <td>${item.nombre}</td>
-            <td>${item.cantidad}</td>
-            <td>$${item.precio}</td>
-            <td><button onclick="listaCompra.splice(${i},1); renderizarTabla()">X</button></td>
-        </tr>
-    `).join('');
-}
-
-// ==========================================
-// 3. GUARDADO EN FIRESTORE
-// ==========================================
-window.procesarIngresoMercancia = async () => {
-    if (listaCompra.length === 0) { mostrarEstado("Lista vacía", "error"); return; }
-
-    try {
-        for (const item of listaCompra) {
-            const id = doc(collection(db, "temp")).id; // Genera ID nuevo si no existe
-            await setDoc(doc(db, "usuarios", USER_ID, "productos", id), {
-                nombre: item.nombre,
-                sku: item.sku,
-                costo: item.costo,
-                precio: item.precio,
-                stock: item.cantidad // Ajustar según lógica de stock actual
-            }, { merge: true });
-        }
-        mostrarEstado("✅ Éxito", "success");
-        listaCompra = [];
-        renderizarTabla();
-    } catch (e) {
-        mostrarEstado("Error: " + e.message, "error");
-    }
+window.procesarIngreso = async () => {
+    const id = doc(collection(db, "temp")).id;
+    await setDoc(doc(db, "usuarios", USER_ID, "productos", id), {
+        nombre: el.nombre.value,
+        sku: el.sku.value,
+        costo: parseFloat(el.costo.value),
+        precio: parseFloat(el.precio.value),
+        stock: parseInt(el.stockViejo.value) + parseInt(el.cantidad.value)
+    }, { merge: true });
+    alert("Producto guardado correctamente");
 };
 
-function limpiarFormulario() {
-    inputs.nombre.value = '';
-    inputs.cantidad.value = '0';
-}
+// Eventos para calculos en tiempo real
+el.costo.addEventListener('input', window.calcularPrecios);
+el.ganancia.addEventListener('input', window.calcularPrecios);
 
 document.addEventListener('DOMContentLoaded', inicializar);
