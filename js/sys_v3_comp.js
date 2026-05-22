@@ -12,10 +12,10 @@ import {
 const USER_ID = localStorage.getItem('youcontrol_empresa_id'); 
 
 let productosLocales = [];
-let listaTemporal = []; // NUEVO: Acumulador para la tabla de la derecha
+let listaTemporal = []; 
 let tasaActual = 1.00;
 
-// Vinculaciones del DOM (MANTENIDAS IGUAL)
+// Vinculaciones del DOM
 const buscador = document.getElementById('buscador-dinamico');
 const dropdown = document.getElementById('dropdown-resultados');
 const txtTasa = document.getElementById('txt-tasa');
@@ -42,7 +42,7 @@ function mostrarEstado(mensaje, tipo) {
 }
 
 // ==========================================
-// 1. INICIALIZACIÓN (MANTENIDA)
+// 1. INICIALIZACIÓN
 // ==========================================
 async function inicializarEntradaMercancia() {
     if (!USER_ID) {
@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// 2. BUSCADOR Y SELECCIÓN (MANTENIDO)
+// 2. BUSCADOR Y SELECCIÓN
 // ==========================================
 if (buscador) {
     buscador.addEventListener('input', (e) => {
@@ -125,7 +125,7 @@ function seleccionarProducto(producto) {
 window.prepararNuevoProducto = (texto) => { inputSku.value = texto.toUpperCase(); inputNombre.value = texto; dropdown.style.display = 'none'; };
 
 // ==========================================
-// 3. MATEMÁTICA (MANTENIDO)
+// 3. MATEMÁTICA
 // ==========================================
 window.calcularPreciosCompra = () => {
     const costo = parseFloat(inputCosto.value) || 0;
@@ -143,7 +143,7 @@ window.calcularGananciaCompra = () => {
 };
 
 // ==========================================
-// 4. LÓGICA DE LISTA (LO NUEVO)
+// 4. LÓGICA DE LISTA
 // ==========================================
 window.agregarALista = function() {
     const sku = inputSku.value.trim();
@@ -151,7 +151,7 @@ window.agregarALista = function() {
     const cant = parseInt(inputCantidad.value) || 0;
     const precio = parseFloat(inputPrecio.value) || 0;
 
-    if (!nombre || cant <= 0) return mostrarEstado("❌ Datos incompletos", "loading");
+    if (!nombre || cant <= 0 || !sku) return mostrarEstado("❌ Datos incompletos o falta SKU", "loading");
 
     listaTemporal.push({ sku, nombre, cant, precio, barras: inputBarras.value, costo: inputCosto.value, ganancia: inputGanancia.value });
     renderizarTabla();
@@ -177,8 +177,9 @@ window.procesarIngresoMercancia = async () => {
     mostrarEstado("⏳ Procesando...", "loading");
     try {
         for (const item of listaTemporal) {
+            // MODIFICACIÓN: El ID del documento será directamente el SKU, sin prefijo.
+            const idDoc = item.sku; 
             const prodExistente = productosLocales.find(p => p.sku === item.sku);
-            const idDoc = prodExistente ? prodExistente.id : ("prod_" + item.sku);
             const stockActual = prodExistente ? (parseInt(prodExistente.stock) || 0) : 0;
 
             await setDoc(doc(db, "usuarios", USER_ID, "productos", idDoc), {
