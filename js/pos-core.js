@@ -127,24 +127,34 @@ window.seleccionarCliente = (id, nombre) => {
 };
 
 // ==========================================
-// 5. INTEGRACIÓN UI: SELECCIÓN DE PRODUCTO
+// 5. INTEGRACIÓN UI: BÚSQUEDA DE PRODUCTOS (DEBUG)
 // ==========================================
+const inputProducto = document.getElementById('buscar-producto-pos');
+const divResultadosProd = document.getElementById('resultados-producto-pos');
 
-window.seleccionarProducto = (id) => {
-    // 1. Agregamos el producto al carrito usando tu función existente
-    window.agregarCarrito(id);
-    
-    // 2. Limpiamos el input de búsqueda
-    inputProducto.value = '';
-    
-    // 3. Ocultamos el menú desplegable de resultados
-    divResultadosProd.style.display = 'none';
-    
-    // 4. Devolvemos el foco al input para que puedas seguir escaneando rápido
-    inputProducto.focus();
-    
-    console.log("Producto agregado al carrito:", id);
-};
+if (inputProducto) {
+    inputProducto.addEventListener('input', (e) => {
+        const texto = e.target.value;
+        const resultados = window.buscarProducto(texto);
+        
+        // DEBUG: Mira esto en la consola del navegador (F12 > Console)
+        console.log("Buscando:", texto, "Resultados encontrados:", resultados);
+        
+        if (resultados.length > 0 && texto.trim() !== "") {
+            divResultadosProd.style.display = 'block';
+            divResultadosProd.innerHTML = resultados.map(p => `
+                <div class="resultado-item" 
+                     style="padding: 10px; cursor: pointer; border-bottom: 1px solid #f1f5f9;"
+                     onclick="window.seleccionarProducto('${p.id}')">
+                     <strong>${p.nombre || 'Sin nombre'}</strong>
+                     <span style="float: right; color: var(--primary-color); font-weight: bold;">$${p.precio || '0.00'}</span>
+                </div>
+            `).join('');
+        } else {
+            divResultadosProd.style.display = 'none';
+        }
+    });
+}
 
 // ==========================================
 // INICIALIZACIÓN GLOBAL
