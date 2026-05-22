@@ -68,7 +68,7 @@
                     <div class="form-group full"><label>Fecha</label><input type="date" id="comp-fecha"></div>
                 </div>
 
-                <button class="btn-add-item" id="btn-agregar-lista">
+                <button class="btn-add-item" onclick="window.agregarALista()">
                     <i class="fas fa-plus-circle"></i> AGREGAR A LA LISTA
                 </button>
             </div>
@@ -80,7 +80,7 @@
                     </thead>
                     <tbody id="tabla-items-compra"></tbody>
                 </table>
-                <button class="btn-save-compra" id="btn-guardar-entrada">
+                <button class="btn-save-compra" onclick="window.procesarIngresoMercancia()">
                     <i class="fas fa-cloud-arrow-up"></i> GUARDAR ENTRADA (F9)
                 </button>
             </div>
