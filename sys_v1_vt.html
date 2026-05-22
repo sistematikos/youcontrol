@@ -445,50 +445,40 @@
         let indiceProd = -1;
         let indiceClie = -1;
 
-        // Función de navegación genérica para evitar repetir código
-        const manejarTeclado = (e, contenedor, callbackSeleccion, indexVar, listaItems) => {
-            const items = contenedor.querySelectorAll('.resultado-item');
-            if (!items.length) return;
+        // Lógica de navegación por teclado para ambos buscadores
+        const manejarNavegacion = (e, contenedorId, indiceVar, callbackSeleccion) => {
+            const cont = document.getElementById(contenedorId);
+            const items = cont.querySelectorAll('.resultado-item');
+            if (!items.length) return indiceVar;
 
             if (e.key === 'ArrowDown') {
-                if (indexVar < items.length - 1) indexVar++;
+                if (indiceVar < items.length - 1) indiceVar++;
             } else if (e.key === 'ArrowUp') {
-                if (indexVar > 0) indexVar--;
+                if (indiceVar > 0) indiceVar--;
             } else if (e.key === 'Enter') {
                 e.preventDefault();
-                if (items[indexVar]) items[indexVar].click();
-                return indexVar;
+                if (items[indiceVar]) items[indiceVar].click();
+                return -1;
             } else {
-                return indexVar;
+                return indiceVar;
             }
-            
-            items.forEach((it, i) => it.classList.toggle('seleccionado', i === indexVar));
-            return indexVar;
+
+            items.forEach((it, i) => it.classList.toggle('seleccionado', i === indiceVar));
+            return indiceVar;
         };
 
-        // Evento Producto
+        // Eventos de teclado
         document.getElementById('buscar-producto-pos').addEventListener('keydown', (e) => {
-            indiceProd = manejarTeclado(e, document.getElementById('resultados-producto-pos'), null, indiceProd);
+            indiceProd = manejarNavegacion(e, 'resultados-producto-pos', indiceProd);
         });
 
-        // Evento Cliente
         document.getElementById('buscar-cliente-pos').addEventListener('keydown', (e) => {
-            indiceClie = manejarTeclado(e, document.getElementById('resultados-cliente-pos'), null, indiceClie);
+            indiceClie = manejarNavegacion(e, 'resultados-cliente-pos', indiceClie);
         });
 
-        // Asegúrate de que tus funciones de renderizado añadan la clase 'resultado-item' a cada div creado
-        // Ejemplo para clientes:
-        window.renderizarResultadosCliente = (lista) => {
-            const div = document.getElementById('resultados-cliente-pos');
-            indiceClie = -1;
-            if(lista.length === 0) { div.style.display = 'none'; return; }
-            div.innerHTML = lista.map(c => `
-                <div class="resultado-item" style="padding:10px; cursor:pointer;" onclick="console.log('Cliente seleccionado'); document.getElementById('resultados-cliente-pos').style.display='none'">
-                    ${c.nombre}
-                </div>
-            `).join('');
-            div.style.display = 'block';
-        };
+        // Modificación: Las funciones de renderizado deben agregar la clase 'resultado-item'
+        // Asegúrate de que tus funciones actuales en pos-core.js tengan esto:
+        // div.innerHTML = lista.map(p => `<div class="resultado-item" onclick="...">...</div>`).join('');
     </script>
     <script type="module" src="js/pos-core.js"></script>
 </body>
