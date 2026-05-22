@@ -258,6 +258,28 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
+window.ejecutarF4 = () => { 
+    // F4: Modificar Cantidad del último producto
+    if (carrito.length === 0) return;
+    const item = carrito[carrito.length - 1];
+    const nuevaCant = prompt(`Cantidad para ${item.nombre}:`, item.cantidad);
+    if (nuevaCant !== null && !isNaN(nuevaCant) && nuevaCant > 0) {
+        item.cantidad = parseInt(nuevaCant);
+        window.actualizarCarritoUI();
+    }
+};
+
+window.ejecutarF5 = () => { 
+    // F5: Modificar Precio del último producto
+    if (carrito.length === 0) return;
+    const item = carrito[carrito.length - 1];
+    const nuevoPrecio = prompt(`Precio para ${item.nombre} ($):`, item.precio);
+    if (nuevoPrecio !== null && !isNaN(nuevoPrecio)) {
+        item.precio = parseFloat(nuevoPrecio);
+        window.actualizarCarritoUI();
+    }
+};
+
 // ==========================================
 // INICIALIZACIÓN GLOBAL
 // ==========================================
