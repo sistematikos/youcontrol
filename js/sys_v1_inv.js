@@ -10,8 +10,8 @@ import {
     collection, onSnapshot, doc, getDoc, setDoc, deleteDoc 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// CAMBIO CRÍTICO: ID dinámico basado en la activación de la licencia de la empresa
-const USER_ID = localStorage.getItem('youcontrol_empresa_id') || "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
+// CAMBIO CRÍTICO: ID dinámico obtenido directamente del localStorage de la sesión
+const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 
 // Estado Global
 let listaProductos = [];
@@ -39,6 +39,11 @@ const formStock = document.getElementById('form-stock');
 // 1. INICIALIZACIÓN DE LA DATA (FIRESTORE)
 // ==========================================
 async function inicializarInventario() {
+    if (!USER_ID) {
+        console.error("Error: ID de empresa no encontrado en localStorage.");
+        return;
+    }
+
     mostrarStatusBar("⏳ Conectando con Cloud Firestore...", "loading");
     
     try {
