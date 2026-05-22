@@ -1,7 +1,7 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
  * Módulo de Facturación y Ventas (pos-core.js)
- * Adaptación Multi-Empresa: Rutas dinámicas basadas en ID de localStorage.
+ * Adaptación Multi-Empresa: Rutas dinámicas 100% basadas en el ID de sesión.
  */
 
 import { db } from './firebase-config.js';
@@ -9,21 +9,16 @@ import {
     collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc, query, orderBy, limit 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Función centralizada para obtener el ID de la empresa activa
-const getEmpresaId = () => {
-    const id = localStorage.getItem('youcontrol_empresa_id');
-    if (!id) {
-        console.error("Acceso denegado: No se ha detectado una empresa activa.");
-        window.location.href = "index.html"; 
-    }
-    return id;
-};
+// --- SEGURIDAD Y OBTENCIÓN DINÁMICA ---
+const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 
-// Función de utilidad para construir rutas dinámicas
-const getCollectionRef = (coleccion) => {
-    const id = getEmpresaId();
-    return collection(db, "usuarios", id, coleccion);
-};
+if (!USER_ID) {
+    console.error("Acceso denegado: No se ha detectado una empresa activa.");
+    alert("Error de sesión: Por favor, ingrese nuevamente al sistema.");
+    window.location.href = "index.html"; 
+}
+
+console.log("Sistema operando para empresa ID:", USER_ID);
 
 let productosMaster = [];
 let clientesMaster = []; 
@@ -32,13 +27,16 @@ let itemSeleccionadoIndex = -1;
 let tasaActual = 1;
 let proximoNumeroFacturaStr = "000001";
 
+window.clientesMaster = [];
+let indexFocoCliente = -1;
+let indexFocoProducto = -1;
+
 // ==========================================
-// 1. INICIALIZACIÓN, TASA Y FACTURA
+// 1. INICIALIZACIÓN, TASA Y FACTURA AUTOMÁTICA
 // ==========================================
 async function cargarTasa() {
     try {
-        const id = getEmpresaId();
-        const tasaRef = doc(db, "usuarios", id, "configuracion", "tasa");
+        const tasaRef = doc(db, "usuarios", USER_ID, "configuracion", "tasa");
         const tasaSnap = await getDoc(tasaRef);
         if (tasaSnap.exists()) {
             tasaActual = parseFloat(tasaSnap.data().valor) || 1;
@@ -50,7 +48,7 @@ async function cargarTasa() {
 }
 
 function escucharUltimaFactura() {
-    const ventsRef = getCollectionRef("ventas");
+    const ventsRef = collection(db, "usuarios", USER_ID, "ventas");
     const q = query(ventsRef, orderBy("fecha", "desc"), limit(1));
     
     onSnapshot(q, (snapshot) => {
@@ -70,39 +68,46 @@ function escucharUltimaFactura() {
 }
 
 function inicializarClientes() {
-    onSnapshot(getCollectionRef("clientes"), (snapshot) => {
+    const clientesRef = collection(db, "usuarios", USER_ID, "clientes");
+    onSnapshot(clientesRef, (snapshot) => {
         clientesMaster = [];
         snapshot.forEach(docSnap => {
             clientesMaster.push({ id: docSnap.id, ...docSnap.data() });
         });
         clientesMaster.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
+        window.clientesMaster = clientesMaster;
         poblarSelectorClientes();
     });
 }
 
 // ==========================================
-// 2. MOTORES DE BÚSQUEDA (DINÁMICOS)
+// 2. MOTORES DE BÚSQUEDA Y CARRO
 // ==========================================
-// (Se mantienen las funciones de búsqueda existentes, 
-// ellas ya consumen los arrays que alimentamos con las nuevas rutas)
-
 function inicializarProductos() {
-    onSnapshot(getCollectionRef("productos"), (snapshot) => {
+    const productosRef = collection(db, "usuarios", USER_ID, "productos");
+    onSnapshot(productosRef, (snapshot) => {
         productosMaster = [];
         snapshot.forEach(doc => productosMaster.push({ id: doc.id, ...doc.data() }));
     });
 }
 
+window.agregarCarrito = (id) => {
+    const p = productosMaster.find(x => x.id === id);
+    if (!p) return;
+    const item = carrito.find(c => c.id === id);
+    if (item) item.cantidad++; else carrito.push({ ...p, cantidad: 1 });
+    window.actualizarCarritoUI();
+};
+
 // ==========================================
-// 3. PERSISTENCIA Y CARRO
+// 3. REGISTRO DE VENTAS (DINÁMICO)
 // ==========================================
 window.registrarVenta = async () => {
     const btn = document.getElementById('btnConfirmarVenta');
     if (!btn || btn.disabled) return;
     
     try {
-        // Guarda la venta en la colección dinámica de la empresa actual
-        await addDoc(getCollectionRef("ventas"), {
+        await addDoc(collection(db, "usuarios", USER_ID, "ventas"), {
             fecha: serverTimestamp(),
             nro_factura: proximoNumeroFacturaStr,
             total_usd: window.totalVentaUSD,
@@ -123,4 +128,3 @@ cargarTasa();
 escucharUltimaFactura();
 inicializarClientes();
 inicializarProductos();
-// ... resto de inicializaciones
