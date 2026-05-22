@@ -1,7 +1,7 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
  * Módulo de Gestión de Inventario General (sys_v1_inv.js)
- * Dinámico: La ruta se construye según el ID del usuario en sesión.
+ * Estructura: usuarios -> [ID_LARGO] -> colecciones
  */
 
 import { db } from './firebase-config.js'; 
@@ -9,14 +9,21 @@ import {
     collection, onSnapshot, doc, getDoc, setDoc, deleteDoc 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// OBTENCIÓN DINÁMICA: Lee el ID guardado al iniciar sesión
-const USER_ID = localStorage.getItem('youcontrol_empresa_id');
+// --- SEGURIDAD Y RUTA DINÁMICA ---
+const getEmpresaId = () => {
+    const id = localStorage.getItem('youcontrol_empresa_id');
+    if (!id) {
+        console.error("Acceso denegado: No se ha detectado una empresa activa.");
+        window.location.href = "index.html"; // Redirige al inicio si no hay ID
+        return null;
+    }
+    return id;
+};
 
-// Validación básica de seguridad
-if (!USER_ID) {
-    console.error("No se encontró ID de empresa. Redirigiendo a inicio...");
-    // window.location.href = "login.html"; // Descomenta esto si quieres forzar redirección
-}
+const USER_ID = getEmpresaId();
+
+// Detener ejecución si no hay ID
+if (!USER_ID) throw new Error("No se pudo inicializar el inventario: ID de empresa ausente.");
 
 console.log("Sistema operando para empresa ID:", USER_ID);
 
@@ -24,33 +31,16 @@ console.log("Sistema operando para empresa ID:", USER_ID);
 let listaProductos = [];
 let tasaActual = 1.00;
 
-// Enlaces del DOM
-const cuerpoTabla = document.getElementById('cuerpo-tabla');
-const tasaInput = document.getElementById('tasaCambio');
-const buscadorInput = document.getElementById('buscador');
-const statusBar = document.getElementById('status-bar-inv');
-
-// Enlaces del Formulario Modal
-const modal = document.getElementById('modalProducto');
-const formId = document.getElementById('form-id');
-const formBarras = document.getElementById('form-barras');
-const formSku = document.getElementById('form-sku');
-const formNombre = document.getElementById('form-nombre');
-const formCosto = document.getElementById('form-costo');
-const formGanancia = document.getElementById('form-ganancia');
-const formPrecio = document.getElementById('form-precio');
-const formStock = document.getElementById('form-stock');
+// ... [Mantén tus variables del DOM constantes aquí] ...
 
 // ==========================================
 // 1. INICIALIZACIÓN DINÁMICA
 // ==========================================
 async function inicializarInventario() {
-    if (!USER_ID) return;
-    
     mostrarStatusBar("⏳ Cargando datos de empresa...", "loading");
     
     try {
-        // La ruta es: usuarios -> [ID_DINAMICO] -> configuracion -> tasa
+        // Ruta: usuarios -> [ID_LARGO] -> configuracion -> tasa
         const tasaDocRef = doc(db, "usuarios", USER_ID, "configuracion", "tasa");
         const tasaSnap = await getDoc(tasaDocRef);
         
@@ -59,7 +49,7 @@ async function inicializarInventario() {
             if (tasaInput) tasaInput.value = tasaActual.toFixed(2);
         }
 
-        // La ruta es: usuarios -> [ID_DINAMICO] -> productos
+        // Ruta: usuarios -> [ID_LARGO] -> productos
         const productosCollection = collection(db, "usuarios", USER_ID, "productos");
         
         onSnapshot(productosCollection, (snapshot) => {
@@ -84,11 +74,9 @@ document.addEventListener('DOMContentLoaded', inicializarInventario);
 // CRUD DINÁMICO
 // ==========================================
 window.guardarCambiosModal = async function() {
-    if (!USER_ID) return;
-    
     const idDoc = formId.value.trim() || formSku.value.trim() || formBarras.value.trim() || Date.now().toString();
     
-    // RUTA DINÁMICA: Siempre utiliza el USER_ID capturado de la sesión
+    // RUTA: usuarios -> [ID_LARGO] -> productos -> [ID_PRODUCTO]
     const docRef = doc(db, "usuarios", USER_ID, "productos", idDoc);
     
     const productoData = {
@@ -105,7 +93,7 @@ window.guardarCambiosModal = async function() {
     try {
         await setDoc(docRef, productoData, { merge: true });
         window.cerrarModal();
-        mostrarStatusBar("✅ Producto guardado en: " + USER_ID, "success");
+        mostrarStatusBar("✅ Producto guardado.", "success");
     } catch (e) {
         alert("Error al guardar: " + e.message);
     }
@@ -114,24 +102,11 @@ window.guardarCambiosModal = async function() {
 window.eliminarProducto = async function(id, nombre) {
     if (confirm(`¿Eliminar ${nombre}?`)) {
         try {
+            // RUTA: usuarios -> [ID_LARGO] -> productos -> [ID]
             await deleteDoc(doc(db, "usuarios", USER_ID, "productos", id));
             mostrarStatusBar("✅ Producto eliminado.", "success");
         } catch (e) { alert("Error al eliminar."); }
     }
 };
 
-// ==========================================
-// VENTANAS Y ESTADOS (MANTENER)
-// ==========================================
-window.cerrarModal = function() { modal.style.display = 'none'; };
-
-function mostrarStatusBar(mensaje, tipo) {
-    if (!statusBar) return;
-    statusBar.innerText = mensaje;
-    statusBar.style.display = 'block';
-    if (tipo === 'success') setTimeout(ocultarStatusBar, 3000);
-}
-
-function ocultarStatusBar() { if (statusBar) statusBar.style.display = 'none'; }
-
-// ... (El resto de tus funciones como renderizarTabla y filtrarProductos se mantienen iguales)
+// ... [Mantén tus funciones de UI: cerrarModal, mostrarStatusBar, etc.]
