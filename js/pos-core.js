@@ -176,6 +176,34 @@ window.seleccionarProducto = (id) => {
 };
 
 // ==========================================
+// 7. ACTUALIZACIÓN VISUAL DEL CARRITO
+// ==========================================
+window.actualizarCarritoUI = () => {
+    const contenedor = document.getElementById('lista-carrito'); // Asegúrate que este ID exista en tu HTML
+    if (!contenedor) return;
+
+    // Pintar los productos en el carrito
+    contenedor.innerHTML = carrito.map((item, index) => `
+        <div style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between;">
+            <div>
+                <strong>${item.nombre}</strong><br>
+                <small>${item.cantidad} x $${item.precio || 0}</small>
+            </div>
+            <div>
+                $${(item.cantidad * (item.precio || 0)).toFixed(2)}
+            </div>
+        </div>
+    `).join('');
+
+    // Calcular y actualizar totales
+    const total = carrito.reduce((sum, item) => sum + (item.cantidad * (item.precio || 0)), 0);
+    window.totalVentaUSD = total;
+    
+    // Si tienes elementos con estos IDs, los actualiza
+    if(document.getElementById('total-usd')) document.getElementById('total-usd').innerText = `$ ${total.toFixed(2)}`;
+};
+
+// ==========================================
 // INICIALIZACIÓN GLOBAL
 // ==========================================
 // (Las funciones de tasa y factura se mantienen como estaban)
