@@ -204,6 +204,30 @@ window.actualizarCarritoUI = () => {
 };
 
 // ==========================================
+// 8. COMANDOS RÁPIDOS DE TECLADO (F4, F5, F6, F9)
+// ==========================================
+document.addEventListener('keydown', (event) => {
+    switch(event.key) {
+        case 'F4':
+            event.preventDefault(); // Evita el comportamiento por defecto del navegador
+            window.ejecutarF4();
+            break;
+        case 'F5':
+            event.preventDefault();
+            window.ejecutarF5();
+            break;
+        case 'F6':
+            event.preventDefault();
+            window.ejecutarF6();
+            break;
+        case 'F9':
+            event.preventDefault();
+            window.abrirModalCobro();
+            break;
+    }
+});
+
+// ==========================================
 // INICIALIZACIÓN GLOBAL
 // ==========================================
 // (Las funciones de tasa y factura se mantienen como estaban)
