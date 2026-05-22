@@ -157,6 +157,25 @@ if (inputProducto) {
 }
 
 // ==========================================
+// 6. EJECUCIÓN DE SELECCIÓN DE PRODUCTO
+// ==========================================
+window.seleccionarProducto = (id) => {
+    // 1. Agregamos el producto al carrito usando tu función original
+    window.agregarCarrito(id);
+    
+    // 2. Limpiamos el input de búsqueda
+    inputProducto.value = '';
+    
+    // 3. Ocultamos el menú desplegable de resultados
+    divResultadosProd.style.display = 'none';
+    
+    // 4. Devolvemos el foco al input para que puedas seguir buscando rápido
+    inputProducto.focus();
+    
+    console.log("Producto agregado al carrito:", id);
+};
+
+// ==========================================
 // INICIALIZACIÓN GLOBAL
 // ==========================================
 // (Las funciones de tasa y factura se mantienen como estaban)
