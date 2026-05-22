@@ -13,6 +13,7 @@ import {
 const USER_ID = localStorage.getItem('youcontrol_empresa_id'); 
 
 let productosLocales = [];
+let listaTemporal = []; // NUEVA LISTA TEMPORAL
 let tasaActual = 1.00;
 
 // Vinculaciones del DOM
@@ -162,7 +163,7 @@ document.addEventListener('click', (e) => {
 });
 
 // ==========================================
-// 3. MATEMÁTICA Y PROCESAMIENTO
+// 3. MATEMÁTICA Y LISTA TEMPORAL
 // ==========================================
 window.calcularPreciosCompra = function() {
     const costo = parseFloat(inputCosto.value) || 0;
@@ -179,39 +180,30 @@ window.calcularGananciaCompra = function() {
     inputPrecioBs.value = (precio * tasaActual).toFixed(2).replace('.', ',') + " Bs.";
 };
 
-window.procesarIngresoMercancia = async () => {
-    if (!USER_ID) return mostrarEstado("❌ Error de identificación.", "loading");
-    
+window.agregarALista = function() {
     const sku = inputSku.value.trim();
     const nombre = inputNombre.value.trim();
-    const cantidadEntrante = parseInt(inputCantidad.value) || 0;
+    const cantidad = parseInt(inputCantidad.value) || 0;
+    const precio = parseFloat(inputPrecio.value) || 0;
     const stockViejo = parseInt(inputStockViejo.value) || 0;
 
-    if (!nombre || cantidadEntrante <= 0) return mostrarEstado("❌ Datos incompletos.", "loading");
+    if (!sku || !nombre || cantidad <= 0) return mostrarEstado("❌ SKU, nombre y cantidad obligatorios", "loading");
 
-    const nuevoStockTotal = stockViejo + cantidadEntrante;
-    const datos = {
-        sku: sku, barras: inputBarras.value.trim(), nombre: nombre,
-        costo: parseFloat(inputCosto.value) || 0, ganancia: parseFloat(inputGanancia.value) || 0,
-        precio: parseFloat(inputPrecio.value) || 0, stock: nuevoStockTotal,
-        ultima_actualizacion: inputFecha.value
-    };
+    listaTemporal.push({ 
+        sku, nombre, cantidad, precio, stockViejo,
+        barras: inputBarras.value,
+        costo: inputCosto.value,
+        ganancia: inputGanancia.value
+    });
 
-    try {
-        const prodExistente = productosLocales.find(p => p.sku === sku);
-        const idDocumento = prodExistente ? prodExistente.id : (sku || "prod_" + Date.now());
-
-        await setDoc(doc(db, "usuarios", USER_ID, "productos", idDocumento), datos, { merge: true });
-        mostrarEstado(`✅ Entrada exitosa. Stock: ${nuevoStockTotal}`, "success");
-        limpiarFormulario();
-    } catch (e) {
-        mostrarEstado("❌ Error al actualizar.", "loading");
-    }
+    renderizarTabla();
+    limpiarFormulario();
 };
 
-function limpiarFormulario() {
-    inputSku.value = ''; inputBarras.value = ''; inputNombre.value = '';
-    inputCosto.value = '0.00'; inputGanancia.value = '0.0'; inputPrecio.value = '0.00';
-    inputStockViejo.value = '0'; inputCantidad.value = '0';
-    if (buscador) { buscador.value = ''; buscador.focus(); }
-}
+function renderizarTabla() {
+    const tbody = document.getElementById('tabla-items-compra');
+    if (!tbody) return;
+    tbody.innerHTML = listaTemporal.map((item, index) => `
+        <tr>
+            <td>${item.sku}</td><td>${item.nombre}</td><td>${item.cantidad}</td><td>$${item.precio}</td>
+            <td><button onclick="window.eliminar
