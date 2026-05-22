@@ -95,6 +95,38 @@ window.registrarVenta = async () => {
 };
 
 // ==========================================
+// 4. LÓGICA DE VISUALIZACIÓN DE RESULTADOS
+// ==========================================
+
+const inputCliente = document.getElementById('buscar-cliente-pos');
+const divResultadosCliente = document.getElementById('resultados-cliente-pos');
+
+inputCliente.addEventListener('input', (e) => {
+    const texto = e.target.value;
+    const resultados = window.buscarCliente(texto);
+    
+    if (resultados.length > 0 && texto.length > 0) {
+        divResultadosCliente.style.display = 'block';
+        divResultadosCliente.innerHTML = resultados.map(c => `
+            <div class="resultado-item" 
+                 style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;"
+                 onclick="window.seleccionarCliente('${c.id}', '${c.nombre || 'Sin nombre'}')">
+                <strong>${c.id}</strong> - ${c.nombre || 'Sin nombre'}
+            </div>
+        `).join('');
+    } else {
+        divResultadosCliente.style.display = 'none';
+    }
+});
+
+// Función para cuando haces clic en un cliente de la lista
+window.seleccionarCliente = (id, nombre) => {
+    inputCliente.value = id; // O puedes poner el nombre si prefieres
+    divResultadosCliente.style.display = 'none';
+    console.log("Cliente seleccionado:", id, nombre);
+};
+
+// ==========================================
 // INICIALIZACIÓN GLOBAL
 // ==========================================
 // (Las funciones de tasa y factura se mantienen como estaban)
