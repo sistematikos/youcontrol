@@ -1,7 +1,6 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * Controlador de Gestión de Clientes en Firestore v2.1 (sys_v2_clt.js)
- * ACTUALIZADO: Guardado directo usando el RIF como ID del documento.
+ * Controlador de Gestión de Clientes en Firestore v2.2
  */
 
 import { db } from './firebase-config.js';
@@ -38,15 +37,40 @@ async function inicializarClientes() {
     onSnapshot(collection(db, "usuarios", ID_LICENCIA, "clientes"), (snapshot) => {
         clientesMaster = [];
         snapshot.forEach((docSnap) => {
+            // Guardamos el objeto completo incluyendo el ID (que es el RIF)
             clientesMaster.push({ id: docSnap.id, ...docSnap.data() });
         });
-        clientesMaster.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
         renderizarTabla(clientesMaster);
     });
 }
 
 // ==========================================
-// 2. REGISTRAR O ACTUALIZAR (CAMBIOS AQUÍ)
+// 2. RENDERIZAR TABLA (LA FUNCIÓN QUE FALTABA)
+// ==========================================
+function renderizarTabla(lista) {
+    if (!tablaClientes) return;
+    
+    if (lista.length === 0) {
+        tablaClientes.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px;">No hay clientes registrados.</td></tr>`;
+        return;
+    }
+
+    tablaClientes.innerHTML = lista.map(c => `
+        <tr>
+            <td><b>${c.nombre || 'N/A'}</b></td>
+            <td>${c.rif || c.id}</td>
+            <td>${c.telefono || '-'}</td>
+            <td>${c.direccion || '-'}</td>
+            <td style="text-align:center;">
+                <button class="btn-table" onclick="window.prepararEdicion('${c.id}')"><i class="fas fa-edit"></i></button>
+                <button class="btn-table" onclick="window.eliminarCliente('${c.id}', '${c.nombre}')"><i class="fas fa-trash"></i></button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// ==========================================
+// 3. REGISTRAR O ACTUALIZAR
 // ==========================================
 if (formCliente) {
     formCliente.addEventListener('submit', async (e) => {
@@ -58,47 +82,38 @@ if (formCliente) {
         const telefono = document.getElementById('cl-telefono').value.trim();
         const direccion = document.getElementById('cl-direccion').value.trim().toUpperCase();
 
-        if (!rif) { alert("El RIF es obligatorio para identificar al cliente"); return; }
+        if (!rif) { alert("El RIF es obligatorio"); return; }
 
         btnGuardar.disabled = true;
         btnGuardar.innerText = "PROCESANDO...";
 
         try {
-            // USAMOS EL RIF COMO ID ÚNICO PARA GUARDAR DIRECTAMENTE
             const clienteRef = doc(db, "usuarios", ID_LICENCIA, "clientes", rif);
             
             if (editMode) {
-                await updateDoc(clienteRef, {
-                    nombre, rif, telefono, direccion,
-                    fecha_modificacion: serverTimestamp()
-                });
+                await updateDoc(clienteRef, { nombre, rif, telefono, direccion, fecha_modificacion: serverTimestamp() });
                 alert("✅ Ficha actualizada");
             } else {
-                await setDoc(clienteRef, {
-                    nombre, rif, telefono, direccion,
-                    fecha_creacion: serverTimestamp()
-                });
+                await setDoc(clienteRef, { nombre, rif, telefono, direccion, fecha_creacion: serverTimestamp() });
                 alert("✅ Cliente registrado");
             }
             cancelarEdicion();
         } catch (error) {
             console.error("Error:", error);
-            alert("Error al guardar en la base de datos");
+            alert("Error al guardar");
         }
-
         btnGuardar.disabled = false;
         btnGuardar.innerHTML = `<i class="fas fa-save"></i> GUARDAR CLIENTE`;
     });
 }
 
 // ==========================================
-// 3. FUNCIONES DE EDICIÓN Y ELIMINACIÓN
+// 4. FUNCIONES DE EDICIÓN Y ELIMINACIÓN
 // ==========================================
 window.prepararEdicion = (id) => {
     const c = clientesMaster.find(x => x.id === id);
     if (!c) return;
 
-    // Bloqueamos el RIF al editar para evitar que se rompa la referencia del ID
     document.getElementById('cl-rif').readOnly = true; 
     document.getElementById('cl-nombre').value = c.nombre;
     document.getElementById('cl-rif').value = c.rif;
@@ -109,7 +124,6 @@ window.prepararEdicion = (id) => {
     formTitle.innerHTML = `<i class="fas fa-user-edit"></i> Editar Cliente`;
     btnGuardar.innerHTML = `<i class="fas fa-sync-alt"></i> ACTUALIZAR FICHA`;
     if (btnCancelar) btnCancelar.style.display = 'block';
-    formCliente.scrollIntoView({ behavior: 'smooth' });
 };
 
 window.eliminarCliente = async (id, nombre) => {
@@ -120,9 +134,15 @@ window.eliminarCliente = async (id, nombre) => {
 
 function cancelarEdicion() {
     formCliente.reset();
-    document.getElementById('cl-rif').readOnly = false; // Permitir escribir RIF de nuevo
+    document.getElementById('cl-rif').readOnly = false;
     editMode = false;
     formTitle.innerHTML = `<i class="fas fa-user-plus"></i> Registrar Cliente`;
     if (btnCancelar) btnCancelar.style.display = 'none';
 }
-// ... (resto de funciones de renderizado y búsqueda se mantienen igual)
+
+if (btnCancelar) btnCancelar.addEventListener('click', cancelarEdicion);
+
+// ==========================================
+// 5. INICIALIZACIÓN
+// ==========================================
+inicializarClientes();
