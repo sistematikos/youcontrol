@@ -234,6 +234,31 @@ window.abrirModalCobro = () => {
 };
 
 // ==========================================
+// 9. ESCUCHADOR DE TECLADO (COMANDOS RÁPIDOS)
+// ==========================================
+document.addEventListener('keydown', (event) => {
+    // Manejo de teclas F4, F5, F6, F9
+    switch(event.key) {
+        case 'F4':
+            event.preventDefault();
+            window.ejecutarF4();
+            break;
+        case 'F5':
+            event.preventDefault();
+            window.ejecutarF5();
+            break;
+        case 'F6':
+            event.preventDefault();
+            window.ejecutarF6();
+            break;
+        case 'F9':
+            event.preventDefault();
+            window.abrirModalCobro();
+            break;
+    }
+});
+
+// ==========================================
 // INICIALIZACIÓN GLOBAL
 // ==========================================
 // (Las funciones de tasa y factura se mantienen como estaban)
