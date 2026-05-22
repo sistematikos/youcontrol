@@ -1,7 +1,7 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * Módulo de Gestión de Inventario General (sys_v1_inv.js)
- * Estructura: usuarios -> [ID_LARGO] -> colecciones
+ * Módulo de Gestión de Inventario (sys_v1_inv.js)
+ * Ruta: usuarios -> [ID_LARGO] -> productos
  */
 
 import { db } from './firebase-config.js'; 
@@ -9,12 +9,11 @@ import {
     collection, onSnapshot, doc, getDoc, setDoc, deleteDoc 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// --- SEGURIDAD Y RUTA DINÁMICA ---
+// Función central de seguridad para obtener la ruta
 const getEmpresaId = () => {
     const id = localStorage.getItem('youcontrol_empresa_id');
     if (!id) {
-        console.error("Acceso denegado: No se ha detectado una empresa activa.");
-        window.location.href = "index.html"; // Redirige al inicio si no hay ID
+        console.error("No se detectó empresa activa.");
         return null;
     }
     return id;
@@ -22,61 +21,63 @@ const getEmpresaId = () => {
 
 const USER_ID = getEmpresaId();
 
-// Detener ejecución si no hay ID
-if (!USER_ID) throw new Error("No se pudo inicializar el inventario: ID de empresa ausente.");
-
-console.log("Sistema operando para empresa ID:", USER_ID);
-
 // Estado Global
 let listaProductos = [];
 let tasaActual = 1.00;
 
-// ... [Mantén tus variables del DOM constantes aquí] ...
+// Elementos DOM (Asegúrate de que existan en tu HTML)
+const cuerpoTabla = document.getElementById('cuerpo-tabla');
+const tasaInput = document.getElementById('tasaCambio');
+const statusBar = document.getElementById('status-bar-inv');
 
 // ==========================================
-// 1. INICIALIZACIÓN DINÁMICA
+// INICIALIZACIÓN DINÁMICA
 // ==========================================
 async function inicializarInventario() {
-    mostrarStatusBar("⏳ Cargando datos de empresa...", "loading");
+    if (!USER_ID) {
+        mostrarStatusBar("❌ Error: No hay empresa seleccionada.", "error");
+        return;
+    }
+    
+    console.log("Inventario cargando para ruta:", `usuarios/${USER_ID}/productos`);
     
     try {
-        // Ruta: usuarios -> [ID_LARGO] -> configuracion -> tasa
+        // Carga de tasa
         const tasaDocRef = doc(db, "usuarios", USER_ID, "configuracion", "tasa");
         const tasaSnap = await getDoc(tasaDocRef);
-        
         if (tasaSnap.exists()) {
             tasaActual = parseFloat(tasaSnap.data().valor) || 1.00;
             if (tasaInput) tasaInput.value = tasaActual.toFixed(2);
         }
 
-        // Ruta: usuarios -> [ID_LARGO] -> productos
+        // Carga de productos (Ruta absoluta)
         const productosCollection = collection(db, "usuarios", USER_ID, "productos");
         
         onSnapshot(productosCollection, (snapshot) => {
             listaProductos = [];
             cuerpoTabla.innerHTML = '';
+            
             snapshot.forEach(doc => {
                 listaProductos.push({ id: doc.id, ...doc.data() });
             });
+            
             renderizarTabla(listaProductos);
-            mostrarStatusBar("✅ Sincronizado: Empresa " + USER_ID, "success");
+            mostrarStatusBar("✅ Inventario sincronizado.", "success");
         });
 
     } catch (e) {
-        console.error("Error al cargar:", e);
-        mostrarStatusBar("❌ Error al conectar con la base de datos.", "loading");
+        console.error("Error al cargar inventario:", e);
+        mostrarStatusBar("❌ Error de conexión: " + e.message, "error");
     }
 }
 
-document.addEventListener('DOMContentLoaded', inicializarInventario);
-
 // ==========================================
-// CRUD DINÁMICO
+// GUARDAR / ELIMINAR (CRUD DINÁMICO)
 // ==========================================
 window.guardarCambiosModal = async function() {
-    const idDoc = formId.value.trim() || formSku.value.trim() || formBarras.value.trim() || Date.now().toString();
+    if (!USER_ID) return;
     
-    // RUTA: usuarios -> [ID_LARGO] -> productos -> [ID_PRODUCTO]
+    const idDoc = formId.value.trim() || Date.now().toString();
     const docRef = doc(db, "usuarios", USER_ID, "productos", idDoc);
     
     const productoData = {
@@ -86,27 +87,20 @@ window.guardarCambiosModal = async function() {
         costo: parseFloat(formCosto.value) || 0,
         ganancia: parseFloat(formGanancia.value) || 0,
         precio: parseFloat(formPrecio.value) || 0,
-        stock: parseInt(formStock.value) || 0,
-        ultima_actualizacion: new Date().toISOString().split('T')[0]
+        stock: parseInt(formStock.value) || 0
     };
 
-    try {
-        await setDoc(docRef, productoData, { merge: true });
-        window.cerrarModal();
-        mostrarStatusBar("✅ Producto guardado.", "success");
-    } catch (e) {
-        alert("Error al guardar: " + e.message);
+    await setDoc(docRef, productoData, { merge: true });
+    window.cerrarModal();
+};
+
+window.eliminarProducto = async function(id) {
+    if (confirm("¿Eliminar este producto?")) {
+        await deleteDoc(doc(db, "usuarios", USER_ID, "productos", id));
     }
 };
 
-window.eliminarProducto = async function(id, nombre) {
-    if (confirm(`¿Eliminar ${nombre}?`)) {
-        try {
-            // RUTA: usuarios -> [ID_LARGO] -> productos -> [ID]
-            await deleteDoc(doc(db, "usuarios", USER_ID, "productos", id));
-            mostrarStatusBar("✅ Producto eliminado.", "success");
-        } catch (e) { alert("Error al eliminar."); }
-    }
-};
+document.addEventListener('DOMContentLoaded', inicializarInventario);
 
-// ... [Mantén tus funciones de UI: cerrarModal, mostrarStatusBar, etc.]
+// Funciones auxiliares de UI (Mantener igual)
+function mostrarStatusBar(msg, type) { if(statusBar) statusBar.innerText = msg; }
