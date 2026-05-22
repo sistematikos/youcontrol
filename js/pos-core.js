@@ -237,7 +237,9 @@ window.abrirModalCobro = () => {
 // 9. ESCUCHADOR DE TECLADO (COMANDOS RÁPIDOS)
 // ==========================================
 document.addEventListener('keydown', (event) => {
-    // Manejo de teclas F4, F5, F6, F9
+    // Si se presiona Ctrl, permitimos que el navegador maneje sus atajos (como Ctrl+F5)
+    if (event.ctrlKey) return; 
+
     switch(event.key) {
         case 'F4':
             event.preventDefault();
