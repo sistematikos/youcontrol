@@ -9,7 +9,7 @@
         :root {
             --primary-color: #1E3A8A; /* Azul Oscuro Ejecutivo */
             --accent-color: #3B82F6;  /* Azul Eléctrico */
-            --bg-color: #F8FAFC;      /* Fondo Claro */
+            --bg-color: #F8FAFC;     /* Fondo Claro */
             --card-bg: #FFFFFF;
             --text-main: #0F172A;
             --text-muted: #64748B;
@@ -21,7 +21,7 @@
             padding: 0;
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            user-select: none; /* Protección visual */
+            user-select: none;
         }
 
         body {
@@ -93,144 +93,38 @@
             padding-bottom: 8px;
         }
 
-        .form-group {
-            margin-bottom: 15px;
-        }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.9rem; font-weight: 600; outline: none; transition: border-color 0.3s; }
+        .form-group input:focus { border-color: var(--accent-color); }
 
-        .form-group label {
-            display: block;
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: var(--text-muted);
-            margin-bottom: 5px;
-            text-transform: uppercase;
-        }
+        .btn-primary { width: 100%; background: var(--primary-color); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: background 0.3s; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .btn-primary:hover { background: #111827; }
 
-        .form-group input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            outline: none;
-            transition: border-color 0.3s;
-        }
+        .search-box { position: relative; margin-bottom: 15px; }
+        .search-box input { width: 100%; padding: 12px 12px 12px 40px; border: 1px solid var(--border-color); border-radius: 8px; font-weight: 600; outline: none; }
+        .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
 
-        .form-group input:focus {
-            border-color: var(--accent-color);
-        }
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { background: var(--bg-color); color: var(--text-muted); padding: 12px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; border-bottom: 1px solid var(--border-color); }
+        td { padding: 14px 12px; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
+        tr:hover td { background-color: #F1F5F9; }
 
-        .btn-primary {
-            width: 100%;
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: background 0.3s;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-primary:hover {
-            background: #111827;
-        }
-
-        .search-box {
-            position: relative;
-            margin-bottom: 15px;
-        }
-
-        .search-box input {
-            width: 100%;
-            padding: 12px 12px 12px 40px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-weight: 600;
-            outline: none;
-        }
-
-        .search-box i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-muted);
-        }
-
-        .table-container {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-        }
-
-        th {
-            background: var(--bg-color);
-            color: var(--text-muted);
-            padding: 12px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        td {
-            padding: 14px 12px;
-            border-bottom: 1px solid var(--border-color);
-            font-size: 0.9rem;
-        }
-
-        tr:hover td {
-            background-color: #F1F5F9;
-        }
-
-        .badge-rif {
-            background: #E2E8F0;
-            color: var(--text-main);
-            padding: 3px 8px;
-            border-radius: 6px;
-            font-family: monospace;
-            font-weight: 700;
-            font-size: 0.8rem;
-        }
-
-        .btn-table {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 4px;
-            transition: background 0.3s;
-        }
-
+        .badge-rif { background: #E2E8F0; color: var(--text-main); padding: 3px 8px; border-radius: 6px; font-family: monospace; font-weight: 700; font-size: 0.8rem; }
+        .btn-table { background: none; border: none; cursor: pointer; padding: 4px 8px; border-radius: 4px; transition: background 0.3s; }
         .btn-edit { color: var(--accent-color); }
         .btn-delete { color: #EF4444; }
         .btn-table:hover { background: #E2E8F0; }
 
-        /* Footer de autoría */
-        .footer-credit {
-            text-align: center;
-            margin-top: 30px;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            font-weight: 600;
-        }
+        .footer-credit { text-align: center; margin-top: 30px; font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
     </style>
 </head>
 <body>
 
     <div class="header-container">
         <div>
-            <h1 style="font-size: 1.5rem; font-weight: 800;">Módulo de Clientes</h1>
+            <h1 style="font-size: 1.5rem; font-weight: 800;" id="empresa-titulo">Cargando...</h1>
             <p style="font-size: 0.85rem; opacity: 0.9;">Administración de Carteras de Clientes v2.0</p>
         </div>
         <a href="sys_v1_vt.html" class="btn-volver">
@@ -294,7 +188,7 @@
                         </tr>
                     </thead>
                     <tbody id="tabla-clientes">
-                        </tbody>
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -307,10 +201,7 @@
     <script type="module" src="js/sys_v2_clt.js"></script>
     
     <script>
-        // Bloquear Click Derecho
         document.addEventListener('contextmenu', e => e.preventDefault());
-        
-        // Bloquear Teclas de Inspección (F12, Ctrl+U, Ctrl+Shift+I)
         document.addEventListener('keydown', e => {
             if (e.key === 'F12' || 
                 (e.ctrlKey && e.key === 'u') || 
