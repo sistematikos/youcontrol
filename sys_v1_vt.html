@@ -442,29 +442,52 @@
     </div>
 
     <script>
-        let indice = -1;
-        const inputProd = document.getElementById('buscar-producto-pos');
-        const contProd = document.getElementById('resultados-producto-pos');
+        let indiceProd = -1;
+        let indiceClie = -1;
 
-        inputProd.addEventListener('keydown', (e) => {
-            const items = contProd.querySelectorAll('.resultado-item');
+        // Función de navegación genérica para evitar repetir código
+        const manejarTeclado = (e, contenedor, callbackSeleccion, indexVar, listaItems) => {
+            const items = contenedor.querySelectorAll('.resultado-item');
             if (!items.length) return;
-            if (e.key === 'ArrowDown') { if(indice < items.length-1) indice++; }
-            else if (e.key === 'ArrowUp') { if(indice > 0) indice--; }
-            else if (e.key === 'Enter') { e.preventDefault(); if(items[indice]) items[indice].click(); return; }
-            else return;
-            items.forEach((it, i) => it.classList.toggle('seleccionado', i === indice));
+
+            if (e.key === 'ArrowDown') {
+                if (indexVar < items.length - 1) indexVar++;
+            } else if (e.key === 'ArrowUp') {
+                if (indexVar > 0) indexVar--;
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (items[indexVar]) items[indexVar].click();
+                return indexVar;
+            } else {
+                return indexVar;
+            }
+            
+            items.forEach((it, i) => it.classList.toggle('seleccionado', i === indexVar));
+            return indexVar;
+        };
+
+        // Evento Producto
+        document.getElementById('buscar-producto-pos').addEventListener('keydown', (e) => {
+            indiceProd = manejarTeclado(e, document.getElementById('resultados-producto-pos'), null, indiceProd);
         });
 
-        // Aseguramos que la función global sea accesible para tu pos-core.js
-        window.renderizarResultados = (lista) => {
-            indice = -1;
-            contProd.innerHTML = lista.map(p => `
-                <div class="resultado-item" style="padding:10px; cursor:pointer;" onclick="window.agregarCarrito('${p.id}'); contProd.style.display='none'">
-                    ${p.nombre} - <b>$${p.precio_venta}</b>
+        // Evento Cliente
+        document.getElementById('buscar-cliente-pos').addEventListener('keydown', (e) => {
+            indiceClie = manejarTeclado(e, document.getElementById('resultados-cliente-pos'), null, indiceClie);
+        });
+
+        // Asegúrate de que tus funciones de renderizado añadan la clase 'resultado-item' a cada div creado
+        // Ejemplo para clientes:
+        window.renderizarResultadosCliente = (lista) => {
+            const div = document.getElementById('resultados-cliente-pos');
+            indiceClie = -1;
+            if(lista.length === 0) { div.style.display = 'none'; return; }
+            div.innerHTML = lista.map(c => `
+                <div class="resultado-item" style="padding:10px; cursor:pointer;" onclick="console.log('Cliente seleccionado'); document.getElementById('resultados-cliente-pos').style.display='none'">
+                    ${c.nombre}
                 </div>
             `).join('');
-            contProd.style.display = lista.length ? 'block' : 'none';
+            div.style.display = 'block';
         };
     </script>
     <script type="module" src="js/pos-core.js"></script>
