@@ -2,20 +2,89 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Entrada de Mercancía | Sistematikos</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        /* ... (Tus estilos anteriores se mantienen igual) ... */
+        :root { --bg: #F8FAFC; --primary: #3B82F6; --text: #1E293B; --border: #E2E8F0; --emerald: #10B981; --indigo: #6366F1; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding-bottom: 50px; color: var(--text); }
+        .container { padding: 15px; max-width: 1300px; margin: auto; }
+        .header-table { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .workspace-grid { display: grid; grid-template-columns: minmax(360px, 460px) 1fr; gap: 20px; align-items: start; }
+        .compra-card { background: white; padding: 22px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .search-wrapper { position: relative; margin-bottom: 20px; }
+        .search-box { background: #EEF2F6; padding: 12px; border-radius: 12px; display: flex; align-items: center; gap: 12px; border: 1px solid #CBD5E1; }
+        .search-box input { flex: 1; padding: 11px; border-radius: 8px; border: 1px solid var(--border); font-family: 'Poppins'; font-size: 1rem; outline: none; font-weight: 600; }
+        .search-results-dropdown { position: absolute; top: 102%; left: 0; right: 0; background: #FFFFFF; border-radius: 12px; border: 1px solid #CBD5E1; box-shadow: 0 10px 25px rgba(0,0,0,0.15); max-height: 260px; overflow-y: auto; z-index: 9999; display: none; }
+        .search-item { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #F1F5F9; font-size: 0.9rem; }
+        .search-item:hover { background: #F1F5F9; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group.full { grid-column: span 2; }
+        .form-group label { font-size: 0.80rem; font-weight: 600; color: #64748B; text-transform: uppercase; }
+        .form-group input { padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; font-family: 'Poppins'; font-size: 0.95rem; background: #F8FAFC; width: 100%; box-sizing: border-box; }
+        .precio-bs-box { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; font-weight: 800; text-align: center; }
+        .btn-add-item { background: var(--indigo); color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: 600; width: 100%; margin-top: 15px; }
+        .btn-save-compra { background: var(--emerald); color: white; border: none; padding: 14px; border-radius: 12px; cursor: pointer; font-weight: 800; font-size: 1.1rem; width: 100%; margin-top: 20px; }
+        .table-container { background: white; border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+        .table-review { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        .table-review th { background: #F1F5F9; padding: 12px 10px; text-align: left; }
+        .table-review td { padding: 12px 10px; border-bottom: 1px solid #F1F5F9; }
+        #status-bar-comp { padding: 10px; border-radius: 10px; margin-bottom: 15px; display: none; text-align: center; font-weight: 600; }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false">
     <div class="container">
-        <button class="btn-add-item" id="btn-agregar-lista">
-            <i class="fas fa-plus-circle"></i> AGREGAR A LA LISTA
-        </button>
-        <button class="btn-save-compra" id="btn-guardar-entrada">
-            <i class="fas fa-cloud-arrow-up"></i> GUARDAR ENTRADA
-        </button>
+        <button class="btn-back" onclick="location.href='sys_v1_menu.html'"><i class="fas fa-arrow-left"></i> VOLVER AL MENÚ</button>
+
+        <div class="header-table">
+            <h3><i class="fas fa-boxes-stacked" style="color: var(--indigo);"></i> ENTRADA DE MERCANCÍA</h3>
+            <span id="txt-tasa" style="background: #E2E8F0; padding: 4px 10px; border-radius: 6px;">1,00 Bs.</span>
+        </div>
+
+        <div id="status-bar-comp"></div>
+
+        <div class="workspace-grid">
+            <div class="compra-card">
+                <div class="search-wrapper">
+                    <div class="search-box">
+                        <i class="fas fa-magnifying-glass"></i>
+                        <input type="text" id="buscador-dinamico" placeholder="Buscar por código o nombre...">
+                    </div>
+                    <div id="dropdown-resultados" class="search-results-dropdown"></div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group"><label>SKU</label><input type="text" id="comp-sku"></div>
+                    <div class="form-group"><label>Barras</label><input type="text" id="comp-barras"></div>
+                    <div class="form-group full"><label>Descripción</label><input type="text" id="comp-nombre"></div>
+                    <div class="form-group"><label>Costo USD</label><input type="number" id="comp-costo" step="0.01"></div>
+                    <div class="form-group"><label>% Ganancia</label><input type="number" id="comp-ganancia" step="0.1"></div>
+                    <div class="form-group"><label>Precio USD</label><input type="number" id="comp-precio" step="0.01"></div>
+                    <div class="form-group"><label>Precio Bs.</label><input type="text" id="comp-precio-bs" class="precio-bs-box" readonly></div>
+                    <div class="form-group"><label>Stock</label><input type="number" id="comp-stock-viejo" readonly></div>
+                    <div class="form-group"><label>Cantidad</label><input type="number" id="comp-cantidad" value="0"></div>
+                    <div class="form-group full"><label>Fecha</label><input type="date" id="comp-fecha"></div>
+                </div>
+
+                <button class="btn-add-item" id="btn-agregar-lista">
+                    <i class="fas fa-plus-circle"></i> AGREGAR A LA LISTA
+                </button>
+            </div>
+
+            <div class="table-container">
+                <table class="table-review">
+                    <thead>
+                        <tr><th>SKU</th><th>Descripción</th><th>Cant.</th><th>Precio</th><th>X</th></tr>
+                    </thead>
+                    <tbody id="tabla-items-compra"></tbody>
+                </table>
+                <button class="btn-save-compra" id="btn-guardar-entrada">
+                    <i class="fas fa-cloud-arrow-up"></i> GUARDAR ENTRADA (F9)
+                </button>
+            </div>
+        </div>
     </div>
     <script type="module" src="./js/sys_v3_comp.js"></script>
 </body>
