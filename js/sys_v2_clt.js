@@ -5,10 +5,11 @@
 
 import { db } from './firebase-config.js';
 import { 
-    collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, serverTimestamp 
+    collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, getDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const USER_ID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12"; 
+// CAMBIO: ID de la licencia o empresa actual
+const ID_LICENCIA = "YC-2026-001"; 
 
 let clientesMaster = [];
 let editMode = false;
@@ -19,12 +20,22 @@ const inputBuscar = document.getElementById('buscar-cliente');
 const btnCancelar = document.getElementById('btn-cancelar-edicion');
 const formTitle = document.getElementById('form-title');
 const btnGuardar = document.getElementById('btn-guardar-cliente');
+// Nuevo elemento para mostrar el nombre
+const empresaTitulo = document.getElementById('empresa-titulo'); 
 
 // ==========================================
-// 1. ESCUCHAR CLIENTES EN TIEMPO REAL
+// 1. ESCUCHAR CLIENTES Y CARGAR EMPRESA
 // ==========================================
-function inicializarClientes() {
-    const clientesRef = collection(db, "usuarios", USER_ID, "clientes");
+async function inicializarClientes() {
+    // Cargar nombre de empresa
+    const empRef = doc(db, "usuarios", ID_LICENCIA);
+    const empSnap = await getDoc(empRef);
+    if (empSnap.exists() && empresaTitulo) {
+        empresaTitulo.innerText = empSnap.data().nombre_empresa || "CONTROL DE CLIENTES";
+    }
+
+    // Escuchar clientes bajo la ruta dinámica
+    const clientesRef = collection(db, "usuarios", ID_LICENCIA, "clientes");
     
     onSnapshot(clientesRef, (snapshot) => {
         clientesMaster = [];
@@ -32,7 +43,6 @@ function inicializarClientes() {
             clientesMaster.push({ id: docSnap.id, ...docSnap.data() });
         });
         
-        // Ordenar alfabéticamente por defecto
         clientesMaster.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
         renderizarTabla(clientesMaster);
     });
@@ -45,7 +55,7 @@ function renderizarTabla(lista) {
     if (!tablaClientes) return;
     
     if (lista.length === 0) {
-        tablaClientes.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#94A3B8; font-weight:600; padding:30px;">Ningún cliente registrado o encontrado.</td></tr>`;
+        tablaClientes.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#94A3B8; font-weight:600; padding:30px;">Ningún cliente registrado en ${empresaTitulo?.innerText || 'esta empresa'}.</td></tr>`;
         return;
     }
 
@@ -87,8 +97,8 @@ if (formCliente) {
 
         try {
             if (editMode) {
-                // Actualizar Registro Existente
-                const clienteRef = doc(db, "usuarios", USER_ID, "clientes", id);
+                // Actualizar bajo la ruta dinámica
+                const clienteRef = doc(db, "usuarios", ID_LICENCIA, "clientes", id);
                 await updateDoc(clienteRef, {
                     nombre, rif, telefono, direccion,
                     fecha_modificacion: serverTimestamp()
@@ -96,17 +106,17 @@ if (formCliente) {
                 alert("✅ Ficha de cliente actualizada correctamente");
                 cancelarEdicion();
             } else {
-                // Insertar Nuevo Registro
-                const clientesRef = collection(db, "usuarios", USER_ID, "clientes");
+                // Insertar bajo la ruta dinámica
+                const clientesRef = collection(db, "usuarios", ID_LICENCIA, "clientes");
                 await addDoc(clientesRef, {
                     nombre, rif, telefono, direccion,
                     fecha_creacion: serverTimestamp()
                 });
-                alert("✅ Cliente registrado con éxito en el sistema");
+                alert("✅ Cliente registrado con éxito");
                 formCliente.reset();
             }
         } catch (error) {
-            console.error("Error en operación de cliente:", error);
+            console.error("Error:", error);
             alert("Error al interactuar con Firebase");
         }
 
@@ -133,22 +143,18 @@ window.prepararEdicion = (id) => {
     btnGuardar.innerHTML = `<i class="fas fa-sync-alt"></i> ACTUALIZAR FICHA`;
     if (btnCancelar) btnCancelar.style.display = 'block';
     
-    // Auto-scroll al formulario en dispositivos pequeños
     formCliente.scrollIntoView({ behavior: 'smooth' });
 };
 
 window.eliminarCliente = async (id, nombre) => {
-    if (confirm(`¿Está seguro de que desea eliminar al cliente "${nombre}"?\nEsta acción no se puede deshacer.`)) {
+    if (confirm(`¿Está seguro de que desea eliminar al cliente "${nombre}"?`)) {
         try {
-            const clienteRef = doc(db, "usuarios", USER_ID, "clientes", id);
+            const clienteRef = doc(db, "usuarios", ID_LICENCIA, "clientes", id);
             await deleteDoc(clienteRef);
-            alert("🗑️ Cliente removido de la cartera con éxito");
-            if (editMode && document.getElementById('cliente-id').value === id) {
-                cancelarEdicion();
-            }
+            alert("🗑️ Cliente removido con éxito");
         } catch (error) {
-            console.error("Error al eliminar cliente:", error);
-            alert("No se pudo eliminar el registro de la nube.");
+            console.error(error);
+            alert("No se pudo eliminar.");
         }
     }
 };
@@ -165,21 +171,18 @@ function cancelarEdicion() {
 if (btnCancelar) btnCancelar.addEventListener('click', cancelarEdicion);
 
 // ==========================================
-// 5. FILTRO DE BÚSQUEDA DINÁMICO
+// 5. FILTRO DE BÚSQUEDA Y ARRANQUE
 // ==========================================
 if (inputBuscar) {
     inputBuscar.addEventListener('input', (e) => {
         const query = e.target.value.toLowerCase().trim();
-        
         const filtrados = clientesMaster.filter(c => {
             return (c.nombre || '').toLowerCase().includes(query) || 
                    (c.rif || '').toLowerCase().includes(query) || 
                    (c.telefono || '').toLowerCase().includes(query);
         });
-        
         renderizarTabla(filtrados);
     });
 }
 
-// Arrancar Módulo
 inicializarClientes();
