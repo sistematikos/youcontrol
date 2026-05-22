@@ -442,44 +442,40 @@
     </div>
 
     <script>
-        let indiceProd = -1;
-        let indiceClie = -1;
+    // Exponemos esto al objeto window para que pos-core.js pueda acceder
+    window.indiceProd = -1;
+    window.indiceClie = -1;
 
-        // Lógica de navegación por teclado para ambos buscadores
-        const manejarNavegacion = (e, contenedorId, indiceVar, callbackSeleccion) => {
-            const cont = document.getElementById(contenedorId);
-            const items = cont.querySelectorAll('.resultado-item');
-            if (!items.length) return indiceVar;
+    window.manejarNavegacion = (e, contenedorId, indiceVar, callbackSeleccion) => {
+        const cont = document.getElementById(contenedorId);
+        const items = cont.querySelectorAll('.resultado-item');
+        if (!items.length) return indiceVar;
 
-            if (e.key === 'ArrowDown') {
-                if (indiceVar < items.length - 1) indiceVar++;
-            } else if (e.key === 'ArrowUp') {
-                if (indiceVar > 0) indiceVar--;
-            } else if (e.key === 'Enter') {
-                e.preventDefault();
-                if (items[indiceVar]) items[indiceVar].click();
-                return -1;
-            } else {
-                return indiceVar;
-            }
-
-            items.forEach((it, i) => it.classList.toggle('seleccionado', i === indiceVar));
+        if (e.key === 'ArrowDown') {
+            if (indiceVar < items.length - 1) indiceVar++;
+        } else if (e.key === 'ArrowUp') {
+            if (indiceVar > 0) indiceVar--;
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (items[indiceVar]) items[indiceVar].click();
+            return -1;
+        } else {
             return indiceVar;
-        };
+        }
 
-        // Eventos de teclado
-        document.getElementById('buscar-producto-pos').addEventListener('keydown', (e) => {
-            indiceProd = manejarNavegacion(e, 'resultados-producto-pos', indiceProd);
-        });
+        items.forEach((it, i) => it.classList.toggle('seleccionado', i === indiceVar));
+        return indiceVar;
+    };
 
-        document.getElementById('buscar-cliente-pos').addEventListener('keydown', (e) => {
-            indiceClie = manejarNavegacion(e, 'resultados-cliente-pos', indiceClie);
-        });
+    // Ajuste de los eventos
+    document.getElementById('buscar-producto-pos').addEventListener('keydown', (e) => {
+        window.indiceProd = window.manejarNavegacion(e, 'resultados-producto-pos', window.indiceProd);
+    });
 
-        // Modificación: Las funciones de renderizado deben agregar la clase 'resultado-item'
-        // Asegúrate de que tus funciones actuales en pos-core.js tengan esto:
-        // div.innerHTML = lista.map(p => `<div class="resultado-item" onclick="...">...</div>`).join('');
-    </script>
+    document.getElementById('buscar-cliente-pos').addEventListener('keydown', (e) => {
+        window.indiceClie = window.manejarNavegacion(e, 'resultados-cliente-pos', window.indiceClie);
+    });
+</script>
     <script type="module" src="js/pos-core.js"></script>
 </body>
 </html>
