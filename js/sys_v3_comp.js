@@ -1,7 +1,7 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * Módulo de Entrada de Mercancía (sys_v3_comp.js)
- * Corrección de eventos y cálculos en tiempo real
+ * Módulo Integrado de Entrada de Mercancía (sys_v3_comp.js)
+ * Versión Corregida: Integración total con botones y cálculos
  */
 
 import { db } from './firebase-config.js';
@@ -11,8 +11,9 @@ import { collection, onSnapshot, doc, getDoc, setDoc } from "https://www.gstatic
 const USER_ID = localStorage.getItem('youcontrol_empresa_id') || "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
 let productosLocales = [];
 let tasaActual = 1.00;
+let listaTemporal = []; // Para la lista de la derecha
 
-// --- ELEMENTOS DEL DOM ---
+// --- ELEMENTOS DOM ---
 const el = {
     buscador: document.getElementById('buscador-dinamico'),
     dropdown: document.getElementById('dropdown-resultados'),
@@ -39,31 +40,29 @@ async function inicializar() {
     });
 }
 
-// --- 2. CÁLCULOS AUTOMÁTICOS ---
+// --- 2. CÁLCULOS (Exponer a ventana) ---
 window.calcularPrecios = () => {
-    const costo = parseFloat(el.costo.value) || 0;
-    const ganancia = parseFloat(el.ganancia.value) || 0;
-    const pUsd = costo + (costo * (ganancia / 100));
-    el.precio.value = pUsd.toFixed(2);
-    el.precioBs.value = (pUsd * tasaActual).toFixed(2) + " Bs.";
+    const c = parseFloat(el.costo.value) || 0;
+    const g = parseFloat(el.ganancia.value) || 0;
+    const p = c + (c * (g / 100));
+    el.precio.value = p.toFixed(2);
+    el.precioBs.value = (p * tasaActual).toFixed(2).replace('.', ',') + " Bs.";
 };
 
 // --- 3. BUSCADOR Y SELECCIÓN ---
-if (el.buscador) {
-    el.buscador.addEventListener('input', (e) => {
-        const val = e.target.value.toLowerCase();
-        if (!val) { el.dropdown.style.display = 'none'; return; }
-        
-        const filtrados = productosLocales.filter(p => 
-            p.nombre?.toLowerCase().includes(val) || p.sku?.toLowerCase().includes(val)
-        );
+el.buscador.addEventListener('input', (e) => {
+    const val = e.target.value.toLowerCase();
+    if (!val) { el.dropdown.style.display = 'none'; return; }
+    
+    const filtrados = productosLocales.filter(p => 
+        p.nombre?.toLowerCase().includes(val) || p.sku?.toLowerCase().includes(val)
+    );
 
-        el.dropdown.innerHTML = filtrados.map(p => `
-            <div class="search-item" onclick="window.cargarProducto('${p.id}')">${p.nombre}</div>
-        `).join('') || `<div class="search-item" onclick="window.nuevoProducto('${val}')">Crear: ${val}</div>`;
-        el.dropdown.style.display = 'block';
-    });
-}
+    el.dropdown.innerHTML = filtrados.map(p => `
+        <div class="search-item" onclick="window.cargarProducto('${p.id}')">${p.nombre}</div>
+    `).join('') || `<div class="search-item" onclick="window.nuevoProducto('${val}')">Crear: ${val}</div>`;
+    el.dropdown.style.display = 'block';
+});
 
 window.cargarProducto = (id) => {
     const p = productosLocales.find(x => x.id === id);
@@ -81,29 +80,37 @@ window.nuevoProducto = (val) => {
 
 // --- 4. LISTA Y GUARDADO ---
 window.agregarALista = () => {
-    const fila = `<tr>
-        <td>${el.sku.value || 'N/A'}</td>
-        <td>${el.nombre.value}</td>
-        <td>${el.cantidad.value}</td>
-        <td>$${el.precio.value}</td>
+    const item = {
+        nombre: el.nombre.value,
+        sku: el.sku.value,
+        cant: el.cantidad.value,
+        precio: el.precio.value,
+        costo: el.costo.value,
+        stockViejo: el.stockViejo.value
+    };
+    listaTemporal.push(item);
+    
+    el.tabla.innerHTML += `<tr>
+        <td>${item.sku}</td><td>${item.nombre}</td><td>${item.cant}</td><td>$${item.precio}</td>
         <td><button onclick="this.parentElement.parentElement.remove()">X</button></td>
     </tr>`;
-    el.tabla.innerHTML += fila;
 };
 
 window.procesarIngreso = async () => {
-    const id = doc(collection(db, "temp")).id;
-    await setDoc(doc(db, "usuarios", USER_ID, "productos", id), {
-        nombre: el.nombre.value,
-        sku: el.sku.value,
-        costo: parseFloat(el.costo.value),
-        precio: parseFloat(el.precio.value),
-        stock: parseInt(el.stockViejo.value) + parseInt(el.cantidad.value)
-    }, { merge: true });
-    alert("Producto guardado correctamente");
+    for (const item of listaTemporal) {
+        const id = doc(collection(db, "temp")).id;
+        await setDoc(doc(db, "usuarios", USER_ID, "productos", id), {
+            nombre: item.nombre, sku: item.sku,
+            costo: parseFloat(item.costo), precio: parseFloat(item.precio),
+            stock: parseInt(item.stockViejo) + parseInt(item.cant)
+        }, { merge: true });
+    }
+    alert("Procesado con éxito");
+    listaTemporal = [];
+    el.tabla.innerHTML = "";
 };
 
-// Eventos para calculos en tiempo real
+// Eventos de cálculo
 el.costo.addEventListener('input', window.calcularPrecios);
 el.ganancia.addEventListener('input', window.calcularPrecios);
 
