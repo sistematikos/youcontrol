@@ -131,6 +131,12 @@
 </head>
 <body oncontextmenu="return false">
 
+    <script>
+        if (localStorage.getItem('youcontrol_empresa_id')) {
+            window.location.replace('sys_v1_menu.html');
+        }
+    </script>
+
     <div id="pantallaCarga" class="loading-screen">
         <i class="fas fa-circle-notch"></i>
         <h2 style="font-weight: 600; font-size: 1.4rem; margin: 0 0 6px 0;">Verificando Licencia de Uso...</h2>
