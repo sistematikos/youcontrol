@@ -1,6 +1,7 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
  * Controlador de Gestión de Clientes en Firestore v2.0 (sys_v2_clt.js)
+ * CORRECCIÓN: Ruta dinámica basada en el ID de sesión del usuario.
  */
 
 import { db } from './firebase-config.js';
@@ -8,8 +9,13 @@ import {
     collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, getDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// CAMBIO: ID de la licencia o empresa actual
-const ID_LICENCIA = "YC-2026-001"; 
+// RUTA DINÁMICA: Obtenemos el ID de la empresa directamente desde el localStorage
+const ID_LICENCIA = localStorage.getItem('youcontrol_empresa_id');
+
+// Validación de seguridad: si no hay ID, el sistema no debe intentar cargar rutas vacías
+if (!ID_LICENCIA) {
+    console.error("Error: No se encontró ID de licencia en el sistema.");
+}
 
 let clientesMaster = [];
 let editMode = false;
@@ -20,13 +26,14 @@ const inputBuscar = document.getElementById('buscar-cliente');
 const btnCancelar = document.getElementById('btn-cancelar-edicion');
 const formTitle = document.getElementById('form-title');
 const btnGuardar = document.getElementById('btn-guardar-cliente');
-// Nuevo elemento para mostrar el nombre
 const empresaTitulo = document.getElementById('empresa-titulo'); 
 
 // ==========================================
 // 1. ESCUCHAR CLIENTES Y CARGAR EMPRESA
 // ==========================================
 async function inicializarClientes() {
+    if (!ID_LICENCIA) return;
+
     // Cargar nombre de empresa
     const empRef = doc(db, "usuarios", ID_LICENCIA);
     const empSnap = await getDoc(empRef);
@@ -34,7 +41,7 @@ async function inicializarClientes() {
         empresaTitulo.innerText = empSnap.data().nombre_empresa || "CONTROL DE CLIENTES";
     }
 
-    // Escuchar clientes bajo la ruta dinámica
+    // Escuchar clientes bajo la ruta dinámica basada en el UID
     const clientesRef = collection(db, "usuarios", ID_LICENCIA, "clientes");
     
     onSnapshot(clientesRef, (snapshot) => {
@@ -55,7 +62,7 @@ function renderizarTabla(lista) {
     if (!tablaClientes) return;
     
     if (lista.length === 0) {
-        tablaClientes.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#94A3B8; font-weight:600; padding:30px;">Ningún cliente registrado en ${empresaTitulo?.innerText || 'esta empresa'}.</td></tr>`;
+        tablaClientes.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#94A3B8; font-weight:600; padding:30px;">Ningún cliente registrado.</td></tr>`;
         return;
     }
 
@@ -85,6 +92,7 @@ function renderizarTabla(lista) {
 if (formCliente) {
     formCliente.addEventListener('submit', async (e) => {
         e.preventDefault();
+        if (!ID_LICENCIA) return;
         
         const id = document.getElementById('cliente-id').value;
         const nombre = document.getElementById('cl-nombre').value.trim().toUpperCase();
@@ -97,7 +105,7 @@ if (formCliente) {
 
         try {
             if (editMode) {
-                // Actualizar bajo la ruta dinámica
+                // Actualizar bajo la ruta dinámica basada en UID
                 const clienteRef = doc(db, "usuarios", ID_LICENCIA, "clientes", id);
                 await updateDoc(clienteRef, {
                     nombre, rif, telefono, direccion,
@@ -106,7 +114,7 @@ if (formCliente) {
                 alert("✅ Ficha de cliente actualizada correctamente");
                 cancelarEdicion();
             } else {
-                // Insertar bajo la ruta dinámica
+                // Insertar bajo la ruta dinámica basada en UID
                 const clientesRef = collection(db, "usuarios", ID_LICENCIA, "clientes");
                 await addDoc(clientesRef, {
                     nombre, rif, telefono, direccion,
@@ -126,7 +134,7 @@ if (formCliente) {
 }
 
 // ==========================================
-// 4. FUNCIONES GLOBALES PARA LA TABLA (WINDOW)
+// 4. FUNCIONES GLOBALES PARA LA TABLA
 // ==========================================
 window.prepararEdicion = (id) => {
     const c = clientesMaster.find(x => x.id === id);
@@ -147,6 +155,7 @@ window.prepararEdicion = (id) => {
 };
 
 window.eliminarCliente = async (id, nombre) => {
+    if (!ID_LICENCIA) return;
     if (confirm(`¿Está seguro de que desea eliminar al cliente "${nombre}"?`)) {
         try {
             const clienteRef = doc(db, "usuarios", ID_LICENCIA, "clientes", id);
