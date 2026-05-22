@@ -127,6 +127,41 @@ window.seleccionarCliente = (id, nombre) => {
 };
 
 // ==========================================
+// 5. INTEGRACIÓN UI: BÚSQUEDA DE PRODUCTOS
+// ==========================================
+const inputProducto = document.getElementById('buscar-producto-pos');
+const divResultadosProd = document.getElementById('resultados-producto-pos');
+
+if (inputProducto) {
+    inputProducto.addEventListener('input', (e) => {
+        const resultados = window.buscarProducto(e.target.value);
+        
+        if (resultados.length > 0 && e.target.value.trim() !== "") {
+            divResultadosProd.style.display = 'block';
+            divResultadosProd.innerHTML = resultados.map(p => `
+                <div class="resultado-item" 
+                     style="padding: 10px; cursor: pointer; border-bottom: 1px solid #f1f5f9;"
+                     onclick="window.seleccionarProducto('${p.id}')">
+                     <strong>${p.id}</strong> - ${p.nombre} 
+                     <span style="float: right; color: var(--primary-color); font-weight: bold;">$${p.precio || '0.00'}</span>
+                </div>
+            `).join('');
+        } else {
+            divResultadosProd.style.display = 'none';
+        }
+    });
+}
+
+window.seleccionarProducto = (id) => {
+    // Llama a tu función original para agregar al carrito
+    window.agregarCarrito(id);
+    // Limpia el input y oculta los resultados
+    inputProducto.value = '';
+    divResultadosProd.style.display = 'none';
+    inputProducto.focus();
+};
+
+// ==========================================
 // INICIALIZACIÓN GLOBAL
 // ==========================================
 // (Las funciones de tasa y factura se mantienen como estaban)
