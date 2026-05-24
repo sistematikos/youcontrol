@@ -255,10 +255,36 @@ window.ejecutarF6 = () => {
     }
 };
 
+// ==========================================
+// MODAL COBRO:
+// ==========================================
 window.abrirModalCobro = () => {
+    // 1. Verificamos si hay productos en el carrito
+    if (carrito.length === 0) {
+        alert("El carrito está vacío.");
+        return;
+    }
+
     const modal = document.getElementById('modalPago');
     if (modal) {
+        // 2. Calculamos los totales
+        const totalUSD = window.totalVentaUSD;
+        const totalBs = totalUSD * tasaActual;
+
+        // 3. ACTUALIZAMOS EL HTML DEL MODAL CON LOS DATOS
+        // (Asegúrate de que estos IDs existan en tu HTML)
+        const displayTotalUSD = document.getElementById('totalModalUSD');
+        const displayTotalBS = document.getElementById('totalModalBS');
+        const inputFactura = document.getElementById('in-nro-factura');
+
+        if (displayTotalUSD) displayTotalUSD.innerText = `$ ${totalUSD.toFixed(2)}`;
+        if (displayTotalBS) displayTotalBS.innerText = `${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2})} Bs.`;
+        if (inputFactura) inputFactura.value = proximoNumeroFacturaStr;
+
+        // 4. Mostramos el modal
         modal.style.display = 'flex';
+        
+        // Enfocamos el primer input para escribir rápido
         document.getElementById('in-divisas-usd')?.focus();
     }
 };
