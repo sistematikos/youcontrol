@@ -48,26 +48,35 @@ async function cargarConfiguracionGlobal() {
 }
 
 // ==========================================
-// 1. CARGA DE DATOS (RUTAS DINÁMICAS)
+// 1. CARGA DE DATOS CORREGIDA
 // ==========================================
 function inicializarClientes() {
-    const clientesRef = collection(db, "usuarios", USER_ID, "clientes");
-    onSnapshot(clientesRef, (snapshot) => {
-        clientesMaster = [];
-        snapshot.forEach(docSnap => {
-            clientesMaster.push({ id: docSnap.id, ...docSnap.data() });
-        });
-    });
+    // Aseguramos que la ruta apunte correctamente al documento del usuario
+    const clientesRef = collection(db, "usuarios", USER_ID, "clientes");
+    
+    onSnapshot(clientesRef, (snapshot) => {
+        clientesMaster = [];
+        snapshot.forEach(docSnap => {
+            clientesMaster.push({ id: docSnap.id, ...docSnap.data() });
+        });
+        console.log("Clientes cargados:", clientesMaster.length);
+    }, (error) => {
+        console.error("Error al cargar clientes (¿Revisaste el USER_ID?):", error);
+    });
 }
 
 function inicializarProductos() {
-    const productosRef = collection(db, "usuarios", USER_ID, "productos");
-    onSnapshot(productosRef, (snapshot) => {
-        productosMaster = [];
-        snapshot.forEach(docSnap => {
-            productosMaster.push({ id: docSnap.id, ...docSnap.data() });
-        });
-    });
+    const productosRef = collection(db, "usuarios", USER_ID, "productos");
+    
+    onSnapshot(productosRef, (snapshot) => {
+        productosMaster = [];
+        snapshot.forEach(docSnap => {
+            productosMaster.push({ id: docSnap.id, ...docSnap.data() });
+        });
+        console.log("Productos cargados:", productosMaster.length);
+    }, (error) => {
+        console.error("Error al cargar productos:", error);
+    });
 }
 
 // ==========================================
