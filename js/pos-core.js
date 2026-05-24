@@ -265,14 +265,23 @@ window.actualizarCarritoUI = () => {
 };
 
 // ==========================================
-// 8. COMANDOS DE TECLADO (CORREGIDOS)
+// 8. COMANDOS DE TECLADO (ORGANIZADOS)
 // ==========================================
 document.addEventListener('keydown', (event) => {
-    // Lista de teclas que queremos capturar
+    // 1. Detección del estado del modal
+    const modalPago = document.getElementById('modalPago');
+    const estaEnPago = modalPago && modalPago.style.display !== 'none';
+
+    // 2. Si estamos en el modal, permitimos que F5 refresque la página (acción nativa)
+    if (estaEnPago && event.key === 'F5') {
+        return; // Salimos sin ejecutar preventDefault
+    }
+
+    // 3. Captura de teclas para funciones del sistema
     const teclasValidas = ['F4', 'F5', 'F6', 'F9'];
     
     if (teclasValidas.includes(event.key)) {
-        event.preventDefault(); // Esto detiene la acción del navegador (ej. F5 refrescar)
+        event.preventDefault(); // Bloqueamos acción nativa del navegador
         
         switch(event.key) {
             case 'F4': window.ejecutarF4(); break;
@@ -282,6 +291,8 @@ document.addEventListener('keydown', (event) => {
         }
     }
 });
+
+// --- Funciones de Comandos ---
 
 window.ejecutarF4 = () => { 
     if (carrito.length === 0) return;
@@ -312,6 +323,7 @@ window.ejecutarF6 = () => {
 
 window.abrirModalCobro = () => {
     if (carrito.length === 0) { alert("El carrito está vacío."); return; }
+    
     const modal = document.getElementById('modalPago');
     if (modal) {
         const totalUSD = window.totalVentaUSD || 0;
@@ -320,12 +332,14 @@ window.abrirModalCobro = () => {
         // Actualizar valores en el modal
         const dUSD = document.getElementById('totalModalUSD');
         const dBS = document.getElementById('totalModalBS');
+        const inputFactura = document.getElementById('nro_control_factura');
+        
         if (dUSD) dUSD.innerText = `$ ${totalUSD.toFixed(2)}`;
         if (dBS) dBS.innerText = `${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2})} Bs.`;
-        const inputFactura = document.getElementById('nro_control_factura');
         if (inputFactura) inputFactura.value = proximoNumeroFacturaStr;
         
         modal.style.display = 'flex';
+        // Foco al primer input de pago
         document.getElementById('in-divisas-usd')?.focus();
     }
 };
