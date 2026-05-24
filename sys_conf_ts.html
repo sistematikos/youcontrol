@@ -27,47 +27,41 @@
         import { db } from './js/firebase-config.js'; 
         import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Referencia a la colección 'configuracion', documento 'tasa'
-        // Obtén el ID del usuario igual que en tus otros archivos
-const USER_ID = localStorage.getItem('youcontrol_empresa_id'); 
+        const USER_ID = localStorage.getItem('youcontrol_empresa_id'); 
+        const tasaRef = doc(db, "usuarios", USER_ID); 
 
-// Apuntamos al documento del usuario, donde quieres guardar el campo
-const tasaRef = doc(db, "usuarios", USER_ID); 
-
-async function cargarTasa() {
-    try {
-        const snap = await getDoc(tasaRef);
-        if (snap.exists() && snap.data().tasa_bcv) {
-            document.getElementById('inputTasa').value = snap.data().tasa_bcv;
+        async function cargarTasa() {
+            try {
+                const snap = await getDoc(tasaRef);
+                if (snap.exists() && snap.data().tasa_bcv) {
+                    document.getElementById('inputTasa').value = snap.data().tasa_bcv;
+                }
+            } catch (error) {
+                console.error("Error al cargar tasa:", error);
+            }
         }
-    } catch (error) {
-        console.error("Error al cargar tasa:", error);
-    }
-}
 
-window.guardarTasa = async () => {
-    const valor = document.getElementById('inputTasa').value;
-    if (!valor) return alert("Ingresa un valor");
-
-    try {
-        // Usamos setDoc con {merge: true} para solo actualizar ese campo sin borrar lo demás
-        await setDoc(tasaRef, { 
-            tasa_bcv: parseFloat(valor) 
-        }, { merge: true });
-        
-        alert("Tasa guardada en el perfil del usuario.");
-        window.location.href = "sys_config.html";
-    } catch (e) {
-        alert("Error: " + e.message);
-    }
-};
-    // ... (todo tu código anterior) ...
         window.guardarTasa = async () => {
-            // ... (tu código de guardar) ...
+            const btn = document.querySelector('.btn-act');
+            const valor = document.getElementById('inputTasa').value;
+            if (!valor) return alert("Ingresa un valor");
+
+            btn.disabled = true;
+            btn.innerText = "GUARDANDO...";
+
+            try {
+                await setDoc(tasaRef, { tasa_bcv: parseFloat(valor) }, { merge: true });
+                alert("Tasa guardada exitosamente.");
+                window.location.href = "sys_config.html";
+            } catch (e) {
+                alert("Error: " + e.message);
+                btn.disabled = false;
+                btn.innerText = "GUARDAR NUEVA TASA";
+            }
         };
 
-        // ¡AGREGA ESTA LÍNEA AQUÍ ABAJO!
-        cargarTasa(); 
+        // --- ESTA ES LA LÍNEA QUE FALTABA ---
+        cargarTasa();
     </script>
 </body>
 </html>
