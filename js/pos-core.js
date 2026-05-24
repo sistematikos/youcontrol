@@ -1,4 +1,5 @@
- * YOU CONTROL - SISTEMATIKOS
+
+ * YOU CONTROL - SISTEMATIKOS
  * Módulo de Facturación y Ventas (pos-core.js)
  */
 
@@ -103,35 +104,18 @@ window.agregarCarrito = (id) => {
 
 window.registrarVenta = async () => {
     try {
-        // --- RE-VERIFICAR NÚMERO ANTES DE GUARDAR ---
-        await obtenerSiguienteNumeroFactura(); 
-
         await addDoc(collection(db, "usuarios", USER_ID, "ventas"), {
             fecha: serverTimestamp(),
-            nro_factura: proximoNumeroFacturaStr, // Usará el valor recién obtenido
+            nro_factura: proximoNumeroFacturaStr,
             total_usd: window.totalVentaUSD,
             tasa: tasaActual,
             formato: formatoFactura,
             items: carrito
         });
-        
         alert("✅ Venta registrada: " + proximoNumeroFacturaStr);
-        
-        // Limpieza post-venta
         carrito = [];
         window.actualizarCarritoUI();
-        document.getElementById('modalPago').style.display = 'none';
-        
-        // Limpiar inputs del modal
-        document.getElementById('in-punto-bs').value = '0';
-        document.getElementById('in-pagomovil-bs').value = '0';
-        document.getElementById('in-efectivo-bs').value = '0';
-        document.getElementById('in-divisas-usd').value = '0';
-        document.getElementById('btnConfirmarVenta').disabled = true;
-        
-    } catch (e) { 
-        alert("Error al registrar: " + e.message); 
-    }
+    } catch (e) { alert("Error: " + e.message); }
 };
 
 // ==========================================
