@@ -1,6 +1,20 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+
+    <script>
+    // --- GUARD DE AUTENTICACIÓN AUTOMÁTICA ---
+    (function() {
+        // Verificamos si existe la bandera de licencia válida o el ID de empresa
+        const licenciaGuardada = localStorage.getItem('licencia_youcontrol');
+        
+        if (licenciaGuardada) {
+            // Si ya existe licencia, redirigimos al menú inmediatamente
+            window.location.replace('sys_v1_menu.html');
+        }
+    })();
+</script>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistematikos | You Control v4</title>
