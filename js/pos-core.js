@@ -265,27 +265,33 @@ window.actualizarCarritoUI = () => {
 };
 
 // ==========================================
-// 8. COMANDOS DE TECLADO (ORGANIZADOS)
+// 8. COMANDOS DE TECLADO (CORREGIDOS)
 // ==========================================
 document.addEventListener('keydown', (event) => {
-    // 1. Detección del estado del modal
+    // 1. Detectamos si estamos en el modal
     const modalPago = document.getElementById('modalPago');
     const estaEnPago = modalPago && modalPago.style.display !== 'none';
 
-    // 2. Si estamos en el modal, permitimos que F5 refresque la página (acción nativa)
-    if (estaEnPago && event.key === 'F5') {
-        return; // Salimos sin ejecutar preventDefault
+    // 2. Lógica para F5
+    if (event.key === 'F5') {
+        if (estaEnPago) {
+            // Si estamos en el modal, NO hacemos preventDefault.
+            // Esto permite que el navegador haga su función nativa (refrescar).
+            return; 
+        } else {
+            // Si NO estamos en el modal, bloqueamos el refresco y ejecutamos nuestro cambio de precio
+            event.preventDefault();
+            window.ejecutarF5();
+            return;
+        }
     }
 
-    // 3. Captura de teclas para funciones del sistema
-    const teclasValidas = ['F4', 'F5', 'F6', 'F9'];
-    
+    // 3. Lógica para F4, F6, F9
+    const teclasValidas = ['F4', 'F6', 'F9'];
     if (teclasValidas.includes(event.key)) {
-        event.preventDefault(); // Bloqueamos acción nativa del navegador
-        
+        event.preventDefault();
         switch(event.key) {
             case 'F4': window.ejecutarF4(); break;
-            case 'F5': window.ejecutarF5(); break;
             case 'F6': window.ejecutarF6(); break;
             case 'F9': window.abrirModalCobro(); break;
         }
