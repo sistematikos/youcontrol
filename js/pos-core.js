@@ -265,28 +265,31 @@ window.actualizarCarritoUI = () => {
 };
 
 // ==========================================
-// 8. COMANDOS DE TECLADO (CORREGIDOS)
+// 8. COMANDOS DE TECLADO (BLOQUEO FORZADO)
 // ==========================================
 document.addEventListener('keydown', (event) => {
-    // 1. Detectamos si estamos en el modal
-    const modalPago = document.getElementById('modalPago');
-    const estaEnPago = modalPago && modalPago.style.display !== 'none';
-
-    // 2. Lógica para F5
+    // 1. SIEMPRE capturamos F5 para tener control total
     if (event.key === 'F5') {
+        event.preventDefault(); // Esto detiene el refresco nativo del navegador SIEMPRE
+        event.stopImmediatePropagation(); // Detiene cualquier otro listener que interfiera
+
+        const modalPago = document.getElementById('modalPago');
+        // Verificamos si está visible (display block, flex, o grid)
+        const estaEnPago = modalPago && (window.getComputedStyle(modalPago).display !== 'none');
+
         if (estaEnPago) {
-            // Si estamos en el modal, NO hacemos preventDefault.
-            // Esto permite que el navegador haga su función nativa (refrescar).
-            return; 
+            // Si estamos en pago, damos la opción de refrescar manualmente
+            if (confirm("¿Deseas refrescar la página? Se perderán los datos del carrito.")) {
+                window.location.reload();
+            }
         } else {
-            // Si NO estamos en el modal, bloqueamos el refresco y ejecutamos nuestro cambio de precio
-            event.preventDefault();
+            // Si NO estamos en pago, ejecutamos la función de precio
             window.ejecutarF5();
-            return;
         }
+        return;
     }
 
-    // 3. Lógica para F4, F6, F9
+    // 2. Lógica para F4, F6, F9
     const teclasValidas = ['F4', 'F6', 'F9'];
     if (teclasValidas.includes(event.key)) {
         event.preventDefault();
@@ -296,7 +299,7 @@ document.addEventListener('keydown', (event) => {
             case 'F9': window.abrirModalCobro(); break;
         }
     }
-});
+}, true); // El 'true' en el addEventListener es CLAVE: activa el modo captura
 
 // --- Funciones de Comandos ---
 
