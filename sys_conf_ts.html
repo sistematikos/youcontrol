@@ -1,0 +1,21 @@
+<div class="card">
+    <h3>Tasa BCV Actual</h3>
+    <input type="number" id="inputTasa" step="0.01">
+    <button onclick="guardarTasa()">Guardar Tasa</button>
+</div>
+
+<script type="module">
+    import { db } from './js/firebase-config.js';
+    import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const empresaID = localStorage.getItem('youcontrol_empresa_id');
+    const docRef = doc(db, "usuarios", empresaID);
+
+    // Al guardar aquí, cualquier otro módulo que haga un getDoc(docRef)
+    // obtendrá este valor actualizado inmediatamente.
+    window.guardarTasa = async () => {
+        const valor = parseFloat(document.getElementById('inputTasa').value);
+        await setDoc(docRef, { tasa_bcv: valor }, { merge: true });
+        alert("Tasa actualizada para todo el sistema.");
+    };
+</script>
