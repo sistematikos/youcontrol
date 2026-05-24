@@ -28,16 +28,21 @@ let formatoFactura = "ticket";
 // ==========================================
 async function cargarConfiguracionGlobal() {
     try {
-        // 1. Cargar Tasa desde la nueva colección "configuracion"
-        const snapTasa = await getDoc(doc(db, "configuracion", "tasa"));
-        if (snapTasa.exists()) {
-            tasaActual = snapTasa.data().valor || 1.0;
-        }
-
-        // 2. Cargar Formato de Factura desde el documento del usuario
-        const snapConfig = await getDoc(doc(db, "usuarios", USER_ID));
+        // Obtenemos la referencia al documento del usuario
+        const userDocRef = doc(db, "usuarios", USER_ID);
+        const snapConfig = await getDoc(userDocRef);
+        
         if (snapConfig.exists()) {
-            formatoFactura = snapConfig.data().formato_factura || "ticket";
+            const data = snapConfig.data();
+            // Asignamos la tasa desde el campo 'tasa_bcv' (según tu base de datos)
+            tasaActual = data.tasa_bcv || 1.0;
+            formatoFactura = data.formato_factura || "ticket";
+            
+            // ACTUALIZACIÓN DE LA UI
+            const labelBCV = document.getElementById('display-tasa-bcv');
+            if (labelBCV) {
+                labelBCV.innerText = `BCV: ${tasaActual.toLocaleString('es-VE', {minimumFractionDigits: 2})} Bs.`;
+            }
         }
         console.log("Configuración cargada: Tasa", tasaActual, "Formato", formatoFactura);
     } catch (e) {
