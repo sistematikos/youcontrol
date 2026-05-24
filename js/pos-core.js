@@ -212,37 +212,40 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 3. LÓGICA DE PAGOS (Cálculo automático de diferencia)
-    const camposPago = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs'];
+    // 3. LÓGICA DE PAGOS (Cálculo bidireccional)
+    const camposBs = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs'];
+    const campoUsd = document.getElementById('in-divisas-usd');
     
-    camposPago.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            // Al hacer clic, calcula lo que falta para llegar al total
-            el.addEventListener('click', () => {
-                const totalBs = (window.totalVentaUSD || 0) * tasaActual;
-                
-                // Sumamos lo que ya tienen escrito los OTROS campos de pago
-                const sumOtros = camposPago
-                    .filter(c => c !== id)
-                    .reduce((acc, cId) => {
-                        const valor = parseFloat(document.getElementById(cId)?.value) || 0;
-                        return acc + valor;
-                    }, 0);
-                
-                // Calculamos cuánto falta para completar la venta
-                const pendiente = totalBs - sumOtros;
-                el.value = (pendiente > 0 ? pendiente : 0).toFixed(2);
-            });
-            
-            // Opcional: También permitimos que al tabular o escribir cambie el valor
-            el.addEventListener('input', () => {
-                // Si el usuario escribe manualmente, el sistema no bloquea el valor
-            });
+    const calcularPendiente = (idClickeado) => {
+        const totalVentaBs = (window.totalVentaUSD || 0) * tasaActual;
+        
+        // Sumar lo que ya hay en los otros campos de Bs
+        const otrosBs = camposBs
+            .filter(id => id !== idClickeado)
+            .reduce((acc, id) => acc + (parseFloat(document.getElementById(id)?.value) || 0), 0);
+        
+        // Sumar lo que hay en USD (si el clic fue en Bs) o lo que hay en Bs (si el clic fue en USD)
+        const valorUsdActual = parseFloat(campoUsd?.value) || 0;
+        
+        if (camposBs.includes(idClickeado)) {
+            // Caso: Hiciste clic en un campo de Bs
+            const pendienteBs = totalVentaBs - (otrosBs + (valorUsdActual * tasaActual));
+            document.getElementById(idClickeado).value = (pendienteBs > 0 ? pendienteBs : 0).toFixed(2);
+        } else if (idClickeado === 'in-divisas-usd') {
+            // Caso: Hiciste clic en el campo USD
+            const totalPagadoBs = camposBs.reduce((acc, id) => acc + (parseFloat(document.getElementById(id)?.value) || 0), 0);
+            const pendienteBs = totalVentaBs - totalPagadoBs;
+            const pendienteUsd = pendienteBs / tasaActual;
+            campoUsd.value = (pendienteUsd > 0 ? pendienteUsd : 0).toFixed(2);
         }
+    };
+
+    // Asignar el evento a todos los campos
+    [...camposBs, 'in-divisas-usd'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('click', () => calcularPendiente(id));
     });
 });
-
 
 // ==========================================
 // 7. ACTUALIZACIÓN VISUAL Y COMANDOS
