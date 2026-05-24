@@ -17,8 +17,33 @@ if (!USER_ID) {
 let productosMaster = [];
 let clientesMaster = []; 
 let carrito = [];
-let tasaActual = 1;
 let proximoNumeroFacturaStr = "000001";
+
+// Variables de Configuración
+let tasaActual = 1.0; 
+let formatoFactura = "ticket";
+
+// ==========================================
+// CARGA DE CONFIGURACIÓN GLOBAL
+// ==========================================
+async function cargarConfiguracionGlobal() {
+    try {
+        // 1. Cargar Tasa desde la nueva colección "configuracion"
+        const snapTasa = await getDoc(doc(db, "configuracion", "tasa"));
+        if (snapTasa.exists()) {
+            tasaActual = snapTasa.data().valor || 1.0;
+        }
+
+        // 2. Cargar Formato de Factura desde el documento del usuario
+        const snapConfig = await getDoc(doc(db, "usuarios", USER_ID));
+        if (snapConfig.exists()) {
+            formatoFactura = snapConfig.data().formato_factura || "ticket";
+        }
+        console.log("Configuración cargada: Tasa", tasaActual, "Formato", formatoFactura);
+    } catch (e) {
+        console.error("Error al cargar configuración:", e);
+    }
+}
 
 // ==========================================
 // 1. CARGA DE DATOS (RUTAS DINÁMICAS)
@@ -46,24 +71,21 @@ function inicializarProductos() {
 // ==========================================
 // 2. MOTORES DE BÚSQUEDA (INTEGRACIÓN UI)
 // ==========================================
-
-// Búsqueda de Productos
 window.buscarProducto = (texto) => {
     const criterio = texto.toLowerCase().trim();
     if (!criterio) return [];
     return productosMaster.filter(p => 
-        (p.id || '').toLowerCase().includes(criterio) || // El ID es el SKU ahora
+        (p.id || '').toLowerCase().includes(criterio) || 
         (p.nombre || '').toLowerCase().includes(criterio) ||
         (p.barras || '').toLowerCase().includes(criterio)
     );
 };
 
-// Búsqueda de Clientes
 window.buscarCliente = (texto) => {
     const criterio = texto.toLowerCase().trim();
     if (!criterio) return [];
     return clientesMaster.filter(c => 
-        (c.id || '').toLowerCase().includes(criterio) || // El ID es el RIF ahora
+        (c.id || '').toLowerCase().includes(criterio) || 
         (c.nombre || '').toLowerCase().includes(criterio)
     );
 };
@@ -86,6 +108,7 @@ window.registrarVenta = async () => {
             nro_factura: proximoNumeroFacturaStr,
             total_usd: window.totalVentaUSD,
             tasa: tasaActual,
+            formato: formatoFactura,
             items: carrito
         });
         alert("✅ Venta registrada: " + proximoNumeroFacturaStr);
@@ -103,12 +126,10 @@ const divResultados = document.getElementById('resultados-cliente-pos');
 if (inputCliente) {
     inputCliente.addEventListener('input', (e) => {
         const resultados = window.buscarCliente(e.target.value);
-        
         if (resultados.length > 0 && e.target.value.trim() !== "") {
             divResultados.style.display = 'block';
             divResultados.innerHTML = resultados.map(c => `
-                <div class="resultado-item" 
-                     style="padding: 10px; cursor: pointer; border-bottom: 1px solid #f1f5f9;"
+                <div class="resultado-item" style="padding: 10px; cursor: pointer; border-bottom: 1px solid #f1f5f9;"
                      onclick="window.seleccionarCliente('${c.id}', '${c.nombre}')">
                      <strong>${c.id}</strong> - ${c.nombre}
                 </div>
@@ -120,14 +141,13 @@ if (inputCliente) {
 }
 
 window.seleccionarCliente = (id, nombre) => {
-    inputCliente.value = nombre; // Pone el nombre en el input
+    inputCliente.value = nombre;
     divResultados.style.display = 'none';
-    // Opcional: Guardar el ID en una variable global para la factura
     window.clienteSeleccionadoID = id; 
 };
 
 // ==========================================
-// 5. INTEGRACIÓN UI: BÚSQUEDA DE PRODUCTOS (DEBUG)
+// 5. INTEGRACIÓN UI: BÚSQUEDA DE PRODUCTOS
 // ==========================================
 const inputProducto = document.getElementById('buscar-producto-pos');
 const divResultadosProd = document.getElementById('resultados-producto-pos');
@@ -136,15 +156,10 @@ if (inputProducto) {
     inputProducto.addEventListener('input', (e) => {
         const texto = e.target.value;
         const resultados = window.buscarProducto(texto);
-        
-        // DEBUG: Mira esto en la consola del navegador (F12 > Console)
-        console.log("Buscando:", texto, "Resultados encontrados:", resultados);
-        
         if (resultados.length > 0 && texto.trim() !== "") {
             divResultadosProd.style.display = 'block';
             divResultadosProd.innerHTML = resultados.map(p => `
-                <div class="resultado-item" 
-                     style="padding: 10px; cursor: pointer; border-bottom: 1px solid #f1f5f9;"
+                <div class="resultado-item" style="padding: 10px; cursor: pointer; border-bottom: 1px solid #f1f5f9;"
                      onclick="window.seleccionarProducto('${p.id}')">
                      <strong>${p.nombre || 'Sin nombre'}</strong>
                      <span style="float: right; color: var(--primary-color); font-weight: bold;">$${p.precio || '0.00'}</span>
@@ -156,33 +171,20 @@ if (inputProducto) {
     });
 }
 
-// ==========================================
-// 6. EJECUCIÓN DE SELECCIÓN DE PRODUCTO
-// ==========================================
 window.seleccionarProducto = (id) => {
-    // 1. Agregamos el producto al carrito usando tu función original
     window.agregarCarrito(id);
-    
-    // 2. Limpiamos el input de búsqueda
     inputProducto.value = '';
-    
-    // 3. Ocultamos el menú desplegable de resultados
     divResultadosProd.style.display = 'none';
-    
-    // 4. Devolvemos el foco al input para que puedas seguir buscando rápido
     inputProducto.focus();
-    
-    console.log("Producto agregado al carrito:", id);
 };
 
 // ==========================================
 // 7. ACTUALIZACIÓN VISUAL DEL CARRITO
 // ==========================================
 window.actualizarCarritoUI = () => {
-    const contenedor = document.getElementById('lista-carrito'); // Asegúrate que este ID exista en tu HTML
+    const contenedor = document.getElementById('lista-carrito');
     if (!contenedor) return;
 
-    // Pintar los productos en el carrito
     contenedor.innerHTML = carrito.map((item, index) => `
         <div style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between;">
             <div>
@@ -195,73 +197,27 @@ window.actualizarCarritoUI = () => {
         </div>
     `).join('');
 
-    // Calcular y actualizar totales
     const total = carrito.reduce((sum, item) => sum + (item.cantidad * (item.precio || 0)), 0);
     window.totalVentaUSD = total;
     
-    // Si tienes elementos con estos IDs, los actualiza
-    if(document.getElementById('total-usd')) document.getElementById('total-usd').innerText = `$ ${total.toFixed(2)}`;
+    if(document.getElementById('total-usd')) 
+        document.getElementById('total-usd').innerText = `$ ${total.toFixed(2)}`;
 };
 
 // ==========================================
-// 8.1 DEFINICIÓN DE FUNCIONES DE COMANDOS (Necesario para que no den error)
-// ==========================================
-window.ejecutarF4 = () => { 
-    console.log("F4: Función de cantidad activada"); 
-    // Aquí iría tu lógica para cambiar cantidad
-};
-
-window.ejecutarF5 = () => { 
-    console.log("F5: Función de precio activada"); 
-    // Aquí iría tu lógica para cambiar precio
-};
-
-window.ejecutarF6 = () => { 
-    console.log("F6: Eliminando último item");
-    if (carrito.length > 0) {
-        carrito.pop();
-        window.actualizarCarritoUI();
-    }
-};
-
-window.abrirModalCobro = () => {
-    const modal = document.getElementById('modalPago');
-    if (modal) {
-        modal.style.display = 'flex';
-        // Opcional: enfocar el input de pago
-        document.getElementById('in-divisas-usd')?.focus();
-    }
-};
-
-// ==========================================
-// 9. ESCUCHADOR DE TECLADO (COMANDOS RÁPIDOS)
+// 8. COMANDOS DE TECLADO (F4, F5, F6, F9)
 // ==========================================
 document.addEventListener('keydown', (event) => {
-    // Si se presiona Ctrl, permitimos que el navegador maneje sus atajos (como Ctrl+F5)
     if (event.ctrlKey) return; 
-
     switch(event.key) {
-        case 'F4':
-            event.preventDefault();
-            window.ejecutarF4();
-            break;
-        case 'F5':
-            event.preventDefault();
-            window.ejecutarF5();
-            break;
-        case 'F6':
-            event.preventDefault();
-            window.ejecutarF6();
-            break;
-        case 'F9':
-            event.preventDefault();
-            window.abrirModalCobro();
-            break;
+        case 'F4': event.preventDefault(); window.ejecutarF4(); break;
+        case 'F5': event.preventDefault(); window.ejecutarF5(); break;
+        case 'F6': event.preventDefault(); window.ejecutarF6(); break;
+        case 'F9': event.preventDefault(); window.abrirModalCobro(); break;
     }
 });
 
 window.ejecutarF4 = () => { 
-    // F4: Modificar Cantidad del último producto
     if (carrito.length === 0) return;
     const item = carrito[carrito.length - 1];
     const nuevaCant = prompt(`Cantidad para ${item.nombre}:`, item.cantidad);
@@ -272,7 +228,6 @@ window.ejecutarF4 = () => {
 };
 
 window.ejecutarF5 = () => { 
-    // F5: Modificar Precio del último producto
     if (carrito.length === 0) return;
     const item = carrito[carrito.length - 1];
     const nuevoPrecio = prompt(`Precio para ${item.nombre} ($):`, item.precio);
@@ -282,9 +237,25 @@ window.ejecutarF5 = () => {
     }
 };
 
+window.ejecutarF6 = () => { 
+    if (carrito.length > 0) {
+        carrito.pop();
+        window.actualizarCarritoUI();
+    }
+};
+
+window.abrirModalCobro = () => {
+    const modal = document.getElementById('modalPago');
+    if (modal) {
+        modal.style.display = 'flex';
+        document.getElementById('in-divisas-usd')?.focus();
+    }
+};
+
 // ==========================================
 // INICIALIZACIÓN GLOBAL
 // ==========================================
-// (Las funciones de tasa y factura se mantienen como estaban)
-inicializarClientes();
-inicializarProductos();
+cargarConfiguracionGlobal().then(() => {
+    inicializarClientes();
+    inicializarProductos();
+});
