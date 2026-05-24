@@ -3,9 +3,9 @@
  * Módulo de Facturación y Ventas (pos-core.js)
  */
 
-import { db } from './firebase-config.js';
 import { 
-    collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc 
+    collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc,
+    query, orderBy, limit, getDocs 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
@@ -333,25 +333,52 @@ window.ejecutarF6 = () => {
     }
 };
 
-window.abrirModalCobro = () => {
+async function obtenerProximoNumeroFactura() {
+    try {
+        const ventasRef = collection(db, "usuarios", USER_ID, "ventas");
+        // Consulta el último documento registrado ordenado por número
+        const q = query(ventasRef, orderBy("nro_factura", "desc"), limit(1));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+            const ultimoNro = parseInt(querySnapshot.docs[0].data().nro_factura);
+            proximoNumeroFacturaStr = (ultimoNro + 1).toString().padStart(6, '0');
+        } else {
+            proximoNumeroFacturaStr = "000001";
+        }
+        console.log("Número de factura actualizado a:", proximoNumeroFacturaStr);
+    } catch (e) {
+        console.error("Error al obtener nro factura:", e);
+        // Fallback en caso de error
+        proximoNumeroFacturaStr = "000001";
+    }
+}
+
+window.abrirModalCobro = async () => {
     if (carrito.length === 0) { alert("El carrito está vacío."); return; }
+    
+    // 1. Refrescar el número desde Firebase antes de abrir
+    await obtenerProximoNumeroFactura(); 
     
     const modal = document.getElementById('modalPago');
     if (modal) {
         const totalUSD = window.totalVentaUSD || 0;
         const totalBs = totalUSD * tasaActual;
         
-        // Actualizar valores en el modal
+        // Actualizar valores visuales
         const dUSD = document.getElementById('totalModalUSD');
         const dBS = document.getElementById('totalModalBS');
         const inputFactura = document.getElementById('nro_control_factura');
         
         if (dUSD) dUSD.innerText = `$ ${totalUSD.toFixed(2)}`;
         if (dBS) dBS.innerText = `${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2})} Bs.`;
-        if (inputFactura) inputFactura.value = proximoNumeroFacturaStr;
+        
+        // 2. Asignar el valor actualizado de la variable
+        if (inputFactura) {
+            inputFactura.value = proximoNumeroFacturaStr;
+        }
         
         modal.style.display = 'flex';
-        // Foco al primer input de pago
         document.getElementById('in-divisas-usd')?.focus();
     }
 };
