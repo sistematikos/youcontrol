@@ -1,21 +1,74 @@
-<div class="card">
-    <h3>Tasa BCV Actual</h3>
-    <input type="number" id="inputTasa" step="0.01">
-    <button onclick="guardarTasa()">Guardar Tasa</button>
-</div>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Configuración de Tasa | You Control</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { background: #F1F5F9; font-family: 'Poppins', sans-serif; padding: 20px; color: #1E293B; }
+        .container { max-width: 500px; margin: 0 auto; }
+        .card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        h2 { color: #002D72; margin-top: 0; font-size: 1.5rem; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: #64748B; }
+        input { width: 100%; padding: 15px; border: 2px solid #E2E8F0; border-radius: 12px; font-size: 1.2rem; box-sizing: border-box; margin-bottom: 20px; outline: none; transition: 0.2s; }
+        input:focus { border-color: #0052D4; }
+        .btn-act { background: #0052D4; color: white; border: none; padding: 16px; border-radius: 12px; font-weight: 700; width: 100%; cursor: pointer; transition: 0.2s; }
+        .btn-act:hover { background: #0041a8; transform: translateY(-1px); }
+        .back-link { display: block; text-align: center; margin-top: 20px; color: #0052D4; text-decoration: none; font-weight: 600; }
+    </style>
+</head>
+<body>
 
-<script type="module">
-    import { db } from './js/firebase-config.js';
-    import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    <div class="container">
+        <div class="card">
+            <h2><i class="fas fa-dollar-sign"></i> Tasa BCV</h2>
+            <label>Valor actual de la tasa:</label>
+            <input type="number" id="inputTasa" step="0.01" placeholder="0.00">
+            <button onclick="guardarTasa()" class="btn-act">GUARDAR NUEVA TASA</button>
+        </div>
+        <a href="sys_config.html" class="back-link">← Volver a Configuración</a>
+    </div>
 
-    const empresaID = localStorage.getItem('youcontrol_empresa_id');
-    const docRef = doc(db, "usuarios", empresaID);
+    <script type="module">
+        import { db } from './js/firebase-config.js';
+        import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // Al guardar aquí, cualquier otro módulo que haga un getDoc(docRef)
-    // obtendrá este valor actualizado inmediatamente.
-    window.guardarTasa = async () => {
-        const valor = parseFloat(document.getElementById('inputTasa').value);
-        await setDoc(docRef, { tasa_bcv: valor }, { merge: true });
-        alert("Tasa actualizada para todo el sistema.");
-    };
-</script>
+        const empresaID = localStorage.getItem('youcontrol_empresa_id');
+        const docRef = doc(db, "usuarios", empresaID);
+
+        async function cargarTasa() {
+            try {
+                const snap = await getDoc(docRef);
+                if (snap.exists() && snap.data().tasa_bcv) {
+                    document.getElementById('inputTasa').value = snap.data().tasa_bcv;
+                }
+            } catch (error) {
+                console.error("Error al cargar tasa:", error);
+            }
+        }
+
+        window.guardarTasa = async () => {
+            const btn = document.querySelector('.btn-act');
+            const valor = document.getElementById('inputTasa').value;
+            
+            if (!valor) return;
+
+            btn.disabled = true;
+            btn.innerText = "GUARDANDO...";
+
+            try {
+                await setDoc(docRef, { tasa_bcv: parseFloat(valor) }, { merge: true });
+                alert("Tasa actualizada exitosamente.");
+                window.location.href = "sys_config.html";
+            } catch (e) {
+                alert("Error al guardar: " + e.message);
+                btn.disabled = false;
+                btn.innerText = "GUARDAR NUEVA TASA";
+            }
+        };
+
+        cargarTasa();
+    </script>
+</body>
+</html>
