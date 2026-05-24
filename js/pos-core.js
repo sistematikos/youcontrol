@@ -196,7 +196,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>`).join('');
             } else { divRes.style.display = 'none'; }
         });
-
         inputCliente.addEventListener('keydown', (e) => {
             window.indiceClie = window.manejarNavegacion(e, 'resultados-cliente-pos', window.indiceClie);
         });
@@ -217,23 +216,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>`).join('');
             } else { divRes.style.display = 'none'; }
         });
-
         inputProd.addEventListener('keydown', (e) => {
             window.indiceProd = window.manejarNavegacion(e, 'resultados-producto-pos', window.indiceProd);
         });
     }
 
-  // 3. LÓGICA DE PAGOS
+    // 3. LÓGICA DE PAGOS
     const camposBs = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs'];
     const inputDivisas = document.getElementById('in-divisas-usd');
 
-    // Lógica para los campos en Bolívares (al hacer clic, completa el resto)
     camposBs.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
             el.addEventListener('click', () => {
                 const totalBs = (window.totalVentaUSD || 0) * tasaActual;
-                // Sumamos lo que ya tienen escrito los OTROS campos de Bs y lo de Divisas (convertido)
                 const valorDivisasBs = (parseFloat(inputDivisas?.value) || 0) * tasaActual;
                 const sumOtrosBs = camposBs
                     .filter(c => c !== id)
@@ -241,28 +237,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const pendiente = totalBs - sumOtrosBs - valorDivisasBs;
                 el.value = (pendiente > 0 ? pendiente : 0).toFixed(2);
-                document.getElementById('btnConfirmarVenta').disabled = false;
             });
         }
     });
 
-    // Lógica para el campo de Divisas (auto-rellena el resto en Efectivo Bs al escribir)
     if (inputDivisas) {
         inputDivisas.addEventListener('input', function() {
             const totalBs = (window.totalVentaUSD || 0) * tasaActual;
             const valorDivisasBs = (parseFloat(this.value) || 0) * tasaActual;
-            
-            // Sumamos lo que hay en Punto y Pago Móvil
             const sumPuntoMovil = (parseFloat(document.getElementById('in-punto-bs')?.value) || 0) + 
                                   (parseFloat(document.getElementById('in-pagomovil-bs')?.value) || 0);
-            
             const resto = totalBs - valorDivisasBs - sumPuntoMovil;
-            
-            // El resto se asigna automáticamente a Efectivo Bs
             document.getElementById('in-efectivo-bs').value = (resto > 0 ? resto : 0).toFixed(2);
-            document.getElementById('btnConfirmarVenta').disabled = false;
         });
     }
+}); // <--- ESTA LLAVE CIERRA EL DOMContentLoaded
 
 
 // ==========================================
