@@ -229,17 +229,21 @@ window.actualizarCarritoUI = () => {
 };
 
 // ==========================================
-// 8. COMANDOS DE TECLADO (F4, F5, F6, F9)
+// 8. COMANDOS DE TECLADO (CORREGIDOS)
 // ==========================================
 document.addEventListener('keydown', (event) => {
-    // Si el usuario está escribiendo en un input, ignorar atajos para no interrumpir
-    if (event.target.tagName === 'INPUT') return; 
-
-    switch(event.key) {
-        case 'F4': event.preventDefault(); window.ejecutarF4(); break;
-        case 'F5': event.preventDefault(); window.ejecutarF5(); break;
-        case 'F6': event.preventDefault(); window.ejecutarF6(); break;
-        case 'F9': event.preventDefault(); window.abrirModalCobro(); break;
+    // Lista de teclas que queremos capturar
+    const teclasValidas = ['F4', 'F5', 'F6', 'F9'];
+    
+    if (teclasValidas.includes(event.key)) {
+        event.preventDefault(); // Esto detiene la acción del navegador (ej. F5 refrescar)
+        
+        switch(event.key) {
+            case 'F4': window.ejecutarF4(); break;
+            case 'F5': window.ejecutarF5(); break;
+            case 'F6': window.ejecutarF6(); break;
+            case 'F9': window.abrirModalCobro(); break;
+        }
     }
 });
 
