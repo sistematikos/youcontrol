@@ -168,9 +168,9 @@ window.manejarNavegacion = (e, contenedorId, indiceVar) => {
 // 5. LISTENERS DE UI (Evento Input y Teclas)
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("DOM completamente cargado y analizado");
+    console.log("DOM cargado - Inicializando listeners");
 
-    // Búsqueda Cliente
+    // 1. Búsqueda Cliente
     const inputCliente = document.getElementById('buscar-cliente-pos');
     if (inputCliente) {
         inputCliente.addEventListener('input', (e) => {
@@ -191,7 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Búsqueda Producto
+    // 2. Búsqueda Producto
     const inputProd = document.getElementById('buscar-producto-pos');
     if (inputProd) {
         inputProd.addEventListener('input', (e) => {
@@ -212,14 +212,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // EVENTOS DE CLICK RÁPIDO PARA PAGOS (Lo que pediste)
+    // 3. LÓGICA DE PAGOS (Cálculo automático de diferencia)
     const camposPago = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs'];
+    
     camposPago.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
+            // Al hacer clic, calcula lo que falta para llegar al total
             el.addEventListener('click', () => {
                 const totalBs = (window.totalVentaUSD || 0) * tasaActual;
-                el.value = totalBs.toFixed(2);
+                
+                // Sumamos lo que ya tienen escrito los OTROS campos de pago
+                const sumOtros = camposPago
+                    .filter(c => c !== id)
+                    .reduce((acc, cId) => {
+                        const valor = parseFloat(document.getElementById(cId)?.value) || 0;
+                        return acc + valor;
+                    }, 0);
+                
+                // Calculamos cuánto falta para completar la venta
+                const pendiente = totalBs - sumOtros;
+                el.value = (pendiente > 0 ? pendiente : 0).toFixed(2);
+            });
+            
+            // Opcional: También permitimos que al tabular o escribir cambie el valor
+            el.addEventListener('input', () => {
+                // Si el usuario escribe manualmente, el sistema no bloquea el valor
             });
         }
     });
