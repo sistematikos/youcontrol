@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Configuración | You Control</title>
+    </head>
+<body>
+    <div style="max-width: 600px; margin: 40px auto; padding: 20px;">
+        <h2>Configuración del Sistema</h2>
+        
+        <div style="background: white; padding: 20px; border-radius: 12px;">
+            <label>Tasa BCV Actual:</label>
+            <input type="number" id="inputTasa" step="0.01" style="width: 100%; padding: 10px; margin: 10px 0;">
+            <button onclick="guardarTasa()" class="btn-act">Guardar Cambios</button>
+        </div>
+        
+        <br>
+        <a href="sys_v1_menu.html">← Volver al Menú</a>
+    </div>
+
+    <script type="module">
+        import { db } from './js/firebase-config.js';
+        import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const empresaID = localStorage.getItem('youcontrol_empresa_id');
+        const docRef = doc(db, "usuarios", empresaID);
+
+        // Cargar tasa actual
+        async function cargarConfig() {
+            const snap = await getDoc(docRef);
+            if (snap.exists()) {
+                document.getElementById('inputTasa').value = snap.data().tasa_bcv || 1.0;
+            }
+        }
+
+        window.guardarTasa = async () => {
+            const nuevaTasa = document.getElementById('inputTasa').value;
+            await setDoc(docRef, { tasa_bcv: parseFloat(nuevaTasa) }, { merge: true });
+            alert("Configuración guardada");
+        };
+
+        cargarConfig();
+    </script>
+</body>
+</html>
