@@ -389,4 +389,5 @@ window.abrirModalCobro = async () => {
 cargarConfiguracionGlobal().then(() => {
     inicializarClientes();
     inicializarProductos();
+    obtenerProximoNumeroFactura();
 });
