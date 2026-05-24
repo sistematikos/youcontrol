@@ -3,9 +3,9 @@
  * Módulo de Facturación y Ventas (pos-core.js)
  */
 
+import { db } from './firebase-config.js';
 import { 
-    collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc,
-    query, orderBy, limit, getDocs 
+    collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
@@ -212,40 +212,37 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 3. LÓGICA DE PAGOS (Cálculo bidireccional)
-    const camposBs = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs'];
-    const campoUsd = document.getElementById('in-divisas-usd');
+    // 3. LÓGICA DE PAGOS (Cálculo automático de diferencia)
+    const camposPago = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs'];
     
-    const calcularPendiente = (idClickeado) => {
-        const totalVentaBs = (window.totalVentaUSD || 0) * tasaActual;
-        
-        // Sumar lo que ya hay en los otros campos de Bs
-        const otrosBs = camposBs
-            .filter(id => id !== idClickeado)
-            .reduce((acc, id) => acc + (parseFloat(document.getElementById(id)?.value) || 0), 0);
-        
-        // Sumar lo que hay en USD (si el clic fue en Bs) o lo que hay en Bs (si el clic fue en USD)
-        const valorUsdActual = parseFloat(campoUsd?.value) || 0;
-        
-        if (camposBs.includes(idClickeado)) {
-            // Caso: Hiciste clic en un campo de Bs
-            const pendienteBs = totalVentaBs - (otrosBs + (valorUsdActual * tasaActual));
-            document.getElementById(idClickeado).value = (pendienteBs > 0 ? pendienteBs : 0).toFixed(2);
-        } else if (idClickeado === 'in-divisas-usd') {
-            // Caso: Hiciste clic en el campo USD
-            const totalPagadoBs = camposBs.reduce((acc, id) => acc + (parseFloat(document.getElementById(id)?.value) || 0), 0);
-            const pendienteBs = totalVentaBs - totalPagadoBs;
-            const pendienteUsd = pendienteBs / tasaActual;
-            campoUsd.value = (pendienteUsd > 0 ? pendienteUsd : 0).toFixed(2);
-        }
-    };
-
-    // Asignar el evento a todos los campos
-    [...camposBs, 'in-divisas-usd'].forEach(id => {
+    camposPago.forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.addEventListener('click', () => calcularPendiente(id));
+        if (el) {
+            // Al hacer clic, calcula lo que falta para llegar al total
+            el.addEventListener('click', () => {
+                const totalBs = (window.totalVentaUSD || 0) * tasaActual;
+                
+                // Sumamos lo que ya tienen escrito los OTROS campos de pago
+                const sumOtros = camposPago
+                    .filter(c => c !== id)
+                    .reduce((acc, cId) => {
+                        const valor = parseFloat(document.getElementById(cId)?.value) || 0;
+                        return acc + valor;
+                    }, 0);
+                
+                // Calculamos cuánto falta para completar la venta
+                const pendiente = totalBs - sumOtros;
+                el.value = (pendiente > 0 ? pendiente : 0).toFixed(2);
+            });
+            
+            // Opcional: También permitimos que al tabular o escribir cambie el valor
+            el.addEventListener('input', () => {
+                // Si el usuario escribe manualmente, el sistema no bloquea el valor
+            });
+        }
     });
 });
+
 
 // ==========================================
 // 7. ACTUALIZACIÓN VISUAL Y COMANDOS
@@ -333,52 +330,25 @@ window.ejecutarF6 = () => {
     }
 };
 
-async function obtenerProximoNumeroFactura() {
-    try {
-        const ventasRef = collection(db, "usuarios", USER_ID, "ventas");
-        // Consulta el último documento registrado ordenado por número
-        const q = query(ventasRef, orderBy("nro_factura", "desc"), limit(1));
-        const querySnapshot = await getDocs(q);
-        
-        if (!querySnapshot.empty) {
-            const ultimoNro = parseInt(querySnapshot.docs[0].data().nro_factura);
-            proximoNumeroFacturaStr = (ultimoNro + 1).toString().padStart(6, '0');
-        } else {
-            proximoNumeroFacturaStr = "000001";
-        }
-        console.log("Número de factura actualizado a:", proximoNumeroFacturaStr);
-    } catch (e) {
-        console.error("Error al obtener nro factura:", e);
-        // Fallback en caso de error
-        proximoNumeroFacturaStr = "000001";
-    }
-}
-
-window.abrirModalCobro = async () => {
+window.abrirModalCobro = () => {
     if (carrito.length === 0) { alert("El carrito está vacío."); return; }
-    
-    // 1. Refrescar el número desde Firebase antes de abrir
-    await obtenerProximoNumeroFactura(); 
     
     const modal = document.getElementById('modalPago');
     if (modal) {
         const totalUSD = window.totalVentaUSD || 0;
         const totalBs = totalUSD * tasaActual;
         
-        // Actualizar valores visuales
+        // Actualizar valores en el modal
         const dUSD = document.getElementById('totalModalUSD');
         const dBS = document.getElementById('totalModalBS');
         const inputFactura = document.getElementById('nro_control_factura');
         
         if (dUSD) dUSD.innerText = `$ ${totalUSD.toFixed(2)}`;
         if (dBS) dBS.innerText = `${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2})} Bs.`;
-        
-        // 2. Asignar el valor actualizado de la variable
-        if (inputFactura) {
-            inputFactura.value = proximoNumeroFacturaStr;
-        }
+        if (inputFactura) inputFactura.value = proximoNumeroFacturaStr;
         
         modal.style.display = 'flex';
+        // Foco al primer input de pago
         document.getElementById('in-divisas-usd')?.focus();
     }
 };
@@ -389,5 +359,4 @@ window.abrirModalCobro = async () => {
 cargarConfiguracionGlobal().then(() => {
     inicializarClientes();
     inicializarProductos();
-    obtenerProximoNumeroFactura(); 
 });
