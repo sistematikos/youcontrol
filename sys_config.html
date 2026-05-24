@@ -4,17 +4,33 @@
     <meta charset="UTF-8">
     <title>Configuración | You Control</title>
     </head>
-<body>
-    <div style="max-width: 600px; margin: 40px auto; padding: 20px;">
-        <h2>Configuración del Sistema</h2>
+<body style="background: #F1F5F9; font-family: 'Poppins', sans-serif; padding: 20px;">
+
+    <div style="max-width: 600px; margin: 0 auto;">
+        <h2>⚙️ Configuración del Sistema</h2>
         
-        <div style="background: white; padding: 20px; border-radius: 12px;">
-            <label>Tasa BCV Actual:</label>
+        <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+            <h3>Tasa BCV</h3>
             <input type="number" id="inputTasa" step="0.01" style="width: 100%; padding: 10px; margin: 10px 0;">
-            <button onclick="guardarTasa()" class="btn-act">Guardar Cambios</button>
+        </div>
+
+        <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+            <h3>Usuarios Autorizados</h3>
+            <input type="text" id="inputUsuarios" placeholder="ej: admin, vendedor1, vendedor2" style="width: 100%; padding: 10px; margin: 10px 0;">
+            <p style="font-size: 0.8rem; color: #64748B;">Separa los nombres por comas.</p>
+        </div>
+
+        <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+            <h3>Formato de Factura</h3>
+            <select id="selectFactura" style="width: 100%; padding: 10px; margin: 10px 0;">
+                <option value="ticket">Ticket (Pos)</option>
+                <option value="carta">Carta (A4)</option>
+                <option value="media_carta">Media Carta</option>
+            </select>
         </div>
         
-        <br>
+        <button onclick="guardarConfig()" class="btn-act" style="width: 100%; padding: 15px; border-radius: 12px;">Guardar Todo</button>
+        <br><br>
         <a href="sys_v1_menu.html">← Volver al Menú</a>
     </div>
 
@@ -25,18 +41,23 @@
         const empresaID = localStorage.getItem('youcontrol_empresa_id');
         const docRef = doc(db, "usuarios", empresaID);
 
-        // Cargar tasa actual
         async function cargarConfig() {
             const snap = await getDoc(docRef);
             if (snap.exists()) {
-                document.getElementById('inputTasa').value = snap.data().tasa_bcv || 1.0;
+                const data = snap.data();
+                document.getElementById('inputTasa').value = data.tasa_bcv || 1.0;
+                document.getElementById('inputUsuarios').value = data.usuarios_permitidos || "";
+                document.getElementById('selectFactura').value = data.formato_factura || "ticket";
             }
         }
 
-        window.guardarTasa = async () => {
-            const nuevaTasa = document.getElementById('inputTasa').value;
-            await setDoc(docRef, { tasa_bcv: parseFloat(nuevaTasa) }, { merge: true });
-            alert("Configuración guardada");
+        window.guardarConfig = async () => {
+            await setDoc(docRef, { 
+                tasa_bcv: parseFloat(document.getElementById('inputTasa').value),
+                usuarios_permitidos: document.getElementById('inputUsuarios').value,
+                formato_factura: document.getElementById('selectFactura').value
+            }, { merge: true });
+            alert("Configuración actualizada correctamente");
         };
 
         cargarConfig();
