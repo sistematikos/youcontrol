@@ -206,6 +206,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+
+
 // ==========================================
 // 7. ACTUALIZACIÓN VISUAL Y COMANDOS
 // ==========================================
@@ -226,10 +228,65 @@ window.actualizarCarritoUI = () => {
     if(document.getElementById('total-bs')) document.getElementById('total-bs').innerText = `${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2})} Bs.`;
 };
 
-// Mantener el resto de tus funciones F4, F5, F6 y Modal Cobro tal cual las tenías abajo...
-// (El resto de tu código original se mantiene intacto aquí abajo)
+// ==========================================
+// 8. COMANDOS DE TECLADO (F4, F5, F6, F9)
+// ==========================================
+document.addEventListener('keydown', (event) => {
+    // Si el usuario está escribiendo en un input, ignorar atajos para no interrumpir
+    if (event.target.tagName === 'INPUT') return; 
 
-window.abrirModalCobro = () => { /* ... tu lógica original ... */ };
+    switch(event.key) {
+        case 'F4': event.preventDefault(); window.ejecutarF4(); break;
+        case 'F5': event.preventDefault(); window.ejecutarF5(); break;
+        case 'F6': event.preventDefault(); window.ejecutarF6(); break;
+        case 'F9': event.preventDefault(); window.abrirModalCobro(); break;
+    }
+});
+
+window.ejecutarF4 = () => { 
+    if (carrito.length === 0) return;
+    const item = carrito[carrito.length - 1];
+    const nuevaCant = prompt(`Cantidad para ${item.nombre}:`, item.cantidad);
+    if (nuevaCant !== null && !isNaN(nuevaCant) && nuevaCant > 0) {
+        item.cantidad = parseInt(nuevaCant);
+        window.actualizarCarritoUI();
+    }
+};
+
+window.ejecutarF5 = () => { 
+    if (carrito.length === 0) return;
+    const item = carrito[carrito.length - 1];
+    const nuevoPrecio = prompt(`Precio para ${item.nombre} ($):`, item.precio);
+    if (nuevoPrecio !== null && !isNaN(nuevoPrecio)) {
+        item.precio = parseFloat(nuevoPrecio);
+        window.actualizarCarritoUI();
+    }
+};
+
+window.ejecutarF6 = () => { 
+    if (carrito.length > 0) {
+        carrito.pop();
+        window.actualizarCarritoUI();
+    }
+};
+
+window.abrirModalCobro = () => {
+    if (carrito.length === 0) { alert("El carrito está vacío."); return; }
+    const modal = document.getElementById('modalPago');
+    if (modal) {
+        const totalUSD = window.totalVentaUSD || 0;
+        const totalBs = totalUSD * tasaActual;
+        
+        // Actualizar valores en el modal
+        const dUSD = document.getElementById('totalModalUSD');
+        const dBS = document.getElementById('totalModalBS');
+        if (dUSD) dUSD.innerText = `$ ${totalUSD.toFixed(2)}`;
+        if (dBS) dBS.innerText = `${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2})} Bs.`;
+        
+        modal.style.display = 'flex';
+        document.getElementById('in-divisas-usd')?.focus();
+    }
+};
 
 // ==========================================
 // INICIALIZACIÓN FINAL
