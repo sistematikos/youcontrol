@@ -1,10 +1,11 @@
-
+/**
  * YOU CONTROL - SISTEMATIKOS
  * Módulo de Facturación y Ventas (pos-core.js)
  */
 
+import { db } from './firebase-config.js';
 import { 
-    collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc, query, orderBy, limit, getDocs 
+    collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc, query, orderBy, limit 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
@@ -254,55 +255,71 @@ window.ejecutarF6 = () => { 
     }
 };
 
-async function obtenerSiguienteNumeroFactura() {
-    try {
-        const ventasRef = collection(db, "usuarios", USER_ID, "ventas");
-        const q = query(ventasRef, orderBy("nro_factura", "desc"), limit(1));
-        const snapshot = await getDocs(q);
-        
-        if (!snapshot.empty) {
-            const ultimaFactura = parseInt(snapshot.docs[0].data().nro_factura);
-            proximoNumeroFacturaStr = String(ultimaFactura + 1).padStart(6, '0');
-        } else {
-            proximoNumeroFacturaStr = "000001";
-        }
-    } catch (e) {
-        console.error("Error al obtener correlativo:", e);
-        proximoNumeroFacturaStr = "000001";
-    }
-}
-
 // ==========================================
 // MODAL COBRO:
 // ==========================================
-// MODIFICADA A ASYNC
-window.abrirModalCobro = async () => {
+window.abrirModalCobro = () => {
+    // 1. Verificamos si hay productos en el carrito
     if (carrito.length === 0) {
         alert("El carrito está vacío.");
         return;
     }
 
-    // --- LLAMADA PARA OBTENER EL NÚMERO AUTOMÁTICO ---
-    await obtenerSiguienteNumeroFactura();
-
     const modal = document.getElementById('modalPago');
     if (modal) {
+        // 2. Calculamos los totales
         const totalUSD = window.totalVentaUSD;
         const totalBs = totalUSD * tasaActual;
 
+        // 3. ACTUALIZAMOS EL HTML DEL MODAL CON LOS DATOS
+        // (Asegúrate de que estos IDs existan en tu HTML)
         const displayTotalUSD = document.getElementById('totalModalUSD');
         const displayTotalBS = document.getElementById('totalModalBS');
         const inputFactura = document.getElementById('in-nro-factura');
 
         if (displayTotalUSD) displayTotalUSD.innerText = `$ ${totalUSD.toFixed(2)}`;
         if (displayTotalBS) displayTotalBS.innerText = `${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2})} Bs.`;
-        
-        // Aquí se inserta el número autocalculado
         if (inputFactura) inputFactura.value = proximoNumeroFacturaStr;
 
+        // 4. Mostramos el modal
         modal.style.display = 'flex';
+        
+        // Enfocamos el primer input para escribir rápido
         document.getElementById('in-divisas-usd')?.focus();
     }
+};
+
+// Agrega esto al final de tu archivo pos-core.js
+const inputsPago = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd'];
+const btnConfirmar = document.getElementById('btnConfirmarVenta');
+
+inputsPago.forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+        // Habilitar el botón siempre que el valor sea mayor a 0
+        const totalIngresado = inputsPago.reduce((sum, id) => sum + (parseFloat(document.getElementById(id).value) || 0), 0);
+        btnConfirmar.disabled = totalIngresado <= 0;
+    });
+});
+
+// Modifica ligeramente tu función registrarVenta para limpiar al finalizar
+window.registrarVenta = async () => {
+    try {
+        await addDoc(collection(db, "usuarios", USER_ID, "ventas"), {
+            fecha: serverTimestamp(),
+            nro_factura: proximoNumeroFacturaStr,
+            total_usd: window.totalVentaUSD,
+            tasa: tasaActual,
+            items: carrito
+        });
+        alert("✅ Venta registrada: " + proximoNumeroFacturaStr);
+        
+        // Limpieza post-venta
+        carrito = [];
+        window.actualizarCarritoUI();
+        document.getElementById('modalPago').style.display = 'none';
+        btnConfirmar.disabled = true; // Volver a deshabilitar
+        inputsPago.forEach(id => document.getElementById(id).value = '0');
+    } catch (e) { alert("Error: " + e.message); }
 };
 
 // ==========================================
