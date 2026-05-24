@@ -168,44 +168,62 @@ window.manejarNavegacion = (e, contenedorId, indiceVar) => {
 // 5. LISTENERS DE UI (Evento Input y Teclas)
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-    
-    // Búsqueda Cliente
-    document.getElementById('buscar-cliente-pos').addEventListener('input', (e) => {
-        const resultados = window.buscarCliente(e.target.value);
-        const divRes = document.getElementById('resultados-cliente-pos');
-        if (resultados.length > 0 && e.target.value.trim() !== "") {
-            divRes.style.display = 'block';
-            divRes.innerHTML = resultados.map(c => `
-                <div class="resultado-item" style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;"
-                     onclick="window.seleccionarCliente('${c.id}', '${c.nombre.replace(/'/g, "\\'")}')">
-                     <strong>${c.id}</strong> - ${c.nombre}
-                </div>`).join('');
-        } else { divRes.style.display = 'none'; }
-    });
+    console.log("DOM completamente cargado y analizado");
 
-    document.getElementById('buscar-cliente-pos').addEventListener('keydown', (e) => {
-        window.indiceClie = window.manejarNavegacion(e, 'resultados-cliente-pos', window.indiceClie);
-    });
+    // Búsqueda Cliente
+    const inputCliente = document.getElementById('buscar-cliente-pos');
+    if (inputCliente) {
+        inputCliente.addEventListener('input', (e) => {
+            const resultados = window.buscarCliente(e.target.value);
+            const divRes = document.getElementById('resultados-cliente-pos');
+            if (resultados.length > 0 && e.target.value.trim() !== "") {
+                divRes.style.display = 'block';
+                divRes.innerHTML = resultados.map(c => `
+                    <div class="resultado-item" style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;"
+                         onclick="window.seleccionarCliente('${c.id}', '${c.nombre.replace(/'/g, "\\'")}')">
+                         <strong>${c.id}</strong> - ${c.nombre}
+                    </div>`).join('');
+            } else { divRes.style.display = 'none'; }
+        });
+
+        inputCliente.addEventListener('keydown', (e) => {
+            window.indiceClie = window.manejarNavegacion(e, 'resultados-cliente-pos', window.indiceClie);
+        });
+    }
 
     // Búsqueda Producto
-    document.getElementById('buscar-producto-pos').addEventListener('input', (e) => {
-        const resultados = window.buscarProducto(e.target.value);
-        const divRes = document.getElementById('resultados-producto-pos');
-        if (resultados.length > 0 && e.target.value.trim() !== "") {
-            divRes.style.display = 'block';
-            divRes.innerHTML = resultados.map(p => `
-                <div class="resultado-item" style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;"
-                     onclick="window.seleccionarProducto('${p.id}')">
-                     <strong>${p.nombre}</strong> - $${p.precio}
-                </div>`).join('');
-        } else { divRes.style.display = 'none'; }
-    });
+    const inputProd = document.getElementById('buscar-producto-pos');
+    if (inputProd) {
+        inputProd.addEventListener('input', (e) => {
+            const resultados = window.buscarProducto(e.target.value);
+            const divRes = document.getElementById('resultados-producto-pos');
+            if (resultados.length > 0 && e.target.value.trim() !== "") {
+                divRes.style.display = 'block';
+                divRes.innerHTML = resultados.map(p => `
+                    <div class="resultado-item" style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;"
+                         onclick="window.seleccionarProducto('${p.id}')">
+                         <strong>${p.nombre}</strong> - $${p.precio}
+                    </div>`).join('');
+            } else { divRes.style.display = 'none'; }
+        });
 
-    document.getElementById('buscar-producto-pos').addEventListener('keydown', (e) => {
-        window.indiceProd = window.manejarNavegacion(e, 'resultados-producto-pos', window.indiceProd);
+        inputProd.addEventListener('keydown', (e) => {
+            window.indiceProd = window.manejarNavegacion(e, 'resultados-producto-pos', window.indiceProd);
+        });
+    }
+
+    // EVENTOS DE CLICK RÁPIDO PARA PAGOS (Lo que pediste)
+    const camposPago = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs'];
+    camposPago.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('click', () => {
+                const totalBs = (window.totalVentaUSD || 0) * tasaActual;
+                el.value = totalBs.toFixed(2);
+            });
+        }
     });
 });
-
 
 
 // ==========================================
