@@ -1,8 +1,8 @@
 // Importamos las funciones necesarias usando la misma versión de CDN que en pos-core.js
+// js/firebase-config.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Configuración de tu proyecto
 const firebaseConfig = {
   apiKey: "AIzaSyAMkpj9tFps526mL6hO-ciePWrTdx_NK9Q",
   authDomain: "youcontrol-1d60a.firebaseapp.com",
@@ -14,6 +14,4 @@ const firebaseConfig = {
 
 // Inicializar Firebase
 const app = initializeApp(firebaseConfig);
-
-// EXPORTAR la base de datos para que pos-core.js pueda leerla
-export const db = getFirestore(app);
+export const db = getFirestore(app); // <--- ESTO ES CRÍTICO
