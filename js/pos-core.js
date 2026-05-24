@@ -223,36 +223,46 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 3. LÓGICA DE PAGOS (Cálculo automático de diferencia)
-    const camposPago = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs'];
-    
-    camposPago.forEach(id => {
+  // 3. LÓGICA DE PAGOS
+    const camposBs = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs'];
+    const inputDivisas = document.getElementById('in-divisas-usd');
+
+    // Lógica para los campos en Bolívares (al hacer clic, completa el resto)
+    camposBs.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
-            // Al hacer clic, calcula lo que falta para llegar al total
             el.addEventListener('click', () => {
                 const totalBs = (window.totalVentaUSD || 0) * tasaActual;
-                
-                // Sumamos lo que ya tienen escrito los OTROS campos de pago
-                const sumOtros = camposPago
+                // Sumamos lo que ya tienen escrito los OTROS campos de Bs y lo de Divisas (convertido)
+                const valorDivisasBs = (parseFloat(inputDivisas?.value) || 0) * tasaActual;
+                const sumOtrosBs = camposBs
                     .filter(c => c !== id)
-                    .reduce((acc, cId) => {
-                        const valor = parseFloat(document.getElementById(cId)?.value) || 0;
-                        return acc + valor;
-                    }, 0);
+                    .reduce((acc, cId) => acc + (parseFloat(document.getElementById(cId)?.value) || 0), 0);
                 
-                // Calculamos cuánto falta para completar la venta
-                const pendiente = totalBs - sumOtros;
+                const pendiente = totalBs - sumOtrosBs - valorDivisasBs;
                 el.value = (pendiente > 0 ? pendiente : 0).toFixed(2);
-            });
-            
-            // Opcional: También permitimos que al tabular o escribir cambie el valor
-            el.addEventListener('input', () => {
-                // Si el usuario escribe manualmente, el sistema no bloquea el valor
+                document.getElementById('btnConfirmarVenta').disabled = false;
             });
         }
     });
-});
+
+    // Lógica para el campo de Divisas (auto-rellena el resto en Efectivo Bs al escribir)
+    if (inputDivisas) {
+        inputDivisas.addEventListener('input', function() {
+            const totalBs = (window.totalVentaUSD || 0) * tasaActual;
+            const valorDivisasBs = (parseFloat(this.value) || 0) * tasaActual;
+            
+            // Sumamos lo que hay en Punto y Pago Móvil
+            const sumPuntoMovil = (parseFloat(document.getElementById('in-punto-bs')?.value) || 0) + 
+                                  (parseFloat(document.getElementById('in-pagomovil-bs')?.value) || 0);
+            
+            const resto = totalBs - valorDivisasBs - sumPuntoMovil;
+            
+            // El resto se asigna automáticamente a Efectivo Bs
+            document.getElementById('in-efectivo-bs').value = (resto > 0 ? resto : 0).toFixed(2);
+            document.getElementById('btnConfirmarVenta').disabled = false;
+        });
+    }
 
 
 // ==========================================
