@@ -108,19 +108,30 @@ window.agregarCarrito = (id) => {
 
 window.registrarVenta = async () => {
     try {
+        // En lugar de usar una variable global fija, aseguramos el número al momento de guardar
+        // Opcional: podrías llamar a una función que busque el último ID en Firestore aquí mismo
+        
         await addDoc(collection(db, "usuarios", USER_ID, "ventas"), {
             fecha: serverTimestamp(),
-            nro_factura: proximoNumeroFacturaStr,
+            nro_factura: proximoNumeroFacturaStr, // Usa la variable que ya tienes
             total_usd: window.totalVentaUSD,
             tasa: tasaActual,
             formato: formatoFactura,
             items: carrito
         });
-        alert("✅ Venta registrada: " + proximoNumeroFacturaStr);
+
+        alert("✅ Venta registrada correctamente.");
+        
+        // Limpiamos
         carrito = [];
         window.actualizarCarritoUI();
         document.getElementById('modalPago').style.display = 'none';
-    } catch (e) { alert("Error: " + e.message); }
+        
+        // IMPORTANTE: Incrementamos el contador para la próxima venta
+        const ultimoNro = parseInt(proximoNumeroFacturaStr);
+        proximoNumeroFacturaStr = (ultimoNro + 1).toString().padStart(6, '0');
+        
+    } catch (e) { alert("Error al guardar: " + e.message); }
 };
 
 // ==========================================
@@ -338,17 +349,14 @@ window.abrirModalCobro = () => {
         const totalUSD = window.totalVentaUSD || 0;
         const totalBs = totalUSD * tasaActual;
         
-        // Actualizar valores en el modal
+        // Solo actualizamos los totales visuales
         const dUSD = document.getElementById('totalModalUSD');
         const dBS = document.getElementById('totalModalBS');
-        const inputFactura = document.getElementById('nro_control_factura');
         
         if (dUSD) dUSD.innerText = `$ ${totalUSD.toFixed(2)}`;
         if (dBS) dBS.innerText = `${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2})} Bs.`;
-        if (inputFactura) inputFactura.value = proximoNumeroFacturaStr;
         
         modal.style.display = 'flex';
-        // Foco al primer input de pago
         document.getElementById('in-divisas-usd')?.focus();
     }
 };
