@@ -28,23 +28,20 @@ let formatoFactura = "ticket";
 // ==========================================
 async function cargarConfiguracionGlobal() {
     try {
-        // Obtenemos la referencia al documento del usuario
         const userDocRef = doc(db, "usuarios", USER_ID);
         const snapConfig = await getDoc(userDocRef);
         
         if (snapConfig.exists()) {
             const data = snapConfig.data();
-            // Asignamos la tasa desde el campo 'tasa_bcv' (según tu base de datos)
             tasaActual = data.tasa_bcv || 1.0;
             formatoFactura = data.formato_factura || "ticket";
             
-            // ACTUALIZACIÓN DE LA UI
-            const labelBCV = document.getElementById('display-tasa-bcv');
-            if (labelBCV) {
-                labelBCV.innerText = `BCV: ${tasaActual.toLocaleString('es-VE', {minimumFractionDigits: 2})} Bs.`;
+            // --- AQUÍ ESTÁ EL CAMBIO PARA TU HTML ---
+            const spanTasa = document.getElementById('txt-tasa');
+            if (spanTasa) {
+                spanTasa.innerText = tasaActual.toLocaleString('es-VE', {minimumFractionDigits: 2});
             }
         }
-        console.log("Configuración cargada: Tasa", tasaActual, "Formato", formatoFactura);
     } catch (e) {
         console.error("Error al cargar configuración:", e);
     }
@@ -202,11 +199,20 @@ window.actualizarCarritoUI = () => {
         </div>
     `).join('');
 
-    const total = carrito.reduce((sum, item) => sum + (item.cantidad * (item.precio || 0)), 0);
-    window.totalVentaUSD = total;
+    const totalUSD = carrito.reduce((sum, item) => sum + (item.cantidad * (item.precio || 0)), 0);
+    window.totalVentaUSD = totalUSD;
     
+    // Total en USD
     if(document.getElementById('total-usd')) 
-        document.getElementById('total-usd').innerText = `$ ${total.toFixed(2)}`;
+        document.getElementById('total-usd').innerText = `$ ${totalUSD.toFixed(2)}`;
+
+    // --- ESTA ES LA PARTE QUE DEBES ASEGURAR ---
+    // Cálculo y actualización del total en Bolívares
+    const totalBs = totalUSD * tasaActual;
+    const displayBs = document.getElementById('total-bs');
+    if (displayBs) {
+        displayBs.innerText = `${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2})} Bs.`;
+    }
 };
 
 // ==========================================
