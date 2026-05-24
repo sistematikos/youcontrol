@@ -131,25 +131,38 @@ window.registrarVenta = async () => {
 // ==========================================
 // 4. INTEGRACIÓN UI: BÚSQUEDA DE CLIENTES
 // ==========================================
-const inputCliente = document.getElementById('buscar-cliente-pos');
-const divResultados = document.getElementById('resultados-cliente-pos');
+// Aseguramos que la función esté en el ámbito global
+window.seleccionarCliente = (id, nombre) => {
+    console.log("Intentando seleccionar:", id, nombre); // DEBUG: Mira esto en la consola F12
+    
+    const inputCliente = document.getElementById('buscar-cliente-pos');
+    const divResultados = document.getElementById('resultados-cliente-pos');
+    
+    if (inputCliente) {
+        inputCliente.value = nombre;
+    }
+    
+    if (divResultados) {
+        divResultados.style.display = 'none';
+        divResultados.innerHTML = ''; // Limpiamos para evitar residuos
+    }
+    
+    window.clienteSeleccionadoID = id; 
+    
+    // Enfocamos el siguiente input para flujo rápido
+    document.getElementById('buscar-producto-pos')?.focus();
+};
 
-if (inputCliente) {
-    inputCliente.addEventListener('input', (e) => {
-        const resultados = window.buscarCliente(e.target.value);
-        if (resultados.length > 0 && e.target.value.trim() !== "") {
-            divResultados.style.display = 'block';
-            divResultados.innerHTML = resultados.map(c => `
-                <div class="resultado-item" style="padding: 10px; cursor: pointer; border-bottom: 1px solid #f1f5f9;"
-                     onclick="window.seleccionarCliente('${c.id}', '${c.nombre}')">
-                     <strong>${c.id}</strong> - ${c.nombre}
-                </div>
-            `).join('');
-        } else {
-            divResultados.style.display = 'none';
-        }
-    });
-}
+// Ajuste en el generador de resultados (Bloque 4, dentro del eventListener 'input')
+divResultados.innerHTML = resultados.map(c => `
+    <div class="resultado-item" 
+         style="padding: 10px; cursor: pointer; border-bottom: 1px solid #f1f5f9; background: white;"
+         onmouseover="this.style.background='#f0f0f0'" 
+         onmouseout="this.style.background='white'"
+         onclick="window.seleccionarCliente('${c.id}', '${c.nombre.replace(/'/g, "\\'")}')">
+         <strong>${c.id}</strong> - ${c.nombre}
+    </div>
+`).join('');
 
 window.seleccionarCliente = (id, nombre) => {
     inputCliente.value = nombre;
