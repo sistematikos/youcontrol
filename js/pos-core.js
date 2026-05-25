@@ -176,77 +176,80 @@ window.manejarNavegacion = (e, contenedorId, indiceVar) => {
 };
 
 // ==========================================
-// 5. LISTENERS DE UI (Evento Input y Teclas)
+// 5. INICIALIZACIÓN POR SECCIONES
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("DOM cargado - Inicializando listeners");
+    console.log("DOM cargado - Inicializando módulos...");
 
-    // 1. Búsqueda Cliente
+    // Inicializar buscadores (Responsabilidad: Selección de datos)
+    initBuscadores();
+
+    // Inicializar pagos (Responsabilidad: Cierre de venta)
+    initLogicaPagos();
+});
+
+// Bloque 1: Separado y modular
+function initBuscadores() {
     const inputCliente = document.getElementById('buscar-cliente-pos');
-    if (inputCliente) {
-        inputCliente.addEventListener('input', (e) => {
-            const resultados = window.buscarCliente(e.target.value);
-            const divRes = document.getElementById('resultados-cliente-pos');
-            if (resultados.length > 0 && e.target.value.trim() !== "") {
-                divRes.style.display = 'block';
-                divRes.innerHTML = resultados.map(c => `
-                    <div class="resultado-item" style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;"
-                         onclick="window.seleccionarCliente('${c.id}', '${c.nombre.replace(/'/g, "\\'")}')">
-                         <strong>${c.id}</strong> - ${c.nombre}
-                    </div>`).join('');
-            } else { divRes.style.display = 'none'; }
-        });
-        inputCliente.addEventListener('keydown', (e) => {
-            window.indiceClie = window.manejarNavegacion(e, 'resultados-cliente-pos', window.indiceClie);
-        });
-    }
-
-    // 2. Búsqueda Producto
     const inputProd = document.getElementById('buscar-producto-pos');
-    if (inputProd) {
-        inputProd.addEventListener('input', (e) => {
-            const resultados = window.buscarProducto(e.target.value);
-            const divRes = document.getElementById('resultados-producto-pos');
-            if (resultados.length > 0 && e.target.value.trim() !== "") {
-                divRes.style.display = 'block';
-                divRes.innerHTML = resultados.map(p => `
-                    <div class="resultado-item" style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;"
-                         onclick="window.seleccionarProducto('${p.id}')">
-                         <strong>${p.nombre}</strong> - $${p.precio}
-                    </div>`).join('');
-            } else { divRes.style.display = 'none'; }
-        });
-        inputProd.addEventListener('keydown', (e) => {
-            window.indiceProd = window.manejarNavegacion(e, 'resultados-producto-pos', window.indiceProd);
-        });
-    }
 
-    // 3. LÓGICA DE PAGOS (Cálculo automático mejorado)
+    // Listener Cliente
+    inputCliente?.addEventListener('input', (e) => {
+        const resultados = window.buscarCliente(e.target.value);
+        const divRes = document.getElementById('resultados-cliente-pos');
+        if (resultados.length > 0 && e.target.value.trim() !== "") {
+            divRes.style.display = 'block';
+            divRes.innerHTML = resultados.map(c => `
+                <div class="resultado-item" style="padding: 10px; cursor: pointer;"
+                     onclick="window.seleccionarCliente('${c.id}', '${c.nombre.replace(/'/g, "\\'")}')">
+                     <strong>${c.id}</strong> - ${c.nombre}
+                </div>`).join('');
+        } else { divRes.style.display = 'none'; }
+    });
+
+    // Listener Producto
+    inputProd?.addEventListener('input', (e) => {
+        const resultados = window.buscarProducto(e.target.value);
+        const divRes = document.getElementById('resultados-producto-pos');
+        if (resultados.length > 0 && e.target.value.trim() !== "") {
+            divRes.style.display = 'block';
+            divRes.innerHTML = resultados.map(p => `
+                <div class="resultado-item" style="padding: 10px; cursor: pointer;"
+                     onclick="window.seleccionarProducto('${p.id}')">
+                     <strong>${p.nombre}</strong> - $${p.precio}
+                </div>`).join('');
+        } else { divRes.style.display = 'none'; }
+    });
+}
+
+// Bloque 2: Separado y modular
+function initLogicaPagos() {
     const camposBs = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs'];
     const inputDivisas = document.getElementById('in-divisas-usd');
 
-    // Función para calcular lo pendiente
-    const calcularRestante = () => {
-        const totalBs = (window.totalVentaUSD || 0) * tasaActual;
-        const divBs = (parseFloat(inputDivisas?.value) || 0) * tasaActual;
-        const sumBs = camposBs.reduce((acc, id) => acc + (parseFloat(document.getElementById(id)?.value) || 0), 0);
-        return totalBs - divBs - sumBs;
-    };
-
-    // Click en campos de Bs: completa el restante en Bs
+    // Eventos Click en Bs
     camposBs.forEach(id => {
         document.getElementById(id)?.addEventListener('click', () => {
             const el = document.getElementById(id);
-            const pendiente = calcularRestante() + (parseFloat(el.value) || 0);
+            const totalBs = (window.totalVentaUSD || 0) * tasaActual;
+            const valorDivisasBs = (parseFloat(inputDivisas?.value) || 0) * tasaActual;
+            const sumOtrosBs = camposBs
+                .filter(c => c !== id)
+                .reduce((acc, cId) => acc + (parseFloat(document.getElementById(cId)?.value) || 0), 0);
+            
+            const pendiente = totalBs - sumOtrosBs - valorDivisasBs;
             el.value = (pendiente > 0 ? pendiente : 0).toFixed(2);
         });
     });
 
-    // Click en campo de Divisas: completa el restante en $
+    // Evento Divisas
     inputDivisas?.addEventListener('click', () => {
-        const pendienteBs = calcularRestante() + ((parseFloat(inputDivisas.value) || 0) * tasaActual);
-        inputDivisas.value = (pendienteBs / tasaActual).toFixed(2);
+        const totalBs = (window.totalVentaUSD || 0) * tasaActual;
+        const sumBs = camposBs.reduce((acc, cId) => acc + (parseFloat(document.getElementById(cId)?.value) || 0), 0);
+        const pendienteBs = totalBs - sumBs;
+        inputDivisas.value = (pendienteBs / tasaActual > 0 ? (pendienteBs / tasaActual) : 0).toFixed(2);
     });
+}
 
 // ==========================================
 // 7. ACTUALIZACIÓN VISUAL Y COMANDOS
