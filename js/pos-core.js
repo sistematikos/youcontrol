@@ -9,46 +9,32 @@ import { collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc } from "ht
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 if (!USER_ID) window.location.href = "index.html"; 
 
-// Variables de Estado
 let productosMaster = [];
 let clientesMaster = []; 
 let carrito = [];
-let proximoNumeroFacturaStr = "000001";
 let tasaActual = 1.0; 
 
 // ==========================================
 // 1. CARGA DE DATOS (FIREBASE)
 // ==========================================
 async function initDatos() {
-    const snap = await getDoc(doc(db, "usuarios", USER_ID));
-    if (snap.exists()) {
-        tasaActual = snap.data().tasa_bcv || 1.0;
-        document.getElementById('txt-tasa')?.innerText = tasaActual.toLocaleString('es-VE', {minimumFractionDigits: 2});
-    }
-
-    onSnapshot(collection(db, "usuarios", USER_ID, "clientes"), (s) => {
-        clientesMaster = s.docs.map(d => ({ id: d.id, ...d.data() }));
-    });
-    onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (s) => {
-        productosMaster = s.docs.map(d => ({ id: d.id, ...d.data() }));
-    });
+    try {
+        const snap = await getDoc(doc(db, "usuarios", USER_ID));
+        if (snap.exists()) {
+            tasaActual = snap.data().tasa_bcv || 1.0;
+            document.getElementById('txt-tasa')?.innerText = tasaActual.toLocaleString('es-VE', {minimumFractionDigits: 2});
+        }
+        onSnapshot(collection(db, "usuarios", USER_ID, "clientes"), (s) => {
+            clientesMaster = s.docs.map(d => ({ id: d.id, ...d.data() }));
+        });
+        onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (s) => {
+            productosMaster = s.docs.map(d => ({ id: d.id, ...d.data() }));
+        });
+    } catch (e) { console.error("Error iniciando datos:", e); }
 }
 
 // ==========================================
-// 2. MOTORES DE BÚSQUEDA
-// ==========================================
-window.buscarProducto = (texto) => {
-    const c = texto.toLowerCase().trim();
-    return !c ? [] : productosMaster.filter(p => (p.nombre+p.id+p.barras).toLowerCase().includes(c));
-};
-
-window.buscarCliente = (texto) => {
-    const c = texto.toLowerCase().trim();
-    return !c ? [] : clientesMaster.filter(cl => (cl.nombre+cl.id).toLowerCase().includes(c));
-};
-
-// ==========================================
-// 3. LÓGICA DE CARRITO Y VENTAS
+// 2. LÓGICA DE CARRITO Y BÚSQUEDA
 // ==========================================
 window.agregarCarrito = (id) => {
     const p = productosMaster.find(x => x.id === id);
@@ -68,44 +54,42 @@ window.actualizarCarritoUI = () => {
         </div>`).join('');
     
     window.totalVentaUSD = carrito.reduce((s, i) => s + (i.cantidad * (i.precio || 0)), 0);
-    document.getElementById('total-usd').innerText = `$ ${window.totalVentaUSD.toFixed(2)}`;
-    document.getElementById('total-bs').innerText = `${(window.totalVentaUSD * tasaActual).toLocaleString('es-VE', {minimumFractionDigits: 2})} Bs.`;
+    document.getElementById('total-usd')?.innerText = `$ ${window.totalVentaUSD.toFixed(2)}`;
+    document.getElementById('total-bs')?.innerText = `${(window.totalVentaUSD * tasaActual).toLocaleString('es-VE', {minimumFractionDigits: 2})} Bs.`;
 };
 
 // ==========================================
-// 4. INTEGRACIÓN UI (LISTENERS Y EVENTOS)
+// 3. EVENTOS (DOM)
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     initDatos();
 
-    // Listener Buscador Producto
+    // Buscador Producto
     document.getElementById('buscar-producto-pos')?.addEventListener('input', (e) => {
-        const res = window.buscarProducto(e.target.value);
+        const c = e.target.value.toLowerCase().trim();
+        const res = !c ? [] : productosMaster.filter(p => (p.nombre+p.id+p.barras).toLowerCase().includes(c));
         const div = document.getElementById('resultados-producto-pos');
-        if (res.length > 0 && e.target.value.trim() !== "") {
+        if (res.length > 0 && c !== "") {
             div.style.display = 'block';
             div.innerHTML = res.map(p => `<div class="resultado-item" style="padding:10px; cursor:pointer;" onclick="window.seleccionarProducto('${p.id}')"><strong>${p.nombre}</strong></div>`).join('');
         } else { div.style.display = 'none'; }
     });
 
-    // Listener Buscador Cliente
+    // Buscador Cliente
     document.getElementById('buscar-cliente-pos')?.addEventListener('input', (e) => {
-        const res = window.buscarCliente(e.target.value);
+        const c = e.target.value.toLowerCase().trim();
+        const res = !c ? [] : clientesMaster.filter(cl => (cl.nombre+cl.id).toLowerCase().includes(c));
         const div = document.getElementById('resultados-cliente-pos');
-        if (res.length > 0 && e.target.value.trim() !== "") {
+        if (res.length > 0 && c !== "") {
             div.style.display = 'block';
-            div.innerHTML = res.map(c => `<div class="resultado-item" style="padding:10px; cursor:pointer;" onclick="window.seleccionarCliente('${c.id}', '${c.nombre.replace(/'/g, "\\'")}')"><strong>${c.nombre}</strong></div>`).join('');
+            div.innerHTML = res.map(cl => `<div class="resultado-item" style="padding:10px; cursor:pointer;" onclick="window.seleccionarCliente('${cl.id}', '${cl.nombre.replace(/'/g, "\\'")}')"><strong>${cl.nombre}</strong></div>`).join('');
         } else { div.style.display = 'none'; }
     });
-
-    // Listener Teclado Global (Atajos)
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'F9') { e.preventDefault(); window.abrirModalCobro(); }
-        if (e.key === 'F6') { e.preventDefault(); window.ejecutarF6(); }
-    }, true);
 });
 
-// Funciones de Selección
+// ==========================================
+// 4. FUNCIONES GLOBALES DE UI
+// ==========================================
 window.seleccionarProducto = (id) => {
     window.agregarCarrito(id);
     document.getElementById('buscar-producto-pos').value = '';
@@ -117,26 +101,3 @@ window.seleccionarCliente = (id, nombre) => {
     window.clienteSeleccionadoID = id;
     document.getElementById('resultados-cliente-pos').style.display = 'none';
 };
-
-window.abrirModalCobro = () => {
-    if (carrito.length > 0) document.getElementById('modalPago').style.display = 'flex';
-};
-
-window.ejecutarF6 = () => { if(carrito.length > 0) { carrito.pop(); window.actualizarCarritoUI(); } };
-
-// ==========================================
-// INICIALIZACIÓN FINAL CORREGIDA
-// ==========================================
-cargarConfiguracionGlobal().then(async () => {
-    // 1. Cargamos los datos de Firebase primero
-    inicializarClientes();
-    inicializarProductos();
-
-    // 2. Esperamos un breve momento para asegurar que las variables estén pobladas
-    // y luego inicializamos los buscadores y pagos
-    setTimeout(() => {
-        if (typeof initBuscadores === 'function') initBuscadores();
-        if (typeof initLogicaPagos === 'function') initLogicaPagos();
-        console.log("Sistema cargado y listeners activos.");
-    }, 1000); // 1 segundo de espera es suficiente para que Firebase responda
-});
