@@ -95,54 +95,43 @@ window.buscarCliente = (texto) => {
     );
 };
 
-    // ==========================================
-    // 3. LÓGICA DE PAGOS (Cálculo automático)
-    // ==========================================
-    const idsBs = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs'];
-    const inputDivisas = document.getElementById('in-divisas-usd');
-
-    // Función que calcula cuánto falta por pagar en Bs
-    const obtenerPendienteBs = (excluirId = '') => {
-        const totalVentaBs = (window.totalVentaUSD || 0) * tasaActual;
-        let sumOtrosBs = 0;
-        
-        // Sumar otros campos de Bs
-        idsBs.forEach(id => {
-            if (id !== excluirId) sumOtrosBs += parseFloat(document.getElementById(id)?.value) || 0;
-        });
-        
-        // Sumar divisas (convertidas a Bs) si no estamos clicando en el campo divisas
-        if (excluirId !== 'in-divisas-usd') {
-            sumOtrosBs += (parseFloat(inputDivisas?.value) || 0) * tasaActual;
-        }
-        
-        return Math.max(0, totalVentaBs - sumOtrosBs);
-    };
-
-    // Al hacer click en cualquier campo (Bs o Divisas), se rellena con el saldo pendiente
-    [...idsBs, 'in-divisas-usd'].forEach(id => {
-        const el = document.getElementById(id);
-        el?.addEventListener('click', () => {
-            const pendienteBs = obtenerPendienteBs(id);
-            
-            if (id === 'in-divisas-usd') {
-                // Si es divisas, mostramos el resultado en dólares
-                el.value = (pendienteBs / tasaActual).toFixed(2);
-            } else {
-                // Si es Bs, mostramos el resultado en Bolívares
-                el.value = pendienteBs.toFixed(2);
-            }
-        });
-    });
-
 // ==========================================
-// FUNCIÓN PARA RESETEAR (Llamar tras registrar venta)
+// 3. CARRITO Y VENTAS
 // ==========================================
-const resetearCamposPago = () => {
-    ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd'].forEach(id => {
-        const el = document.getElementById(id);
-        if(el) el.value = "0.00";
-    });
+window.agregarCarrito = (id) => {
+    const p = productosMaster.find(x => x.id === id);
+    if (!p) return;
+    const item = carrito.find(c => c.id === id);
+    if (item) item.cantidad++; else carrito.push({ ...p, cantidad: 1 });
+    window.actualizarCarritoUI();
+};
+
+window.registrarVenta = async () => {
+    try {
+        // En lugar de usar una variable global fija, aseguramos el número al momento de guardar
+        // Opcional: podrías llamar a una función que busque el último ID en Firestore aquí mismo
+        
+        await addDoc(collection(db, "usuarios", USER_ID, "ventas"), {
+            fecha: serverTimestamp(),
+            nro_factura: proximoNumeroFacturaStr, // Usa la variable que ya tienes
+            total_usd: window.totalVentaUSD,
+            tasa: tasaActual,
+            formato: formatoFactura,
+            items: carrito
+        });
+
+        alert("✅ Venta registrada correctamente.");
+        
+        // Limpiamos
+        carrito = [];
+        window.actualizarCarritoUI();
+        document.getElementById('modalPago').style.display = 'none';
+        
+        // IMPORTANTE: Incrementamos el contador para la próxima venta
+        const ultimoNro = parseInt(proximoNumeroFacturaStr);
+        proximoNumeroFacturaStr = (ultimoNro + 1).toString().padStart(6, '0');
+        
+    } catch (e) { alert("Error al guardar: " + e.message); }
 };
 
 // ==========================================
@@ -367,7 +356,7 @@ window.abrirModalCobro = () => {
         if (dBS) dBS.innerText = `${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2})} Bs.`;
         
         modal.style.display = 'flex';
-        document.getElementById('in-punto-bs')?.focus();
+        document.getElementById('in-divisas-usd')?.focus();
     }
 };
 
