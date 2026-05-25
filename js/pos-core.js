@@ -108,16 +108,34 @@ window.agregarCarrito = (id) => {
 
 window.registrarVenta = async () => {
     try {
-        // En lugar de usar una variable global fija, aseguramos el número al momento de guardar
-        // Opcional: podrías llamar a una función que busque el último ID en Firestore aquí mismo
+        // Obtenemos los valores de los inputs en el DOM
+        const pagoUSD = parseFloat(document.getElementById('in-divisas-usd')?.value) || 0;
+        const pagoPunto = (parseFloat(document.getElementById('in-punto-bs')?.value) || 0) / tasaActual;
+        const pagoMovil = (parseFloat(document.getElementById('in-pagomovil-bs')?.value) || 0) / tasaActual;
+        const pagoEfectivo = (parseFloat(document.getElementById('in-efectivo-bs')?.value) || 0) / tasaActual;
+
+        const totalPagadoUSD = pagoUSD + pagoPunto + pagoMovil + pagoEfectivo;
         
+        // Validación básica: permite una pequeña diferencia por redondeo de tasa
+        if (totalPagadoUSD < (window.totalVentaUSD - 0.01)) {
+            alert("⚠️ El monto pagado es menor al total de la venta.");
+            return;
+        }
+
         await addDoc(collection(db, "usuarios", USER_ID, "ventas"), {
             fecha: serverTimestamp(),
-            nro_factura: proximoNumeroFacturaStr, // Usa la variable que ya tienes
+            nro_factura: proximoNumeroFacturaStr,
             total_usd: window.totalVentaUSD,
             tasa: tasaActual,
             formato: formatoFactura,
-            items: carrito
+            items: carrito,
+            // Guardamos el desglose de pago
+            pago: {
+                divisas_usd: pagoUSD,
+                punto_bs: (pagoPunto * tasaActual),
+                pagomovil_bs: (pagoMovil * tasaActual),
+                efectivo_bs: (pagoEfectivo * tasaActual)
+            }
         });
 
         alert("✅ Venta registrada correctamente.");
@@ -127,9 +145,13 @@ window.registrarVenta = async () => {
         window.actualizarCarritoUI();
         document.getElementById('modalPago').style.display = 'none';
         
-        // IMPORTANTE: Incrementamos el contador para la próxima venta
-        const ultimoNro = parseInt(proximoNumeroFacturaStr);
-        proximoNumeroFacturaStr = (ultimoNro + 1).toString().padStart(6, '0');
+        // Reset de campos de pago
+        document.getElementById('in-divisas-usd').value = "";
+        document.getElementById('in-punto-bs').value = "";
+        document.getElementById('in-pagomovil-bs').value = "";
+        document.getElementById('in-efectivo-bs').value = "";
+        
+        proximoNumeroFacturaStr = (parseInt(proximoNumeroFacturaStr) + 1).toString().padStart(6, '0');
         
     } catch (e) { alert("Error al guardar: " + e.message); }
 };
