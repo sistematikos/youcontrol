@@ -221,38 +221,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 3. LÓGICA DE PAGOS
+    // 3. LÓGICA DE PAGOS (Cálculo automático mejorado)
     const camposBs = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs'];
     const inputDivisas = document.getElementById('in-divisas-usd');
 
+    // Función para calcular lo pendiente
+    const calcularRestante = () => {
+        const totalBs = (window.totalVentaUSD || 0) * tasaActual;
+        const divBs = (parseFloat(inputDivisas?.value) || 0) * tasaActual;
+        const sumBs = camposBs.reduce((acc, id) => acc + (parseFloat(document.getElementById(id)?.value) || 0), 0);
+        return totalBs - divBs - sumBs;
+    };
+
+    // Click en campos de Bs: completa el restante en Bs
     camposBs.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.addEventListener('click', () => {
-                const totalBs = (window.totalVentaUSD || 0) * tasaActual;
-                const valorDivisasBs = (parseFloat(inputDivisas?.value) || 0) * tasaActual;
-                const sumOtrosBs = camposBs
-                    .filter(c => c !== id)
-                    .reduce((acc, cId) => acc + (parseFloat(document.getElementById(cId)?.value) || 0), 0);
-                
-                const pendiente = totalBs - sumOtrosBs - valorDivisasBs;
-                el.value = (pendiente > 0 ? pendiente : 0).toFixed(2);
-            });
-        }
+        document.getElementById(id)?.addEventListener('click', () => {
+            const el = document.getElementById(id);
+            const pendiente = calcularRestante() + (parseFloat(el.value) || 0);
+            el.value = (pendiente > 0 ? pendiente : 0).toFixed(2);
+        });
     });
 
-    if (inputDivisas) {
-        inputDivisas.addEventListener('input', function() {
-            const totalBs = (window.totalVentaUSD || 0) * tasaActual;
-            const valorDivisasBs = (parseFloat(this.value) || 0) * tasaActual;
-            const sumPuntoMovil = (parseFloat(document.getElementById('in-punto-bs')?.value) || 0) + 
-                                  (parseFloat(document.getElementById('in-pagomovil-bs')?.value) || 0);
-            const resto = totalBs - valorDivisasBs - sumPuntoMovil;
-            document.getElementById('in-efectivo-bs').value = (resto > 0 ? resto : 0).toFixed(2);
-        });
-    }
-}); // <--- ESTA LLAVE CIERRA EL DOMContentLoaded
-
+    // Click en campo de Divisas: completa el restante en $
+    inputDivisas?.addEventListener('click', () => {
+        const pendienteBs = calcularRestante() + ((parseFloat(inputDivisas.value) || 0) * tasaActual);
+        inputDivisas.value = (pendienteBs / tasaActual).toFixed(2);
+    });
 
 // ==========================================
 // 7. ACTUALIZACIÓN VISUAL Y COMANDOS
