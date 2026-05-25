@@ -95,70 +95,54 @@ window.buscarCliente = (texto) => {
     );
 };
 
-// ==========================================
+    // ==========================================
     // 3. LÓGICA DE PAGOS (Cálculo automático)
     // ==========================================
     const idsBs = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs'];
     const inputDivisas = document.getElementById('in-divisas-usd');
 
-    // Función que recalcula el pendiente
-    const calcularPendiente = (campoActualId) => {
+    // Función que calcula cuánto falta por pagar en Bs
+    const obtenerPendienteBs = (excluirId = '') => {
         const totalVentaBs = (window.totalVentaUSD || 0) * tasaActual;
-        
-        // Sumar lo que ya hay en los otros campos de Bs
         let sumOtrosBs = 0;
+        
+        // Sumar otros campos de Bs
         idsBs.forEach(id => {
-            if (id !== campoActualId) {
-                sumOtrosBs += parseFloat(document.getElementById(id)?.value) || 0;
-            }
+            if (id !== excluirId) sumOtrosBs += parseFloat(document.getElementById(id)?.value) || 0;
         });
-
-        // Sumar lo que hay en divisas convertido a Bs
-        const valorDivisasBs = (parseFloat(inputDivisas?.value) || 0) * tasaActual;
         
-        const totalYaPagado = sumOtrosBs + (campoActualId === 'divisas' ? 0 : valorDivisasBs);
-        const pendiente = totalVentaBs - totalYaPagado;
+        // Sumar divisas (convertidas a Bs) si no estamos clicando en el campo divisas
+        if (excluirId !== 'in-divisas-usd') {
+            sumOtrosBs += (parseFloat(inputDivisas?.value) || 0) * tasaActual;
+        }
         
-        return pendiente > 0 ? pendiente : 0;
+        return Math.max(0, totalVentaBs - sumOtrosBs);
     };
 
-    // Listener para campos de Bolívares (click para completar)
-    idsBs.forEach(id => {
+    // Al hacer click en cualquier campo (Bs o Divisas), se rellena con el saldo pendiente
+    [...idsBs, 'in-divisas-usd'].forEach(id => {
         const el = document.getElementById(id);
         el?.addEventListener('click', () => {
-            const faltante = calcularPendiente(id);
-            el.value = faltante.toFixed(2);
+            const pendienteBs = obtenerPendienteBs(id);
+            
+            if (id === 'in-divisas-usd') {
+                // Si es divisas, mostramos el resultado en dólares
+                el.value = (pendienteBs / tasaActual).toFixed(2);
+            } else {
+                // Si es Bs, mostramos el resultado en Bolívares
+                el.value = pendienteBs.toFixed(2);
+            }
         });
     });
 
-    // Listener para campo de Divisas (click para completar en dólares)
-    inputDivisas?.addEventListener('click', () => {
-        const totalVentaBs = (window.totalVentaUSD || 0) * tasaActual;
-        let sumOtrosBs = 0;
-        idsBs.forEach(id => { sumOtrosBs += parseFloat(document.getElementById(id)?.value) || 0; });
-        
-        const pendienteBs = totalVentaBs - sumOtrosBs;
-        const pendienteUsd = pendienteBs / tasaActual;
-        
-        inputDivisas.value = (pendienteUsd > 0 ? pendienteUsd : 0).toFixed(2);
+// ==========================================
+// FUNCIÓN PARA RESETEAR (Llamar tras registrar venta)
+// ==========================================
+const resetearCamposPago = () => {
+    ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.value = "0.00";
     });
-
-        alert("✅ Venta registrada correctamente.");
-        
-        // Limpiamos
-        carrito = [];
-        window.actualizarCarritoUI();
-        document.getElementById('modalPago').style.display = 'none';
-        
-        // Reset de campos de pago
-        document.getElementById('in-divisas-usd').value = "";
-        document.getElementById('in-punto-bs').value = "";
-        document.getElementById('in-pagomovil-bs').value = "";
-        document.getElementById('in-efectivo-bs').value = "";
-        
-        proximoNumeroFacturaStr = (parseInt(proximoNumeroFacturaStr) + 1).toString().padStart(6, '0');
-        
-    } catch (e) { alert("Error al guardar: " + e.message); }
 };
 
 // ==========================================
