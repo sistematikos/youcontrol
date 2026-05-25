@@ -176,80 +176,79 @@ window.manejarNavegacion = (e, contenedorId, indiceVar) => {
 };
 
 // ==========================================
-// 5. INICIALIZACIÓN POR SECCIONES
+// 5. INICIALIZACIÓN UNIFICADA (A prueba de fallos)
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("DOM cargado - Inicializando módulos...");
+    console.log("Inicializando POS...");
 
-    // Inicializar buscadores (Responsabilidad: Selección de datos)
-    initBuscadores();
-
-    // Inicializar pagos (Responsabilidad: Cierre de venta)
-    initLogicaPagos();
-});
-
-// Bloque 1: Separado y modular
-function initBuscadores() {
+    // 1. INICIALIZAR BUSCADORES (Primero, para que el POS funcione rápido)
     const inputCliente = document.getElementById('buscar-cliente-pos');
+    if (inputCliente) {
+        inputCliente.addEventListener('input', (e) => {
+            const resultados = window.buscarCliente(e.target.value);
+            const divRes = document.getElementById('resultados-cliente-pos');
+            if (resultados.length > 0 && e.target.value.trim() !== "") {
+                divRes.style.display = 'block';
+                divRes.innerHTML = resultados.map(c => `
+                    <div class="resultado-item" style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;"
+                         onclick="window.seleccionarCliente('${c.id}', '${c.nombre.replace(/'/g, "\\'")}')">
+                         <strong>${c.id}</strong> - ${c.nombre}
+                    </div>`).join('');
+            } else { divRes.style.display = 'none'; }
+        });
+        inputCliente.addEventListener('keydown', (e) => window.indiceClie = window.manejarNavegacion(e, 'resultados-cliente-pos', window.indiceClie));
+    }
+
     const inputProd = document.getElementById('buscar-producto-pos');
+    if (inputProd) {
+        inputProd.addEventListener('input', (e) => {
+            const resultados = window.buscarProducto(e.target.value);
+            const divRes = document.getElementById('resultados-producto-pos');
+            if (resultados.length > 0 && e.target.value.trim() !== "") {
+                divRes.style.display = 'block';
+                divRes.innerHTML = resultados.map(p => `
+                    <div class="resultado-item" style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;"
+                         onclick="window.seleccionarProducto('${p.id}')">
+                         <strong>${p.nombre}</strong> - $${p.precio}
+                    </div>`).join('');
+            } else { divRes.style.display = 'none'; }
+        });
+        inputProd.addEventListener('keydown', (e) => window.indiceProd = window.manejarNavegacion(e, 'resultados-producto-pos', window.indiceProd));
+    }
 
-    // Listener Cliente
-    inputCliente?.addEventListener('input', (e) => {
-        const resultados = window.buscarCliente(e.target.value);
-        const divRes = document.getElementById('resultados-cliente-pos');
-        if (resultados.length > 0 && e.target.value.trim() !== "") {
-            divRes.style.display = 'block';
-            divRes.innerHTML = resultados.map(c => `
-                <div class="resultado-item" style="padding: 10px; cursor: pointer;"
-                     onclick="window.seleccionarCliente('${c.id}', '${c.nombre.replace(/'/g, "\\'")}')">
-                     <strong>${c.id}</strong> - ${c.nombre}
-                </div>`).join('');
-        } else { divRes.style.display = 'none'; }
-    });
-
-    // Listener Producto
-    inputProd?.addEventListener('input', (e) => {
-        const resultados = window.buscarProducto(e.target.value);
-        const divRes = document.getElementById('resultados-producto-pos');
-        if (resultados.length > 0 && e.target.value.trim() !== "") {
-            divRes.style.display = 'block';
-            divRes.innerHTML = resultados.map(p => `
-                <div class="resultado-item" style="padding: 10px; cursor: pointer;"
-                     onclick="window.seleccionarProducto('${p.id}')">
-                     <strong>${p.nombre}</strong> - $${p.precio}
-                </div>`).join('');
-        } else { divRes.style.display = 'none'; }
-    });
-}
-
-// Bloque 2: Separado y modular
-function initLogicaPagos() {
+    // 2. INICIALIZAR LÓGICA DE PAGOS (La que te funcionaba)
     const camposBs = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs'];
     const inputDivisas = document.getElementById('in-divisas-usd');
 
-    // Eventos Click en Bs
     camposBs.forEach(id => {
-        document.getElementById(id)?.addEventListener('click', () => {
-            const el = document.getElementById(id);
-            const totalBs = (window.totalVentaUSD || 0) * tasaActual;
-            const valorDivisasBs = (parseFloat(inputDivisas?.value) || 0) * tasaActual;
-            const sumOtrosBs = camposBs
-                .filter(c => c !== id)
-                .reduce((acc, cId) => acc + (parseFloat(document.getElementById(cId)?.value) || 0), 0);
-            
-            const pendiente = totalBs - sumOtrosBs - valorDivisasBs;
-            el.value = (pendiente > 0 ? pendiente : 0).toFixed(2);
-        });
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('click', () => {
+                const totalBs = (window.totalVentaUSD || 0) * tasaActual;
+                const valorDivisasBs = (parseFloat(inputDivisas?.value) || 0) * tasaActual;
+                const sumOtrosBs = camposBs
+                    .filter(c => c !== id)
+                    .reduce((acc, cId) => acc + (parseFloat(document.getElementById(cId)?.value) || 0), 0);
+                
+                const pendiente = totalBs - sumOtrosBs - valorDivisasBs;
+                el.value = (pendiente > 0 ? pendiente : 0).toFixed(2);
+            });
+        }
     });
 
-    // Evento Divisas
-    inputDivisas?.addEventListener('click', () => {
-        const totalBs = (window.totalVentaUSD || 0) * tasaActual;
-        const sumBs = camposBs.reduce((acc, cId) => acc + (parseFloat(document.getElementById(cId)?.value) || 0), 0);
-        const pendienteBs = totalBs - sumBs;
-        inputDivisas.value = (pendienteBs / tasaActual > 0 ? (pendienteBs / tasaActual) : 0).toFixed(2);
-    });
-}
+    if (inputDivisas) {
+        inputDivisas.addEventListener('input', function() {
+            const totalBs = (window.totalVentaUSD || 0) * tasaActual;
+            const valorDivisasBs = (parseFloat(this.value) || 0) * tasaActual;
+            const sumPuntoMovil = (parseFloat(document.getElementById('in-punto-bs')?.value) || 0) + 
+                                  (parseFloat(document.getElementById('in-pagomovil-bs')?.value) || 0);
+            const resto = totalBs - valorDivisasBs - sumPuntoMovil;
+            document.getElementById('in-efectivo-bs').value = (resto > 0 ? resto : 0).toFixed(2);
+        });
+    }
+    
+    console.log("POS Inicializado correctamente.");
+});
 
 // ==========================================
 // 7. ACTUALIZACIÓN VISUAL Y COMANDOS
