@@ -272,45 +272,40 @@ window.actualizarCarritoUI = () => {
 };
 
 // ==========================================
-// 8. COMANDOS DE TECLADO (BLOQUEO FORZADO)
+// 8. COMANDOS DE TECLADO Y ATAJOS
 // ==========================================
-document.addEventListener('keydown', (event) => {
-    // 1. SIEMPRE capturamos F5 para tener control total
-    if (event.key === 'F5') {
-        event.preventDefault(); // Esto detiene el refresco nativo del navegador SIEMPRE
-        event.stopImmediatePropagation(); // Detiene cualquier otro listener que interfiera
+const initComandos = () => {
+    document.addEventListener('keydown', (event) => {
+        const teclasMap = {
+            'F4': window.ejecutarF4,
+            'F5': manejarF5,
+            'F6': window.ejecutarF6,
+            'F9': window.abrirModalCobro
+        };
 
-        const modalPago = document.getElementById('modalPago');
-        // Verificamos si está visible (display block, flex, o grid)
-        const estaEnPago = modalPago && (window.getComputedStyle(modalPago).display !== 'none');
-
-        if (estaEnPago) {
-            // Si estamos en pago, damos la opción de refrescar manualmente
-            if (confirm("¿Deseas refrescar la página? Se perderán los datos del carrito.")) {
-                window.location.reload();
-            }
-        } else {
-            // Si NO estamos en pago, ejecutamos la función de precio
-            window.ejecutarF5();
+        if (teclasMap[event.key]) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            teclasMap[event.key]();
         }
-        return;
-    }
+    }, true);
+};
 
-    // 2. Lógica para F4, F6, F9
-    const teclasValidas = ['F4', 'F6', 'F9'];
-    if (teclasValidas.includes(event.key)) {
-        event.preventDefault();
-        switch(event.key) {
-            case 'F4': window.ejecutarF4(); break;
-            case 'F6': window.ejecutarF6(); break;
-            case 'F9': window.abrirModalCobro(); break;
+const manejarF5 = () => {
+    const modalPago = document.getElementById('modalPago');
+    const estaEnPago = modalPago && window.getComputedStyle(modalPago).display !== 'none';
+
+    if (estaEnPago) {
+        if (confirm("¿Deseas refrescar la página? Se perderán los datos del carrito.")) {
+            window.location.reload();
         }
+    } else {
+        window.ejecutarF5();
     }
-}, true); // El 'true' en el addEventListener es CLAVE: activa el modo captura
+};
 
-// --- Funciones de Comandos ---
-
-window.ejecutarF4 = () => { 
+// --- Acciones de Comandos ---
+window.ejecutarF4 = () => {
     if (carrito.length === 0) return;
     const item = carrito[carrito.length - 1];
     const nuevaCant = prompt(`Cantidad para ${item.nombre}:`, item.cantidad);
@@ -320,7 +315,7 @@ window.ejecutarF4 = () => {
     }
 };
 
-window.ejecutarF5 = () => { 
+window.ejecutarF5 = () => {
     if (carrito.length === 0) return;
     const item = carrito[carrito.length - 1];
     const nuevoPrecio = prompt(`Precio para ${item.nombre} ($):`, item.precio);
@@ -330,7 +325,7 @@ window.ejecutarF5 = () => {
     }
 };
 
-window.ejecutarF6 = () => { 
+window.ejecutarF6 = () => {
     if (carrito.length > 0) {
         carrito.pop();
         window.actualizarCarritoUI();
@@ -345,12 +340,8 @@ window.abrirModalCobro = () => {
         const totalUSD = window.totalVentaUSD || 0;
         const totalBs = totalUSD * tasaActual;
         
-        // Solo actualizamos los totales visuales
-        const dUSD = document.getElementById('totalModalUSD');
-        const dBS = document.getElementById('totalModalBS');
-        
-        if (dUSD) dUSD.innerText = `$ ${totalUSD.toFixed(2)}`;
-        if (dBS) dBS.innerText = `${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2})} Bs.`;
+        document.getElementById('totalModalUSD')?.innerText = `$ ${totalUSD.toFixed(2)}`;
+        document.getElementById('totalModalBS')?.innerText = `${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2})} Bs.`;
         
         modal.style.display = 'flex';
         document.getElementById('in-divisas-usd')?.focus();
@@ -363,4 +354,6 @@ window.abrirModalCobro = () => {
 cargarConfiguracionGlobal().then(() => {
     inicializarClientes();
     inicializarProductos();
+    initComandos(); // Activamos los atajos al cargar
+    console.log("Sistema Control Voley - Módulo POS listo.");
 });
