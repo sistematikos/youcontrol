@@ -96,47 +96,52 @@ window.buscarCliente = (texto) => {
 };
 
 // ==========================================
-// 3. CARRITO Y VENTAS
-// ==========================================
-window.agregarCarrito = (id) => {
-    const p = productosMaster.find(x => x.id === id);
-    if (!p) return;
-    const item = carrito.find(c => c.id === id);
-    if (item) item.cantidad++; else carrito.push({ ...p, cantidad: 1 });
-    window.actualizarCarritoUI();
-};
+    // 3. LÓGICA DE PAGOS (Cálculo automático)
+    // ==========================================
+    const idsBs = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs'];
+    const inputDivisas = document.getElementById('in-divisas-usd');
 
-window.registrarVenta = async () => {
-    try {
-        // Obtenemos los valores de los inputs en el DOM
-        const pagoUSD = parseFloat(document.getElementById('in-divisas-usd')?.value) || 0;
-        const pagoPunto = (parseFloat(document.getElementById('in-punto-bs')?.value) || 0) / tasaActual;
-        const pagoMovil = (parseFloat(document.getElementById('in-pagomovil-bs')?.value) || 0) / tasaActual;
-        const pagoEfectivo = (parseFloat(document.getElementById('in-efectivo-bs')?.value) || 0) / tasaActual;
-
-        const totalPagadoUSD = pagoUSD + pagoPunto + pagoMovil + pagoEfectivo;
+    // Función que recalcula el pendiente
+    const calcularPendiente = (campoActualId) => {
+        const totalVentaBs = (window.totalVentaUSD || 0) * tasaActual;
         
-        // Validación básica: permite una pequeña diferencia por redondeo de tasa
-        if (totalPagadoUSD < (window.totalVentaUSD - 0.01)) {
-            alert("⚠️ El monto pagado es menor al total de la venta.");
-            return;
-        }
-
-        await addDoc(collection(db, "usuarios", USER_ID, "ventas"), {
-            fecha: serverTimestamp(),
-            nro_factura: proximoNumeroFacturaStr,
-            total_usd: window.totalVentaUSD,
-            tasa: tasaActual,
-            formato: formatoFactura,
-            items: carrito,
-            // Guardamos el desglose de pago
-            pago: {
-                divisas_usd: pagoUSD,
-                punto_bs: (pagoPunto * tasaActual),
-                pagomovil_bs: (pagoMovil * tasaActual),
-                efectivo_bs: (pagoEfectivo * tasaActual)
+        // Sumar lo que ya hay en los otros campos de Bs
+        let sumOtrosBs = 0;
+        idsBs.forEach(id => {
+            if (id !== campoActualId) {
+                sumOtrosBs += parseFloat(document.getElementById(id)?.value) || 0;
             }
         });
+
+        // Sumar lo que hay en divisas convertido a Bs
+        const valorDivisasBs = (parseFloat(inputDivisas?.value) || 0) * tasaActual;
+        
+        const totalYaPagado = sumOtrosBs + (campoActualId === 'divisas' ? 0 : valorDivisasBs);
+        const pendiente = totalVentaBs - totalYaPagado;
+        
+        return pendiente > 0 ? pendiente : 0;
+    };
+
+    // Listener para campos de Bolívares (click para completar)
+    idsBs.forEach(id => {
+        const el = document.getElementById(id);
+        el?.addEventListener('click', () => {
+            const faltante = calcularPendiente(id);
+            el.value = faltante.toFixed(2);
+        });
+    });
+
+    // Listener para campo de Divisas (click para completar en dólares)
+    inputDivisas?.addEventListener('click', () => {
+        const totalVentaBs = (window.totalVentaUSD || 0) * tasaActual;
+        let sumOtrosBs = 0;
+        idsBs.forEach(id => { sumOtrosBs += parseFloat(document.getElementById(id)?.value) || 0; });
+        
+        const pendienteBs = totalVentaBs - sumOtrosBs;
+        const pendienteUsd = pendienteBs / tasaActual;
+        
+        inputDivisas.value = (pendienteUsd > 0 ? pendienteUsd : 0).toFixed(2);
+    });
 
         alert("✅ Venta registrada correctamente.");
         
