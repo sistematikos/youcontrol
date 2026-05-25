@@ -123,3 +123,20 @@ window.abrirModalCobro = () => {
 };
 
 window.ejecutarF6 = () => { if(carrito.length > 0) { carrito.pop(); window.actualizarCarritoUI(); } };
+
+// ==========================================
+// INICIALIZACIÓN FINAL CORREGIDA
+// ==========================================
+cargarConfiguracionGlobal().then(async () => {
+    // 1. Cargamos los datos de Firebase primero
+    inicializarClientes();
+    inicializarProductos();
+
+    // 2. Esperamos un breve momento para asegurar que las variables estén pobladas
+    // y luego inicializamos los buscadores y pagos
+    setTimeout(() => {
+        if (typeof initBuscadores === 'function') initBuscadores();
+        if (typeof initLogicaPagos === 'function') initLogicaPagos();
+        console.log("Sistema cargado y listeners activos.");
+    }, 1000); // 1 segundo de espera es suficiente para que Firebase responda
+});
