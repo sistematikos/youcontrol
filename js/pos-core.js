@@ -20,60 +20,60 @@ let tasaActual = 1.0;
 // 1. CARGA DE DATOS (FIREBASE)
 // ==========================================
 async function initDatos() {
-    // Configuración
     const snap = await getDoc(doc(db, "usuarios", USER_ID));
     if (snap.exists()) {
         tasaActual = snap.data().tasa_bcv || 1.0;
         document.getElementById('txt-tasa')?.innerText = tasaActual.toLocaleString('es-VE', {minimumFractionDigits: 2});
     }
 
-    // Datos en tiempo real
     onSnapshot(collection(db, "usuarios", USER_ID, "clientes"), (s) => {
         clientesMaster = s.docs.map(d => ({ id: d.id, ...d.data() }));
     });
     onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (s) => {
         productosMaster = s.docs.map(d => ({ id: d.id, ...d.data() }));
-        console.log("Productos cargados:", productosMaster.length);
     });
 }
 
 // ==========================================
-// 2. LÓGICA DE CARRITO Y BÚSQUEDA
+// 2. MOTORES DE BÚSQUEDA
 // ==========================================
-window.agregarCarrito = (id) => {
-    console.log("Intentando añadir ID:", id);
-    console.log("Array productosMaster:", productosMaster);
-    
-    const p = productosMaster.find(x => x.id === id);
-    if (!p) {
-        alert("Error: Producto no encontrado en memoria.");
-        return;
-    }
-    
-    const item = carrito.find(c => c.id === id);
-    item ? item.cantidad++ : carrito.push({ ...p, cantidad: 1 });
-    window.actualizarCarritoUI();
-};
-
 window.buscarProducto = (texto) => {
     const c = texto.toLowerCase().trim();
     return !c ? [] : productosMaster.filter(p => (p.nombre+p.id+p.barras).toLowerCase().includes(c));
 };
 
-// ==========================================
-// 3. UI Y PAGOS
-// ==========================================
-window.actualizarCarritoUI = () => {
-    const cont = document.getElementById('lista-carrito');
-    if (!cont) return;
-    cont.innerHTML = carrito.map(i => `<div>${i.nombre} - $${i.precio} (x${i.cantidad})</div>`).join('');
-    
-    window.totalVentaUSD = carrito.reduce((s, i) => s + (i.cantidad * i.precio), 0);
-    document.getElementById('total-usd').innerText = `$ ${window.totalVentaUSD.toFixed(2)}`;
+window.buscarCliente = (texto) => {
+    const c = texto.toLowerCase().trim();
+    return !c ? [] : clientesMaster.filter(cl => (cl.nombre+cl.id).toLowerCase().includes(c));
 };
 
 // ==========================================
-// 4. INICIALIZACIÓN (LISTENER ÚNICO)
+// 3. LÓGICA DE CARRITO Y VENTAS
+// ==========================================
+window.agregarCarrito = (id) => {
+    const p = productosMaster.find(x => x.id === id);
+    if (!p) return;
+    const item = carrito.find(c => c.id === id);
+    item ? item.cantidad++ : carrito.push({ ...p, cantidad: 1 });
+    window.actualizarCarritoUI();
+};
+
+window.actualizarCarritoUI = () => {
+    const cont = document.getElementById('lista-carrito');
+    if (!cont) return;
+    cont.innerHTML = carrito.map(i => `
+        <div style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between;">
+            <div><strong>${i.nombre}</strong><br><small>${i.cantidad} x $${i.precio || 0}</small></div>
+            <div>$${(i.cantidad * (i.precio || 0)).toFixed(2)}</div>
+        </div>`).join('');
+    
+    window.totalVentaUSD = carrito.reduce((s, i) => s + (i.cantidad * (i.precio || 0)), 0);
+    document.getElementById('total-usd').innerText = `$ ${window.totalVentaUSD.toFixed(2)}`;
+    document.getElementById('total-bs').innerText = `${(window.totalVentaUSD * tasaActual).toLocaleString('es-VE', {minimumFractionDigits: 2})} Bs.`;
+};
+
+// ==========================================
+// 4. INTEGRACIÓN UI (LISTENERS Y EVENTOS)
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     initDatos();
@@ -84,17 +84,42 @@ document.addEventListener('DOMContentLoaded', () => {
         const div = document.getElementById('resultados-producto-pos');
         if (res.length > 0 && e.target.value.trim() !== "") {
             div.style.display = 'block';
-            div.innerHTML = res.map(p => `
-                <div class="resultado-item" style="padding:10px; cursor:pointer;" 
-                     onclick="window.seleccionarProducto('${p.id}')">
-                     ${p.nombre} - $${p.precio}
-                </div>`).join('');
+            div.innerHTML = res.map(p => `<div class="resultado-item" style="padding:10px; cursor:pointer;" onclick="window.seleccionarProducto('${p.id}')"><strong>${p.nombre}</strong></div>`).join('');
         } else { div.style.display = 'none'; }
     });
+
+    // Listener Buscador Cliente
+    document.getElementById('buscar-cliente-pos')?.addEventListener('input', (e) => {
+        const res = window.buscarCliente(e.target.value);
+        const div = document.getElementById('resultados-cliente-pos');
+        if (res.length > 0 && e.target.value.trim() !== "") {
+            div.style.display = 'block';
+            div.innerHTML = res.map(c => `<div class="resultado-item" style="padding:10px; cursor:pointer;" onclick="window.seleccionarCliente('${c.id}', '${c.nombre.replace(/'/g, "\\'")}')"><strong>${c.nombre}</strong></div>`).join('');
+        } else { div.style.display = 'none'; }
+    });
+
+    // Listener Teclado Global (Atajos)
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'F9') { e.preventDefault(); window.abrirModalCobro(); }
+        if (e.key === 'F6') { e.preventDefault(); window.ejecutarF6(); }
+    }, true);
 });
 
+// Funciones de Selección
 window.seleccionarProducto = (id) => {
     window.agregarCarrito(id);
     document.getElementById('buscar-producto-pos').value = '';
     document.getElementById('resultados-producto-pos').style.display = 'none';
 };
+
+window.seleccionarCliente = (id, nombre) => {
+    document.getElementById('buscar-cliente-pos').value = nombre;
+    window.clienteSeleccionadoID = id;
+    document.getElementById('resultados-cliente-pos').style.display = 'none';
+};
+
+window.abrirModalCobro = () => {
+    if (carrito.length > 0) document.getElementById('modalPago').style.display = 'flex';
+};
+
+window.ejecutarF6 = () => { if(carrito.length > 0) { carrito.pop(); window.actualizarCarritoUI(); } };
