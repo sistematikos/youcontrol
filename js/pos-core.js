@@ -115,14 +115,13 @@ window.registrarVenta = async () => {
     }
 
     try {
-        // Obtenemos el nombre directamente del elemento HTML
-        const inputCliente = document.getElementById('buscar-cliente-pos');
-        const nombreCapturado = inputCliente ? inputCliente.value : "Anónimo";
+        // Obtenemos el valor del input directamente
+        const nombreVal = document.getElementById('buscar-cliente-pos')?.value || "Anónimo";
 
-        // Construimos el objeto directamente sin declarar variables previas conflictivas
+        // Creamos el objeto de datos
         const ventaData = {
             cliente_id: window.clienteSeleccionadoID || "anonimo",
-            nombre_cliente: nombreCapturado, // Guardamos el nombre capturado
+            nombre_cliente: nombreVal, // <--- ESTO ES LO QUE DEBE APARECER EN FIRESTORE
             items: carrito,
             total_usd: window.totalVentaUSD || 0,
             tasa_aplicada: tasaActual,
@@ -136,28 +135,24 @@ window.registrarVenta = async () => {
             nro_factura: proximoNumeroFacturaStr
         };
 
+        // Guardamos
         await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
 
-        alert("✅ Venta registrada correctamente con nombre: " + nombreCapturado);
+        alert("✅ Venta registrada correctamente.");
 
-        // Limpieza
+        // Limpieza de UI
         carrito = [];
         window.clienteSeleccionadoID = null;
-        if (inputCliente) inputCliente.value = '';
+        const inputC = document.getElementById('buscar-cliente-pos');
+        if (inputC) inputC.value = '';
         document.getElementById('modalPago').style.display = 'none';
         
-        // Reset inputs
-        ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd'].forEach(id => {
-            const el = document.getElementById(id);
-            if(el) el.value = "0";
-        });
-
         window.actualizarCarritoUI();
         proximoNumeroFacturaStr = (parseInt(proximoNumeroFacturaStr) + 1).toString().padStart(6, '0');
 
     } catch (error) {
-        console.error("Error al guardar venta:", error);
-        alert("Error crítico al guardar: " + error.message);
+        console.error("Error al guardar:", error);
+        alert("Error al guardar: " + error.message);
     }
 };
 
