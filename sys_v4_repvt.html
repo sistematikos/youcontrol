@@ -1,57 +1,16 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reporte de Ventas | Sistematikos</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root { 
-            --bg: #F1F5F9; 
-            --primary: #1D4ED8; 
-            --primary-hover: #1E40AF;
-            --text: #0F172A; 
-            --border: #CBD5E1; 
-            --text-muted: #475569;
-            --card-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.05);
-        }
-        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding-bottom: 60px; color: var(--text); }
-        .container { padding: 24px 15px; max-width: 1340px; margin: auto; }
-        .btn-back { border: none; background: none; color: var(--text-muted); cursor: pointer; font-weight: 600; margin-bottom: 20px; display: inline-flex; align-items: center; gap: 8px; transition: color 0.2s; }
-        .btn-back:hover { color: var(--primary); }
-        .header-table h3 { font-size: 1.6rem; font-weight: 800; color: var(--text); margin: 0 0 25px 0; }
-
-        .filter-card {
-            background: white;
-            padding: 20px;
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            box-shadow: var(--card-shadow);
-            margin-bottom: 24px;
-            display: flex;
-            align-items: flex-end;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-        .form-group { display: flex; flex-direction: column; gap: 8px; }
-        .form-group label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
-        .form-group input[type="date"] { padding: 12px 14px; border: 1.5px solid #E2E8F0; border-radius: 12px; font-family: 'Poppins'; background: #F8FAFC; outline: none; }
-        .btn-filter { background: var(--primary); color: white; border: none; padding: 13px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 10px; }
-        .btn-filter:hover { background: var(--primary-hover); }
-
-        .report-container {
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 24px;
-            box-shadow: var(--card-shadow);
-        }
-        .table-report { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
-        .table-report th { background: #F8FAFC; color: var(--text-muted); text-transform: uppercase; font-size: 0.75rem; font-weight: 800; padding: 16px 12px; text-align: left; border-bottom: 2px solid #E2E8F0; }
-        .table-report td { padding: 16px 12px; border-bottom: 1px solid #F1F5F9; color: var(--text); }
-        .table-report tr:hover td { background-color: #F8FAFC; }
-    </style>
+<style>
+    /* Agrega esto a tu bloque de estilos */
+    .header-flex {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+    .logo-header {
+        height: 60px; /* Ajusta este tamaño a tu gusto */
+        width: auto;
+    }
+</style>
 </head>
 <body oncontextmenu="return false">
     <div class="container">
@@ -59,45 +18,21 @@
             <i class="fas fa-arrow-left"></i> VOLVER AL MENÚ
         </button>
 
-        <div class="header-table">
-            <h3><i class="fas fa-chart-line" style="color: var(--primary); margin-right: 8px;"></i> Historial de Ventas</h3>
+        <div class="header-flex">
+            <div class="header-table">
+                <h3 style="margin: 0;"><i class="fas fa-chart-line" style="color: var(--primary); margin-right: 8px;"></i> Historial de Ventas</h3>
+            </div>
+            <img src="img/logo.png" alt="Logo" class="logo-header">
         </div>
+
+        <div id="status-bar-report"></div>
 
         <div class="filter-card">
-            <div class="form-group">
-                <label>Desde Fecha</label>
-                <input type="date" id="filtro-desde">
             </div>
-            <div class="form-group">
-                <label>Hasta Fecha</label>
-                <input type="date" id="filtro-hasta">
-            </div>
-            <button class="btn-filter" id="btnConsultar" onclick="window.cargarReporteVentas()">
-                <i class="fas fa-magnifying-glass"></i> GENERAR REPORTE
-            </button>
-        </div>
 
         <div class="report-container">
-            <table class="table-report">
-                <thead>
-                   <tr>
-                     <th style="width: 18%;">Factura / Fecha</th>
-                     <th style="width: 22%;">Cliente</th>
-                     <th style="width: 48%;">Detalle de Artículos</th>
-                     <th style="text-align: right; width: 12%;">Total ($)</th>
-                   </tr>
-                </thead>
-                <tbody id="tabla-reporte-ventas">
-                    <tr>
-                        <td colspan="4" style="text-align:center; color:var(--text-muted); padding:40px;">
-                            Selecciona las fechas y presiona Generar Reporte.
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+            </div>
     </div>
-
     <script type="module" src="./js/sys_v4_repvt.js"></script>
 </body>
 </html>
