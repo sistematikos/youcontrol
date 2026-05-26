@@ -6,76 +6,77 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         :root {
-            --bg-gradient: linear-gradient(135deg, #0f4c75 0%, #3282b8 50%, #00d2ff 100%);
+            --bg-color: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --accent: #2563EB; /* Azul Zafiro profesional */
+            --text: #1E293B;
+            --border: #E2E8F0;
         }
         body { 
             font-family: 'Poppins', sans-serif; 
-            background: var(--bg-gradient); 
+            background-color: var(--bg-color); 
             min-height: 100vh;
             margin: 0; padding: 20px; 
         }
-        .container { max-width: 1200px; margin: auto; display: flex; flex-direction: column; gap: 15px; }
+        .container { max-width: 1200px; margin: auto; display: flex; flex-direction: column; gap: 20px; }
 
-        /* Tarjeta 1: Compacta */
+        /* Encabezado: Logo sin bordes */
         .header-card {
-            background: white;
-            border-radius: 16px;
-            padding: 15px 25px; /* Menos padding vertical */
+            background: var(--card-bg);
+            border-radius: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            padding: 0 25px; /* Padding lateral solo */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            height: 90px; /* Altura fija para alinear logo */
+            border: 1px solid var(--border);
         }
-        .btn-back { background: #3282b8; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; }
-        .logo-header { height: 90px; width: auto; filter: drop-shadow(0 0 8px rgba(0, 210, 255, 0.5)); }
+        .logo-header { 
+            height: 100%; /* Ocupa toda la altura de la tarjeta */
+            width: auto;
+            padding: 5px 0; /* Ajuste mínimo para que no toque bordes extremos */
+        }
 
-        /* Tarjeta 2: Altura controlada */
+        /* Cuerpo del reporte */
         .report-card {
-            background: white;
-            border-radius: 16px;
-            padding: 20px;
-            max-height: 70vh; /* Ajustado para no exceder tanto la pantalla */
-            overflow-y: auto;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid var(--border);
+            min-height: 65vh;
         }
 
-        /* Inputs Modernos */
-        .filter-section { display: flex; gap: 20px; margin-bottom: 20px; align-items: flex-end; }
-        .input-group { display: flex; flex-direction: column; gap: 5px; }
-        .input-group label { font-size: 0.75rem; font-weight: 600; color: #555; text-transform: uppercase; }
-        input[type="date"] { 
-            padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 10px; 
-            font-family: inherit; font-size: 0.9rem; transition: border-color 0.3s;
-        }
-        input[type="date"]:focus { border-color: #3282b8; outline: none; }
+        .filter-section { display: flex; gap: 15px; margin-bottom: 25px; align-items: flex-end; }
+        .input-group label { font-size: 0.7rem; font-weight: 700; color: #64748B; text-transform: uppercase; }
+        input[type="date"] { padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; }
         
-        .btn-gen { background: #0f4c75; color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+        .btn-gen { background: var(--accent); color: white; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
         
         table { width: 100%; border-collapse: collapse; }
-        th { background: #f8f9fa; padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6; font-size: 0.9rem; }
-        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+        th { background: #F1F5F9; padding: 12px; text-align: left; border-bottom: 2px solid var(--border); font-size: 0.85rem; }
+        td { padding: 12px; border-bottom: 1px solid #F1F5F9; font-size: 0.85rem; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header-card">
-            <div>
-                <button class="btn-back" onclick="location.href='sys_v1_menu.html'">
-                    <i class="fas fa-arrow-left"></i> VOLVER
-                </button>
-                <h2 style="margin: 10px 0 0 0;">Reporte de Ventas</h2>
-            </div>
+            <button class="btn-back" style="background:none; border:1px solid #ccc; padding:5px 15px; border-radius:6px; cursor:pointer;" onclick="location.href='sys_v1_menu.html'">
+                <i class="fas fa-arrow-left"></i> VOLVER
+            </button>
             <img src="img/logo.png" alt="Logo" class="logo-header">
         </div>
 
         <div class="report-card">
+            <h2 style="margin-top:0;">Historial de Ventas</h2>
             <div class="filter-section">
                 <div class="input-group">
-                    <label>Desde</label>
+                    <label>Desde</label><br>
                     <input type="date" id="filtro-desde">
                 </div>
                 <div class="input-group">
-                    <label>Hasta</label>
+                    <label>Hasta</label><br>
                     <input type="date" id="filtro-hasta">
                 </div>
                 <button class="btn-gen" onclick="window.cargarReporteVentas()">
@@ -93,7 +94,7 @@
                     </tr>
                 </thead>
                 <tbody id="tabla-reporte-ventas">
-                    <tr><td colspan="4" style="text-align:center; padding: 20px; color: #888;">Esperando selección de fechas...</td></tr>
+                    <tr><td colspan="4" style="text-align:center; padding: 40px; color: #94A3B8;">Selecciona fechas para cargar datos.</td></tr>
                 </tbody>
             </table>
         </div>
