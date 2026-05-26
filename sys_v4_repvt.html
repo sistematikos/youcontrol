@@ -2,86 +2,92 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Reporte de Ventas | You Control</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOU CONTROL | Reporte de Ventas</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --brand-blue: #007bff;
-            --bg-gradient: linear-gradient(to bottom, var(--brand-blue) 0%, #dbeafe 50%, #f1f5f9 100%);
+            --bg-vivo: #0284C7;          
+            --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
+            --emerald: #10B981;
+            --sky: #0EA5E9;
+            --indigo: #6366F1;
         }
-        body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); min-height: 100vh; margin: 0; padding: 20px; background-attachment: fixed; }
-        .container { max-width: 1200px; margin: auto; display: flex; flex-direction: column; gap: 20px; }
 
-        /* Encabezado */
-        .header-card { background: white; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; padding: 0 30px; height: 110px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .logo-header { height: 100%; width: auto; object-fit: contain; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; color: var(--text-dark); }
 
-        /* Tarjetas KPI Estilo Cuadre de Caja */
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px; }
-        .kpi-card { background: white; padding: 20px; border-radius: 12px; border-left: 6px solid var(--brand-blue); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .kpi-card.green { border-left-color: #10b981; }
-        .kpi-card.sky { border-left-color: #0ea5e9; }
-        .kpi-label { font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 5px; }
-        .kpi-value { font-size: 1.5rem; font-weight: 700; color: #1e293b; }
+        /* Estructura sincronizada */
+        .layout-width { width: 92%; max-width: 1200px; margin: 0 auto; box-sizing: border-box; }
 
-        /* Cuerpo del Reporte */
-        .report-card { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-height: 50vh; }
-        .filter-section { display: flex; gap: 20px; margin-bottom: 25px; align-items: flex-end; }
-        input[type="date"] { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; }
-        .btn-gen { background: var(--brand-blue); color: white; border: none; padding: 10px 25px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        .report-header { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; margin-bottom: 15px; }
+
+        .btn-back { background: #ffffff; color: var(--text-dark); padding: 8px 16px; border-radius: 12px; text-decoration: none; font-size: 0.8rem; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid #E2E8F0; transition: 0.2s; display: flex; align-items: center; gap: 8px; }
+        .btn-back:hover { background: var(--text-dark); color: #ffffff; }
+
+        .date-selector { display: flex; align-items: center; gap: 10px; background: #ffffff; padding: 6px 12px; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
+        .date-selector input { border: none; font-family: 'Poppins', sans-serif; font-size: 0.85rem; font-weight: 600; color: var(--text-dark); outline: none; }
+
+        /* Tarjetas KPI (Modificadas para Reporte de Ventas) */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 15px; }
+        .kpi-card { background: #ffffff; border-radius: 14px; padding: 14px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02); border-left: 5px solid var(--bg-vivo); display: flex; justify-content: space-between; align-items: center; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th { background: #f8fafc; padding: 15px; text-align: left; border-bottom: 2px solid #e2e8f0; font-size: 0.85rem; }
-        td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
+        .kpi-info .p-label { font-size: 0.65rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; display: block; }
+        .kpi-info .p-val { font-size: 1.2rem; font-weight: 800; color: var(--text-dark); }
+
+        /* Panel de Tabla */
+        .table-panel { background: #ffffff; border-radius: 16px; padding: 18px; box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04); border: 1px solid #E2E8F0; margin-bottom: 20px; }
+        .table-header-box { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #F1F5F9; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.8rem; }
+        th { background: #F8FAFC; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.68rem; padding: 10px 12px; border-bottom: 1px solid #E2E8F0; }
+        td { padding: 10px 12px; border-bottom: 1px solid #F1F5F9; font-weight: 500; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header-card">
-            <div>
-                <button onclick="location.href='sys_v1_menu.html'" style="background:none; border:none; color:var(--brand-blue); cursor:pointer; font-weight:600;">
-                    <i class="fas fa-arrow-left"></i> VOLVER
-                </button>
-                <h1 style="font-size: 1.4rem; margin: 5px 0 0 0;">Reporte de Ventas</h1>
+
+    <main class="layout-width">
+        <div class="report-header">
+            <a href="index_menu.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
+            <div class="date-selector">
+                <i class="fas fa-calendar-day" style="color: var(--text-muted);"></i>
+                <input type="date" id="filtro-fecha">
             </div>
-            <img src="img/logo.png" alt="Logo" class="logo-header">
         </div>
 
         <div class="kpi-grid">
-            <div class="kpi-card green">
-                <span class="kpi-label">Venta Total</span>
-                <div class="kpi-value" id="kpi-total">$ 0.00</div>
+            <div class="kpi-card" style="border-left-color: var(--emerald);">
+                <div class="kpi-info">
+                    <span class="p-label">Venta Total USD</span>
+                    <span class="p-val" id="kpi-total-usd">$ 0.00</span>
+                </div>
+                <i class="fas fa-dollar-sign" style="color: var(--emerald); font-size: 1.5rem;"></i>
             </div>
-            <div class="kpi-card sky">
-                <span class="kpi-label">Facturas</span>
-                <div class="kpi-value" id="kpi-facturas">0</div>
+            <div class="kpi-card" style="border-left-color: var(--sky);">
+                <div class="kpi-info">
+                    <span class="p-label">Facturas Emitidas</span>
+                    <span class="p-val" id="kpi-total-facturas">0</span>
+                </div>
+                <i class="fas fa-receipt" style="color: var(--sky); font-size: 1.5rem;"></i>
             </div>
         </div>
 
-        <div class="report-card">
-            <h2>Historial de Transacciones</h2>
-            <div class="filter-section">
-                <div>
-                    <label style="font-size: 0.7rem; color:#64748b;">DESDE</label><br>
-                    <input type="date" id="filtro-desde">
-                </div>
-                <div>
-                    <label style="font-size: 0.7rem; color:#64748b;">HASTA</label><br>
-                    <input type="date" id="filtro-hasta">
-                </div>
-                <button class="btn-gen" onclick="window.cargarReporteVentas()">
-                    <i class="fas fa-search"></i> GENERAR
-                </button>
+        <div class="table-panel">
+            <div class="table-header-box">
+                <h3>Detalle de Ventas</h3>
             </div>
-
             <table>
                 <thead>
-                    <tr><th>Factura</th><th>Cliente</th><th>Detalle</th><th>Total</th></tr>
+                    <tr><th>Hora</th><th>Factura</th><th>Cliente</th><th>Monto USD</th></tr>
                 </thead>
                 <tbody id="tabla-reporte-ventas">
-                    <tr><td colspan="4" style="text-align:center; color:#94a3b8;">Selecciona fechas...</td></tr>
+                    <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Seleccione fecha...</td></tr>
                 </tbody>
             </table>
         </div>
-    </div>
+    </main>
+
     <script type="module" src="./js/sys_v4_repvt.js"></script>
+</body>
+</html>
