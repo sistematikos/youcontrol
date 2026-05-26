@@ -115,13 +115,14 @@ window.registrarVenta = async () => {
     }
 
     try {
-        // Obtenemos el nombre directamente del elemento, sin declarar variable const si ya existe
+        // Obtenemos el nombre directamente del elemento HTML
         const inputCliente = document.getElementById('buscar-cliente-pos');
-        
-        // Construimos el objeto de venta directamente
+        const nombreCapturado = inputCliente ? inputCliente.value : "Anónimo";
+
+        // Construimos el objeto directamente sin declarar variables previas conflictivas
         const ventaData = {
             cliente_id: window.clienteSeleccionadoID || "anonimo",
-            nombre_cliente: inputCliente ? inputCliente.value : "Anónimo", // Usamos el valor directamente
+            nombre_cliente: nombreCapturado, // Guardamos el nombre capturado
             items: carrito,
             total_usd: window.totalVentaUSD || 0,
             tasa_aplicada: tasaActual,
@@ -137,7 +138,7 @@ window.registrarVenta = async () => {
 
         await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
 
-        alert("✅ Venta registrada con éxito.");
+        alert("✅ Venta registrada correctamente con nombre: " + nombreCapturado);
 
         // Limpieza
         carrito = [];
@@ -145,7 +146,7 @@ window.registrarVenta = async () => {
         if (inputCliente) inputCliente.value = '';
         document.getElementById('modalPago').style.display = 'none';
         
-        // Reset inputs de pago
+        // Reset inputs
         ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd'].forEach(id => {
             const el = document.getElementById(id);
             if(el) el.value = "0";
@@ -156,7 +157,7 @@ window.registrarVenta = async () => {
 
     } catch (error) {
         console.error("Error al guardar venta:", error);
-        alert("Error al guardar la venta: " + error.message);
+        alert("Error crítico al guardar: " + error.message);
     }
 };
 
