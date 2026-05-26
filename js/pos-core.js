@@ -271,44 +271,44 @@ window.actualizarCarritoUI = () => {
     if(document.getElementById('total-bs')) document.getElementById('total-bs').innerText = `${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2})} Bs.`;
 };
 
-// ==========================================
-// 8. COMANDOS DE TECLADO (BLOQUEO FORZADO)
-// ==========================================
+// ==========================================================
+// 8. COMANDOS DE TECLADO Y ATAJOS
+// ==========================================================
+
+// --- A. Gestor de Eventos de Teclado (EventListener) ---
 document.addEventListener('keydown', (event) => {
-    // 1. SIEMPRE capturamos F5 para tener control total
+    // Manejo exclusivo del F5 (Control de refresco y funciones)
     if (event.key === 'F5') {
-        event.preventDefault(); // Esto detiene el refresco nativo del navegador SIEMPRE
-        event.stopImmediatePropagation(); // Detiene cualquier otro listener que interfiera
+        event.preventDefault();
+        event.stopImmediatePropagation();
 
         const modalPago = document.getElementById('modalPago');
-        // Verificamos si está visible (display block, flex, o grid)
         const estaEnPago = modalPago && (window.getComputedStyle(modalPago).display !== 'none');
 
         if (estaEnPago) {
-            // Si estamos en pago, damos la opción de refrescar manualmente
             if (confirm("¿Deseas refrescar la página? Se perderán los datos del carrito.")) {
                 window.location.reload();
             }
         } else {
-            // Si NO estamos en pago, ejecutamos la función de precio
             window.ejecutarF5();
         }
         return;
     }
 
-    // 2. Lógica para F4, F6, F9
-    const teclasValidas = ['F4', 'F6', 'F9'];
-    if (teclasValidas.includes(event.key)) {
-        event.preventDefault();
-        switch(event.key) {
-            case 'F4': window.ejecutarF4(); break;
-            case 'F6': window.ejecutarF6(); break;
-            case 'F9': window.abrirModalCobro(); break;
-        }
-    }
-}, true); // El 'true' en el addEventListener es CLAVE: activa el modo captura
+    // Manejo de otros comandos
+    const comandos = {
+        'F4': window.ejecutarF4,
+        'F6': window.ejecutarF6,
+        'F9': window.abrirModalCobro
+    };
 
-// --- Funciones de Comandos ---
+    if (comandos[event.key]) {
+        event.preventDefault();
+        comandos[event.key]();
+    }
+}, true);
+
+// --- B. Funciones de Lógica de Comandos ---
 
 window.ejecutarF4 = () => { 
     if (carrito.length === 0) return;
@@ -345,7 +345,6 @@ window.abrirModalCobro = () => {
         const totalUSD = window.totalVentaUSD || 0;
         const totalBs = totalUSD * tasaActual;
         
-        // Solo actualizamos los totales visuales
         const dUSD = document.getElementById('totalModalUSD');
         const dBS = document.getElementById('totalModalBS');
         
@@ -357,10 +356,11 @@ window.abrirModalCobro = () => {
     }
 };
 
-// ==========================================
-// INICIALIZACIÓN FINAL
-// ==========================================
+// ==========================================================
+// 9. INICIALIZACIÓN DE MÓDULOS
+// ==========================================================
 cargarConfiguracionGlobal().then(() => {
     inicializarClientes();
     inicializarProductos();
+});
 });
