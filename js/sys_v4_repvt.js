@@ -25,7 +25,6 @@ window.cargarReporteVentas = async () => {
         let total = 0;
         let articulos = 0;
 
-        // Usamos un bucle for...of para poder usar await dentro si fuera necesario
         for (const vDoc of snapshot.docs) {
             const data = vDoc.data();
             const fechaVenta = data.fecha.toDate();
@@ -36,11 +35,10 @@ window.cargarReporteVentas = async () => {
                 // Sumamos cantidad de artículos
                 data.items.forEach(i => articulos += i.cantidad);
 
-                // Aquí obtenemos el nombre del cliente. 
-                // Si guardas el nombre directamente en 'cliente_id' o tienes un campo 'nombre_cliente'
-                const nombreCliente = data.nombre_cliente || data.cliente_id || "Anónimo";
+                // Mostramos el nombre del cliente que ahora sí se guarda correctamente
+                const nombreCliente = data.nombre_cliente || "Anónimo";
 
-                // Construimos la lista de items con su precio
+                // Detalle de artículos con sus precios
                 const listaItems = data.items.map(i => 
                     `<li>${i.nombre} (${i.cantidad} x $${(i.precio || 0).toFixed(2)})</li>`
                 ).join('');
@@ -49,17 +47,20 @@ window.cargarReporteVentas = async () => {
                     <td><strong>${data.nro_factura}</strong><br><small>${fechaVenta.toLocaleDateString()}</small></td>
                     <td>${nombreCliente}</td>
                     <td><ul style="margin:0; padding-left:15px;">${listaItems}</ul></td>
-                    <td style="text-align:right;">$${(data.total_usd || 0).toFixed(2)}</td>
+                    <td style="text-align:right;"><strong>$${(data.total_usd || 0).toFixed(2)}</strong></td>
                 </tr>`;
             }
         }
 
+        // Actualizamos la tabla
         document.getElementById('tabla-reporte-ventas').innerHTML = html || '<tr><td colspan="4" style="text-align:center;">No hay ventas en este rango.</td></tr>';
+        
+        // Actualizamos solo los indicadores de ventas totales y cantidad de artículos
         document.getElementById('kpi-total-ventas').innerText = `$ ${total.toFixed(2)}`;
         document.getElementById('kpi-total-articulos').innerText = articulos;
 
     } catch (error) {
-        console.error("Error al filtrar:", error);
+        console.error("Error al cargar reporte:", error);
         alert("Error al cargar el reporte: " + error.message);
     }
 };
