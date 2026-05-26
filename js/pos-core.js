@@ -109,29 +109,56 @@ window.agregarCarrito = (id) => {
 };
 
 window.registrarVenta = async () => {
-    // ... (validaciones previas)
+    if (carrito.length === 0) {
+        alert("El carrito está vacío.");
+        return;
+    }
 
     try {
-        // Asegúrate de capturar el valor del input en este preciso momento
+        // Obtenemos el nombre directamente del elemento, sin declarar variable const si ya existe
         const inputCliente = document.getElementById('buscar-cliente-pos');
-        const nombreCliente = inputCliente ? inputCliente.value : "Anónimo";
-
-        const nombreCliente = document.getElementById('buscar-cliente-pos').value;
-
-const ventaData = {
-    cliente_id: window.clienteSeleccionadoID || "anonimo",
-    nombre_cliente: nombreCliente, // Asegúrate de que esto sea texto plano
-    items: carrito,
-    total_usd: window.totalVentaUSD || 0,
-    tasa_aplicada: tasaActual,
-    fecha: serverTimestamp(),
-    nro_factura: proximoNumeroFacturaStr
-};
+        
+        // Construimos el objeto de venta directamente
+        const ventaData = {
+            cliente_id: window.clienteSeleccionadoID || "anonimo",
+            nombre_cliente: inputCliente ? inputCliente.value : "Anónimo", // Usamos el valor directamente
+            items: carrito,
+            total_usd: window.totalVentaUSD || 0,
+            tasa_aplicada: tasaActual,
+            pagos: {
+                punto_bs: parseFloat(document.getElementById('in-punto-bs')?.value) || 0,
+                pago_movil_bs: parseFloat(document.getElementById('in-pagomovil-bs')?.value) || 0,
+                efectivo_bs: parseFloat(document.getElementById('in-efectivo-bs')?.value) || 0,
+                divisas_usd: parseFloat(document.getElementById('in-divisas-usd')?.value) || 0
+            },
+            fecha: serverTimestamp(),
+            nro_factura: proximoNumeroFacturaStr
+        };
 
         await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
-        // ... (resto de la función)
-    } catch (e) { ... }
-}
+
+        alert("✅ Venta registrada con éxito.");
+
+        // Limpieza
+        carrito = [];
+        window.clienteSeleccionadoID = null;
+        if (inputCliente) inputCliente.value = '';
+        document.getElementById('modalPago').style.display = 'none';
+        
+        // Reset inputs de pago
+        ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.value = "0";
+        });
+
+        window.actualizarCarritoUI();
+        proximoNumeroFacturaStr = (parseInt(proximoNumeroFacturaStr) + 1).toString().padStart(6, '0');
+
+    } catch (error) {
+        console.error("Error al guardar venta:", error);
+        alert("Error al guardar la venta: " + error.message);
+    }
+};
 
 // ==========================================
 // 4. INTEGRACIÓN UI: SELECCIÓN Y NAVEGACIÓN
