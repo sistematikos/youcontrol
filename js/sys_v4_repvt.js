@@ -1,166 +1,59 @@
-/**
- * YOU CONTROL - SISTEMATIKOS
- * Módulo de Auditoría y Reportes de Ventas por Fechas (sys_v4_repvt.js)
- * Optimización: Muestra el desglose de artículos con alineación en espejo para los precios unitarios.
- */
-
 import { db } from './firebase-config.js';
-import { 
-    collection, query, where, getDocs, orderBy 
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, query, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const USER_ID = localStorage.getItem('youcontrol_empresa_id') || "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
-
-// Vinculaciones del DOM
-const inputDesde = document.getElementById('filtro-desde');
-const inputHasta = document.getElementById('filtro-hasta');
-const tablaReporte = document.getElementById('tabla-reporte-ventas');
-const statusBar = document.getElementById('status-bar-report');
-
-// Elementos KPI
-const kpiVentas = document.getElementById('kpi-total-ventas');
-const kpiGanancia = document.getElementById('kpi-margen-estimado');
-const kpiArticulos = document.getElementById('kpi-total-articulos');
-
-function mostrarEstado(mensaje, tipo) {
-    if (!statusBar) return;
-    statusBar.className = `status-${tipo}`;
-    statusBar.innerText = mensaje;
-    statusBar.style.display = 'block';
-    if (tipo === 'success') {
-        setTimeout(() => { statusBar.style.display = 'none'; }, 3000);
-    }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    const hoy = new Date().toISOString().split('T')[0];
-    if (inputDesde && !inputDesde.value) inputDesde.value = hoy;
-    if (inputHasta && !inputHasta.value) inputHasta.value = hoy;
-    
-    window.cargarReporteVentas();
-});
+const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 
 window.cargarReporteVentas = async () => {
-    const desde = inputDesde.value; 
-    const hasta = inputHasta.value; 
-
+    const desde = document.getElementById('filtro-desde').value;
+    const hasta = document.getElementById('filtro-hasta').value;
+    
     if (!desde || !hasta) {
-        mostrarEstado("❌ Ambos rangos de fechas son obligatorios.", "loading");
+        alert("Selecciona un rango de fechas válido.");
         return;
     }
 
-    if (desde > hasta) {
-        mostrarEstado("❌ La fecha inicial no puede ser mayor que la fecha final.", "loading");
-        return;
-    }
-
-    mostrarEstado("⏳ Consultando transacciones en el periodo...", "loading");
-    if (tablaReporte) tablaReporte.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px;">Filtrando base de datos...</td></tr>`;
+    // Convertimos las fechas del input a objetos de JavaScript
+    const fechaInicio = new Date(desde);
+    const fechaFin = new Date(hasta);
+    fechaFin.setHours(23, 59, 59, 999); // Incluye todo el día final
 
     try {
         const ventasRef = collection(db, "usuarios", USER_ID, "ventas");
-        
-        const q = query(
-            ventasRef,
-            where("fecha", ">=", desde),
-            where("fecha", "<=", hasta),
-            orderBy("fecha", "desc")
-        );
+        // Traemos todas las ventas ordenadas por fecha
+        const q = query(ventasRef, orderBy("fecha", "desc"));
+        const snapshot = await getDocs(q);
 
-        const querySnapshot = await getDocs(q);
-        
-        let acumTotalFacturado = 0;
-        let acumTotalCosto = 0;
-        let acumArticulosVendidos = 0;
-        
-        if (querySnapshot.empty) {
-            tablaReporte.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#64748B; padding:30px;">No se encontraron registros de ventas en las fechas seleccionadas.</td></tr>`;
-            resetearKPIs();
-            mostrarEstado("📌 Consulta lista. Sin registros.", "success");
-            return;
-        }
+        let html = '';
+        let total = 0;
+        let articulos = 0;
 
-        // Tabla limpia con 4 columnas balanceadas
-        tablaReporte.innerHTML = '';
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            const fechaVenta = data.fecha.toDate();
 
-        querySnapshot.forEach((docSnap) => {
-            const venta = docSnap.data();
-            const idVenta = docSnap.id;
+            // AQUÍ ESTÁ EL FILTRO: Solo procesamos lo que está en el rango
+            if (fechaVenta >= fechaInicio && fechaVenta <= fechaFin) {
+                total += data.total_usd || 0;
+                
+                // Sumamos cantidad de artículos
+                data.items.forEach(i => articulos += i.cantidad);
 
-            const identificadorFactura = venta.nro_factura ? venta.nro_factura : `#${idVenta.substring(0, 8).toUpperCase()}`;
-
-            let totalVentaDolar = 0;
-            let totalCostoDolar = 0;
-            let totalUnidadesVenta = 0;
-            let listaArticulosHTML = "";
-
-            // Procesar ítems y armar filas ordenadas internamente
-            if (Array.isArray(venta.items)) {
-                venta.items.forEach(prod => {
-                    const cant = parseFloat(prod.cantidad) || parseFloat(prod.cant) || 0;
-                    const precio = parseFloat(prod.precio) || 0;
-                    const costo = parseFloat(prod.costo) || 0;
-                    const descripcion = prod.descripcion || prod.nombre || "Artículo sin nombre";
-
-                    totalVentaDolar += (cant * precio);
-                    totalCostoDolar += (cant * costo);
-                    totalUnidadesVenta += cant;
-
-                    // Bloque con alineación a los extremos y separador visual elegante
-                    listaArticulosHTML += `
-                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.88rem; color: #334155; margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px dashed #E2E8F0; line-height: 1.4;">
-                            <span style="padding-right: 15px;">• ${descripcion} <span style="color:#64748B; font-weight:600;">(x${cant})</span></span> 
-                            <span style="color:#1D4ED8; font-weight:700; white-space: nowrap; font-family: monospace; font-size: 0.92rem;">$ ${precio.toFixed(2)}</span>
-                        </div>`;
-                });
-            } 
-            
-            if (totalVentaDolar === 0) {
-                totalVentaDolar = parseFloat(venta.total_usd) || 0;
-                totalCostoDolar = parseFloat(venta.total_costo_usd) || 0;
-                totalUnidadesVenta = parseInt(venta.total_items) || 0;
-                listaArticulosHTML = `<span style="color:#94A3B8; font-style:italic; font-size:0.85rem;">Ver detalle en POS</span>`;
+                html += `<tr>
+                    <td><strong>${data.nro_factura}</strong><br><small>${fechaVenta.toLocaleDateString()}</small></td>
+                    <td>Cliente</td>
+                    <td>${data.items.map(i => i.nombre).join(', ')}</td>
+                    <td style="text-align:right;">$${(data.total_usd || 0).toFixed(2)}</td>
+                </tr>`;
             }
-
-            acumTotalFacturado += totalVentaDolar;
-            acumTotalCosto += totalCostoDolar;
-            acumArticulosVendidos += totalUnidadesVenta;
-
-            let metodoPago = "Efectivo/Otros";
-            if (venta.pagos) {
-                const p = venta.pagos;
-                if ((p.point || p.punto) > 0) metodoPago = "Punto de Venta";
-                else if (p.movil > 0) metodoPago = "Pago Móvil";
-                else if (p.divisas > 0) metodoPago = "Divisas ($)";
-                else if (p.efectivo > 0) metodoPago = "Efectivo (Bs)";
-            }
-
-            const fila = document.createElement('tr');
-            fila.innerHTML = `
-                <td><b>${identificadorFactura}</b><br><small style="color:#64748B;">${venta.fecha_completa || venta.fecha}</small></td>
-                <td>${venta.cliente_nombre || 'Consumidor Final'}<br><small style="color:#1D4ED8; font-weight:600;">${metodoPago}</small></td>
-                <td style="text-align: left; padding-left: 10px; padding-right: 20px;">${listaArticulosHTML}</td>
-                <td style="text-align: right; font-weight: 800; color: #0F172A; font-size: 1rem;">$ ${totalVentaDolar.toFixed(2)}</td>
-            `;
-            tablaReporte.appendChild(fila);
         });
 
-        const gananciaEstimada = acumTotalFacturado - acumTotalCosto;
+        // Actualizamos la tabla
+        document.getElementById('tabla-reporte-ventas').innerHTML = html || '<tr><td colspan="4" style="text-align:center;">No hay ventas en este rango.</td></tr>';
+        document.getElementById('kpi-total-ventas').innerText = `$ ${total.toFixed(2)}`;
+        document.getElementById('kpi-total-articulos').innerText = articulos;
 
-        if (kpiVentas) kpiVentas.innerText = `$ ${acumTotalFacturado.toFixed(2)}`;
-        if (kpiGanancia) kpiGanancia.innerText = `$ ${gananciaEstimada.toFixed(2)}`;
-        if (kpiArticulos) kpiArticulos.innerText = acumArticulosVendidos.toString();
-
-        mostrarEstado("✅ Reporte consolidado con éxito.", "success");
-
-    } catch (e) {
-        console.error("Error al generar el reporte de ventas:", e);
-        mostrarEstado("❌ Error de lectura en la base de datos.", "loading");
+    } catch (error) {
+        console.error("Error al filtrar:", error);
+        alert("Asegúrate de que la empresa ya tenga ventas registradas.");
     }
 };
-
-function resetearKPIs() {
-    if (kpiVentas) kpiVentas.innerText = "$ 0.00";
-    if (kpiGanancia) kpiGanancia.innerText = "$ 0.00";
-    if (kpiArticulos) kpiArticulos.innerText = "0";
-}
