@@ -275,41 +275,38 @@ window.actualizarCarritoUI = () => {
 // 8. COMANDOS DE TECLADO (BLOQUEO FORZADO)
 // ==========================================
 document.addEventListener('keydown', (event) => {
-    // 1. SIEMPRE capturamos F5 para tener control total
+    // 1. Manejo del F5 (Control de refresco)
     if (event.key === 'F5') {
-        event.preventDefault(); // Esto detiene el refresco nativo del navegador SIEMPRE
-        event.stopImmediatePropagation(); // Detiene cualquier otro listener que interfiera
+        event.preventDefault();
+        event.stopImmediatePropagation();
 
         const modalPago = document.getElementById('modalPago');
-        // Verificamos si está visible (display block, flex, o grid)
         const estaEnPago = modalPago && (window.getComputedStyle(modalPago).display !== 'none');
 
         if (estaEnPago) {
-            // Si estamos en pago, damos la opción de refrescar manualmente
             if (confirm("¿Deseas refrescar la página? Se perderán los datos del carrito.")) {
                 window.location.reload();
             }
         } else {
-            // Si NO estamos en pago, ejecutamos la función de precio
             window.ejecutarF5();
         }
         return;
     }
 
-    // 2. Lógica para F4, F6, F9
-    const teclasValidas = ['F4', 'F6', 'F9'];
-    if (teclasValidas.includes(event.key)) {
+    // 2. Manejo de otros comandos (F4, F6, F9)
+    const comandos = {
+        'F4': window.ejecutarF4,
+        'F6': window.ejecutarF6,
+        'F9': window.abrirModalCobro
+    };
+
+    if (comandos[event.key]) {
         event.preventDefault();
-        switch(event.key) {
-            case 'F4': window.ejecutarF4(); break;
-            case 'F6': window.ejecutarF6(); break;
-            case 'F9': window.abrirModalCobro(); break;
-        }
+        comandos[event.key]();
     }
-}, true); // El 'true' en el addEventListener es CLAVE: activa el modo captura
+}, true);
 
 // --- Funciones de Comandos ---
-
 window.ejecutarF4 = () => { 
     if (carrito.length === 0) return;
     const item = carrito[carrito.length - 1];
@@ -345,7 +342,6 @@ window.abrirModalCobro = () => {
         const totalUSD = window.totalVentaUSD || 0;
         const totalBs = totalUSD * tasaActual;
         
-        // Solo actualizamos los totales visuales
         const dUSD = document.getElementById('totalModalUSD');
         const dBS = document.getElementById('totalModalBS');
         
