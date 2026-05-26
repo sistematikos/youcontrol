@@ -162,9 +162,13 @@ window.registrarVenta = async () => {
 window.seleccionarCliente = (id, nombre) => {
     const inputCliente = document.getElementById('buscar-cliente-pos');
     const divResultados = document.getElementById('resultados-cliente-pos');
+    
     inputCliente.value = nombre;
     divResultados.style.display = 'none';
+    
     window.clienteSeleccionadoID = id; 
+    window.nombreClienteSeleccionado = nombre; // <--- AGREGA ESTA LÍNEA
+    
     document.getElementById('buscar-producto-pos')?.focus();
 };
 
