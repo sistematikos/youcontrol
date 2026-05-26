@@ -383,16 +383,23 @@ window.abrirModalCobro = () => {
 // NUEVA FUNCIÓN: REGISTRAR VENTA
 // ==========================================
 window.registrarVenta = async () => {
-    // 1. Validación de carrito
     if (carrito.length === 0) {
         alert("El carrito está vacío.");
         return;
     }
 
     try {
-        // 2. Construcción de datos con la FECHA DE SERVIDOR
+        // PRIORIDAD: 
+        // 1. Usar el nombre "memorizado" en la variable global (si se seleccionó cliente).
+        // 2. Si no hay, intentar leer del input.
+        // 3. Por defecto, "Anónimo".
+        const nombreParaGuardar = window.nombreClienteSeleccionado || 
+                                 document.getElementById('buscar-cliente-pos')?.value || 
+                                 "Anónimo";
+
         const ventaData = {
             cliente_id: window.clienteSeleccionadoID || "anonimo",
+            nombre_cliente: nombreParaGuardar, // Se guardará correctamente en Firestore
             items: carrito,
             total_usd: window.totalVentaUSD || 0,
             tasa_aplicada: tasaActual,
@@ -402,34 +409,37 @@ window.registrarVenta = async () => {
                 efectivo_bs: parseFloat(document.getElementById('in-efectivo-bs')?.value) || 0,
                 divisas_usd: parseFloat(document.getElementById('in-divisas-usd')?.value) || 0
             },
-            fecha: serverTimestamp(), // Esto permitirá que tu reporte funcione
+            fecha: serverTimestamp(),
             nro_factura: proximoNumeroFacturaStr
         };
 
-        // 3. Guardar en Firestore
+        // Guardar en Firestore
         await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
 
-        alert("✅ Venta registrada con éxito.");
+        alert("✅ Venta registrada correctamente para: " + nombreParaGuardar);
 
-        // 4. Limpieza del proceso
+        // Limpieza profunda de variables globales y UI
         carrito = [];
         window.clienteSeleccionadoID = null;
-        if (document.getElementById('buscar-cliente-pos')) document.getElementById('buscar-cliente-pos').value = '';
+        window.nombreClienteSeleccionado = null; // LIMPIAMOS LA MEMORIA
+        
+        const inputC = document.getElementById('buscar-cliente-pos');
+        if (inputC) inputC.value = '';
+        
         document.getElementById('modalPago').style.display = 'none';
         
-        // Resetear inputs de pago
+        // Reset inputs de pago
         ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd'].forEach(id => {
             const el = document.getElementById(id);
             if(el) el.value = "0";
         });
 
-        // Actualizar UI y contador de factura
         window.actualizarCarritoUI();
         proximoNumeroFacturaStr = (parseInt(proximoNumeroFacturaStr) + 1).toString().padStart(6, '0');
 
     } catch (error) {
-        console.error("Error al guardar venta:", error);
-        alert("Error al guardar la venta: " + error.message);
+        console.error("Error al guardar:", error);
+        alert("Error al guardar: " + error.message);
     }
 };
 
