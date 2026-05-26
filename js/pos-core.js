@@ -412,14 +412,19 @@ window.registrarVenta = async () => {
 };
 
 // ==========================================
-// LIGAR AL BOTÓN (Dentro de DOMContentLoaded)
+// ACTIVACIÓN DINÁMICA DEL BOTÓN DE VENTA
 // ==========================================
-// Agrega esto al final de tu archivo para activar el botón automáticamente
-document.addEventListener('input', () => {
-    const btn = document.getElementById('btn-confirmar-venta');
-    if (btn) {
-        // El botón se activa solo si hay algo escrito en los campos (puedes poner lógica más compleja aquí)
-        btn.disabled = false; 
+// Esto escucha cambios dentro del modal de pago para activar el botón
+document.addEventListener('input', (e) => {
+    const targetId = e.target.id;
+    // Lista de IDs de campos de pago
+    const camposPago = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd'];
+    
+    if (camposPago.includes(targetId)) {
+        const btn = document.getElementById('btn-confirmar-venta');
+        if (btn) {
+            btn.disabled = false; // Habilita el botón al escribir en los campos de pago
+        }
     }
 });
 
