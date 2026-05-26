@@ -354,6 +354,73 @@ window.abrirModalCobro = () => {
 };
 
 // ==========================================
+// NUEVA FUNCIÓN: REGISTRAR VENTA
+// ==========================================
+window.registrarVenta = async () => {
+    // 1. Obtener datos del DOM
+    const puntoBs = parseFloat(document.getElementById('in-punto-bs')?.value) || 0;
+    const pagoMovilBs = parseFloat(document.getElementById('in-pagomovil-bs')?.value) || 0;
+    const efectivoBs = parseFloat(document.getElementById('in-efectivo-bs')?.value) || 0;
+    const divisasUsd = parseFloat(document.getElementById('in-divisas-usd')?.value) || 0;
+    
+    // 2. Validar que la venta no esté vacía
+    if (carrito.length === 0) {
+        alert("El carrito está vacío.");
+        return;
+    }
+
+    try {
+        // 3. Crear el objeto de la venta
+        const ventaData = {
+            cliente_id: window.clienteSeleccionadoID || "anonimo",
+            items: carrito,
+            total_usd: window.totalVentaUSD,
+            tasa_aplicada: tasaActual,
+            pagos: {
+                punto_bs: puntoBs,
+                pago_movil_bs: pagoMovilBs,
+                efectivo_bs: efectivoBs,
+                divisas_usd: divisasUsd
+            },
+            fecha: serverTimestamp(),
+            nro_factura: proximoNumeroFacturaStr
+        };
+
+        // 4. Guardar en Firestore
+        await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
+
+        alert("✅ Venta registrada con éxito.");
+
+        // 5. Limpiar y resetear
+        carrito = [];
+        window.clienteSeleccionadoID = null;
+        document.getElementById('buscar-cliente-pos').value = '';
+        document.getElementById('modalPago').style.display = 'none';
+        
+        // Resetear campos de pago
+        ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.value = "0";
+        });
+
+        window.actualizarCarritoUI();
+
+    } catch (error) {
+        console.error("Error al guardar venta:", error);
+        alert("Error al guardar la venta: " + error.message);
+    }
+};
+
+// ==========================================
+// LIGAR AL BOTÓN (Dentro de DOMContentLoaded)
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    // ... tu código anterior ...
+
+    document.getElementById('btn-confirmar-venta')?.addEventListener('click', window.registrarVenta);
+});
+
+// ==========================================
 // INICIALIZACIÓN FINAL
 // ==========================================
 cargarConfiguracionGlobal().then(() => {
