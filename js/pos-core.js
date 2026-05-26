@@ -116,15 +116,17 @@ window.registrarVenta = async () => {
         const inputCliente = document.getElementById('buscar-cliente-pos');
         const nombreCliente = inputCliente ? inputCliente.value : "Anónimo";
 
-        const ventaData = {
-            cliente_id: window.clienteSeleccionadoID || "anonimo",
-            nombre_cliente: nombreCliente, // <--- ESTO ES LO QUE GUARDA EL NOMBRE
-            items: carrito,
-            total_usd: window.totalVentaUSD || 0,
-            // ... resto de tus campos (tasa, pagos, fecha, nro_factura)
-            fecha: serverTimestamp(),
-            nro_factura: proximoNumeroFacturaStr
-        };
+        const nombreCliente = document.getElementById('buscar-cliente-pos').value;
+
+const ventaData = {
+    cliente_id: window.clienteSeleccionadoID || "anonimo",
+    nombre_cliente: nombreCliente, // Asegúrate de que esto sea texto plano
+    items: carrito,
+    total_usd: window.totalVentaUSD || 0,
+    tasa_aplicada: tasaActual,
+    fecha: serverTimestamp(),
+    nro_factura: proximoNumeroFacturaStr
+};
 
         await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
         // ... (resto de la función)
