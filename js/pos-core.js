@@ -3,7 +3,6 @@
  * Módulo de Facturación y Ventas (pos-core.js)
  */
 
-import { db } from './firebase-config.js';
 import { 
     collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -357,32 +356,23 @@ window.abrirModalCobro = () => {
 // NUEVA FUNCIÓN: REGISTRAR VENTA
 // ==========================================
 window.registrarVenta = async () => {
-    // 1. Obtener datos del DOM
-    const puntoBs = parseFloat(document.getElementById('in-punto-bs')?.value) || 0;
-    const pagoMovilBs = parseFloat(document.getElementById('in-pagomovil-bs')?.value) || 0;
-    const efectivoBs = parseFloat(document.getElementById('in-efectivo-bs')?.value) || 0;
-    const divisasUsd = parseFloat(document.getElementById('in-divisas-usd')?.value) || 0;
-    
-    // 2. Validar que la venta no esté vacía
-    if (carrito.length === 0) {
-        alert("El carrito está vacío.");
-        return;
-    }
+    // ... tu código previo de validación ...
 
     try {
-        // 3. Crear el objeto de la venta
+        // 3. Crear el objeto de la venta incluyendo la fecha del servidor
         const ventaData = {
             cliente_id: window.clienteSeleccionadoID || "anonimo",
             items: carrito,
-            total_usd: window.totalVentaUSD,
+            total_usd: window.totalVentaUSD || 0,
             tasa_aplicada: tasaActual,
             pagos: {
-                punto_bs: puntoBs,
-                pago_movil_bs: pagoMovilBs,
-                efectivo_bs: efectivoBs,
-                divisas_usd: divisasUsd
+                punto_bs: parseFloat(document.getElementById('in-punto-bs')?.value) || 0,
+                pago_movil_bs: parseFloat(document.getElementById('in-pagomovil-bs')?.value) || 0,
+                efectivo_bs: parseFloat(document.getElementById('in-efectivo-bs')?.value) || 0,
+                divisas_usd: parseFloat(document.getElementById('in-divisas-usd')?.value) || 0
             },
-            fecha: serverTimestamp(),
+            // AQUÍ COLOCAS LA FECHA:
+            fecha: serverTimestamp(), 
             nro_factura: proximoNumeroFacturaStr
         };
 
@@ -390,21 +380,9 @@ window.registrarVenta = async () => {
         await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
 
         alert("✅ Venta registrada con éxito.");
-
-        // 5. Limpiar y resetear
-        carrito = [];
-        window.clienteSeleccionadoID = null;
-        document.getElementById('buscar-cliente-pos').value = '';
-        document.getElementById('modalPago').style.display = 'none';
         
-        // Resetear campos de pago
-        ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd'].forEach(id => {
-            const el = document.getElementById(id);
-            if(el) el.value = "0";
-        });
-
-        window.actualizarCarritoUI();
-
+        // ... el resto de tu código de limpieza ...
+        
     } catch (error) {
         console.error("Error al guardar venta:", error);
         alert("Error al guardar la venta: " + error.message);
