@@ -109,31 +109,53 @@ window.agregarCarrito = (id) => {
 };
 
 window.registrarVenta = async () => {
-    try {
-        // En lugar de usar una variable global fija, aseguramos el número al momento de guardar
-        // Opcional: podrías llamar a una función que busque el último ID en Firestore aquí mismo
-        
-        await addDoc(collection(db, "usuarios", USER_ID, "ventas"), {
-            fecha: serverTimestamp(),
-            nro_factura: proximoNumeroFacturaStr, // Usa la variable que ya tienes
-            total_usd: window.totalVentaUSD,
-            tasa: tasaActual,
-            formato: formatoFactura,
-            items: carrito
-        });
+    if (carrito.length === 0) {
+        alert("El carrito está vacío.");
+        return;
+    }
 
-        alert("✅ Venta registrada correctamente.");
-        
-        // Limpiamos
+    try {
+        // Obtenemos el nombre del cliente del input de búsqueda
+        const nombreCliente = document.getElementById('buscar-cliente-pos')?.value || "Anónimo";
+
+        const ventaData = {
+            cliente_id: window.clienteSeleccionadoID || "anonimo",
+            nombre_cliente: nombreCliente, // <--- GUARDAMOS EL NOMBRE AQUÍ
+            items: carrito,
+            total_usd: window.totalVentaUSD || 0,
+            tasa_aplicada: tasaActual,
+            pagos: {
+                punto_bs: parseFloat(document.getElementById('in-punto-bs')?.value) || 0,
+                pago_movil_bs: parseFloat(document.getElementById('in-pagomovil-bs')?.value) || 0,
+                efectivo_bs: parseFloat(document.getElementById('in-efectivo-bs')?.value) || 0,
+                divisas_usd: parseFloat(document.getElementById('in-divisas-usd')?.value) || 0
+            },
+            fecha: serverTimestamp(),
+            nro_factura: proximoNumeroFacturaStr
+        };
+
+        await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
+
+        alert("✅ Venta registrada con éxito.");
+
+        // Limpieza y reset
         carrito = [];
-        window.actualizarCarritoUI();
+        window.clienteSeleccionadoID = null;
+        if (document.getElementById('buscar-cliente-pos')) document.getElementById('buscar-cliente-pos').value = '';
         document.getElementById('modalPago').style.display = 'none';
         
-        // IMPORTANTE: Incrementamos el contador para la próxima venta
-        const ultimoNro = parseInt(proximoNumeroFacturaStr);
-        proximoNumeroFacturaStr = (ultimoNro + 1).toString().padStart(6, '0');
-        
-    } catch (e) { alert("Error al guardar: " + e.message); }
+        ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.value = "0";
+        });
+
+        window.actualizarCarritoUI();
+        proximoNumeroFacturaStr = (parseInt(proximoNumeroFacturaStr) + 1).toString().padStart(6, '0');
+
+    } catch (error) {
+        console.error("Error al guardar venta:", error);
+        alert("Error al guardar la venta: " + error.message);
+    }
 };
 
 // ==========================================
