@@ -6,54 +6,32 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         :root {
-            /* Azul oficial y degradado vertical hacia un azul grisáceo (azul hielo) */
             --brand-blue: #007bff;
             --bg-gradient: linear-gradient(to bottom, var(--brand-blue) 0%, #dbeafe 50%, #f1f5f9 100%);
         }
-        body { 
-            font-family: 'Poppins', sans-serif; 
-            background: var(--bg-gradient); 
-            min-height: 100vh;
-            margin: 0; padding: 20px; 
-            background-attachment: fixed;
-        }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); min-height: 100vh; margin: 0; padding: 20px; background-attachment: fixed; }
         .container { max-width: 1200px; margin: auto; display: flex; flex-direction: column; gap: 20px; }
 
-        /* Tarjeta 1: Encabezado */
-        .header-card {
-            background: white;
-            border-radius: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 30px; 
-            height: 110px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .logo-header { 
-            height: 100%; 
-            width: auto;
-            object-fit: contain;
-        }
+        /* Encabezado */
+        .header-card { background: white; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; padding: 0 30px; height: 110px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .logo-header { height: 100%; width: auto; object-fit: contain; }
 
-        /* Tarjeta 2: Cuerpo del Reporte */
-        .report-card {
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            min-height: 60vh;
-        }
+        /* Tarjetas KPI Estilo Cuadre de Caja */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .kpi-card { background: white; padding: 20px; border-radius: 12px; border-left: 6px solid var(--brand-blue); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .kpi-card.green { border-left-color: #10b981; }
+        .kpi-card.sky { border-left-color: #0ea5e9; }
+        .kpi-label { font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 5px; }
+        .kpi-value { font-size: 1.5rem; font-weight: 700; color: #1e293b; }
 
+        /* Cuerpo del Reporte */
+        .report-card { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-height: 50vh; }
         .filter-section { display: flex; gap: 20px; margin-bottom: 25px; align-items: flex-end; }
-        .input-group label { font-size: 0.75rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 5px; display: block; }
         input[type="date"] { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; }
-        
         .btn-gen { background: var(--brand-blue); color: white; border: none; padding: 10px 25px; border-radius: 6px; cursor: pointer; font-weight: 600; }
         
-        h1, h2 { color: #1e293b; margin: 0; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { background: #f8fafc; padding: 15px; text-align: left; border-bottom: 2px solid #e2e8f0; font-size: 0.85rem; color: #1e293b; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: #f8fafc; padding: 15px; text-align: left; border-bottom: 2px solid #e2e8f0; font-size: 0.85rem; }
         td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
     </style>
 </head>
@@ -64,42 +42,46 @@
                 <button onclick="location.href='sys_v1_menu.html'" style="background:none; border:none; color:var(--brand-blue); cursor:pointer; font-weight:600;">
                     <i class="fas fa-arrow-left"></i> VOLVER
                 </button>
-                <h1 style="font-size: 1.5rem;">Reporte de Ventas</h1>
+                <h1 style="font-size: 1.4rem; margin: 5px 0 0 0;">Reporte de Ventas</h1>
             </div>
             <img src="img/logo.png" alt="Logo" class="logo-header">
+        </div>
+
+        <div class="kpi-grid">
+            <div class="kpi-card green">
+                <span class="kpi-label">Venta Total</span>
+                <div class="kpi-value" id="kpi-total">$ 0.00</div>
+            </div>
+            <div class="kpi-card sky">
+                <span class="kpi-label">Facturas</span>
+                <div class="kpi-value" id="kpi-facturas">0</div>
+            </div>
         </div>
 
         <div class="report-card">
             <h2>Historial de Transacciones</h2>
             <div class="filter-section">
-                <div class="input-group">
-                    <label>Desde</label>
+                <div>
+                    <label style="font-size: 0.7rem; color:#64748b;">DESDE</label><br>
                     <input type="date" id="filtro-desde">
                 </div>
-                <div class="input-group">
-                    <label>Hasta</label>
+                <div>
+                    <label style="font-size: 0.7rem; color:#64748b;">HASTA</label><br>
                     <input type="date" id="filtro-hasta">
                 </div>
                 <button class="btn-gen" onclick="window.cargarReporteVentas()">
-                    <i class="fas fa-search"></i> GENERAR REPORTE
+                    <i class="fas fa-search"></i> GENERAR
                 </button>
             </div>
 
             <table>
                 <thead>
-                    <tr>
-                        <th>Factura / Fecha</th>
-                        <th>Cliente</th>
-                        <th>Detalle</th>
-                        <th>Total ($)</th>
-                    </tr>
+                    <tr><th>Factura</th><th>Cliente</th><th>Detalle</th><th>Total</th></tr>
                 </thead>
                 <tbody id="tabla-reporte-ventas">
-                    <tr><td colspan="4" style="text-align:center; padding: 40px; color:#94a3b8;">Selecciona fechas para cargar información.</td></tr>
+                    <tr><td colspan="4" style="text-align:center; color:#94a3b8;">Selecciona fechas...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
     <script type="module" src="./js/sys_v4_repvt.js"></script>
-</body>
-</html>
