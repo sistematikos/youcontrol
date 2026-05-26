@@ -22,23 +22,16 @@ window.cargarReporteVentas = async () => {
         const snapshot = await getDocs(q);
 
         let html = '';
-        let total = 0;
-        let articulos = 0;
 
         for (const vDoc of snapshot.docs) {
             const data = vDoc.data();
             const fechaVenta = data.fecha.toDate();
 
             if (fechaVenta >= fechaInicio && fechaVenta <= fechaFin) {
-                total += data.total_usd || 0;
                 
-                // Sumamos cantidad de artículos
-                data.items.forEach(i => articulos += i.cantidad);
-
-                // Mostramos el nombre del cliente que ahora sí se guarda correctamente
                 const nombreCliente = data.nombre_cliente || "Anónimo";
 
-                // Detalle de artículos con sus precios
+                // Lista de productos con precio unitario
                 const listaItems = data.items.map(i => 
                     `<li>${i.nombre} (${i.cantidad} x $${(i.precio || 0).toFixed(2)})</li>`
                 ).join('');
@@ -52,15 +45,11 @@ window.cargarReporteVentas = async () => {
             }
         }
 
-        // Actualizamos la tabla
+        // Solo actualizamos la tabla, los KPIs ya no se tocan ni se muestran
         document.getElementById('tabla-reporte-ventas').innerHTML = html || '<tr><td colspan="4" style="text-align:center;">No hay ventas en este rango.</td></tr>';
-        
-        // Actualizamos solo los indicadores de ventas totales y cantidad de artículos
-        document.getElementById('kpi-total-ventas').innerText = `$ ${total.toFixed(2)}`;
-        document.getElementById('kpi-total-articulos').innerText = articulos;
 
     } catch (error) {
         console.error("Error al cargar reporte:", error);
-        alert("Error al cargar el reporte: " + error.message);
+        alert("Error al cargar el reporte.");
     }
 };
