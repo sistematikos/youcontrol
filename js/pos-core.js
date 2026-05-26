@@ -414,10 +414,13 @@ window.registrarVenta = async () => {
 // ==========================================
 // LIGAR AL BOTÓN (Dentro de DOMContentLoaded)
 // ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    // ... tu código anterior ...
-
-    document.getElementById('btn-confirmar-venta')?.addEventListener('click', window.registrarVenta);
+// Agrega esto al final de tu archivo para activar el botón automáticamente
+document.addEventListener('input', () => {
+    const btn = document.getElementById('btn-confirmar-venta');
+    if (btn) {
+        // El botón se activa solo si hay algo escrito en los campos (puedes poner lógica más compleja aquí)
+        btn.disabled = false; 
+    }
 });
 
 // ==========================================
