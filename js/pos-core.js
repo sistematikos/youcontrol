@@ -109,54 +109,27 @@ window.agregarCarrito = (id) => {
 };
 
 window.registrarVenta = async () => {
-    if (carrito.length === 0) {
-        alert("El carrito está vacío.");
-        return;
-    }
+    // ... (validaciones previas)
 
     try {
-        // Obtenemos el nombre del cliente del input de búsqueda
-        const nombreCliente = document.getElementById('buscar-cliente-pos')?.value || "Anónimo";
+        // Asegúrate de capturar el valor del input en este preciso momento
+        const inputCliente = document.getElementById('buscar-cliente-pos');
+        const nombreCliente = inputCliente ? inputCliente.value : "Anónimo";
 
         const ventaData = {
             cliente_id: window.clienteSeleccionadoID || "anonimo",
-            nombre_cliente: nombreCliente, // <--- GUARDAMOS EL NOMBRE AQUÍ
+            nombre_cliente: nombreCliente, // <--- ESTO ES LO QUE GUARDA EL NOMBRE
             items: carrito,
             total_usd: window.totalVentaUSD || 0,
-            tasa_aplicada: tasaActual,
-            pagos: {
-                punto_bs: parseFloat(document.getElementById('in-punto-bs')?.value) || 0,
-                pago_movil_bs: parseFloat(document.getElementById('in-pagomovil-bs')?.value) || 0,
-                efectivo_bs: parseFloat(document.getElementById('in-efectivo-bs')?.value) || 0,
-                divisas_usd: parseFloat(document.getElementById('in-divisas-usd')?.value) || 0
-            },
+            // ... resto de tus campos (tasa, pagos, fecha, nro_factura)
             fecha: serverTimestamp(),
             nro_factura: proximoNumeroFacturaStr
         };
 
         await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
-
-        alert("✅ Venta registrada con éxito.");
-
-        // Limpieza y reset
-        carrito = [];
-        window.clienteSeleccionadoID = null;
-        if (document.getElementById('buscar-cliente-pos')) document.getElementById('buscar-cliente-pos').value = '';
-        document.getElementById('modalPago').style.display = 'none';
-        
-        ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd'].forEach(id => {
-            const el = document.getElementById(id);
-            if(el) el.value = "0";
-        });
-
-        window.actualizarCarritoUI();
-        proximoNumeroFacturaStr = (parseInt(proximoNumeroFacturaStr) + 1).toString().padStart(6, '0');
-
-    } catch (error) {
-        console.error("Error al guardar venta:", error);
-        alert("Error al guardar la venta: " + error.message);
-    }
-};
+        // ... (resto de la función)
+    } catch (e) { ... }
+}
 
 // ==========================================
 // 4. INTEGRACIÓN UI: SELECCIÓN Y NAVEGACIÓN
