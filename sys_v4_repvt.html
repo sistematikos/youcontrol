@@ -6,20 +6,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         :root {
-            /* Azul oficial de tu sistema tomado de la referencia */
-            --brand-blue: #007bff; 
-            /* Degradado: De tu azul oficial a un gris/blanco muy limpio */
-            --bg-gradient: linear-gradient(135deg, var(--brand-blue) 0%, #aab8c2 50%, #f8f9fa 100%);
+            /* Azul oficial y degradado vertical */
+            --brand-blue: #007bff;
+            --bg-gradient: linear-gradient(to bottom, var(--brand-blue) 0%, #aab8c2 50%, #f8f9fa 100%);
         }
         body { 
             font-family: 'Poppins', sans-serif; 
             background: var(--bg-gradient); 
             min-height: 100vh;
             margin: 0; padding: 20px; 
+            background-attachment: fixed;
         }
         .container { max-width: 1200px; margin: auto; display: flex; flex-direction: column; gap: 20px; }
 
-        /* Tarjeta 1: Header minimalista */
+        /* Tarjeta 1: Encabezado (Logo sin márgenes) */
         .header-card {
             background: white;
             border-radius: 12px;
@@ -49,10 +49,9 @@
         .input-group label { font-size: 0.75rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 5px; display: block; }
         input[type="date"] { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; }
         
-        /* Botón con el azul oficial de tu sistema */
         .btn-gen { background: var(--brand-blue); color: white; border: none; padding: 10px 25px; border-radius: 6px; cursor: pointer; font-weight: 600; }
         
-        h1, h2 { color: #1e293b; }
+        h1, h2 { color: #1e293b; margin: 0; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th { background: #f8fafc; padding: 15px; text-align: left; border-bottom: 2px solid #e2e8f0; font-size: 0.85rem; color: #1e293b; }
         td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
@@ -65,13 +64,13 @@
                 <button onclick="location.href='sys_v1_menu.html'" style="background:none; border:none; color:var(--brand-blue); cursor:pointer; font-weight:600;">
                     <i class="fas fa-arrow-left"></i> VOLVER
                 </button>
-                <h1 style="margin: 5px 0 0 0; font-size: 1.5rem;">Reporte de Ventas</h1>
+                <h1 style="font-size: 1.5rem;">Reporte de Ventas</h1>
             </div>
             <img src="img/logo.png" alt="Logo" class="logo-header">
         </div>
 
         <div class="report-card">
-            <h2 style="margin-top:0;">Historial de Transacciones</h2>
+            <h2>Historial de Transacciones</h2>
             <div class="filter-section">
                 <div class="input-group">
                     <label>Desde</label>
