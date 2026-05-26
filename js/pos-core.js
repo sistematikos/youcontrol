@@ -356,10 +356,14 @@ window.abrirModalCobro = () => {
 // NUEVA FUNCIÓN: REGISTRAR VENTA
 // ==========================================
 window.registrarVenta = async () => {
-    // ... tu código previo de validación ...
+    // 1. Validación de carrito
+    if (carrito.length === 0) {
+        alert("El carrito está vacío.");
+        return;
+    }
 
     try {
-        // 3. Crear el objeto de la venta incluyendo la fecha del servidor
+        // 2. Construcción de datos con la FECHA DE SERVIDOR
         const ventaData = {
             cliente_id: window.clienteSeleccionadoID || "anonimo",
             items: carrito,
@@ -371,18 +375,31 @@ window.registrarVenta = async () => {
                 efectivo_bs: parseFloat(document.getElementById('in-efectivo-bs')?.value) || 0,
                 divisas_usd: parseFloat(document.getElementById('in-divisas-usd')?.value) || 0
             },
-            // AQUÍ COLOCAS LA FECHA:
-            fecha: serverTimestamp(), 
+            fecha: serverTimestamp(), // Esto permitirá que tu reporte funcione
             nro_factura: proximoNumeroFacturaStr
         };
 
-        // 4. Guardar en Firestore
+        // 3. Guardar en Firestore
         await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
 
         alert("✅ Venta registrada con éxito.");
+
+        // 4. Limpieza del proceso
+        carrito = [];
+        window.clienteSeleccionadoID = null;
+        if (document.getElementById('buscar-cliente-pos')) document.getElementById('buscar-cliente-pos').value = '';
+        document.getElementById('modalPago').style.display = 'none';
         
-        // ... el resto de tu código de limpieza ...
-        
+        // Resetear inputs de pago
+        ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.value = "0";
+        });
+
+        // Actualizar UI y contador de factura
+        window.actualizarCarritoUI();
+        proximoNumeroFacturaStr = (parseInt(proximoNumeroFacturaStr) + 1).toString().padStart(6, '0');
+
     } catch (error) {
         console.error("Error al guardar venta:", error);
         alert("Error al guardar la venta: " + error.message);
