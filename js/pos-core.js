@@ -349,7 +349,7 @@ window.abrirModalCobro = () => {
         if (dBS) dBS.innerText = `${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2})} Bs.`;
         
         modal.style.display = 'flex';
-        document.getElementById('in-divisas-usd')?.focus();
+        document.getElementById('in-puntoventa-bs')?.focus();
     }
 };
 
