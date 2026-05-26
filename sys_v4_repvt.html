@@ -2,215 +2,81 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reporte de Ventas Profundo | Sistematikos</title>
+    <title>Reporte de Ventas | Sistematikos</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { 
-            --bg: #F1F5F9; 
-            --primary: #1D4ED8; /* Azul corporativo persuasivo */
-            --primary-hover: #1E40AF;
-            --text: #0F172A; /* Slate oscuro para máxima legibilidad */
-            --border: #CBD5E1; 
-            --text-muted: #64748B;
-            --card-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.05);
+        :root {
+            /* Degradado Zafiro a Turquesa */
+            --bg-gradient: linear-gradient(135deg, #0f4c75 0%, #3282b8 50%, #00d2ff 100%);
         }
         body { 
             font-family: 'Poppins', sans-serif; 
-            background: var(--bg); 
-            margin: 0; 
-            padding: 24px; 
-            color: var(--text); 
-            letter-spacing: -0.01em;
+            background: var(--bg-gradient); 
+            min-height: 100vh;
+            margin: 0; padding: 20px; 
         }
-        .container { 
-            max-width: 1340px; 
-            margin: auto; 
-        }
-        
-        /* Botón Volver Minimalista */
-        .btn-back { 
-            border: none; 
-            background: none; 
-            color: var(--text-muted); 
-            cursor: pointer; 
-            font-weight: 600; 
-            margin-bottom: 24px; 
-            display: inline-flex; 
-            align-items: center; 
-            gap: 8px; 
-            font-size: 0.9rem; 
-            transition: color 0.2s;
-        }
-        .btn-back:hover { color: var(--primary); }
-        
-        /* Encabezado Corporativo Impactante */
-        .header-section { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            background: white;
-            padding: 24px 32px;
-            border-radius: 20px;
-            box-shadow: var(--card-shadow);
-            margin-bottom: 32px;
-            border: 1px solid #E2E8F0;
-        }
-        .header-section h3 { 
-            font-size: 1.8rem; 
-            font-weight: 800; 
-            color: var(--text); 
-            margin: 0; 
-            letter-spacing: -0.02em;
-        }
-        .header-section span {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            font-weight: 500;
-        }
+        .container { max-width: 1200px; margin: auto; }
+
+        /* Estilo para el Logo Eléctrico */
         .logo-header { 
-            height: 90px; /* Logo más grande y protagonista */
-            width: auto; 
+            height: 120px; 
+            width: auto;
+            filter: drop-shadow(0 0 10px rgba(0, 210, 255, 0.8)) brightness(1.2) contrast(1.1);
         }
-        
-        /* Barra de Filtros Ejecutiva */
-        .filter-section { 
-            background: white;
-            padding: 24px;
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            box-shadow: var(--card-shadow);
-            margin-bottom: 28px;
-            display: flex;
-            align-items: flex-end;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-        .form-group { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 8px; 
-        }
-        .form-group label { 
-            font-size: 0.8rem; 
-            font-weight: 700; 
-            color: var(--text-muted); 
-            text-transform: uppercase; 
-            letter-spacing: 0.05em;
-        }
-        .form-group input[type="date"] { 
-            padding: 12px 14px; 
-            border: 1.5px solid #E2E8F0; 
-            border-radius: 12px; 
-            font-family: 'Poppins'; 
-            font-size: 0.95rem; 
-            background: #F8FAFC; 
-            outline: none; 
-            transition: all 0.2s;
-        }
-        .form-group input[type="date"]:focus { 
-            border-color: var(--primary); 
-            background: white;
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
-        }
-        .btn-filter { 
-            background: var(--primary); 
-            color: white; 
-            border: none; 
-            padding: 13px 28px; 
-            border-radius: 12px; 
-            font-weight: 700; 
-            font-size: 0.95rem; 
-            cursor: pointer; 
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
-            transition: background 0.2s;
-            box-shadow: 0 4px 6px rgba(29, 78, 216, 0.15);
-        }
-        .btn-filter:hover { background: var(--primary-hover); }
-        
-        /* Tabla Corporativa de Alta Legibilidad */
-        .report-container {
-            background: white;
-            border: 1px solid var(--border);
+
+        .main-card {
+            background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
-            padding: 24px;
-            box-shadow: var(--card-shadow);
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
         }
-        table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
-        th { 
-            background: #F8FAFC; 
-            text-align: left; 
-            padding: 16px 12px; 
-            border-bottom: 2px solid #E2E8F0; 
-            color: var(--text-muted); 
-            text-transform: uppercase; 
-            font-size: 0.75rem; 
-            font-weight: 800;
-            letter-spacing: 0.05em;
-        }
-        td { 
-            padding: 16px 12px; 
-            border-bottom: 1px solid #F1F5F9; 
-            color: var(--text); 
-            vertical-align: middle;
-        }
-        table tr:hover td { background-color: #F8FAFC; }
-        table tr:last-child td { border: none; }
+
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         
+        /* Ajustes de botones y tablas */
+        .btn-filter { background: #0f4c75; color: white; padding: 12px 25px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; }
+        input { padding: 10px; border-radius: 8px; border: 1px solid #ccc; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background: #eef2f3; padding: 15px; text-align: left; }
+        td { padding: 15px; border-bottom: 1px solid #eee; }
     </style>
 </head>
-<body oncontextmenu="return false">
+<body>
     <div class="container">
-        <button class="btn-back" onclick="location.href='sys_v1_menu.html'">
-            <i class="fas fa-arrow-left"></i> VOLVER AL MENÚ
-        </button>
-
-        <div class="header-section">
-            <div>
-                <h3>Historial de Ventas Pro</h3>
-                <span>Consulta el desempeño histórico de tus transacciones</span>
+        <div class="main-card">
+            <div class="header-row">
+                <div>
+                    <h2>Historial de Ventas Pro</h2>
+                    <p>Consulta el desempeño histórico de tus transacciones</p>
+                </div>
+                <img src="img/logo.png" alt="Logo" class="logo-header">
             </div>
-            <img src="img/logo.png" alt="Sistematikos Logo" class="logo-header">
-        </div>
 
-        <div class="filter-section">
-            <div class="form-group">
-                <label>Desde Fecha</label>
+            <div class="filter-section">
                 <input type="date" id="filtro-desde">
-            </div>
-            <div class="form-group">
-                <label>Hasta Fecha</label>
                 <input type="date" id="filtro-hasta">
+                <button class="btn-filter" onclick="window.cargarReporteVentas()">
+                    <i class="fas fa-magnifying-glass"></i> GENERAR REPORTE
+                </button>
             </div>
-            <button class="btn-filter" id="btnConsultar" onclick="window.cargarReporteVentas()">
-                <i class="fas fa-magnifying-glass"></i> GENERAR REPORTE
-            </button>
-        </div>
 
-        <div class="report-container">
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 18%;">Factura / Fecha</th>
-                        <th style="width: 25%;">Cliente / Identificación</th>
-                        <th style="width: 45%;">Detalle de Artículos</th>
-                        <th style="text-align: right; width: 12%;">Total ($)</th>
+                        <th>Factura / Fecha</th>
+                        <th>Cliente</th>
+                        <th>Detalle</th>
+                        <th>Total ($)</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-reporte-ventas">
-                    <tr>
-                        <td colspan="4" style="text-align:center; color:var(--text-muted); padding:48px; font-weight: 500;">
-                            Selecciona un rango de fechas para procesar el histórico.
-                        </td>
-                    </tr>
+                    <tr><td colspan="4" style="text-align:center;">Selecciona fechas para cargar datos.</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
-
     <script type="module" src="./js/sys_v4_repvt.js"></script>
 </body>
 </html>
