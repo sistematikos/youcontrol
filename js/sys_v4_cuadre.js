@@ -1,79 +1,65 @@
-/**
- * YOU CONTROL - SISTEMATIKOS
- * Controlador de Cuadre de Caja Diario (sys_v4_cuadre.js)
- */
-
 import { db } from './firebase-config.js';
 import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const USER_ID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
-let desuscripcionActiva = null;
-
-// Elementos DOM
 const inputFecha = document.getElementById('filtro-fecha');
 const tablaCuerpo = document.getElementById('tabla-cuerpo');
 
-// Inicialización
 document.addEventListener('DOMContentLoaded', () => {
-    // Establecer fecha actual por defecto
     inputFecha.value = new Date().toISOString().split('T')[0];
     cargarCuadre(inputFecha.value);
-
-    // Escuchar cambios en el selector de fecha
-    inputFecha.addEventListener('change', (e) => {
-        cargarCuadre(e.target.value);
-    });
+    inputFecha.addEventListener('change', (e) => cargarCuadre(e.target.value));
 });
 
 function cargarCuadre(fechaSeleccionada) {
-    if (desuscripcionActiva) desuscripcionActiva();
-
     const colRef = collection(db, "usuarios", USER_ID, "ventas");
 
-    desuscripcionActiva = onSnapshot(colRef, (snapshot) => {
-        let totales = { usd: 0, bs: 0, punto: 0, pmovil: 0, global: 0 };
+    onSnapshot(colRef, (snapshot) => {
+        let t = { usd: 0, efecBs: 0, punto: 0, pmovil: 0, global: 0 };
         tablaCuerpo.innerHTML = "";
 
-        // Filtramos por el campo 'ultima_actualizacion' que identificamos en tu DB
+        // 1. Filtramos usando 'ultima_actualizacion'
         const registros = snapshot.docs.filter(doc => doc.data().ultima_actualizacion === fechaSeleccionada);
 
         if (registros.length === 0) {
             tablaCuerpo.innerHTML = `<tr><td colspan="5" style="text-align:center;">No hay registros para ${fechaSeleccionada}</td></tr>`;
-            actualizarUI(totales);
+            actualizarUI(t);
             return;
         }
 
         registros.forEach(doc => {
             const v = doc.data();
-            const montoUSD = parseFloat(v.total_usd || v.monto || 0);
-            const montoBS = parseFloat(v.total_bs || 0);
-            const metodo = v.metodo_pago || v.metodo || "efectivo_dolar";
+            const p = v.pagos || {}; // Accedemos al objeto 'pagos'
             
-            totales.global += montoUSD;
+            // Sumamos los montos que vienen dentro del objeto 'pagos'
+            const usd = parseFloat(p.divisas_usd || 0);
+            const efecBs = parseFloat(p.efectivo_bs || 0);
+            const punto = parseFloat(p.punto_bs || 0);
+            const pmovil = parseFloat(p.pago_movil_bs || 0);
 
-            // Sumatoria según método
-            if (metodo.includes("dolar")) totales.usd += montoUSD;
-            if (metodo.includes("efectivo_bs")) totales.bs += montoBS;
-            if (metodo.includes("punto")) totales.punto += montoBS;
-            if (metodo.includes("pago_movil")) totales.pmovil += montoBS;
+            t.usd += usd;
+            t.efecBs += efecBs;
+            t.punto += punto;
+            t.pmovil += pmovil;
+            t.global += v.total_usd || 0;
 
             tablaCuerpo.innerHTML += `<tr>
                 <td>${v.hora || '--:--'}</td>
-                <td>#${doc.id.substring(0, 8).toUpperCase()}</td>
-                <td>${metodo.replace('_', ' ')}</td>
-                <td>$ ${montoUSD.toFixed(2)}</td>
-                <td>Bs. ${montoBS.toFixed(2).replace('.', ',')}</td>
+                <td>#${v.nro_factura || '---'}</td>
+                <td>Multimétodo</td>
+                <td>$ ${usd.toFixed(2)}</td>
+                <td>Bs. ${(efecBs + punto + pmovil).toFixed(2)}</td>
             </tr>`;
         });
 
-        actualizarUI(totales);
+        actualizarUI(t);
     });
 }
 
 function actualizarUI(t) {
     document.getElementById('tot-dolar').innerText = `$ ${t.usd.toFixed(2)}`;
-    document.getElementById('tot-efec-bs').innerText = `Bs. ${t.bs.toFixed(2).replace('.', ',')}`;
-    document.getElementById('tot-punto').innerText = `Bs. ${t.punto.toFixed(2).replace('.', ',')}`;
-    document.getElementById('tot-pmovil').innerText = `Bs. ${t.pmovil.toFixed(2).replace('.', ',')}`;
+    document.getElementById('tot-efec-bs').innerText = `Bs. ${t.efecBs.toFixed(2)}`;
+    document.getElementById('tot-punto').innerText = `Bs. ${t.punto.toFixed(2)}`;
+    document.getElementById('tot-pmovil').innerText = `Bs. ${t.pmovil.toFixed(2)}`;
     document.getElementById('tot-venta-dia').innerText = `Venta Total: $ ${t.global.toFixed(2)}`;
 }
