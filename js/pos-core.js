@@ -1,26 +1,43 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * Módulo de Facturación y Ventas (pos-core.js)
+ * Módulo de Facturación y Ventas (pos-core.js) - Versión Consolidada
  */
 
-import { 
-    collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc,
-    query, orderBy, limit, getDocs 
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { db } from './firebase-config.js';
+// ... (Tus importaciones y variables globales se mantienen igual) ...
 
-const USER_ID = localStorage.getItem('youcontrol_empresa_id');
-if (!USER_ID) window.location.href = "index.html"; 
+// ==========================================
+// INICIALIZACIÓN ÚNICA DEL DOM
+// ==========================================
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log("Iniciando carga de módulos...");
 
-let productosMaster = [];
-let clientesMaster = []; 
-let carrito = [];
-let proximoNumeroFacturaStr = "000001";
-let tasaActual = 1.0; 
-let formatoFactura = "ticket";
+    // 1. Carga de configuración y números de factura (Dependencias principales)
+    await cargarConfiguracionGlobal();
+    await obtenerUltimoNumeroFactura();
 
-window.indiceProd = -1;
-window.indiceClie = -1;
+    // 2. Inicialización de datos
+    inicializarClientes();
+    inicializarProductos();
+
+    // 3. Inicialización de UI y Lógica interactiva
+    initBuscadores();
+    initLogicaPagos();
+
+    // 4. Listener único para el botón de venta
+    document.addEventListener('input', (e) => {
+        const camposPago = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd'];
+        if (camposPago.includes(e.target.id)) {
+            const btn = document.getElementById('btn-confirmar-venta');
+            if (btn) btn.disabled = false;
+        }
+    });
+
+    console.log("Módulos inicializados correctamente.");
+});
+
+// ... (Mantén aquí todas tus funciones: registrarVenta, initBuscadores, 
+// initLogicaPagos, actualizarCarritoUI, etc., eliminando los bloques 
+// duplicados de addEventListener que tenías esparcidos) ...
 
 // ==========================================
 // 1. LÓGICA DE FACTURACIÓN Y CONFIG
