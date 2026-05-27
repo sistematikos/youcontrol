@@ -1,32 +1,99 @@
-<main class="layout-width">
-    <header class="header-panel">
-        <h1 class="page-title">Cuadre de Caja Diario</h1>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOU CONTROL | Cuadre de Caja</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
+            --emerald: #10B981;
+            --sky: #0EA5E9;
+            --indigo: #6366F1;
+            --purple: #a855f7;
+        }
+
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 20px 0; min-height: 100vh; color: var(--text-dark); user-select: none; }
+        .layout-width { width: 92%; max-width: 1200px; margin: 0 auto; box-sizing: border-box; }
+
+        /* HEADER */
+        .header-panel { background: #ffffff; padding: 15px 30px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; height: 80px; }
+        .header-left { display: flex; align-items: center; gap: 20px; }
+        .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 8px 16px; border-radius: 12px; text-decoration: none; font-size: 0.8rem; font-weight: 700; border: 1px solid #E2E8F0; display: flex; align-items: center; gap: 8px; }
+        .page-title { font-size: 1.4rem; font-weight: 700; margin: 0; }
+
+        /* FILTRO */
+        .date-selector { display: flex; align-items: center; gap: 10px; background: #ffffff; padding: 10px 15px; border-radius: 12px; border: 1px solid #E2E8F0; margin-bottom: 20px; width: fit-content; }
+        .date-selector input { border: none; font-family: 'Poppins', sans-serif; font-weight: 600; color: var(--text-dark); outline: none; cursor: pointer; }
+
+        /* CARDS */
+        .payment-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .pay-card { background: #ffffff; border-radius: 14px; padding: 14px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02); border-left: 5px solid transparent; display: flex; justify-content: space-between; align-items: center; }
+        .card-efec-dolar { border-left-color: var(--emerald); }
+        .card-efec-bs { border-left-color: var(--sky); }
+        .card-punto { border-left-color: var(--indigo); }
+        .card-pago-movil { border-left-color: var(--purple); }
+        .pay-info .p-label { font-size: 0.65rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
+        .pay-info .p-val { font-size: 1.2rem; font-weight: 800; color: var(--text-dark); }
+
+        /* TABLA */
+        .table-panel { background: #ffffff; border-radius: 16px; padding: 18px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); border: 1px solid #E2E8F0; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        th { color: var(--text-muted); padding: 12px; text-transform: uppercase; font-size: 0.68rem; border-bottom: 1px solid #F1F5F9; text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid #F1F5F9; }
+    </style>
+</head>
+<body oncontextmenu="return false">
+
+    <main class="layout-width">
+        <header class="header-panel">
+            <div class="header-left">
+                <a href="sys_v4_reportes.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
+                <h1 class="page-title">Cuadre de Caja</h1>
+            </div>
+        </header>
+
         <div class="date-selector">
+            <i class="fas fa-calendar-day" style="color: var(--text-muted);"></i>
             <input type="date" id="filtro-fecha">
         </div>
-    </header>
 
-    <div class="payment-grid" id="grid-totales">
-        <div class="pay-card card-efec-dolar">
-            <div class="pay-info"><span class="p-label">Efectivo USD</span><span class="p-val" id="tot-usd">$ 0.00</span></div>
+        <div class="payment-grid">
+            <div class="pay-card card-efec-dolar">
+                <div class="pay-info"><span class="p-label">Efectivo USD</span><span class="p-val" id="tot-dolar">$ 0.00</span></div>
+            </div>
+            <div class="pay-card card-efec-bs">
+                <div class="pay-info"><span class="p-label">Efectivo Bs</span><span class="p-val" id="tot-efec-bs">Bs. 0,00</span></div>
+            </div>
+            <div class="pay-card card-punto">
+                <div class="pay-info"><span class="p-label">Punto Venta</span><span class="p-val" id="tot-punto">Bs. 0,00</span></div>
+            </div>
+            <div class="pay-card card-pago-movil">
+                <div class="pay-info"><span class="p-label">Pago Móvil</span><span class="p-val" id="tot-pmovil">Bs. 0,00</span></div>
+            </div>
         </div>
-        <div class="pay-card card-efec-bs">
-            <div class="pay-info"><span class="p-label">Efectivo Bs</span><span class="p-val" id="tot-bs">Bs. 0,00</span></div>
-        </div>
-        <div class="pay-card card-punto">
-            <div class="pay-info"><span class="p-label">Punto</span><span class="p-val" id="tot-punto">Bs. 0,00</span></div>
-        </div>
-        <div class="pay-card card-pago-movil">
-            <div class="pay-info"><span class="p-label">Pago Móvil</span><span class="p-val" id="tot-pmovil">Bs. 0,00</span></div>
-        </div>
-    </div>
 
-    <div class="table-panel">
-        <table>
-            <thead>
-                <tr><th>Hora</th><th>Ref</th><th>Método</th><th>Monto</th></tr>
-            </thead>
-            <tbody id="tabla-cuerpo"></tbody>
-        </table>
-    </div>
-</main>
+        <div class="table-panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin:0; font-size: 0.95rem;">Facturas Procesadas</h3>
+                <div id="tot-venta-dia" style="font-weight: 700; color: var(--emerald);">Venta Total: $ 0.00</div>
+            </div>
+            <table>
+                <thead>
+                    <tr><th>Hora</th><th>Ref</th><th>Método</th><th>Monto USD</th><th>Monto Bs.</th></tr>
+                </thead>
+                <tbody id="tabla-cuerpo">
+                    <tr><td colspan="5" style="text-align: center;">Cargando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script type="module" src="./js/sys_v4_cuadre.js"></script>
+</body>
+</html>
