@@ -321,7 +321,7 @@ window.actualizarCarritoUI = () => {
 // ==========================================
 // 8. COMANDOS DE TECLADO (BLOQUEO FORZADO)
 // ==========================================
-// Asegúrate de que los imports al inicio de pos-core.js sean estos:
+// Asegúrate de que al inicio de tu archivo pos-core.js tengas esta línea:
 // import { ejecutarF4, ejecutarF5, ejecutarF6, abrirModalCobro } from './pos-core-teclas.js';
 
 document.addEventListener('keydown', (event) => {
@@ -329,6 +329,7 @@ document.addEventListener('keydown', (event) => {
     if (event.key === 'F5') {
         event.preventDefault();
         event.stopImmediatePropagation();
+        
         const modalPago = document.getElementById('modalPago');
         const estaEnPago = modalPago && (window.getComputedStyle(modalPago).display !== 'none');
 
@@ -337,13 +338,14 @@ document.addEventListener('keydown', (event) => {
                 window.location.reload();
             }
         } else {
-            ejecutarF5(); // Llamada directa a la función importada
+            // Llamada directa a la función importada (sin window.)
+            ejecutarF5(); 
         }
         return;
     }
 
     // 2. Manejo de otros comandos
-    // Usamos las funciones importadas directamente, NO window.
+    // Usamos las funciones importadas directamente
     const comandos = {
         'F4': ejecutarF4,
         'F6': ejecutarF6,
