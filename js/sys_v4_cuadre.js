@@ -1,6 +1,6 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * sys_v4_cuadre.js - Versión optimizada (Solo totales y resumen)
+ * sys_v4_cuadre.js - Versión corregida por desfase de zona horaria
  */
 
 import { db } from './firebase-config.js';
@@ -20,10 +20,15 @@ function cargarCuadre(fechaSeleccionada) {
         snapshot.forEach(doc => {
             const data = doc.data();
             
-            // Obtenemos la fecha real de la raíz del documento
+            // CORRECCIÓN: Extraer la fecha LOCAL para evitar el desfase de +1 día
             let fechaVenta = "";
             if (data.fecha && typeof data.fecha.toDate === 'function') {
-                fechaVenta = data.fecha.toDate().toISOString().split('T')[0];
+                const d = data.fecha.toDate();
+                // Usamos los métodos de fecha local (no UTC)
+                const yyyy = d.getFullYear();
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const dd = String(d.getDate()).padStart(2, '0');
+                fechaVenta = `${yyyy}-${mm}-${dd}`;
             }
 
             if (fechaVenta === fechaSeleccionada) {
@@ -37,7 +42,7 @@ function cargarCuadre(fechaSeleccionada) {
                 t.pmovil += parseFloat(p.pago_movil_bs || 0);
                 t.global += parseFloat(data.total_usd || 0);
 
-                // Pintar fila simplificada (sin detalles de productos)
+                // Pintar fila simplificada
                 tablaCuerpo.innerHTML += `<tr>
                     <td><strong>${data.nro_factura || '---'}</strong><br><small>${data.hora || '--:--'}</small></td>
                     <td>${nombreCliente}</td>
@@ -51,20 +56,24 @@ function cargarCuadre(fechaSeleccionada) {
             tablaCuerpo.innerHTML = `<tr><td colspan="4" style="text-align:center;">No hay ventas registradas para ${fechaSeleccionada}</td></tr>`;
         }
 
-        actualizarUI(t);
+        // Actualizar UI
+        document.getElementById('tot-dolar').innerText = `$ ${t.usd.toFixed(2)}`;
+        document.getElementById('tot-efec-bs').innerText = `Bs. ${t.efecBs.toFixed(2)}`;
+        document.getElementById('tot-punto').innerText = `Bs. ${t.punto.toFixed(2)}`;
+        document.getElementById('tot-pmovil').innerText = `Bs. ${t.pmovil.toFixed(2)}`;
+        document.getElementById('tot-venta-dia').innerText = `Venta Total: $ ${t.global.toFixed(2)}`;
     });
 }
 
-function actualizarUI(t) {
-    document.getElementById('tot-dolar').innerText = `$ ${t.usd.toFixed(2)}`;
-    document.getElementById('tot-efec-bs').innerText = `Bs. ${t.efecBs.toFixed(2)}`;
-    document.getElementById('tot-punto').innerText = `Bs. ${t.punto.toFixed(2)}`;
-    document.getElementById('tot-pmovil').innerText = `Bs. ${t.pmovil.toFixed(2)}`;
-    document.getElementById('tot-venta-dia').innerText = `Venta Total: $ ${t.global.toFixed(2)}`;
-}
-
+// Inicialización
 document.addEventListener('DOMContentLoaded', () => {
-    inputFecha.value = new Date().toISOString().split('T')[0];
+    // Establecer fecha actual local
+    const hoy = new Date();
+    const yyyy = hoy.getFullYear();
+    const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+    const dd = String(hoy.getDate()).padStart(2, '0');
+    inputFecha.value = `${yyyy}-${mm}-${dd}`;
+    
     cargarCuadre(inputFecha.value);
     inputFecha.addEventListener('change', (e) => cargarCuadre(e.target.value));
 });
