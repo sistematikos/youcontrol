@@ -7,7 +7,8 @@
 import { db } from './firebase-config.js'; 
 
 import { 
-    collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc 
+    collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc,
+    query, orderBy, limit, getDocs 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
@@ -128,6 +129,22 @@ window.agregarCarrito = (id) => {
     window.actualizarCarritoUI();
 };
 
+async function obtenerSiguienteFactura() {
+    const ventasRef = collection(db, "usuarios", USER_ID, "ventas");
+    const q = query(ventasRef, orderBy("nro_factura", "desc"), limit(1));
+    const snapshot = await getDocs(q);
+    
+    let ultimoNro = 0;
+    snapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.nro_factura) {
+            ultimoNro = parseInt(data.nro_factura);
+        }
+    });
+    
+    return (ultimoNro + 1).toString().padStart(6, '0');
+}
+
 window.registrarVenta = async () => {
     if (carrito.length === 0) {
         alert("El carrito está vacío.");
@@ -135,8 +152,7 @@ window.registrarVenta = async () => {
     }
 
     try {
-        // --- AQUÍ ESTÁ EL CAMBIO ---
-        // Obtenemos el número real desde la base de datos justo antes de guardar
+        // --- CAMBIO AQUÍ: Obtenemos el número real de la BD ---
         const nroFacturaActual = await obtenerSiguienteFactura();
         
         const nombreParaGuardar = window.nombreClienteSeleccionado || 
@@ -156,17 +172,29 @@ window.registrarVenta = async () => {
                 divisas_usd: parseFloat(document.getElementById('in-divisas-usd')?.value) || 0
             },
             fecha: serverTimestamp(),
-            nro_factura: nroFacturaActual // Usamos el número obtenido de Firestore
+            nro_factura: nroFacturaActual // Usamos el número calculado
         };
 
         await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
-        // ---------------------------
 
-        alert("✅ Venta registrada correctamente. Factura: " + nroFacturaActual);
+        alert("✅ Venta registrada. Factura N°: " + nroFacturaActual);
 
-        // Limpieza...
+        // Limpieza
         carrito = [];
-        // ... (resto del código igual)
+        window.clienteSeleccionadoID = null;
+        window.nombreClienteSeleccionado = null;
+        
+        const inputC = document.getElementById('buscar-cliente-pos');
+        if (inputC) inputC.value = '';
+        document.getElementById('modalPago').style.display = 'none';
+        
+        ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.value = "0";
+        });
+
+        window.actualizarCarritoUI();
+
     } catch (error) {
         console.error("Error al guardar:", error);
         alert("Error al guardar: " + error.message);
