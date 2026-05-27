@@ -401,17 +401,22 @@
             <div class="grid-productos-view" id="grid-productos"></div>
         </section>
 
-        <section class="right-panel">
-            <div class="panel-section-header">
-                <div class="input-group-title" style="margin: 0;"><i class="fas fa-shopping-cart"></i> Artículos en Carro</div>
-                <button class="factura-live-badge" id="pos-nro-factura-badge">FACTURA:<span id="factura-display">000001</span>
-            <div class="cart-items-container" id="lista-carrito"></div>
-            <div class="totals-section">
-                <h2 id="total-usd">$ 0.00</h2>
-                <p id="total-bs">0,00 Bs.</p>
-            </div>
-            <button class="btn-pay-action" onclick="window.abrirModalCobro()">PAGAR [F9]</button>
-        </section>
+     <section class="right-panel">
+    <div class="panel-section-header">
+        <div class="input-group-title" style="margin: 0;"><i class="fas fa-shopping-cart"></i> Artículos en Carro</div>
+        
+        <button class="factura-live-badge" id="pos-nro-factura-badge">
+            FACTURA: <span id="factura-display">000001</span>
+        </button>
+    </div> <div class="cart-items-container" id="lista-carrito"></div>
+    
+    <div class="totals-section">
+        <h2 id="total-usd">$ 0.00</h2>
+        <p id="total-bs">0,00 Bs.</p>
+    </div>
+    
+    <button class="btn-pay-action" onclick="window.abrirModalCobro()">PAGAR [F9]</button>
+</section>
     </main>
 
     <div class="modal-overlay" id="modalPago">
