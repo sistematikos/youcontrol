@@ -25,6 +25,27 @@ let formatoFactura = "ticket";
 window.indiceProd = -1;
 window.indiceClie = -1;
 
+
+async function obtenerUltimoNumeroFactura() {
+    try {
+        const ventasRef = collection(db, "usuarios", USER_ID, "ventas");
+        // Consultamos las ventas ordenadas por fecha para obtener la última
+        const q = query(ventasRef, orderBy("fecha", "desc"), limit(1));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+            const ultimaVenta = querySnapshot.docs[0].data();
+            const ultimoNro = parseInt(ultimaVenta.nro_factura || "0");
+            proximoNumeroFacturaStr = (ultimoNro + 1).toString().padStart(6, '0');
+        } else {
+            proximoNumeroFacturaStr = "000001";
+        }
+    } catch (e) {
+        console.error("Error al obtener último número:", e);
+    }
+}
+
+
 // ==========================================
 // CARGA DE CONFIGURACIÓN GLOBAL
 // ==========================================
@@ -431,7 +452,8 @@ document.addEventListener('input', (e) => {
 // ==========================================
 // INICIALIZACIÓN FINAL
 // ==========================================
-cargarConfiguracionGlobal().then(() => {
+cargarConfiguracionGlobal().then(async () => {
+    await obtenerUltimoNumeroFactura(); // <--- AGREGAR ESTO
     inicializarClientes();
     inicializarProductos();
 });
