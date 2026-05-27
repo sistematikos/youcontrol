@@ -9,28 +9,24 @@
         body { font-family: 'Poppins', sans-serif; background: #F1F5F9; padding: 20px; }
         .layout-width { max-width: 800px; margin: auto; }
         .header-panel { background: #fff; padding: 20px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .card { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); margin-bottom: 20px; }
+        .card { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); margin-bottom: 20px; border-top: 4px solid #0284C7; }
         input, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #E2E8F0; border-radius: 8px; box-sizing: border-box; }
         .btn-action { background: #1E293B; color: #fff; padding: 12px; border: none; border-radius: 8px; cursor: pointer; }
         .btn-dev { background: #EF4444; color: #fff; padding: 15px; border: none; border-radius: 8px; width: 100%; font-weight: 700; cursor: pointer; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #F1F5F9; font-size: 0.9rem; }
     </style>
 </head>
 <body>
     <main class="layout-width">
         <header class="header-panel">
-            <h1 style="font-size: 1.2rem;">Módulo de Devoluciones</h1>
+            <h1>Módulo de Devoluciones</h1>
             <a href="index.html">Volver</a>
         </header>
-
         <section class="card">
             <input type="text" id="busqueda-factura" placeholder="Nro de factura...">
             <button class="btn-action" onclick="buscarFacturaParaDevolver()">BUSCAR FACTURA</button>
         </section>
-
-        <section id="resultado-busqueda" class="card" style="display: none; border-top: 4px solid #0284C7;">
-            <h3>Detalle: <span id="nro-factura-display"></span></h3>
+        <section id="resultado-busqueda" class="card" style="display: none;">
+            <h3>Detalle de Factura</h3>
             <div id="lista-productos-dev"></div>
             <textarea id="motivo-devolucion" placeholder="Motivo de la devolución..."></textarea>
             <button class="btn-dev" onclick="ejecutarProcesoDev()">PROCESAR Y REINTEGRAR STOCK</button>
