@@ -1,36 +1,52 @@
-// Asegúrate de que las funciones importadas (ejecutarF4, ejecutarF5, etc.) 
-// estén declaradas al inicio de este archivo pos-core.js
+// js/pos-core-teclas.js
 
-document.addEventListener('keydown', (event) => {
-    // 1. Manejo del F5 (Control de refresco)
-    if (event.key === 'F5') {
-        event.preventDefault();
-        event.stopImmediatePropagation();
+export function ejecutarF4() { 
+    if (!window.carrito || window.carrito.length === 0) return;
+    const item = window.carrito[window.carrito.length - 1];
+    const nuevaCant = prompt(`Cantidad para ${item.nombre}:`, item.cantidad);
+    
+    if (nuevaCant !== null && !isNaN(nuevaCant) && nuevaCant > 0) {
+        item.cantidad = parseInt(nuevaCant);
+        window.actualizarCarritoUI();
+    }
+}
+
+export function ejecutarF5() { 
+    if (!window.carrito || window.carrito.length === 0) return;
+    const item = window.carrito[window.carrito.length - 1];
+    const nuevoPrecio = prompt(`Precio para ${item.nombre} ($):`, item.precio);
+    
+    if (nuevoPrecio !== null && !isNaN(nuevoPrecio)) {
+        item.precio = parseFloat(nuevoPrecio);
+        window.actualizarCarritoUI();
+    }
+}
+
+export function ejecutarF6() { 
+    if (window.carrito && window.carrito.length > 0) {
+        window.carrito.pop();
+        window.actualizarCarritoUI();
+    }
+}
+
+export function abrirModalCobro() {
+    if (!window.carrito || window.carrito.length === 0) { 
+        alert("El carrito está vacío."); 
+        return; 
+    }
+    
+    const modal = document.getElementById('modalPago');
+    if (modal) {
+        const totalUSD = window.totalVentaUSD || 0;
+        const totalBs = totalUSD * (window.tasaActual || 1.0);
         
-        const modalPago = document.getElementById('modalPago');
-        const estaEnPago = modalPago && (window.getComputedStyle(modalPago).display !== 'none');
-
-        if (estaEnPago) {
-            if (confirm("¿Deseas refrescar la página? Se perderán los datos del carrito.")) {
-                window.location.reload();
-            }
-        } else {
-            // Llamamos directamente a la función importada, no a window.ejecutarF5
-            window.ejecutarF5(); 
-        }
-        return;
+        const dUSD = document.getElementById('totalModalUSD');
+        const dBS = document.getElementById('totalModalBS');
+        
+        if (dUSD) dUSD.innerText = `$ ${totalUSD.toFixed(2)}`;
+        if (dBS) dBS.innerText = `${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2})} Bs.`;
+        
+        modal.style.display = 'flex';
+        document.getElementById('in-punto-bs')?.focus();
     }
-
-    // 2. Manejo de otros comandos
-    // Usamos las funciones importadas directamente
-    const comandos = {
-        'F4': window.ejecutarF4,
-        'F6': window.ejecutarF6,
-        'F9': window.abrirModalCobro
-    };
-
-    if (comandos[event.key]) {
-        event.preventDefault();
-        comandos[event.key]();
-    }
-}, true);
+}
