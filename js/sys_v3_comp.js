@@ -127,16 +127,15 @@ window.prepararNuevoProducto = (texto) => { inputSku.value = texto.toUpperCase()
 // ==========================================
 // 3. MATEMÁTICA CORREGIDA
 // ==========================================
+// En tu archivo js/sys_v3_comp.js, asegúrate de que esto sea así:
 window.calcularPreciosCompra = () => {
     const costo = parseFloat(inputCosto.value) || 0;
     const ganancia = parseFloat(inputGanancia.value) || 0;
     const precioUsd = costo + (costo * (ganancia / 100));
     
     inputPrecio.value = precioUsd.toFixed(2);
-    
-    // Solo ponemos el número, sin el "Bs." para que el input siga siendo funcional
-    const precioBs = precioUsd * tasaActual;
-    inputPrecioBs.value = precioBs.toFixed(2); 
+    // Solo valor numérico para que el input sea procesable
+    inputPrecioBs.value = (precioUsd * tasaActual).toFixed(2); 
 };
 
 window.calcularGananciaCompra = () => {
@@ -147,9 +146,7 @@ window.calcularGananciaCompra = () => {
         inputGanancia.value = (((precio - costo) / costo) * 100).toFixed(1);
     }
     
-    // Solo ponemos el número
-    const precioBs = precio * tasaActual;
-    inputPrecioBs.value = precioBs.toFixed(2);
+    inputPrecioBs.value = (precio * tasaActual).toFixed(2);
 };
 
 // ==========================================
