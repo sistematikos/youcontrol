@@ -8,38 +8,29 @@ import { collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc } from "ht
 import { obtenerUltimoNumero } from './pos-core-numfact.js';
 import { ejecutarF4, ejecutarF5, ejecutarF6, abrirModalCobro } from './pos-core-teclas.js';
 
+// --- VALIDACIÓN DE SESIÓN ---
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
-if (!USER_ID) window.location.href = "index.html"; 
-
-// VARIABLES GLOBALES (Uso de window para acceso modular)
-window.productosMaster = [];
-window.clientesMaster = []; 
-window.carrito = []; // <--- IMPORTANTE: Usar window.carrito
-window.tasaActual = 1.0; 
-window.totalVentaUSD = 0;
-
-// Vinculación para que el HTML y el listener encuentren las funciones
-window.ejecutarF4 = ejecutarF4;
-window.ejecutarF5 = ejecutarF5;
-window.ejecutarF6 = ejecutarF6;
-window.abrirModalCobro = abrirModalCobro;
-
-const USER_ID = localStorage.getItem('youcontrol_empresa_id');
-
 if (!USER_ID) {
     window.location.href = "index.html"; 
 }
 
-let productosMaster = [];
-let clientesMaster = []; 
-let carrito = [];
-let proximoNumeroFacturaStr = "000001";
-let tasaActual = 1.0; 
-let formatoFactura = "ticket";
-
-// Variables globales para navegación
+// --- VARIABLES GLOBALES (Todo centralizado en 'window') ---
+window.USER_ID = USER_ID;
+window.productosMaster = [];
+window.clientesMaster = []; 
+window.carrito = [];
+window.tasaActual = 1.0; 
+window.totalVentaUSD = 0;
+window.proximoNumeroFacturaStr = "000001";
+window.formatoFactura = "ticket";
 window.indiceProd = -1;
 window.indiceClie = -1;
+
+// --- VINCULACIÓN PARA MÓDULOS Y HTML ---
+window.ejecutarF4 = ejecutarF4;
+window.ejecutarF5 = ejecutarF5;
+window.ejecutarF6 = ejecutarF6;
+window.abrirModalCobro = abrirModalCobro;
 
 // ==========================================
 // CARGA DE CONFIGURACIÓN GLOBAL
