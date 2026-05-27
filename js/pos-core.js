@@ -138,31 +138,64 @@ window.agregarCarrito = (id) => {
 };
 
 window.registrarVenta = async () => {
+    // 1. Obtener datos del DOM
+    const nombreCliente = document.getElementById('buscar-cliente-pos')?.value || "Cliente Genérico";
+    const puntoBs = parseFloat(document.getElementById('in-punto-bs')?.value) || 0;
+    const pagoMovilBs = parseFloat(document.getElementById('in-pagomovil-bs')?.value) || 0;
+    const efectivoBs = parseFloat(document.getElementById('in-efectivo-bs')?.value) || 0;
+    const divisasUsd = parseFloat(document.getElementById('in-divisas-usd')?.value) || 0;
+    
+    // 2. Validación básica
+    if (carrito.length === 0) {
+        alert("El carrito está vacío.");
+        return;
+    }
+
     try {
-        // En lugar de usar una variable global fija, aseguramos el número al momento de guardar
-        // Opcional: podrías llamar a una función que busque el último ID en Firestore aquí mismo
-        
-        await addDoc(collection(db, "usuarios", USER_ID, "ventas"), {
+        // 3. Crear el objeto con TODA la información necesaria
+        const ventaData = {
             fecha: serverTimestamp(),
-            nro_factura: proximoNumeroFacturaStr, // Usa la variable que ya tienes
+            nro_factura: proximoNumeroFacturaStr,
+            cliente_id: window.clienteSeleccionadoID || "anonimo",
+            nombre_cliente: nombreCliente, // GUARDADO DEL NOMBRE
             total_usd: window.totalVentaUSD,
-            tasa: tasaActual,
+            tasa_aplicada: tasaActual,
             formato: formatoFactura,
-            items: carrito
-        });
+            items: carrito,
+            pagos: {
+                punto_bs: puntoBs,
+                pago_movil_bs: pagoMovilBs,
+                efectivo_bs: efectivoBs,
+                divisas_usd: divisasUsd
+            }
+        };
+
+        // 4. Guardar en Firestore
+        await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
 
         alert("✅ Venta registrada correctamente.");
         
-        // Limpiamos
+        // 5. Limpieza de interfaz
         carrito = [];
+        window.clienteSeleccionadoID = null;
+        document.getElementById('buscar-cliente-pos').value = '';
         window.actualizarCarritoUI();
         document.getElementById('modalPago').style.display = 'none';
         
-        // IMPORTANTE: Incrementamos el contador para la próxima venta
+        // 6. Reseteo de campos de pago
+        ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.value = "0";
+        });
+        
+        // 7. Incremento del contador para la próxima venta
         const ultimoNro = parseInt(proximoNumeroFacturaStr);
         proximoNumeroFacturaStr = (ultimoNro + 1).toString().padStart(6, '0');
         
-    } catch (e) { alert("Error al guardar: " + e.message); }
+    } catch (e) { 
+        console.error("Error detallado:", e);
+        alert("Error al guardar: " + e.message); 
+    }
 };
 
 // ==========================================
