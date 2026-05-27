@@ -8,7 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-vivo: #0284C7;         
             --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
             --text-dark: #1E293B;
             --text-muted: #64748B;
@@ -18,276 +17,69 @@
             --rose: #F43F5E;
         }
 
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: var(--bg-gradient);
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            color: var(--text-dark);
-            user-select: none;
-        }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 20px 0; min-height: 100vh; color: var(--text-dark); }
+        .layout-width { width: 92%; max-width: 1200px; margin: 0 auto; box-sizing: border-box; }
 
-        /* --- ANCHURA GLOBAL SINCRONIZADA --- */
-        .layout-width {
-            width: 92%;
-            max-width: 1200px;
-            margin: 0 auto;
-            box-sizing: border-box;
-        }
+        /* HEADER PANEL (Estilo Reporte Ventas) */
+        .header-panel { background: #ffffff; padding: 20px 30px; border-radius: 16px; box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05); border: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .header-left { display: flex; align-items: center; gap: 20px; }
+        .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 8px 16px; border-radius: 12px; text-decoration: none; font-size: 0.8rem; font-weight: 700; border: 1px solid #E2E8F0; display: flex; align-items: center; gap: 8px; }
+        .page-title { font-size: 1.4rem; font-weight: 700; color: var(--text-dark); margin: 0; }
 
-        /* --- HEADER CONTROL --- */
-        .report-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 20px;
-            margin-bottom: 15px;
-        }
+        /* BUSCADOR */
+        .search-panel { background: #ffffff; padding: 10px 15px; border-radius: 14px; border: 1px solid #E2E8F0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 10px; width: fit-content; margin-bottom: 20px; }
+        .search-panel input { border: none; outline: none; font-size: 0.9rem; width: 250px; }
 
-        .btn-back {
-            background: #ffffff;
-            color: var(--text-dark);
-            padding: 8px 16px;
-            border-radius: 12px;
-            text-decoration: none;
-            font-size: 0.8rem;
-            font-weight: 700;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
-            border: 1px solid #E2E8F0;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .btn-back:hover {
-            background: var(--text-dark);
-            color: #ffffff;
-        }
+        /* GRID KPIs */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .kpi-card { background: #ffffff; border-radius: 14px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 6px solid #0284C7; }
+        .p-label { font-size: 0.7rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
+        .p-val { font-size: 1.4rem; font-weight: 800; color: var(--text-dark); margin-top: 5px; }
 
-        .search-box {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: #ffffff;
-            padding: 6px 14px;
-            border-radius: 12px;
-            border: 1px solid #E2E8F0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
-            width: 260px;
-        }
-        .search-box input {
-            border: none;
-            font-family: 'Poppins', sans-serif;
-            font-size: 0.85rem;
-            color: var(--text-dark);
-            outline: none;
-            width: 100%;
-        }
-
-        /* --- TARJETAS DE VALORIZACIÓN --- */
-        .inventory-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 12px;
-            margin-bottom: 15px;
-        }
-
-        .inv-card {
-            background: #ffffff;
-            border-radius: 14px;
-            padding: 14px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
-            border-left: 5px solid transparent;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .card-costo-total { border-left-color: var(--sky); }
-        .card-pvp-total { border-left-color: var(--emerald); }
-        .card-ganancia-ref { border-left-color: var(--amber); }
-        .card-alertas { border-left-color: var(--rose); }
-
-        .inv-info .i-label {
-            font-size: 0.65rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            display: block;
-        }
-        .inv-info .i-val {
-            font-size: 1.2rem;
-            font-weight: 800;
-            color: var(--text-dark);
-        }
-        .inv-card i { font-size: 1.6rem; opacity: 0.8; }
-        .card-costo-total i { color: var(--sky); }
-        .card-pvp-total i { color: var(--emerald); }
-        .card-ganancia-ref i { color: var(--amber); }
-        .card-alertas i { color: var(--rose); }
-
-        /* --- TABLA DE STOCK --- */
-        .table-panel {
-            background: #ffffff;
-            border-radius: 16px;
-            padding: 18px;
-            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
-            border: 1px solid #E2E8F0;
-            flex-grow: 1;
-            margin-bottom: 20px;
-        }
-
-        .table-header-box {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #F1F5F9;
-        }
-        .table-header-box h3 {
-            margin: 0;
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: var(--text-dark);
-        }
-
-        .table-responsive {
-            width: 100%;
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-            font-size: 0.8rem;
-        }
-
-        th {
-            background: #F8FAFC;
-            color: var(--text-muted);
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.68rem;
-            padding: 10px 12px;
-            border-bottom: 1px solid #E2E8F0;
-        }
-
-        td {
-            padding: 10px 12px;
-            border-bottom: 1px solid #F1F5F9;
-            font-weight: 500;
-        }
-
-        tr:hover td {
-            background: #F8FAFC;
-        }
-
-        /* Estados de Stock */
-        .badge-stock {
-            padding: 3px 8px;
-            border-radius: 6px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            display: inline-block;
-        }
-        .stock-ok { background: #ECFDF5; color: #065F46; }
-        .stock-low { background: #FFF7ED; color: #9A3412; font-weight: 800; border: 1px dashed var(--amber); }
-        .stock-empty { background: #FFF1F2; color: #9F1239; font-weight: 800; }
-
-        /* --- FOOTER --- */
-        .footer-core {
-            text-align: center;
-            padding: 15px 0;
-            color: var(--text-muted);
-            font-size: 0.75rem;
-            margin-top: auto;
-        }
+        /* TABLA */
+        .table-panel { background: #ffffff; border-radius: 16px; padding: 20px; box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05); border: 1px solid #E2E8F0; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { color: var(--text-muted); padding: 12px; text-align: left; text-transform: uppercase; font-size: 0.7rem; border-bottom: 2px solid #F1F5F9; }
+        td { padding: 12px; border-bottom: 1px solid #F1F5F9; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
     </style>
 </head>
-<body oncontextmenu="return false">
+<body>
 
     <main class="layout-width">
-        
-        <div class="report-header">
-            <a href="sys_v4_reportes.html" class="btn-back">
-                <i class="fas fa-arrow-left"></i> VOLVER
-            </a>
-            <div class="search-box">
-                <i class="fas fa-magnifying-glass" style="color: var(--text-muted);"></i>
-                <input type="text" id="input-busqueda" placeholder="Buscar artículo...">
+        <header class="header-panel">
+            <div class="header-left">
+                <a href="sys_v4_reportes.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
+                <h1 class="page-title">Reporte de Existencia</h1>
             </div>
+        </header>
+
+        <div class="search-panel">
+            <i class="fas fa-search" style="color: var(--text-muted);"></i>
+            <input type="text" id="input-busqueda" placeholder="Buscar producto...">
         </div>
 
-        <div class="inventory-grid">
-            <div class="inv-card card-costo-total">
-                <div class="inv-info">
-                    <span class="i-label">Costo Total Invertido</span>
-                    <span class="i-val" id="tot-costo">$ 0.00</span>
-                </div>
-                <i class="fas fa-calculator"></i>
-            </div>
-
-            <div class="inv-card card-pvp-total">
-                <div class="inv-info">
-                    <span class="i-label">Valor de Venta (PVP)</span>
-                    <span class="i-val" id="tot-pvp">$ 0.00</span>
-                </div>
-                <i class="fas fa-hand-holding-dollar"></i>
-            </div>
-
-            <div class="inv-card card-ganancia-ref">
-                <div class="inv-info">
-                    <span class="i-label">Margen Estimado ($)</span>
-                    <span class="i-val" id="tot-ganancia" style="color: var(--emerald);">$ 0.00</span>
-                </div>
-                <i class="fas fa-chart-line"></i>
-            </div>
-
-            <div class="inv-card card-alertas">
-                <div class="inv-info">
-                    <span class="i-label">Alertas Críticas</span>
-                    <span class="i-val" id="tot-alertas">0</span>
-                </div>
-                <i class="fas fa-triangle-exclamation"></i>
-            </div>
+        <div class="kpi-grid">
+            <div class="kpi-card" style="border-left-color: var(--sky);"><div class="p-label">Costo Total</div><div class="p-val" id="tot-costo">$ 0.00</div></div>
+            <div class="kpi-card" style="border-left-color: var(--emerald);"><div class="p-label">Valor Venta (PVP)</div><div class="p-val" id="tot-pvp">$ 0.00</div></div>
+            <div class="kpi-card" style="border-left-color: var(--amber);"><div class="p-label">Margen Est.</div><div class="p-val" id="tot-ganancia">$ 0.00</div></div>
+            <div class="kpi-card" style="border-left-color: var(--rose);"><div class="p-label">Alertas</div><div class="p-val" id="tot-alertas">0</div></div>
         </div>
 
         <div class="table-panel">
-            <div class="table-header-box">
-                <h3><i class="fas fa-boxes-stacked" style="color: var(--bg-vivo); margin-right: 6px;"></i> Auditoría Física de Inventario</h3>
-                <div id="tot-items-conteo" style="font-weight: 700; font-size: 0.85rem; color: var(--text-muted);">Items: 0</div>
-            </div>
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Código</th>
-                            <th>Descripción del Producto</th>
-                            <th style="text-align: center;">Stock Físico</th>
-                            <th>Costo Unitario</th>
-                            <th>PVP Unitario</th>
-                            <th>Inversión Total</th>
-                            <th>Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-existencia">
-                        <tr>
-                            <td colspan="7" style="text-align: center; color: var(--text-muted);">Sincronizando existencias en tiempo real...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Código</th><th>Descripción</th><th class="text-center">Stock</th><th>Costo</th><th>PVP</th><th class="text-right">Inversión</th><th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-existencia">
+                    <tr><td colspan="7" class="text-center" style="padding: 20px;">Cargando inventario...</td></tr>
+                </tbody>
+            </table>
         </div>
-
     </main>
-
-    <footer class="footer-core">
-        Desarrollado por Sistematikos - Frank Hernandez &copy; 2026
-    </footer>
 
     <script type="module" src="./js/sys_v4_exist.js"></script>
 </body>
