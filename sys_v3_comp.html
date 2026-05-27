@@ -8,63 +8,61 @@
     <style>
         :root { --bg: #F1F5F9; --primary: #1E293B; --border: #E2E8F0; --emerald: #10B981; }
         body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding: 20px; }
-        .layout-width { max-width: 1400px; margin: auto; }
+        .layout-width { max-width: 900px; margin: auto; }
         
-        /* 1. CABECERA CON LOGO */
-        .header-panel { background: #fff; padding: 20px 30px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; height: 80px; }
-        .logo-header { height: 60px; }
+        /* CABECERA */
+        .header-panel { background: #fff; padding: 20px 30px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .logo-header { height: 50px; }
 
-        /* ESTRUCTURA HORIZONTAL DE 3 TARJETAS */
-        .main-grid { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 20px; }
-        .card { background: white; padding: 20px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.04); }
+        /* TARJETAS APILADAS */
+        .card { background: white; padding: 25px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.04); margin-bottom: 20px; }
         
-        /* Estilos de inputs y botones */
-        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid var(--border); border-radius: 10px; box-sizing: border-box; }
-        .btn-add { background: var(--primary); color: white; padding: 12px; border: none; border-radius: 10px; width: 100%; cursor: pointer; font-weight: 600; }
-        .btn-save { background: var(--emerald); color: white; padding: 15px; border: none; border-radius: 12px; width: 100%; font-weight: 800; margin-top: 15px; }
+        /* FORMULARIOS */
+        .input-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        input { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid var(--border); border-radius: 10px; box-sizing: border-box; }
+        .btn-add { background: var(--primary); color: white; padding: 12px; border: none; border-radius: 10px; width: 100%; font-weight: 600; margin-top: 15px; cursor: pointer; }
+        .btn-save { background: var(--emerald); color: white; padding: 15px; border: none; border-radius: 12px; width: 100%; font-weight: 800; cursor: pointer; }
         
-        h3 { margin-top: 0; font-size: 1rem; color: #64748B; text-transform: uppercase; }
+        h3 { margin-top: 0; color: #1E293B; font-size: 1.1rem; border-bottom: 2px solid var(--bg); padding-bottom: 10px; }
     </style>
 </head>
 <body>
 
 <div class="layout-width">
     <header class="header-panel">
-        <h1 style="font-size: 1.5rem; margin:0;">Entrada de Mercancía</h1>
+        <h1 style="font-size: 1.3rem; margin:0;">Entrada de Mercancía</h1>
         <img src="img/logo.png" alt="Logo" class="logo-header">
     </header>
 
-    <div class="main-grid">
-        <section class="card">
-            <h3>1. Buscar Producto</h3>
-            <input type="text" id="buscador-dinamico" placeholder="SKU o Nombre...">
-            <div id="dropdown-resultados"></div>
-            
-            <h3>2. Datos de Ingreso</h3>
+    <section class="card">
+        <h3><i class="fas fa-search"></i> 1. Buscar e Ingresar Producto</h3>
+        <input type="text" id="buscador-dinamico" placeholder="SKU o Nombre del producto...">
+        <div id="dropdown-resultados"></div>
+        <div class="input-row">
             <input type="text" id="comp-nombre" placeholder="Descripción">
             <input type="number" id="comp-costo" placeholder="Costo USD">
             <input type="number" id="comp-cantidad" placeholder="Cantidad">
-            <button class="btn-add" onclick="window.agregarALista()">+ AGREGAR A LISTA</button>
-        </section>
+        </div>
+        <button class="btn-add" onclick="window.agregarALista()">+ AGREGAR A LA LISTA</button>
+    </section>
 
-        <section class="card">
-            <h3>3. Configuración</h3>
-            <label>Precio USD:</label>
-            <input type="number" id="comp-precio">
-            <label>Precio Bs (Tasa <span id="txt-tasa"></span>):</label>
-            <input type="text" id="comp-precio-bs" readonly style="background:#f0fdf4;">
-            <label>Ganancia %:</label>
-            <input type="number" id="comp-ganancia">
-        </section>
+    <section class="card">
+        <h3><i class="fas fa-calculator"></i> 2. Ajuste de Precios (Tasa: <span id="txt-tasa"></span>)</h3>
+        <div class="input-row">
+            <div><label>Precio USD</label><input type="number" id="comp-precio"></div>
+            <div><label>Precio Bs</label><input type="text" id="comp-precio-bs" readonly style="background:#f0fdf4;"></div>
+            <div><label>Ganancia %</label><input type="number" id="comp-ganancia"></div>
+        </div>
+    </section>
 
-        <section class="card">
-            <h3>4. Revisión y Guardar</h3>
-            <table style="width:100%; font-size: 0.8rem;">
-                <tbody id="tabla-items-compra"></tbody>
-            </table>
-            <button class="btn-save" onclick="window.procesarIngresoMercancia()">GUARDAR ENTRADA</button>
-        </section>
-    </div>
+    <section class="card">
+        <h3><i class="fas fa-list"></i> 3. Revisión Final</h3>
+        <table style="width:100%; text-align: left; border-collapse: collapse;">
+            <thead><tr style="color: #64748B; font-size: 0.8rem;"><th>SKU</th><th>Producto</th><th>Cant</th><th>Precio</th></tr></thead>
+            <tbody id="tabla-items-compra"></tbody>
+        </table>
+        <button class="btn-save" onclick="window.procesarIngresoMercancia()">GUARDAR ENTRADA DE MERCANCÍA</button>
+    </section>
 </div>
 
 <script type="module" src="./js/sys_v3_comp.js"></script>
