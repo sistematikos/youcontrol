@@ -19,24 +19,26 @@
         body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; color: var(--text-dark); }
         .layout-width { width: 92%; max-width: 1200px; margin: 0 auto; box-sizing: border-box; }
 
-        /* HEADER */
-        .report-header { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; margin-bottom: 15px; }
-        .logo-header { height: 45px; width: auto; }
-
-        .btn-back { background: #ffffff; color: var(--text-dark); padding: 8px 16px; border-radius: 12px; text-decoration: none; font-size: 0.8rem; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid #E2E8F0; display: flex; align-items: center; gap: 8px; }
+        /* HEADER: Título al lado de Volver y Logo libre */
+        .report-header { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+        .header-left { display: flex; align-items: center; gap: 20px; }
         
-        .date-controls { display: flex; gap: 10px; background: #ffffff; padding: 6px 12px; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 2px 4px rgba(0,0,0,0.04); align-items: center; }
-        .date-controls input { border: none; font-family: 'Poppins', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--text-dark); outline: none; width: 120px; }
-        .btn-gen { background: var(--bg-vivo); color: white; border: none; padding: 8px 16px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 0.8rem; }
+        .btn-back { background: #ffffff; color: var(--text-dark); padding: 8px 16px; border-radius: 12px; text-decoration: none; font-size: 0.8rem; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid #E2E8F0; display: flex; align-items: center; gap: 8px; }
+        .page-title { font-size: 1.25rem; font-weight: 700; color: var(--text-dark); margin: 0; }
+        
+        .logo-header { height: 60px; width: auto; } /* Logo más grande */
 
-        /* KPI GRID */
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 15px; }
+        /* FECHAS ACORTADAS */
+        .date-controls { display: flex; gap: 10px; background: #ffffff; padding: 6px 12px; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 2px 4px rgba(0,0,0,0.04); align-items: center; width: fit-content; margin-top: 15px; }
+        .date-controls input { border: none; font-family: 'Poppins', sans-serif; font-size: 0.75rem; font-weight: 600; color: var(--text-dark); outline: none; width: 100px; }
+        .btn-gen { background: var(--bg-vivo); color: white; border: none; padding: 6px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.75rem; }
+
+        /* KPI Y TABLA */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 15px; margin-bottom: 15px; }
         .kpi-card { background: #ffffff; border-radius: 14px; padding: 14px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02); border-left: 5px solid var(--bg-vivo); display: flex; justify-content: space-between; align-items: center; }
         .kpi-info .p-label { font-size: 0.65rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; display: block; }
         .kpi-info .p-val { font-size: 1.2rem; font-weight: 800; color: var(--text-dark); }
-
-        /* TABLA */
-        .table-panel { background: #ffffff; border-radius: 16px; padding: 18px; box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04); border: 1px solid #E2E8F0; margin-bottom: 20px; }
+        .table-panel { background: #ffffff; border-radius: 16px; padding: 18px; box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04); border: 1px solid #E2E8F0; }
         table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
         th { background: #F8FAFC; color: var(--text-muted); padding: 10px; border-bottom: 1px solid #E2E8F0; text-align: left; text-transform: uppercase; font-size: 0.68rem; }
         td { padding: 10px; border-bottom: 1px solid #F1F5F9; }
@@ -46,19 +48,20 @@
 
     <main class="layout-width">
         <div class="report-header">
-            <a href="index_menu.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
+            <div class="header-left">
+                <a href="index_menu.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
+                <h1 class="page-title">Reporte de Ventas</h1>
+            </div>
             <img src="img/logo.png" alt="Logo" class="logo-header">
         </div>
 
         <div class="date-controls">
-            <label style="font-size: 0.7rem; color: var(--text-muted);">DESDE</label>
             <input type="date" id="filtro-desde">
-            <label style="font-size: 0.7rem; color: var(--text-muted);">HASTA</label>
             <input type="date" id="filtro-hasta">
             <button class="btn-gen" onclick="window.cargarReporteVentas()"><i class="fas fa-search"></i> BUSCAR</button>
         </div>
 
-        <div class="kpi-grid" style="margin-top: 15px;">
+        <div class="kpi-grid">
             <div class="kpi-card" style="border-left-color: var(--emerald);">
                 <div class="kpi-info">
                     <span class="p-label">Venta Total USD</span>
