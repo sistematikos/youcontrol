@@ -3,38 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YOU CONTROL | Devoluciones</title>
+    <title>YOU CONTROL | Módulo de Devoluciones</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
     <style>
         :root {
             --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
             --text-dark: #1E293B;
+            --text-muted: #64748B;
             --emerald: #10B981;
             --red: #EF4444;
         }
 
         body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 20px 0; min-height: 100vh; color: var(--text-dark); }
-        .layout-width { width: 92%; max-width: 1200px; margin: 0 auto; }
+        .layout-width { width: 92%; max-width: 1200px; margin: 0 auto; box-sizing: border-box; }
 
-        /* HEADER PANEL IGUAL AL DE REPORTES */
-        .header-panel { background: #ffffff; padding: 15px 30px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        /* HEADER PANEL (Idéntico a tu Historial) */
+        .header-panel { background: #ffffff; padding: 15px 30px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; height: 100px; }
         .header-left { display: flex; align-items: center; gap: 20px; }
-        
-        /* ESTILO LOGO */
-        .logo-box { font-weight: 800; font-size: 1.2rem; color: var(--text-dark); letter-spacing: -0.5px; }
-        .logo-box span { color: var(--emerald); }
-
         .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 8px 16px; border-radius: 12px; text-decoration: none; font-size: 0.8rem; font-weight: 700; border: 1px solid #E2E8F0; display: flex; align-items: center; gap: 8px; }
         .page-title { font-size: 1.4rem; font-weight: 700; margin: 0; }
+        .logo-header { height: 100%; width: auto; object-fit: contain; }
 
-        /* BUSCADOR Y TARJETAS */
-        .card { background: #ffffff; border-radius: 16px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); border: 1px solid #E2E8F0; margin-bottom: 20px; }
+        /* BUSCADOR Y TARJETA */
+        .search-panel { background: #ffffff; padding: 20px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); border: 1px solid #E2E8F0; margin-bottom: 20px; }
         .input-group { display: flex; gap: 10px; }
-        input { padding: 12px 15px; border-radius: 12px; border: 1px solid #E2E8F0; font-family: 'Poppins'; flex: 1; outline: none; }
+        input { border: 1px solid #E2E8F0; padding: 12px 15px; border-radius: 12px; font-size: 0.85rem; outline: none; flex: 1; font-family: 'Poppins'; }
         .btn-action { background: var(--text-dark); color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; }
-        .btn-dev { background: var(--red); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 700; width: 100%; cursor: pointer; margin-top: 15px; }
+        
+        /* RESULTADOS Y TABLA */
+        .card { background: #ffffff; border-radius: 16px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); border: 1px solid #E2E8F0; margin-bottom: 20px; }
+        .btn-dev { background: var(--red); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 700; width: 100%; cursor: pointer; transition: 0.3s; }
+        .btn-dev:hover { opacity: 0.9; }
     </style>
 </head>
 <body>
@@ -42,16 +42,15 @@
     <main class="layout-width">
         <header class="header-panel">
             <div class="header-left">
-                <div class="logo-box">YOU<span>CONTROL</span></div>
-                <div style="width: 1px; height: 30px; background: #E2E8F0; margin: 0 10px;"></div>
-                <a href="sys_v1_vt.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
-                <h1 class="page-title">Devoluciones</h1>
+                <a href="sys_v4_reportes.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
+                <h1 class="page-title">Módulo de Devoluciones</h1>
             </div>
+            <img src="img/logo.png" alt="Logo" class="logo-header">
         </header>
 
-        <section class="card">
+        <section class="search-panel">
             <div class="input-group">
-                <input type="text" id="busqueda-factura" placeholder="Nro de factura a devolver...">
+                <input type="text" id="busqueda-factura" placeholder="Nro de factura original...">
                 <button class="btn-action" onclick="buscarFacturaParaDevolver()">BUSCAR FACTURA</button>
             </div>
         </section>
@@ -60,7 +59,7 @@
             <h3 style="margin-top:0;">Detalles de Factura: <span id="nro-factura-display" style="color: var(--emerald);"></span></h3>
             <div id="lista-productos-dev" style="margin: 20px 0; border-top: 1px solid #F1F5F9; padding-top: 10px;">
                 </div>
-            <textarea id="motivo-devolucion" style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #E2E8F0; font-family: 'Poppins'; box-sizing: border-box;" placeholder="Motivo de la devolución..."></textarea>
+            <textarea id="motivo-devolucion" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #E2E8F0; font-family: 'Poppins'; box-sizing: border-box;" placeholder="Motivo de la devolución..."></textarea>
             <button class="btn-dev" onclick="ejecutarProcesoDev()">PROCESAR DEVOLUCIÓN Y REINTEGRAR STOCK</button>
         </section>
     </main>
