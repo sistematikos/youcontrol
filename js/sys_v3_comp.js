@@ -52,10 +52,14 @@ async function inicializarEntradaMercancia() {
     
     mostrarEstado("⏳ Conectando con el inventario...", "loading");
     try {
-        const tasaSnap = await getDoc(doc(db, "usuarios", USER_ID, "configuracion", "tasa"));
-        if (tasaSnap.exists()) {
-            tasaActual = parseFloat(tasaSnap.data().valor) || 1.00;
+        // CORRECCIÓN: Buscamos en el documento del usuario, no en la subcolección 'configuracion'
+        const userSnap = await getDoc(doc(db, "usuarios", USER_ID));
+        
+        if (userSnap.exists() && userSnap.data().tasa_bcv) {
+            tasaActual = parseFloat(userSnap.data().tasa_bcv) || 1.00;
             if (txtTasa) txtTasa.innerText = tasaActual.toFixed(2).replace('.', ',') + " Bs.";
+        } else {
+            console.warn("Tasa no encontrada en el perfil, usando valor por defecto.");
         }
 
         onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
@@ -64,6 +68,7 @@ async function inicializarEntradaMercancia() {
             mostrarEstado("✅ Inventario sincronizado.", "success");
         });
     } catch (e) {
+        console.error("Error al cargar datos:", e);
         mostrarEstado("❌ Error de comunicación con la DB.", "loading");
     }
 }
