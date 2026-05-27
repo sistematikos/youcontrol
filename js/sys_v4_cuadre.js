@@ -1,21 +1,15 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * sys_v4_cuadre.js - Versión Corregida para estructura YC-2026-001
+ * sys_v4_cuadre.js - Versión final corregida
  */
 
 import { db } from './firebase-config.js';
 import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// ID corregido según tu captura de Firebase
+// ID corregido según la ruta de tu base de datos
 const USER_ID = "YC-2026-001"; 
 const inputFecha = document.getElementById('filtro-fecha');
 const tablaCuerpo = document.getElementById('tabla-cuerpo');
-
-document.addEventListener('DOMContentLoaded', () => {
-    inputFecha.value = new Date().toISOString().split('T')[0];
-    cargarCuadre(inputFecha.value);
-    inputFecha.addEventListener('change', (e) => cargarCuadre(e.target.value));
-});
 
 function cargarCuadre(fechaSeleccionada) {
     const colRef = collection(db, "usuarios", USER_ID, "ventas");
@@ -27,14 +21,14 @@ function cargarCuadre(fechaSeleccionada) {
         snapshot.forEach(doc => {
             const v = doc.data();
             
-            // BUSCAMOS LA FECHA EN EL ARREGLO 'items' (según tu captura image_ec5749)
+            // Accedemos a la fecha dentro de items[0].ultima_actualizacion
             const items = v.items || [];
             const fechaEnItems = items.length > 0 ? items[0].ultima_actualizacion : null;
 
             if (fechaEnItems === fechaSeleccionada) {
                 const p = v.pagos || {};
                 
-                // Sumamos los valores del objeto 'pagos'
+                // Sumamos los montos desde el objeto 'pagos'
                 t.usd += parseFloat(p.divisas_usd || 0);
                 t.efecBs += parseFloat(p.efectivo_bs || 0);
                 t.punto += parseFloat(p.punto_bs || 0);
@@ -51,7 +45,6 @@ function cargarCuadre(fechaSeleccionada) {
             }
         });
 
-        // Si no hay datos, mostrar mensaje
         if (tablaCuerpo.innerHTML === "") {
             tablaCuerpo.innerHTML = `<tr><td colspan="5" style="text-align:center;">No hay registros para ${fechaSeleccionada}</td></tr>`;
         }
@@ -67,3 +60,10 @@ function actualizarUI(t) {
     document.getElementById('tot-pmovil').innerText = `Bs. ${t.pmovil.toFixed(2)}`;
     document.getElementById('tot-venta-dia').innerText = `Venta Total: $ ${t.global.toFixed(2)}`;
 }
+
+// Inicialización
+document.addEventListener('DOMContentLoaded', () => {
+    inputFecha.value = new Date().toISOString().split('T')[0];
+    cargarCuadre(inputFecha.value);
+    inputFecha.addEventListener('change', (e) => cargarCuadre(e.target.value));
+});
