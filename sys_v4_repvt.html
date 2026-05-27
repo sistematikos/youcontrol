@@ -36,11 +36,14 @@
         .kpi-info .p-label { font-size: 0.65rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
         .kpi-info .p-val { font-size: 1.2rem; font-weight: 800; margin-top: 4px; }
 
-        /* TABLA SIN DETALLE */
+        /* TABLA CON TOTAL A LA DERECHA */
         .table-panel { background: #ffffff; border-radius: 16px; padding: 18px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); border: 1px solid #E2E8F0; }
         table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
         th { color: var(--text-muted); padding: 10px; text-align: left; text-transform: uppercase; font-size: 0.68rem; border-bottom: 1px solid #F1F5F9; }
         td { padding: 10px; border-bottom: 1px solid #F1F5F9; }
+        
+        /* Clase para alinear a la derecha */
+        .text-right { text-align: right; }
     </style>
 </head>
 <body>
@@ -80,7 +83,7 @@
         <div class="table-panel">
             <table>
                 <thead>
-                    <tr><th>Hora / Fecha</th><th>Factura</th><th>Cliente</th><th>Total ($)</th></tr>
+                    <tr><th>Hora / Fecha</th><th>Factura</th><th>Cliente</th><th class="text-right">Total ($)</th></tr>
                 </thead>
                 <tbody id="tabla-reporte-ventas">
                     <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">Selecciona fechas para generar reporte.</td></tr>
