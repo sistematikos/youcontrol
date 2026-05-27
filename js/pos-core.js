@@ -120,121 +120,47 @@ document.addEventListener('DOMContentLoaded', async () => {
 // initLogicaPagos, actualizarCarritoUI, etc.]
 
 // ==========================================
-// 4. INTEGRACIÓN UI: SELECCIÓN Y NAVEGACIÓN
+// 4. INTEGRACIÓN UI Y COMANDOS (Consolidado)
 // ==========================================
 window.seleccionarCliente = (id, nombre) => {
-    const inputCliente = document.getElementById('buscar-cliente-pos');
-    const divResultados = document.getElementById('resultados-cliente-pos');
-    inputCliente.value = nombre;
-    divResultados.style.display = 'none';
-    window.clienteSeleccionadoID = id; 
-    document.getElementById('buscar-producto-pos')?.focus();
+    document.getElementById('buscar-cliente-pos').value = nombre;
+    document.getElementById('resultados-cliente-pos').style.display = 'none';
+    window.clienteSeleccionadoID = id; 
+    document.getElementById('buscar-producto-pos')?.focus();
 };
 
 window.seleccionarProducto = (id) => {
-    window.agregarCarrito(id);
-    document.getElementById('buscar-producto-pos').value = '';
-    document.getElementById('resultados-producto-pos').style.display = 'none';
-    document.getElementById('buscar-producto-pos').focus();
-};
-
-// Lógica de navegación con flechas unificada
-window.manejarNavegacion = (e, contenedorId, indiceVar) => {
-    const cont = document.getElementById(contenedorId);
-    if (!cont || cont.style.display === 'none') return -1;
-    const items = cont.querySelectorAll('.resultado-item');
-    if (!items.length) return -1;
-
-    if (e.key === 'ArrowDown') {
-        indiceVar = (indiceVar < items.length - 1) ? indiceVar + 1 : 0;
-    } else if (e.key === 'ArrowUp') {
-        indiceVar = (indiceVar > 0) ? indiceVar - 1 : items.length - 1;
-    } else if (e.key === 'Enter') {
-        e.preventDefault();
-        if (items[indiceVar]) items[indiceVar].click();
-        return -1;
-    } else return indiceVar;
-
-    items.forEach((it, i) => it.classList.toggle('seleccionado', i === indiceVar));
-    items[indiceVar].scrollIntoView({ block: 'nearest' });
-    return indiceVar;
+    window.agregarCarrito(id);
+    document.getElementById('buscar-producto-pos').value = '';
+    document.getElementById('resultados-producto-pos').style.display = 'none';
+    document.getElementById('buscar-producto-pos').focus();
 };
 
 // ==========================================
-// 5. INICIALIZACIÓN POR SECCIONES
+// 5. INICIALIZACIÓN ÚNICA (DOM)
 // ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    console.log("DOM cargado - Inicializando módulos...");
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log("Inicializando sistema...");
 
-    // Inicializar buscadores (Responsabilidad: Selección de datos)
-    initBuscadores();
+    // 1. Cargas asíncronas esenciales
+    await cargarConfiguracionGlobal();
+    await obtenerUltimoNumeroFactura();
 
-    // Inicializar pagos (Responsabilidad: Cierre de venta)
-    initLogicaPagos();
+    // 2. Datos y listeners
+    inicializarClientes();
+    inicializarProductos();
+    initBuscadores();
+    initLogicaPagos();
+
+    // 3. Listener de entrada para el botón de venta
+    document.addEventListener('input', (e) => {
+        const camposPago = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd'];
+        if (camposPago.includes(e.target.id)) {
+            const btn = document.getElementById('btn-confirmar-venta');
+            if (btn) btn.disabled = false;
+        }
+    });
 });
-
-// Bloque 1: Separado y modular
-function initBuscadores() {
-    const inputCliente = document.getElementById('buscar-cliente-pos');
-    const inputProd = document.getElementById('buscar-producto-pos');
-
-    // Listener Cliente
-    inputCliente?.addEventListener('input', (e) => {
-        const resultados = window.buscarCliente(e.target.value);
-        const divRes = document.getElementById('resultados-cliente-pos');
-        if (resultados.length > 0 && e.target.value.trim() !== "") {
-            divRes.style.display = 'block';
-            divRes.innerHTML = resultados.map(c => `
-                <div class="resultado-item" style="padding: 10px; cursor: pointer;"
-                     onclick="window.seleccionarCliente('${c.id}', '${c.nombre.replace(/'/g, "\\'")}')">
-                     <strong>${c.id}</strong> - ${c.nombre}
-                </div>`).join('');
-        } else { divRes.style.display = 'none'; }
-    });
-
-    // Listener Producto
-    inputProd?.addEventListener('input', (e) => {
-        const resultados = window.buscarProducto(e.target.value);
-        const divRes = document.getElementById('resultados-producto-pos');
-        if (resultados.length > 0 && e.target.value.trim() !== "") {
-            divRes.style.display = 'block';
-            divRes.innerHTML = resultados.map(p => `
-                <div class="resultado-item" style="padding: 10px; cursor: pointer;"
-                     onclick="window.seleccionarProducto('${p.id}')">
-                     <strong>${p.nombre}</strong> - $${p.precio}
-                </div>`).join('');
-        } else { divRes.style.display = 'none'; }
-    });
-}
-
-// Bloque 2: Separado y modular
-function initLogicaPagos() {
-    const camposBs = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs'];
-    const inputDivisas = document.getElementById('in-divisas-usd');
-
-    // Eventos Click en Bs
-    camposBs.forEach(id => {
-        document.getElementById(id)?.addEventListener('click', () => {
-            const el = document.getElementById(id);
-            const totalBs = (window.totalVentaUSD || 0) * tasaActual;
-            const valorDivisasBs = (parseFloat(inputDivisas?.value) || 0) * tasaActual;
-            const sumOtrosBs = camposBs
-                .filter(c => c !== id)
-                .reduce((acc, cId) => acc + (parseFloat(document.getElementById(cId)?.value) || 0), 0);
-            
-            const pendiente = totalBs - sumOtrosBs - valorDivisasBs;
-            el.value = (pendiente > 0 ? pendiente : 0).toFixed(2);
-        });
-    });
-
-    // Evento Divisas
-    inputDivisas?.addEventListener('click', () => {
-        const totalBs = (window.totalVentaUSD || 0) * tasaActual;
-        const sumBs = camposBs.reduce((acc, cId) => acc + (parseFloat(document.getElementById(cId)?.value) || 0), 0);
-        const pendienteBs = totalBs - sumBs;
-        inputDivisas.value = (pendienteBs / tasaActual > 0 ? (pendienteBs / tasaActual) : 0).toFixed(2);
-    });
-}
 
 // ==========================================
 // 7. ACTUALIZACIÓN VISUAL Y COMANDOS
