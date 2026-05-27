@@ -15,12 +15,13 @@
             --indigo: #6366F1;
             --amber: #F59E0B;
             --sky: #0EA5E9;
+            --rose: #F43F5E;
         }
 
         body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 20px 0; min-height: 100vh; color: var(--text-dark); }
         .layout-width { width: 92%; max-width: 1200px; margin: 0 auto; box-sizing: border-box; }
 
-        /* HEADER PANEL ESTANDARIZADO */
+        /* HEADER PANEL */
         .header-panel { background: #ffffff; padding: 15px 30px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; height: 80px; }
         .header-left { display: flex; align-items: center; gap: 20px; }
         .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 8px 16px; border-radius: 12px; text-decoration: none; font-size: 0.8rem; font-weight: 700; border: 1px solid #E2E8F0; display: flex; align-items: center; gap: 8px; }
@@ -58,36 +59,3 @@
             <a href="sys_v4_cuadre.html" class="menu-card" style="border-left: 4px solid var(--sky);">
                 <i class="fas fa-cash-register" style="color: var(--sky);"></i>
                 <span>Cuadre de Caja</span>
-                <p>Auditoría de ingresos por punto, efectivo y divisas.</p>
-            </a>
-            <a href="sys_v4_top_vendidos.html" class="menu-card" style="border-left: 4px solid var(--amber);">
-                <i class="fas fa-fire" style="color: var(--amber);"></i>
-                <span>Top Vendidos</span>
-                <p>Análisis de artículos con mayor rotación.</p>
-            </a>
-            <a href="sys_v4_exist.html" class="menu-card" style="border-left: 4px solid var(--indigo);">
-                <i class="fas fa-warehouse" style="color: var(--indigo);"></i>
-                <span>Existencia</span>
-                <p>Stock valorizado y alertas de reposición.</p>
-            </a>
-            <a href="sys_v4_cumple.html" class="menu-card" style="border-left: 4px solid var(--rose, #F43F5E);">
-                <i class="fas fa-birthday-cake" style="color: var(--rose);"></i>
-                <span>Cumpleaños</span>
-                <p>Gestiona los clientes especiales de la base.</p>
-            </a>
-        </div>
-
-        <div class="gerencial-panel">
-            <h4 style="margin: 0 0 15px 0;"><i class="fas fa-chart-line" style="color:var(--emerald)"></i> Resumen Gerencial</h4>
-            <div class="metrics-grid">
-                <div class="metric-box"><span class="m-label">Inversión</span><span class="m-value" id="total-costo">$ 0.00</span></div>
-                <div class="metric-box"><span class="m-label">Venta Proy.</span><span class="m-value" id="total-venta">$ 0.00</span></div>
-                <div class="metric-box"><span class="m-label">Ganancia</span><span class="m-value" id="total-ganancia">$ 0.00</span></div>
-                <div class="metric-box"><span class="m-label">Items Totales</span><span class="m-value" id="total-items">0</span></div>
-            </div>
-        </div>
-    </main>
-
-    <script type="module" src="./js/sys_v4_reportes.js"></script>
-</body>
-</html>
