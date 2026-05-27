@@ -27,6 +27,26 @@ let formatoFactura = "ticket";
 window.indiceProd = -1;
 window.indiceClie = -1;
 
+import { query, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+async function obtenerSiguienteFactura() {
+    const ventasRef = collection(db, "usuarios", USER_ID, "ventas");
+    // Consultamos la última venta ordenada por fecha (si tienes un campo de ordenamiento)
+    // O simplemente traemos las ventas y buscamos el nro_factura más alto
+    const q = query(ventasRef, orderBy("fecha", "desc"), limit(1));
+    const querySnapshot = await getDocs(q);
+    
+    let ultimoNro = 0;
+    querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.nro_factura) {
+            ultimoNro = parseInt(data.nro_factura);
+        }
+    });
+
+    return (ultimoNro + 1).toString().padStart(6, '0');
+}
+
 // ==========================================
 // CARGA DE CONFIGURACIÓN GLOBAL
 // ==========================================
@@ -115,13 +135,17 @@ window.registrarVenta = async () => {
     }
 
     try {
-        // Obtenemos el valor del input directamente
-        const nombreVal = document.getElementById('buscar-cliente-pos')?.value || "Anónimo";
+        // --- AQUÍ ESTÁ EL CAMBIO ---
+        // Obtenemos el número real desde la base de datos justo antes de guardar
+        const nroFacturaActual = await obtenerSiguienteFactura();
+        
+        const nombreParaGuardar = window.nombreClienteSeleccionado || 
+                                 document.getElementById('buscar-cliente-pos')?.value || 
+                                 "Anónimo";
 
-        // Creamos el objeto de datos
         const ventaData = {
             cliente_id: window.clienteSeleccionadoID || "anonimo",
-            nombre_cliente: nombreVal, // <--- ESTO ES LO QUE DEBE APARECER EN FIRESTORE
+            nombre_cliente: nombreParaGuardar,
             items: carrito,
             total_usd: window.totalVentaUSD || 0,
             tasa_aplicada: tasaActual,
@@ -132,24 +156,17 @@ window.registrarVenta = async () => {
                 divisas_usd: parseFloat(document.getElementById('in-divisas-usd')?.value) || 0
             },
             fecha: serverTimestamp(),
-            nro_factura: proximoNumeroFacturaStr
+            nro_factura: nroFacturaActual // Usamos el número obtenido de Firestore
         };
 
-        // Guardamos
         await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
+        // ---------------------------
 
-        alert("✅ Venta registrada correctamente.");
+        alert("✅ Venta registrada correctamente. Factura: " + nroFacturaActual);
 
-        // Limpieza de UI
+        // Limpieza...
         carrito = [];
-        window.clienteSeleccionadoID = null;
-        const inputC = document.getElementById('buscar-cliente-pos');
-        if (inputC) inputC.value = '';
-        document.getElementById('modalPago').style.display = 'none';
-        
-        window.actualizarCarritoUI();
-        proximoNumeroFacturaStr = (parseInt(proximoNumeroFacturaStr) + 1).toString().padStart(6, '0');
-
+        // ... (resto del código igual)
     } catch (error) {
         console.error("Error al guardar:", error);
         alert("Error al guardar: " + error.message);
