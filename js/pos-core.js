@@ -138,37 +138,26 @@ window.agregarCarrito = (id) => {
 };
 
 window.registrarVenta = async () => {
-    // 1. Obtener datos del DOM
-    const nombreCliente = document.getElementById('buscar-cliente-pos')?.value || "Cliente Genérico";
-    const puntoBs = parseFloat(document.getElementById('in-punto-bs')?.value) || 0;
-    const pagoMovilBs = parseFloat(document.getElementById('in-pagomovil-bs')?.value) || 0;
-    const efectivoBs = parseFloat(document.getElementById('in-efectivo-bs')?.value) || 0;
-    const divisasUsd = parseFloat(document.getElementById('in-divisas-usd')?.value) || 0;
-    
-    // 2. Validación básica
-    if (carrito.length === 0) {
-        alert("El carrito está vacío.");
-        return;
-    }
+    // ... (todo tu código de guardado en Firestore) ...
 
     try {
-        // 3. Crear el objeto con TODA la información necesaria
-        const ventaData = {
-            fecha: serverTimestamp(),
-            nro_factura: proximoNumeroFacturaStr,
-            cliente_id: window.clienteSeleccionadoID || "anonimo",
-            nombre_cliente: nombreCliente, // GUARDADO DEL NOMBRE
-            total_usd: window.totalVentaUSD,
-            tasa_aplicada: tasaActual,
-            formato: formatoFactura,
-            items: carrito,
-            pagos: {
-                punto_bs: puntoBs,
-                pago_movil_bs: pagoMovilBs,
-                efectivo_bs: efectivoBs,
-                divisas_usd: divisasUsd
-            }
-        };
+        await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
+        alert("✅ Venta registrada correctamente.");
+
+        // ... (código de limpieza de carrito y campos) ...
+
+        // --- CORRECCIÓN AQUÍ ---
+        // 1. Incrementamos el contador
+        const ultimoNro = parseInt(proximoNumeroFacturaStr);
+        proximoNumeroFacturaStr = (ultimoNro + 1).toString().padStart(6, '0');
+        
+        // 2. Actualizamos el HTML para que se vea el nuevo número (ej: 000002)
+        const display = document.getElementById('txt-nro-factura'); // AJUSTA ESTE ID SI ES DIFERENTE
+        if (display) display.innerText = proximoNumeroFacturaStr;
+        // -----------------------
+
+    } catch (e) { alert("Error al guardar: " + e.message); }
+};
 
         // 4. Guardar en Firestore
         await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
