@@ -3,9 +3,9 @@
  * Módulo de Facturación y Ventas (pos-core.js)
  */
 
-import { db } from './firebase-config.js';
 import { 
-    collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc 
+    collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc, 
+    query, orderBy, limit, getDocs // <--- AGREGA ESTAS
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
