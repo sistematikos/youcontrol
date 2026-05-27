@@ -15,64 +15,47 @@ let desuscripcionActiva = null;
 // Elementos DOM
 const inputFecha = document.getElementById('filtro-fecha');
 const tablaCuerpo = document.getElementById('tabla-cuerpo');
-
 const txtTotDolar = document.getElementById('tot-dolar');
 const txtTotEfecBs = document.getElementById('tot-efec-bs');
 const txtTotPunto = document.getElementById('tot-punto');
 const txtTotPMovil = document.getElementById('tot-pmovil');
 const txtTotVentaDia = document.getElementById('tot-venta-dia');
 
-// ==========================================
-// 1. INICIALIZACIÓN
-// ==========================================
 async function inicializarCuadre() {
-    // Establecer fecha actual de hoy por defecto en el input (YYYY-MM-DD)
     const hoy = new Date().toISOString().split('T')[0];
     inputFecha.value = hoy;
 
     try {
-        // Obtener tasa del sistema
         const tasaSnap = await getDoc(doc(db, "usuarios", USER_ID, "configuracion", "tasa"));
         if (tasaSnap.exists()) {
             tasaActual = parseFloat(tasaSnap.data().valor) || 1.00;
         }
 
-        // Ejecutar escucha para la fecha inicial
         cargarVentasPorFecha(hoy);
 
-        // Escuchar cambios de fecha manuales
         inputFecha.addEventListener('change', (e) => {
+            console.log("Fecha seleccionada:", e.target.value);
             cargarVentasPorFecha(e.target.value);
         });
-
     } catch (error) {
-        console.error("Error cargando tasa en cuadre:", error);
+        console.error("Error inicializando:", error);
     }
 }
 
-// ==========================================
-// 2. CONSULTA EN TIEMPO REAL FIRESTORE
-// ==========================================
 function cargarVentasPorFecha(fechaFormato) {
-    // Si ya hay una escucha abierta, la cerramos antes de abrir otra fecha
     if (desuscripcionActiva) desuscripcionActiva();
 
-    const q = query(
-        collection(db, "usuarios", USER_ID, "ventas"),
-        where("fecha", "==", fechaFormato)
-    );
+    const colRef = collection(db, "usuarios", USER_ID, "ventas");
+    const q = query(colRef, where("fecha", "==", fechaFormato));
 
     desuscripcionActiva = onSnapshot(q, (snapshot) => {
-        let acumDolar = 0;
-        let acumEfecBs = 0;
-        let acumPunto = 0;
-        let acumPMovil = 0;
-        let totalUSDInterfaz = 0;
+        let acumDolar = 0, acumEfecBs = 0, acumPunto = 0, acumPMovil = 0, totalUSDInterfaz = 0;
 
         tablaCuerpo.innerHTML = "";
 
         if (snapshot.empty) {
-            tablaCuerpo.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No se registraron transacciones en esta fecha.</td></tr>`;
+            console.log("No hay documentos para la fecha:", fechaFormato);
+            tablaCuerpo.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No hay ventas registradas este día.</td></tr>`;
             actualizarTotalesPantalla(0, 0, 0, 0, 0);
             return;
         }
@@ -81,13 +64,12 @@ function cargarVentasPorFecha(fechaFormato) {
             const v = docSnap.data();
             const idFactura = docSnap.id.substring(0, 8).toUpperCase();
             const hora = v.hora || "--:--";
-            const metodo = v.metodo_pago || "efectivo_dolar"; // por si acaso
+            const metodo = v.metodo_pago || "efectivo_dolar";
             const totalUSD = parseFloat(v.total_usd || 0);
             const totalBS = parseFloat(v.total_bs || (totalUSD * tasaActual));
 
             totalUSDInterfaz += totalUSD;
 
-            // Clasificación de acumuladores según el método registrado en el POS
             let badgeMetodo = "";
             switch (metodo) {
                 case "efectivo_dolar":
@@ -108,7 +90,6 @@ function cargarVentasPorFecha(fechaFormato) {
                     break;
             }
 
-            // Inserción en la tabla
             const fila = document.createElement('tr');
             fila.innerHTML = `
                 <td>${hora}</td>
@@ -121,12 +102,11 @@ function cargarVentasPorFecha(fechaFormato) {
         });
 
         actualizarTotalesPantalla(acumDolar, acumEfecBs, acumPunto, acumPMovil, totalUSDInterfaz);
+    }, (error) => {
+        console.error("Error en el snapshot de Firestore:", error);
     });
 }
 
-// ==========================================
-// 3. RENDERIZACIÓN DE TOTALES
-// ==========================================
 function actualizarTotalesPantalla(dolar, efecBs, punto, pmovil, globalUSD) {
     txtTotDolar.innerText = `$ ${dolar.toFixed(2)}`;
     txtTotEfecBs.innerText = `Bs. ${efecBs.toFixed(2).replace('.', ',')}`;
