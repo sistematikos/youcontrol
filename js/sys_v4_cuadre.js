@@ -1,12 +1,11 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * sys_v4_cuadre.js - Sincronizado con lógica de Reporte de Ventas
+ * sys_v4_cuadre.js - Versión final sincronizada
  */
 
 import { db } from './firebase-config.js';
 import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Usamos el mismo ID dinámico que en tu otro reporte
 const USER_ID = localStorage.getItem('youcontrol_empresa_id') || "YC-2026-001"; 
 const inputFecha = document.getElementById('filtro-fecha');
 const tablaCuerpo = document.getElementById('tabla-cuerpo');
@@ -21,27 +20,30 @@ function cargarCuadre(fechaSeleccionada) {
         snapshot.forEach(doc => {
             const data = doc.data();
             
-            // 1. Extraer fecha igual que en tu otro reporte (buscando en items[0] o raíz)
-            const items = data.items || [];
-            const fechaVenta = items.length > 0 ? items[0].ultima_actualizacion : null;
+            // LÓGICA CORREGIDA: Obtenemos la fecha real de la raíz del documento
+            let fechaVenta = "";
+            if (data.fecha && typeof data.fecha.toDate === 'function') {
+                fechaVenta = data.fecha.toDate().toISOString().split('T')[0];
+            }
 
+            // Filtramos comparando con la fecha del calendario
             if (fechaVenta === fechaSeleccionada) {
                 const p = data.pagos || {};
+                const items = data.items || [];
                 const nombreCliente = data.nombre_cliente || "Anónimo";
                 
-                // 2. Mapeo de items igual que en tu otro reporte
                 const listaItems = items.map(i => 
                     `<li>${i.nombre} (${i.cantidad})</li>`
                 ).join('');
 
-                // 3. Acumular totales
+                // Acumular totales
                 t.usd += parseFloat(p.divisas_usd || 0);
                 t.efecBs += parseFloat(p.efectivo_bs || 0);
                 t.punto += parseFloat(p.punto_bs || 0);
                 t.pmovil += parseFloat(p.pago_movil_bs || 0);
                 t.global += parseFloat(data.total_usd || 0);
 
-                // 4. Pintar la fila igual que tu otro reporte
+                // Pintar fila
                 tablaCuerpo.innerHTML += `<tr>
                     <td><strong>${data.nro_factura || '---'}</strong><br><small>${data.hora || '--:--'}</small></td>
                     <td>${nombreCliente}</td>
@@ -51,7 +53,11 @@ function cargarCuadre(fechaSeleccionada) {
             }
         });
 
-        // Actualizar tarjetas (igual que antes)
+        if (tablaCuerpo.innerHTML === "") {
+            tablaCuerpo.innerHTML = `<tr><td colspan="4" style="text-align:center;">No hay ventas registradas para ${fechaSeleccionada}</td></tr>`;
+        }
+
+        // Actualizar UI
         document.getElementById('tot-dolar').innerText = `$ ${t.usd.toFixed(2)}`;
         document.getElementById('tot-efec-bs').innerText = `Bs. ${t.efecBs.toFixed(2)}`;
         document.getElementById('tot-punto').innerText = `Bs. ${t.punto.toFixed(2)}`;
