@@ -1,9 +1,10 @@
 // js/pos-core-teclas.js
 
 export function ejecutarF4() { 
-    if (window.carrito.length === 0) return;
+    if (!window.carrito || window.carrito.length === 0) return;
     const item = window.carrito[window.carrito.length - 1];
     const nuevaCant = prompt(`Cantidad para ${item.nombre}:`, item.cantidad);
+    
     if (nuevaCant !== null && !isNaN(nuevaCant) && nuevaCant > 0) {
         item.cantidad = parseInt(nuevaCant);
         window.actualizarCarritoUI();
@@ -11,9 +12,10 @@ export function ejecutarF4() {
 }
 
 export function ejecutarF5() { 
-    if (window.carrito.length === 0) return;
+    if (!window.carrito || window.carrito.length === 0) return;
     const item = window.carrito[window.carrito.length - 1];
     const nuevoPrecio = prompt(`Precio para ${item.nombre} ($):`, item.precio);
+    
     if (nuevoPrecio !== null && !isNaN(nuevoPrecio)) {
         item.precio = parseFloat(nuevoPrecio);
         window.actualizarCarritoUI();
@@ -21,19 +23,22 @@ export function ejecutarF5() {
 }
 
 export function ejecutarF6() { 
-    if (window.carrito.length > 0) {
+    if (window.carrito && window.carrito.length > 0) {
         window.carrito.pop();
         window.actualizarCarritoUI();
     }
 }
 
 export function abrirModalCobro() {
-    if (window.carrito.length === 0) { alert("El carrito está vacío."); return; }
+    if (!window.carrito || window.carrito.length === 0) { 
+        alert("El carrito está vacío."); 
+        return; 
+    }
     
     const modal = document.getElementById('modalPago');
     if (modal) {
         const totalUSD = window.totalVentaUSD || 0;
-        const totalBs = totalUSD * window.tasaActual;
+        const totalBs = totalUSD * (window.tasaActual || 1.0);
         
         const dUSD = document.getElementById('totalModalUSD');
         const dBS = document.getElementById('totalModalBS');
