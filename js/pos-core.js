@@ -459,11 +459,16 @@ document.addEventListener('input', (e) => {
     }
 });
 
-// ==========================================
 // INICIALIZACIÓN FINAL
-// ==========================================
-cargarConfiguracionGlobal().then(async () => {
-    await obtenerUltimoNumeroFactura(); // <--- AGREGAR ESTO
+document.addEventListener('DOMContentLoaded', async () => {
+    // 1. Primero cargamos configuración
+    await cargarConfiguracionGlobal();
+    
+    // 2. Luego obtenemos el número de factura real de la BD
+    await obtenerUltimoNumeroFactura();
+    
+    // 3. Finalmente los datos
     inicializarClientes();
     inicializarProductos();
+    initBuscadores();
 });
