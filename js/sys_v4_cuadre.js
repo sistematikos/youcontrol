@@ -1,13 +1,13 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * sys_v4_cuadre.js - Versión final corregida
+ * sys_v4_cuadre.js - Sincronizado con lógica de Reporte de Ventas
  */
 
 import { db } from './firebase-config.js';
 import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// ID corregido según la ruta de tu base de datos
-const USER_ID = "YC-2026-001"; 
+// Usamos el mismo ID dinámico que en tu otro reporte
+const USER_ID = localStorage.getItem('youcontrol_empresa_id') || "YC-2026-001"; 
 const inputFecha = document.getElementById('filtro-fecha');
 const tablaCuerpo = document.getElementById('tabla-cuerpo');
 
@@ -19,46 +19,45 @@ function cargarCuadre(fechaSeleccionada) {
         tablaCuerpo.innerHTML = "";
 
         snapshot.forEach(doc => {
-            const v = doc.data();
+            const data = doc.data();
             
-            // Accedemos a la fecha dentro de items[0].ultima_actualizacion
-            const items = v.items || [];
-            const fechaEnItems = items.length > 0 ? items[0].ultima_actualizacion : null;
+            // 1. Extraer fecha igual que en tu otro reporte (buscando en items[0] o raíz)
+            const items = data.items || [];
+            const fechaVenta = items.length > 0 ? items[0].ultima_actualizacion : null;
 
-            if (fechaEnItems === fechaSeleccionada) {
-                const p = v.pagos || {};
+            if (fechaVenta === fechaSeleccionada) {
+                const p = data.pagos || {};
+                const nombreCliente = data.nombre_cliente || "Anónimo";
                 
-                // Sumamos los montos desde el objeto 'pagos'
+                // 2. Mapeo de items igual que en tu otro reporte
+                const listaItems = items.map(i => 
+                    `<li>${i.nombre} (${i.cantidad})</li>`
+                ).join('');
+
+                // 3. Acumular totales
                 t.usd += parseFloat(p.divisas_usd || 0);
                 t.efecBs += parseFloat(p.efectivo_bs || 0);
                 t.punto += parseFloat(p.punto_bs || 0);
                 t.pmovil += parseFloat(p.pago_movil_bs || 0);
-                t.global += parseFloat(v.total_usd || 0);
+                t.global += parseFloat(data.total_usd || 0);
 
+                // 4. Pintar la fila igual que tu otro reporte
                 tablaCuerpo.innerHTML += `<tr>
-                    <td>${v.hora || '--:--'}</td>
-                    <td>#${v.nro_factura || '---'}</td>
-                    <td>Multimétodo</td>
-                    <td>$ ${parseFloat(v.total_usd || 0).toFixed(2)}</td>
-                    <td>Bs. ${(parseFloat(p.efectivo_bs||0) + parseFloat(p.punto_bs||0) + parseFloat(p.pago_movil_bs||0)).toFixed(2)}</td>
+                    <td><strong>${data.nro_factura || '---'}</strong><br><small>${data.hora || '--:--'}</small></td>
+                    <td>${nombreCliente}</td>
+                    <td><ul style="margin:0; padding-left:15px; font-size: 0.7rem;">${listaItems}</ul></td>
+                    <td style="text-align:right;"><strong>$${(data.total_usd || 0).toFixed(2)}</strong></td>
                 </tr>`;
             }
         });
 
-        if (tablaCuerpo.innerHTML === "") {
-            tablaCuerpo.innerHTML = `<tr><td colspan="5" style="text-align:center;">No hay registros para ${fechaSeleccionada}</td></tr>`;
-        }
-
-        actualizarUI(t);
+        // Actualizar tarjetas (igual que antes)
+        document.getElementById('tot-dolar').innerText = `$ ${t.usd.toFixed(2)}`;
+        document.getElementById('tot-efec-bs').innerText = `Bs. ${t.efecBs.toFixed(2)}`;
+        document.getElementById('tot-punto').innerText = `Bs. ${t.punto.toFixed(2)}`;
+        document.getElementById('tot-pmovil').innerText = `Bs. ${t.pmovil.toFixed(2)}`;
+        document.getElementById('tot-venta-dia').innerText = `Venta Total: $ ${t.global.toFixed(2)}`;
     });
-}
-
-function actualizarUI(t) {
-    document.getElementById('tot-dolar').innerText = `$ ${t.usd.toFixed(2)}`;
-    document.getElementById('tot-efec-bs').innerText = `Bs. ${t.efecBs.toFixed(2)}`;
-    document.getElementById('tot-punto').innerText = `Bs. ${t.punto.toFixed(2)}`;
-    document.getElementById('tot-pmovil').innerText = `Bs. ${t.pmovil.toFixed(2)}`;
-    document.getElementById('tot-venta-dia').innerText = `Venta Total: $ ${t.global.toFixed(2)}`;
 }
 
 // Inicialización
