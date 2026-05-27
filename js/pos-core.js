@@ -5,21 +5,21 @@
 
 import { db } from './firebase-config.js';
 import { 
-    collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc,
-    query, orderBy, limit, getDocs 
+    collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 
 if (!USER_ID) {
-    window.location.href = "index.html";
+    window.location.href = "index.html"; 
 }
 
-// Variables Globales
 let productosMaster = [];
-let clientesMaster = [];
+let clientesMaster = []; 
 let carrito = [];
-let tasaActual = 1.0;
+// Mantenemos tu variable original de contador
+let proximoNumeroFacturaStr = "000001"; 
+let tasaActual = 1.0; 
 let formatoFactura = "ticket";
 
 window.indiceProd = -1;
@@ -30,50 +30,73 @@ window.indiceClie = -1;
 // ==========================================
 async function cargarConfiguracionGlobal() {
     try {
-        const snapConfig = await getDoc(doc(db, "usuarios", USER_ID));
+        const userDocRef = doc(db, "usuarios", USER_ID);
+        const snapConfig = await getDoc(userDocRef);
+        
         if (snapConfig.exists()) {
             const data = snapConfig.data();
             tasaActual = data.tasa_bcv || 1.0;
             formatoFactura = data.formato_factura || "ticket";
+            
             const spanTasa = document.getElementById('txt-tasa');
-            if (spanTasa) spanTasa.innerText = tasaActual.toLocaleString('es-VE', {minimumFractionDigits: 2});
+            if (spanTasa) {
+                spanTasa.innerText = tasaActual.toLocaleString('es-VE', {minimumFractionDigits: 2});
+            }
         }
-    } catch (e) { console.error("Error al cargar configuración:", e); }
+    } catch (e) {
+        console.error("Error al cargar configuración:", e);
+    }
 }
 
 function inicializarClientes() {
-    onSnapshot(collection(db, "usuarios", USER_ID, "clientes"), (snap) => {
-        clientesMaster = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const clientesRef = collection(db, "usuarios", USER_ID, "clientes");
+    onSnapshot(clientesRef, (snapshot) => {
+        clientesMaster = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        console.log("Clientes cargados:", clientesMaster.length);
     });
 }
 
 function inicializarProductos() {
-    onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snap) => {
-        productosMaster = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const productosRef = collection(db, "usuarios", USER_ID, "productos");
+    onSnapshot(productosRef, (snapshot) => {
+        productosMaster = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        console.log("Productos cargados:", productosMaster.length);
     });
 }
 
 // ==========================================
-// 2. LÓGICA DE VENTA (FACTURA DINÁMICA)
+// 2. MOTORES DE BÚSQUEDA Y CARRITO
 // ==========================================
-async function obtenerSiguienteFactura() {
-    const q = query(collection(db, "usuarios", USER_ID, "ventas"), orderBy("nro_factura", "desc"), limit(1));
-    const snap = await getDocs(q);
-    let ultimoNro = 0;
-    snap.forEach(d => { if (d.data().nro_factura) ultimoNro = parseInt(d.data().nro_factura); });
-    return (ultimoNro + 1).toString().padStart(6, '0');
-}
+window.buscarProducto = (texto) => {
+    const criterio = texto.toLowerCase().trim();
+    return !criterio ? [] : productosMaster.filter(p => (p.id?.toLowerCase().includes(criterio) || p.nombre?.toLowerCase().includes(criterio) || p.barras?.toLowerCase().includes(criterio)));
+};
 
+window.buscarCliente = (texto) => {
+    const criterio = texto.toLowerCase().trim();
+    return !criterio ? [] : clientesMaster.filter(c => (c.id?.toLowerCase().includes(criterio) || c.nombre?.toLowerCase().includes(criterio)));
+};
+
+window.agregarCarrito = (id) => {
+    const p = productosMaster.find(x => x.id === id);
+    if (!p) return;
+    const item = carrito.find(c => c.id === id);
+    if (item) item.cantidad++; else carrito.push({ ...p, cantidad: 1 });
+    window.actualizarCarritoUI();
+};
+
+// ==========================================
+// 3. REGISTRO DE VENTA (EL CORAZÓN DEL SISTEMA)
+// ==========================================
 window.registrarVenta = async () => {
-    if (carrito.length === 0) return alert("El carrito está vacío.");
+    if (carrito.length === 0) {
+        alert("El carrito está vacío.");
+        return;
+    }
 
     try {
-        // Cálculo de factura en tiempo real (evita duplicados o errores)
-        const nroFacturaActual = await obtenerSiguienteFactura();
-        
         const ventaData = {
             cliente_id: window.clienteSeleccionadoID || "anonimo",
-            nombre_cliente: window.nombreClienteSeleccionado || document.getElementById('buscar-cliente-pos')?.value || "Anónimo",
             items: carrito,
             total_usd: window.totalVentaUSD || 0,
             tasa_aplicada: tasaActual,
@@ -84,39 +107,36 @@ window.registrarVenta = async () => {
                 divisas_usd: parseFloat(document.getElementById('in-divisas-usd')?.value) || 0
             },
             fecha: serverTimestamp(),
-            nro_factura: nroFacturaActual
+            nro_factura: proximoNumeroFacturaStr // Usando tu contador original
         };
 
         await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
-        alert(`✅ Venta registrada. Factura N°: ${nroFacturaActual}`);
 
-        // Limpieza
+        alert("✅ Venta registrada. Factura N°: " + proximoNumeroFacturaStr);
+
+        // Limpieza y actualización del contador
         carrito = [];
         window.clienteSeleccionadoID = null;
-        window.nombreClienteSeleccionado = null;
-        document.getElementById('buscar-cliente-pos').value = '';
+        window.actualizarCarritoUI();
         document.getElementById('modalPago').style.display = 'none';
+        
+        // Incremento del contador original
+        proximoNumeroFacturaStr = (parseInt(proximoNumeroFacturaStr) + 1).toString().padStart(6, '0');
+        
+        // Reset inputs
         ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd'].forEach(id => {
             const el = document.getElementById(id);
             if(el) el.value = "0";
         });
-        window.actualizarCarritoUI();
 
     } catch (error) {
-        console.error("Error:", error);
+        console.error("Error al guardar:", error);
         alert("Error al guardar: " + error.message);
     }
 };
 
 // ==========================================
-// 3. MOTORES Y UI (Búsqueda, Navegación, Pagos)
-// ==========================================
-// (Aquí incluirías tus funciones de buscarProducto, buscarCliente, 
-//  manejarNavegacion, initBuscadores, initLogicaPagos y actualizarCarritoUI 
-//  que ya tenías funcionando)
-
-// ==========================================
-// 4. INICIALIZACIÓN FINAL
+// 4. INICIALIZACIÓN
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     cargarConfiguracionGlobal().then(() => {
