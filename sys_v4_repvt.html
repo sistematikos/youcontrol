@@ -48,4 +48,47 @@
     <main class="layout-width">
         <header class="header-panel">
             <div class="header-left">
-                <a href="index_menu.html" class="btn-
+                <a href="index_menu.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
+                <h1 class="page-title">Historial de Ventas</h1>
+            </div>
+            <img src="img/logo.png" alt="Logo" class="logo-header">
+        </header>
+
+        <div class="date-controls">
+            <input type="date" id="filtro-desde">
+            <input type="date" id="filtro-hasta">
+            <button class="btn-gen" onclick="window.cargarReporteVentas()">
+                <i class="fas fa-search"></i> BUSCAR
+            </button>
+        </div>
+
+        <div class="kpi-grid">
+            <div class="kpi-card" style="border-left-color: var(--emerald);">
+                <div class="kpi-info">
+                    <span class="p-label">Venta Total USD</span>
+                    <div class="p-val" id="kpi-total-usd">$ 0.00</div>
+                </div>
+            </div>
+            <div class="kpi-card" style="border-left-color: var(--sky);">
+                <div class="kpi-info">
+                    <span class="p-label">Facturas Emitidas</span>
+                    <div class="p-val" id="kpi-total-facturas">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-panel">
+            <table>
+                <thead>
+                    <tr><th>Hora / Fecha</th><th>Factura</th><th>Cliente</th><th>Detalle</th><th>Total ($)</th></tr>
+                </thead>
+                <tbody id="tabla-reporte-ventas">
+                    <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">Selecciona fechas para generar reporte.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script type="module" src="./js/sys_v4_repvt.js"></script>
+</body>
+</html>
