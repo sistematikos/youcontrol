@@ -4,9 +4,10 @@
  */
 
 import { 
-    collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc, 
-    query, orderBy, limit, getDocs // <--- AGREGA ESTAS
+    collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc,
+    query, orderBy, limit, getDocs 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { db } from './firebase-config.js'; // Esta línea debe estar presente
 
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 
@@ -26,26 +27,30 @@ window.indiceProd = -1;
 window.indiceClie = -1;
 
 
+// Asegúrate de que esta función esté dentro de pos-core.js
 async function obtenerUltimoNumeroFactura() {
     try {
+        if (!db) {
+            console.error("La base de datos (db) no está inicializada.");
+            return;
+        }
+
         const ventasRef = collection(db, "usuarios", USER_ID, "ventas");
-        // Ahora 'query', 'orderBy', 'limit', 'getDocs' ya están definidos gracias al import
         const q = query(ventasRef, orderBy("fecha", "desc"), limit(1));
         const querySnapshot = await getDocs(q);
         
         if (!querySnapshot.empty) {
             const ultimaVenta = querySnapshot.docs[0].data();
-            // Aseguramos que sea un número sumable
             const ultimoNro = parseInt(ultimaVenta.nro_factura) || 0;
             proximoNumeroFacturaStr = (ultimoNro + 1).toString().padStart(6, '0');
         } else {
             proximoNumeroFacturaStr = "000001";
         }
         
-        // Actualiza el UI si tienes un elemento para mostrar el número
-        const elFactura = document.getElementById('nro-factura-ui');
+        // Actualizar UI
+        const elFactura = document.getElementById('factura-display'); // Asegúrate que este ID exista en tu HTML
         if (elFactura) elFactura.innerText = `FACTURA: ${proximoNumeroFacturaStr}`;
-
+        
     } catch (e) {
         console.error("Error al obtener último número:", e);
     }
