@@ -28,25 +28,7 @@ let formatoFactura = "ticket";
 window.indiceProd = -1;
 window.indiceClie = -1;
 
-import { query, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-async function obtenerSiguienteFactura() {
-    const ventasRef = collection(db, "usuarios", USER_ID, "ventas");
-    // Consultamos la última venta ordenada por fecha (si tienes un campo de ordenamiento)
-    // O simplemente traemos las ventas y buscamos el nro_factura más alto
-    const q = query(ventasRef, orderBy("fecha", "desc"), limit(1));
-    const querySnapshot = await getDocs(q);
-    
-    let ultimoNro = 0;
-    querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        if (data.nro_factura) {
-            ultimoNro = parseInt(data.nro_factura);
-        }
-    });
-
-    return (ultimoNro + 1).toString().padStart(6, '0');
-}
 
 // ==========================================
 // CARGA DE CONFIGURACIÓN GLOBAL
