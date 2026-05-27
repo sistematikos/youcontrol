@@ -1,20 +1,27 @@
 import { db } from './firebase-config.js';
-import { collection, query, getDocs, orderBy, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, query, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 
 window.cargarReporteVentas = async () => {
     const desde = document.getElementById('filtro-desde').value;
-    const hasta = document.getElementById('filtro-hasta').value;
+    let hasta = document.getElementById('filtro-hasta').value; // Usamos 'let' para poder modificarlo
     
-    if (!desde || !hasta) {
-        alert("Selecciona un rango de fechas válido.");
+    if (!desde) {
+        alert("Selecciona al menos una fecha inicial.");
         return;
     }
 
+    // Si no se selecciona fecha fin, asumimos que es el mismo día que 'desde'
+    if (!hasta) {
+        hasta = desde;
+    }
+
     const fechaInicio = new Date(desde);
+    fechaInicio.setHours(0, 0, 0, 0); // Inicio del día
+    
     const fechaFin = new Date(hasta);
-    fechaFin.setHours(23, 59, 59, 999);
+    fechaFin.setHours(23, 59, 59, 999); // Fin del día
 
     try {
         const ventasRef = collection(db, "usuarios", USER_ID, "ventas");
@@ -22,16 +29,21 @@ window.cargarReporteVentas = async () => {
         const snapshot = await getDocs(q);
 
         let html = '';
+        let totalVendido = 0; // Acumulador para KPI
+        let contadorFacturas = 0; // Acumulador para KPI
 
         for (const vDoc of snapshot.docs) {
             const data = vDoc.data();
             const fechaVenta = data.fecha.toDate();
 
             if (fechaVenta >= fechaInicio && fechaVenta <= fechaFin) {
+                totalVendido += (data.total_usd || 0);
+                contadorFacturas++;
                 
                 const nombreCliente = data.nombre_cliente || "Anónimo";
-
-                // Lista de productos con precio unitario
+                
+                // Nota: He mantenido tu estructura, si quieres quitar los detalles, 
+                // simplemente elimina la fila de <td> que contiene la lista.
                 const listaItems = data.items.map(i => 
                     `<li>${i.nombre} (${i.cantidad} x $${(i.precio || 0).toFixed(2)})</li>`
                 ).join('');
@@ -45,8 +57,12 @@ window.cargarReporteVentas = async () => {
             }
         }
 
-        // Solo actualizamos la tabla, los KPIs ya no se tocan ni se muestran
+        // Actualizar Tabla
         document.getElementById('tabla-reporte-ventas').innerHTML = html || '<tr><td colspan="4" style="text-align:center;">No hay ventas en este rango.</td></tr>';
+
+        // ACTUALIZAR TARJETAS KPI
+        document.getElementById('kpi-total-usd').textContent = `$ ${totalVendido.toFixed(2)}`;
+        document.getElementById('kpi-total-facturas').textContent = contadorFacturas;
 
     } catch (error) {
         console.error("Error al cargar reporte:", error);
