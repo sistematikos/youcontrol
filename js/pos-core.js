@@ -137,53 +137,63 @@ window.agregarCarrito = (id) => {
 };
 
 window.registrarVenta = async () => {
-    // ... (todo tu código de guardado en Firestore) ...
+    // 1. Capturamos los datos de pago y cliente tal cual los tienes
+    const nombreCliente = document.getElementById('buscar-cliente-pos')?.value || "Cliente Genérico";
+    const puntoBs = parseFloat(document.getElementById('in-punto-bs')?.value) || 0;
+    const pagoMovilBs = parseFloat(document.getElementById('in-pagomovil-bs')?.value) || 0;
+    const efectivoBs = parseFloat(document.getElementById('in-efectivo-bs')?.value) || 0;
+    const divisasUsd = parseFloat(document.getElementById('in-divisas-usd')?.value) || 0;
+    
+    if (carrito.length === 0) {
+        alert("El carrito está vacío.");
+        return;
+    }
 
-    try {
-        await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
-        alert("✅ Venta registrada correctamente.");
+    try {
+        // 2. Construimos el objeto con TODA la data
+        const ventaData = {
+            cliente_id: window.clienteSeleccionadoID || "anonimo",
+            nombre_cliente: nombreCliente, // <--- GUARDADO DEL NOMBRE
+            items: carrito,
+            total_usd: window.totalVentaUSD,
+            tasa_aplicada: tasaActual,
+            formato: formatoFactura,
+            pagos: {
+                punto_bs: puntoBs,
+                pago_movil_bs: pagoMovilBs,
+                efectivo_bs: efectivoBs,
+                divisas_usd: divisasUsd
+            },
+            fecha: serverTimestamp(),
+            nro_factura: proximoNumeroFacturaStr
+        };
 
-        // ... (código de limpieza de carrito y campos) ...
+        // 3. Guardamos
+        await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
+        alert("✅ Venta registrada: " + proximoNumeroFacturaStr);
 
-        // --- CORRECCIÓN AQUÍ ---
-        // 1. Incrementamos el contador
-        const ultimoNro = parseInt(proximoNumeroFacturaStr);
-        proximoNumeroFacturaStr = (ultimoNro + 1).toString().padStart(6, '0');
-        
-        // 2. Actualizamos el HTML para que se vea el nuevo número (ej: 000002)
-        const display = document.getElementById('txt-nro-factura'); // AJUSTA ESTE ID SI ES DIFERENTE
-        if (display) display.innerText = proximoNumeroFacturaStr;
-        // -----------------------
+        // 4. Limpieza (Mantenemos tu lógica original)
+        carrito = [];
+        window.clienteSeleccionadoID = null;
+        document.getElementById('buscar-cliente-pos').value = '';
+        document.getElementById('modalPago').style.display = 'none';
+        
+        // Resetear campos de pago
+        ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.value = "0";
+        });
 
-    } catch (e) { alert("Error al guardar: " + e.message); }
-};
+        window.actualizarCarritoUI();
 
-        // 4. Guardar en Firestore
-        await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
+        // 5. ACTUALIZACIÓN CRÍTICA: Cambiar el número para la siguiente factura
+        // Esto busca de nuevo en BD o incrementa en memoria y actualiza la pantalla
+        await obtenerUltimoNumeroFactura();
 
-        alert("✅ Venta registrada correctamente.");
-        
-        // 5. Limpieza de interfaz
-        carrito = [];
-        window.clienteSeleccionadoID = null;
-        document.getElementById('buscar-cliente-pos').value = '';
-        window.actualizarCarritoUI();
-        document.getElementById('modalPago').style.display = 'none';
-        
-        // 6. Reseteo de campos de pago
-        ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd'].forEach(id => {
-            const el = document.getElementById(id);
-            if(el) el.value = "0";
-        });
-        
-        // 7. Incremento del contador para la próxima venta
-        const ultimoNro = parseInt(proximoNumeroFacturaStr);
-        proximoNumeroFacturaStr = (ultimoNro + 1).toString().padStart(6, '0');
-        
-    } catch (e) { 
-        console.error("Error detallado:", e);
-        alert("Error al guardar: " + e.message); 
-    }
+    } catch (error) {
+        console.error("Error detallado:", error);
+        alert("Error al guardar la venta: " + error.message);
+    }
 };
 
 // ==========================================
