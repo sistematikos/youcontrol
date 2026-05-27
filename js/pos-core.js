@@ -8,7 +8,7 @@ import { db } from './firebase-config.js';
 import { collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // La ruta ahora debe incluir la subcarpeta 'pos-core/'
-import { obtenerUltimoNumero } from './pos-core/pos-core-numfact.js';
+import { obtenerUltimoNumero } from './pos-core-numfact.js';
 
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 
