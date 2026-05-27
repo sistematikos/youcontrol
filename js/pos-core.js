@@ -3,12 +3,12 @@
  * Módulo de Facturación y Ventas (pos-core.js)
  */
 
-// Agregamos { db } a la importación desde tu archivo de configuración
+// ... tus otros imports actuales
 import { db } from './firebase-config.js'; 
+import { collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-import { 
-    collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc 
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+// NUEVA LÍNEA AQUÍ:
+import { obtenerUltimoNumero } from './pos-core-numfact.js';
 
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 
@@ -415,7 +415,20 @@ document.addEventListener('input', (e) => {
 // ==========================================
 // INICIALIZACIÓN FINAL
 // ==========================================
-cargarConfiguracionGlobal().then(() => {
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log("DOM cargado - Inicializando módulos...");
+
+    // 1. Cargamos configuración
+    await cargarConfiguracionGlobal();
+
+    // 2. Cargamos el número de factura (NUEVA LÍNEA)
+    const nuevoNro = await obtenerUltimoNumero(USER_ID);
+    const elFactura = document.getElementById('factura-display');
+    if (elFactura) elFactura.innerText = `FACTURA: ${nuevoNro}`;
+
+    // 3. Inicializamos el resto
     inicializarClientes();
     inicializarProductos();
+    initBuscadores();
+    initLogicaPagos();
 });
