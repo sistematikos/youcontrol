@@ -1,140 +1,123 @@
- * YOU CONTROL - SISTEMATIKOS
- * Módulo de Facturación y Ventas (pos-core.js)
- */
+/**
+ * YOU CONTROL - SISTEMATIKOS
+ * Módulo de Facturación y Ventas (pos-core.js)
+ */
 
-import { 
-    collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc,
-    query, orderBy, limit, getDocs 
+import { 
+    collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc,
+    query, orderBy, limit, getDocs 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { db } from './firebase-config.js'; // Esta línea debe estar presente
+import { db } from './firebase-config.js';
 
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
-
-if (!USER_ID) {
-    window.location.href = "index.html"; 
-}
+if (!USER_ID) window.location.href = "index.html"; 
 
 let productosMaster = [];
-let clientesMaster = []; 
+let clientesMaster = []; 
 let carrito = [];
 let proximoNumeroFacturaStr = "000001";
-let tasaActual = 1.0; 
+let tasaActual = 1.0; 
 let formatoFactura = "ticket";
 
-// Variables globales para navegación
 window.indiceProd = -1;
 window.indiceClie = -1;
 
-
-// Asegúrate de que esta función esté dentro de pos-core.js
+// ==========================================
+// 1. LÓGICA DE FACTURACIÓN Y CONFIG
+// ==========================================
 async function obtenerUltimoNumeroFactura() {
-    try {
-        if (!db) {
-            console.error("La base de datos (db) no está inicializada.");
-            return;
-        }
-
-        const ventasRef = collection(db, "usuarios", USER_ID, "ventas");
-        const q = query(ventasRef, orderBy("fecha", "desc"), limit(1));
-        const querySnapshot = await getDocs(q);
-        
-        if (!querySnapshot.empty) {
-            const ultimaVenta = querySnapshot.docs[0].data();
-            const ultimoNro = parseInt(ultimaVenta.nro_factura) || 0;
-            proximoNumeroFacturaStr = (ultimoNro + 1).toString().padStart(6, '0');
-        } else {
-            proximoNumeroFacturaStr = "000001";
-        }
-        
-        // Actualizar UI
-        const elFactura = document.getElementById('factura-display'); // Asegúrate que este ID exista en tu HTML
-        if (elFactura) elFactura.innerText = `FACTURA: ${proximoNumeroFacturaStr}`;
-        
-    } catch (e) {
-        console.error("Error al obtener último número:", e);
-    }
+    try {
+        const ventasRef = collection(db, "usuarios", USER_ID, "ventas");
+        const q = query(ventasRef, orderBy("fecha", "desc"), limit(1));
+        const snap = await getDocs(q);
+        
+        if (!snap.empty) {
+            const ultimoNro = parseInt(snap.docs[0].data().nro_factura) || 0;
+            proximoNumeroFacturaStr = (ultimoNro + 1).toString().padStart(6, '0');
+        } else {
+            proximoNumeroFacturaStr = "000001";
+        }
+        
+        const elFactura = document.getElementById('factura-display');
+        if (elFactura) elFactura.innerText = `FACTURA: ${proximoNumeroFacturaStr}`;
+    } catch (e) { console.error("Error factura:", e); }
 }
 
-// ==========================================
-// CARGA DE CONFIGURACIÓN GLOBAL
-// ==========================================
 async function cargarConfiguracionGlobal() {
-    try {
-        const userDocRef = doc(db, "usuarios", USER_ID);
-        const snapConfig = await getDoc(userDocRef);
-        
-        if (snapConfig.exists()) {
-            const data = snapConfig.data();
-            tasaActual = data.tasa_bcv || 1.0;
-            formatoFactura = data.formato_factura || "ticket";
-            
-            const spanTasa = document.getElementById('txt-tasa');
-            if (spanTasa) {
-                spanTasa.innerText = tasaActual.toLocaleString('es-VE', {minimumFractionDigits: 2});
-            }
-        }
-    } catch (e) {
-        console.error("Error al cargar configuración:", e);
-    }
+    try {
+        const snap = await getDoc(doc(db, "usuarios", USER_ID));
+        if (snap.exists()) {
+            const data = snap.data();
+            tasaActual = data.tasa_bcv || 1.0;
+            formatoFactura = data.formato_factura || "ticket";
+            const spanTasa = document.getElementById('txt-tasa');
+            if (spanTasa) spanTasa.innerText = tasaActual.toLocaleString('es-VE', {minimumFractionDigits: 2});
+        }
+    } catch (e) { console.error("Error config:", e); }
 }
 
 // ==========================================
-// 1. CARGA DE DATOS
+// 2. REGISTRAR VENTA (VERSIÓN ÚNICA Y CORRECTA)
 // ==========================================
-function inicializarClientes() {
-    const clientesRef = collection(db, "usuarios", USER_ID, "clientes");
-    onSnapshot(clientesRef, (snapshot) => {
-        clientesMaster = [];
-        snapshot.forEach(docSnap => {
-            clientesMaster.push({ id: docSnap.id, ...docSnap.data() });
-        });
-        console.log("Clientes cargados:", clientesMaster.length);
-    });
-}
+window.registrarVenta = async () => {
+    // Captura de datos
+    const nombreCliente = document.getElementById('buscar-cliente-pos')?.value || "Cliente Genérico";
+    const puntoBs = parseFloat(document.getElementById('in-punto-bs')?.value) || 0;
+    const pagoMovilBs = parseFloat(document.getElementById('in-pagomovil-bs')?.value) || 0;
+    const efectivoBs = parseFloat(document.getElementById('in-efectivo-bs')?.value) || 0;
+    const divisasUsd = parseFloat(document.getElementById('in-divisas-usd')?.value) || 0;
+    
+    if (carrito.length === 0) { alert("El carrito está vacío."); return; }
 
-function inicializarProductos() {
-    const productosRef = collection(db, "usuarios", USER_ID, "productos");
-    onSnapshot(productosRef, (snapshot) => {
-        productosMaster = [];
-        snapshot.forEach(docSnap => {
-            productosMaster.push({ id: docSnap.id, ...docSnap.data() });
-        });
-        console.log("Productos cargados:", productosMaster.length);
-    });
-}
+    try {
+        const ventaData = {
+            cliente_id: window.clienteSeleccionadoID || "anonimo",
+            nombre_cliente: nombreCliente, // <--- Esto es lo que necesitabas
+            items: carrito,
+            total_usd: window.totalVentaUSD,
+            tasa_aplicada: tasaActual,
+            formato: formatoFactura,
+            pagos: { punto_bs: puntoBs, pago_movil_bs: pagoMovilBs, efectivo_bs: efectivoBs, divisas_usd: divisasUsd },
+            fecha: serverTimestamp(),
+            nro_factura: proximoNumeroFacturaStr
+        };
 
-// ==========================================
-// 2. MOTORES DE BÚSQUEDA
-// ==========================================
-window.buscarProducto = (texto) => {
-    const criterio = texto.toLowerCase().trim();
-    if (!criterio) return [];
-    return productosMaster.filter(p => 
-        (p.id || '').toLowerCase().includes(criterio) || 
-        (p.nombre || '').toLowerCase().includes(criterio) ||
-        (p.barras || '').toLowerCase().includes(criterio)
-    );
+        await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
+        alert("✅ Venta registrada: " + proximoNumeroFacturaStr);
+
+        // Limpieza
+        carrito = [];
+        window.clienteSeleccionadoID = null;
+        document.getElementById('buscar-cliente-pos').value = '';
+        document.getElementById('modalPago').style.display = 'none';
+        ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.value = "0";
+        });
+
+        window.actualizarCarritoUI();
+        await obtenerUltimoNumeroFactura(); // Actualiza para la próxima
+    } catch (error) {
+        console.error("Error al guardar venta:", error);
+        alert("Error: " + error.message);
+    }
 };
 
-window.buscarCliente = (texto) => {
-    const criterio = texto.toLowerCase().trim();
-    if (!criterio) return [];
-    return clientesMaster.filter(c => 
-        (c.id || '').toLowerCase().includes(criterio) || 
-        (c.nombre || '').toLowerCase().includes(criterio)
-    );
-};
+// ==========================================
+// 3. INICIALIZACIÓN (Mantén el resto de funciones debajo)
+// ==========================================
+document.addEventListener('DOMContentLoaded', async () => {
+    await cargarConfiguracionGlobal();
+    await obtenerUltimoNumeroFactura();
+    inicializarClientes();
+    inicializarProductos();
+    initBuscadores();
+    initLogicaPagos();
+});
 
-// ==========================================
-// 3. CARRITO Y VENTAS
-// ==========================================
-window.agregarCarrito = (id) => {
-    const p = productosMaster.find(x => x.id === id);
-    if (!p) return;
-    const item = carrito.find(c => c.id === id);
-    if (item) item.cantidad++; else carrito.push({ ...p, cantidad: 1 });
-    window.actualizarCarritoUI();
-};
+// [Aquí debes mantener TODAS tus funciones auxiliares: 
+// inicializarClientes, inicializarProductos, initBuscadores, 
+// initLogicaPagos, actualizarCarritoUI, etc.]
 
 // ==========================================
 // 4. INTEGRACIÓN UI: SELECCIÓN Y NAVEGACIÓN
