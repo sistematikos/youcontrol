@@ -18,8 +18,22 @@ function cargarCuadre(fechaSeleccionada) {
         let t = { usd: 0, efecBs: 0, punto: 0, pmovil: 0, global: 0 };
         tablaCuerpo.innerHTML = "";
 
-        // 1. Filtramos usando 'ultima_actualizacion'
-        const registros = snapshot.docs.filter(doc => doc.data().ultima_actualizacion === fechaSeleccionada);
+        const registros = snapshot.docs.filter(doc => {
+            const data = doc.data();
+            
+            // Lógica crítica: Convertimos el campo de fecha a formato YYYY-MM-DD
+            let fechaVenta = "";
+            
+            if (data.fecha && typeof data.fecha.toDate === 'function') {
+                // Si es un Timestamp de Firebase (como en tu reporte de ventas)
+                fechaVenta = data.fecha.toDate().toISOString().split('T')[0];
+            } else if (data.ultima_actualizacion) {
+                // Si es el string "2026-05-22" que vimos en tus capturas
+                fechaVenta = data.ultima_actualizacion;
+            }
+            
+            return fechaVenta === fechaSeleccionada;
+        });
 
         if (registros.length === 0) {
             tablaCuerpo.innerHTML = `<tr><td colspan="5" style="text-align:center;">No hay registros para ${fechaSeleccionada}</td></tr>`;
@@ -29,9 +43,8 @@ function cargarCuadre(fechaSeleccionada) {
 
         registros.forEach(doc => {
             const v = doc.data();
-            const p = v.pagos || {}; // Accedemos al objeto 'pagos'
+            const p = v.pagos || {}; 
             
-            // Sumamos los montos que vienen dentro del objeto 'pagos'
             const usd = parseFloat(p.divisas_usd || 0);
             const efecBs = parseFloat(p.efectivo_bs || 0);
             const punto = parseFloat(p.punto_bs || 0);
@@ -41,7 +54,7 @@ function cargarCuadre(fechaSeleccionada) {
             t.efecBs += efecBs;
             t.punto += punto;
             t.pmovil += pmovil;
-            t.global += v.total_usd || 0;
+            t.global += (v.total_usd || 0);
 
             tablaCuerpo.innerHTML += `<tr>
                 <td>${v.hora || '--:--'}</td>
