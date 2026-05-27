@@ -25,18 +25,18 @@
         .page-title { font-size: 1.4rem; font-weight: 700; margin: 0; }
         .logo-header { height: 100%; width: auto; object-fit: contain; }
 
-        /* CONTROLES DE BUSQUEDA */
+        /* CONTROLES */
         .date-controls { display: flex; gap: 10px; background: #ffffff; padding: 10px 15px; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 2px 4px rgba(0,0,0,0.04); align-items: center; width: fit-content; margin-bottom: 15px; }
         .date-controls input { border: 1px solid #E2E8F0; padding: 6px; border-radius: 8px; font-size: 0.85rem; outline: none; }
         .btn-gen { background: #0284C7; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
 
-        /* KPI CARDS */
+        /* KPI */
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 15px; }
         .kpi-card { background: #ffffff; border-radius: 12px; padding: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border-left: 5px solid #0284C7; display: flex; justify-content: space-between; align-items: center; }
         .kpi-info .p-label { font-size: 0.65rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
         .kpi-info .p-val { font-size: 1.2rem; font-weight: 800; margin-top: 4px; }
 
-        /* TABLA */
+        /* TABLA SIN DETALLE */
         .table-panel { background: #ffffff; border-radius: 16px; padding: 18px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); border: 1px solid #E2E8F0; }
         table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
         th { color: var(--text-muted); padding: 10px; text-align: left; text-transform: uppercase; font-size: 0.68rem; border-bottom: 1px solid #F1F5F9; }
@@ -80,15 +80,19 @@
         <div class="table-panel">
             <table>
                 <thead>
-                    <tr><th>Hora / Fecha</th><th>Factura</th><th>Cliente</th><th>Detalle</th><th>Total ($)</th></tr>
+                    <tr><th>Hora / Fecha</th><th>Factura</th><th>Cliente</th><th>Total ($)</th></tr>
                 </thead>
                 <tbody id="tabla-reporte-ventas">
-                    <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">Selecciona fechas para generar reporte.</td></tr>
+                    <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">Selecciona fechas para generar reporte.</td></tr>
                 </tbody>
             </table>
         </div>
     </main>
 
     <script type="module" src="./js/sys_v4_repvt.js"></script>
+    <script type="module">
+        import { cargarReporteVentas } from './js/sys_v4_repvt.js';
+        window.cargarReporteVentas = cargarReporteVentas;
+    </script>
 </body>
 </html>
