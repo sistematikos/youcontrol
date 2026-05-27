@@ -4,31 +4,26 @@
     <meta charset="UTF-8">
     <title>YOU CONTROL | Devoluciones</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Poppins', sans-serif; background: #F1F5F9; padding: 20px; }
         .layout-width { max-width: 800px; margin: auto; }
-        .header-panel { background: #fff; padding: 20px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .card { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); margin-bottom: 20px; border-top: 4px solid #0284C7; }
-        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #E2E8F0; border-radius: 8px; box-sizing: border-box; }
+        input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #E2E8F0; border-radius: 8px; box-sizing: border-box; }
         .btn-action { background: #1E293B; color: #fff; padding: 12px; border: none; border-radius: 8px; cursor: pointer; }
         .btn-dev { background: #EF4444; color: #fff; padding: 15px; border: none; border-radius: 8px; width: 100%; font-weight: 700; cursor: pointer; }
     </style>
 </head>
 <body>
     <main class="layout-width">
-        <header class="header-panel">
-            <h1>Módulo de Devoluciones</h1>
-            <a href="index.html">Volver</a>
-        </header>
         <section class="card">
             <input type="text" id="busqueda-factura" placeholder="Nro de factura...">
             <button class="btn-action" onclick="buscarFacturaParaDevolver()">BUSCAR FACTURA</button>
         </section>
+
         <section id="resultado-busqueda" class="card" style="display: none;">
-            <h3>Detalle de Factura</h3>
+            <h3>Detalle de Factura: <span id="nro-factura-display"></span></h3>
             <div id="lista-productos-dev"></div>
-            <textarea id="motivo-devolucion" placeholder="Motivo de la devolución..."></textarea>
+            <textarea id="motivo-devolucion" placeholder="Motivo de la devolución..." style="width:100%; margin: 10px 0;"></textarea>
             <button class="btn-dev" onclick="ejecutarProcesoDev()">PROCESAR Y REINTEGRAR STOCK</button>
         </section>
     </main>
