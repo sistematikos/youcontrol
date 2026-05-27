@@ -29,22 +29,27 @@ window.indiceClie = -1;
 async function obtenerUltimoNumeroFactura() {
     try {
         const ventasRef = collection(db, "usuarios", USER_ID, "ventas");
-        // Consultamos las ventas ordenadas por fecha para obtener la última
+        // Ahora 'query', 'orderBy', 'limit', 'getDocs' ya están definidos gracias al import
         const q = query(ventasRef, orderBy("fecha", "desc"), limit(1));
         const querySnapshot = await getDocs(q);
         
         if (!querySnapshot.empty) {
             const ultimaVenta = querySnapshot.docs[0].data();
-            const ultimoNro = parseInt(ultimaVenta.nro_factura || "0");
+            // Aseguramos que sea un número sumable
+            const ultimoNro = parseInt(ultimaVenta.nro_factura) || 0;
             proximoNumeroFacturaStr = (ultimoNro + 1).toString().padStart(6, '0');
         } else {
             proximoNumeroFacturaStr = "000001";
         }
+        
+        // Actualiza el UI si tienes un elemento para mostrar el número
+        const elFactura = document.getElementById('nro-factura-ui');
+        if (elFactura) elFactura.innerText = `FACTURA: ${proximoNumeroFacturaStr}`;
+
     } catch (e) {
         console.error("Error al obtener último número:", e);
     }
 }
-
 
 // ==========================================
 // CARGA DE CONFIGURACIÓN GLOBAL
