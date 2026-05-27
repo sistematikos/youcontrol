@@ -1,6 +1,4 @@
-import { collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { db } from './firebase-config.js';
-
+// En tu archivo pos-core-numfact.js
 export async function obtenerUltimoNumero(userId) {
     try {
         const ventasRef = collection(db, "usuarios", userId, "ventas");
@@ -8,7 +6,9 @@ export async function obtenerUltimoNumero(userId) {
         const snap = await getDocs(q);
         
         if (!snap.empty) {
-            const ultimoNro = parseInt(snap.docs[0].data().nro_factura) || 0;
+            const data = snap.docs[0].data();
+            // Aseguramos que tomamos el valor y lo convertimos a número limpio
+            const ultimoNro = parseInt(data.nro_factura, 10) || 0;
             return (ultimoNro + 1).toString().padStart(6, '0');
         }
         return "000001";
