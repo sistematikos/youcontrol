@@ -10,35 +10,26 @@ import {
 
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 
-if (!USER_ID) {
-    window.location.href = "index.html"; 
-}
+if (!USER_ID) { window.location.href = "index.html"; }
 
 let productosMaster = [];
 let clientesMaster = []; 
 let carrito = [];
 let proximoNumeroFacturaStr = "000001";
 let tasaActual = 1.0; 
-let formatoFactura = "ticket";
-
-window.indiceProd = -1;
-window.indiceClie = -1;
 
 // ==========================================
-// 1. CARGA DE DATOS Y CONFIGURACIÓN
+// 1. CARGA DE CONFIGURACIÓN Y DATOS
 // ==========================================
 async function cargarConfiguracionGlobal() {
     try {
-        const userDocRef = doc(db, "usuarios", USER_ID);
-        const snapConfig = await getDoc(userDocRef);
-        if (snapConfig.exists()) {
-            const data = snapConfig.data();
-            tasaActual = data.tasa_bcv || 1.0;
-            formatoFactura = data.formato_factura || "ticket";
-            const spanTasa = document.getElementById('txt-tasa');
-            if (spanTasa) spanTasa.innerText = tasaActual.toLocaleString('es-VE', {minimumFractionDigits: 2});
+        const snap = await getDoc(doc(db, "usuarios", USER_ID));
+        if (snap.exists()) {
+            tasaActual = snap.data().tasa_bcv || 1.0;
+            const txtTasa = document.getElementById('txt-tasa');
+            if (txtTasa) txtTasa.innerText = tasaActual.toLocaleString('es-VE', {minimumFractionDigits: 2});
         }
-    } catch (e) { console.error("Error al cargar configuración:", e); }
+    } catch (e) { console.error("Config:", e); }
 }
 
 function inicializarClientes() {
@@ -54,23 +45,22 @@ function inicializarProductos() {
 }
 
 // ==========================================
-// 2. MOTORES DE BÚSQUEDA Y SELECCIÓN
+// 2. BUSCADORES Y SELECCIÓN
 // ==========================================
-window.buscarProducto = (texto) => {
-    const criterio = texto.toLowerCase().trim();
-    return !criterio ? [] : productosMaster.filter(p => (p.id?.toLowerCase().includes(criterio) || p.nombre?.toLowerCase().includes(criterio) || p.barras?.toLowerCase().includes(criterio)));
+window.buscarProducto = (t) => {
+    const c = t.toLowerCase().trim();
+    return !c ? [] : productosMaster.filter(p => (p.id?.toLowerCase().includes(c) || p.nombre?.toLowerCase().includes(c)));
 };
 
-window.buscarCliente = (texto) => {
-    const criterio = texto.toLowerCase().trim();
-    return !criterio ? [] : clientesMaster.filter(c => (c.id?.toLowerCase().includes(criterio) || c.nombre?.toLowerCase().includes(criterio)));
+window.buscarCliente = (t) => {
+    const c = t.toLowerCase().trim();
+    return !c ? [] : clientesMaster.filter(cl => (cl.id?.toLowerCase().includes(c) || cl.nombre?.toLowerCase().includes(c)));
 };
 
 window.seleccionarCliente = (id, nombre) => {
-    const inputCliente = document.getElementById('buscar-cliente-pos');
-    if (inputCliente) inputCliente.value = nombre;
+    document.getElementById('buscar-cliente-pos').value = nombre;
     document.getElementById('resultados-cliente-pos').style.display = 'none';
-    window.clienteSeleccionadoID = id; 
+    window.clienteSeleccionadoID = id;
     document.getElementById('buscar-producto-pos')?.focus();
 };
 
@@ -82,7 +72,7 @@ window.seleccionarProducto = (id) => {
 };
 
 // ==========================================
-// 3. CARRITO Y REGISTRO DE VENTA
+// 3. CARRITO Y COMANDOS (F4, F5, F6)
 // ==========================================
 window.agregarCarrito = (id) => {
     const p = productosMaster.find(x => x.id === id);
@@ -92,11 +82,38 @@ window.agregarCarrito = (id) => {
     window.actualizarCarritoUI();
 };
 
-window.registrarVenta = async () => {
-    if (carrito.length === 0) return alert("El carrito está vacío.");
+window.ejecutarF4 = () => { // Cambiar cantidad
+    if (carrito.length === 0) return;
+    const item = carrito[carrito.length - 1];
+    const nuevaCant = prompt(`Cantidad para ${item.nombre}:`, item.cantidad);
+    if (nuevaCant && !isNaN(nuevaCant)) { item.cantidad = parseInt(nuevaCant); window.actualizarCarritoUI(); }
+};
 
+window.ejecutarF5 = () => { // Cambiar precio
+    if (carrito.length === 0) return;
+    const item = carrito[carrito.length - 1];
+    const nuevoPrecio = prompt(`Precio para ${item.nombre} ($):`, item.precio);
+    if (nuevoPrecio && !isNaN(nuevoPrecio)) { item.precio = parseFloat(nuevoPrecio); window.actualizarCarritoUI(); }
+};
+
+window.ejecutarF6 = () => { if (carrito.length > 0) { carrito.pop(); window.actualizarCarritoUI(); } };
+
+// ==========================================
+// 4. MODAL PAGOS Y REGISTRO VENTA
+// ==========================================
+window.abrirModalCobro = () => {
+    if (carrito.length === 0) return alert("Carrito vacío");
+    const modal = document.getElementById('modalPago');
+    if (modal) {
+        document.getElementById('totalModalUSD').innerText = `$ ${window.totalVentaUSD.toFixed(2)}`;
+        document.getElementById('totalModalBS').innerText = `${(window.totalVentaUSD * tasaActual).toLocaleString('es-VE')} Bs.`;
+        modal.style.display = 'flex';
+    }
+};
+
+window.registrarVenta = async () => {
     try {
-        await addDoc(collection(db, "usuarios", USER_ID, "ventas"), {
+        const ventaData = {
             cliente_id: window.clienteSeleccionadoID || "anonimo",
             items: carrito,
             total_usd: window.totalVentaUSD,
@@ -109,59 +126,38 @@ window.registrarVenta = async () => {
             },
             fecha: serverTimestamp(),
             nro_factura: proximoNumeroFacturaStr
-        });
+        };
 
-        alert("✅ Venta registrada: N° " + proximoNumeroFacturaStr);
+        await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
+        alert("✅ Venta registrada: " + proximoNumeroFacturaStr);
         
         // Limpieza
         carrito = [];
         window.clienteSeleccionadoID = null;
-        window.actualizarCarritoUI();
-        document.getElementById('modalPago').style.display = 'none';
-        document.getElementById('buscar-cliente-pos').value = '';
-        
-        // Siguiente factura
         proximoNumeroFacturaStr = (parseInt(proximoNumeroFacturaStr) + 1).toString().padStart(6, '0');
-        
-        ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd'].forEach(id => {
-            const el = document.getElementById(id);
-            if(el) el.value = "0";
-        });
-    } catch (e) { alert("Error al guardar: " + e.message); }
+        document.getElementById('modalPago').style.display = 'none';
+        window.actualizarCarritoUI();
+    } catch (e) { alert("Error: " + e.message); }
 };
 
 // ==========================================
-// 4. UI Y BUSCADORES
+// 5. INICIALIZACIÓN Y UI
 // ==========================================
-function initBuscadores() {
-    document.getElementById('buscar-cliente-pos')?.addEventListener('input', (e) => {
-        const res = window.buscarCliente(e.target.value);
-        const div = document.getElementById('resultados-cliente-pos');
-        div.style.display = res.length ? 'block' : 'none';
-        div.innerHTML = res.map(c => `<div class="resultado-item" onclick="window.seleccionarCliente('${c.id}', '${c.nombre}')">${c.id} - ${c.nombre}</div>`).join('');
-    });
-
-    document.getElementById('buscar-producto-pos')?.addEventListener('input', (e) => {
-        const res = window.buscarProducto(e.target.value);
-        const div = document.getElementById('resultados-producto-pos');
-        div.style.display = res.length ? 'block' : 'none';
-        div.innerHTML = res.map(p => `<div class="resultado-item" onclick="window.seleccionarProducto('${p.id}')">${p.nombre} - $${p.precio}</div>`).join('');
-    });
-}
-
 window.actualizarCarritoUI = () => {
     const cont = document.getElementById('lista-carrito');
-    if (!cont) return;
-    const totalUSD = carrito.reduce((sum, item) => sum + (item.cantidad * (item.precio || 0)), 0);
-    window.totalVentaUSD = totalUSD;
-    document.getElementById('total-usd').innerText = `$ ${totalUSD.toFixed(2)}`;
-    cont.innerHTML = carrito.map(item => `<div>${item.nombre} - ${item.cantidad}</div>`).join('');
+    const total = carrito.reduce((sum, i) => sum + (i.cantidad * i.precio), 0);
+    window.totalVentaUSD = total;
+    if(cont) cont.innerHTML = carrito.map(i => `<div>${i.nombre} ($${i.precio}) x ${i.cantidad}</div>`).join('');
+    document.getElementById('total-usd').innerText = `$ ${total.toFixed(2)}`;
 };
 
+document.addEventListener('keydown', (e) => {
+    const cmds = { 'F4': window.ejecutarF4, 'F5': window.ejecutarF5, 'F6': window.ejecutarF6, 'F9': window.abrirModalCobro };
+    if (cmds[e.key]) { e.preventDefault(); cmds[e.key](); }
+});
+
 document.addEventListener('DOMContentLoaded', () => {
-    cargarConfiguracionGlobal().then(() => {
-        inicializarClientes();
-        inicializarProductos();
-        initBuscadores();
-    });
+    cargarConfiguracionGlobal();
+    inicializarClientes();
+    inicializarProductos();
 });
