@@ -45,23 +45,22 @@ async function inicializarCuadre() {
 function cargarVentasPorFecha(fechaFormato) {
     if (desuscripcionActiva) desuscripcionActiva();
 
-    // Consultamos toda la colección de ventas (sin el filtro 'where' que fallaba)
     const colRef = collection(db, "usuarios", USER_ID, "ventas");
     
     desuscripcionActiva = onSnapshot(colRef, (snapshot) => {
         let acumDolar = 0, acumEfecBs = 0, acumPunto = 0, acumPMovil = 0, totalUSDInterfaz = 0;
         tablaCuerpo.innerHTML = "";
 
-        // Filtramos manualmente en el cliente
+        // FILTRO CORREGIDO: Usamos el nombre real que aparece en tu base de datos
         const ventasFiltradas = snapshot.docs.filter(doc => {
             const data = doc.data();
-            // AJUSTA ESTA LÍNEA si tu campo de fecha se llama distinto (ej: data.fecha_venta)
-            return data.fecha === fechaFormato; 
+            // Esto buscará en el campo 'ultima_actualizacion' que sí existe en tu DB
+            return data.ultima_actualizacion === fechaFormato; 
         });
 
         if (ventasFiltradas.length === 0) {
             console.log("No se encontraron ventas para la fecha:", fechaFormato);
-            tablaCuerpo.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No hay ventas registradas para este día.</td></tr>`;
+            tablaCuerpo.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No hay ventas registradas para este día (${fechaFormato}).</td></tr>`;
             actualizarTotalesPantalla(0, 0, 0, 0, 0);
             return;
         }
