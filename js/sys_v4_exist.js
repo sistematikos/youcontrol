@@ -48,31 +48,33 @@ function inicializarExistencia() {
     inputBusqueda.addEventListener('input', procesarYFiltrarInventario);
 }
 
-// 2. FILTRADO Y RENDERIZACIÓN
+// ... (mantiene tu código anterior hasta la función procesarYFiltrarInventario)
+
+// 2. FILTRADO Y RENDERIZACIÓN (MODIFICADO)
 function procesarYFiltrarInventario() {
     const filtro = inputBusqueda.value.toLowerCase().trim();
     tablaExistencia.innerHTML = "";
 
-    let globalCosto = 0;
-    let globalPvp = 0;
-    let globalAlertas = 0;
-
-    // Calculamos totales sobre el universo total
-    arrayProductosGlobal.forEach(p => {
-        globalCosto += (p.stock * p.costo);
-        globalPvp += (p.stock * p.pvp);
-        if (p.stock <= p.stock_min) globalAlertas++;
-    });
-
+    // Filtramos el array primero
     const productosFiltrados = arrayProductosGlobal.filter(p => 
         p.nombre.toLowerCase().includes(filtro) || p.codigo.toLowerCase().includes(filtro)
     );
+
+    // Reiniciamos contadores para el resultado del filtro
+    let filtroCosto = 0;
+    let filtroPvp = 0;
+    let filtroAlertas = 0;
 
     if (productosFiltrados.length === 0) {
         tablaExistencia.innerHTML = `<tr><td colspan="7" class="text-center" style="padding:20px;">No se encontraron productos.</td></tr>`;
     } else {
         productosFiltrados.forEach(p => {
+            // Cálculos basados en el filtro activo
             const totalInversionItem = p.stock * p.costo;
+            filtroCosto += totalInversionItem;
+            filtroPvp += (p.stock * p.pvp);
+            if (p.stock <= p.stock_min) filtroAlertas++;
+
             let badgeEstado = p.stock <= 0 ? `<span class="badge-stock stock-empty">Agotado</span>` : 
                               p.stock <= p.stock_min ? `<span class="badge-stock stock-low">Stock Bajo</span>` : 
                               `<span class="badge-stock stock-ok">Disponible</span>`;
@@ -91,11 +93,18 @@ function procesarYFiltrarInventario() {
         });
     }
 
-    // Actualizar las tarjetas con los cálculos globales
-    txtTotCosto.innerText = `$ ${globalCosto.toFixed(2)}`;
-    txtTotPvp.innerText = `$ ${globalPvp.toFixed(2)}`;
-    txtTotGanancia.innerText = `$ ${(globalPvp - globalCosto).toFixed(2)}`;
-    txtTotAlertas.innerText = globalAlertas;
+    // Actualizar las tarjetas con los valores calculados del FILTRO
+    txtTotCosto.innerText = `$ ${filtroCosto.toFixed(2)}`;
+    txtTotPvp.innerText = `$ ${filtroPvp.toFixed(2)}`;
+    txtTotGanancia.innerText = `$ ${(filtroPvp - filtroCosto).toFixed(2)}`;
+    txtTotAlertas.innerText = filtroAlertas;
 }
 
-document.addEventListener('DOMContentLoaded', inicializarExistencia);
+// 3. EVENTOS ADICIONALES (Para mejorar la experiencia)
+// Detectar cuando el usuario presiona "Enter" o borra el campo
+inputBusqueda.addEventListener('keyup', (e) => {
+    if (e.key === 'Escape') {
+        inputBusqueda.value = "";
+        procesarYFiltrarInventario();
+    }
+});
