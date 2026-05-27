@@ -3,14 +3,26 @@
  * Módulo de Facturación y Ventas (pos-core.js)
  */
 
-// ... tus otros imports actuales
 import { db } from './firebase-config.js'; 
 import { collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-// La ruta ahora debe incluir la subcarpeta 'pos-core/'
 import { obtenerUltimoNumero } from './pos-core-numfact.js';
-
 import { ejecutarF4, ejecutarF5, ejecutarF6, abrirModalCobro } from './pos-core-teclas.js';
+
+const USER_ID = localStorage.getItem('youcontrol_empresa_id');
+if (!USER_ID) window.location.href = "index.html"; 
+
+// VARIABLES GLOBALES (Uso de window para acceso modular)
+window.productosMaster = [];
+window.clientesMaster = []; 
+window.carrito = []; // <--- IMPORTANTE: Usar window.carrito
+window.tasaActual = 1.0; 
+window.totalVentaUSD = 0;
+
+// Vinculación para que el HTML y el listener encuentren las funciones
+window.ejecutarF4 = ejecutarF4;
+window.ejecutarF5 = ejecutarF5;
+window.ejecutarF6 = ejecutarF6;
+window.abrirModalCobro = abrirModalCobro;
 
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 
@@ -318,12 +330,6 @@ window.actualizarCarritoUI = () => {
 // ==========================================
 // 8. COMANDOS DE TECLADO (BLOQUEO FORZADO)
 // ==========================================
-// Exponemos funciones para los botones del HTML
-window.ejecutarF4 = ejecutarF4;
-window.ejecutarF5 = ejecutarF5;
-window.ejecutarF6 = ejecutarF6;
-window.abrirModalCobro = abrirModalCobro;
-
 document.addEventListener('keydown', (event) => {
     // 1. Manejo del F5 (Control de refresco)
     if (event.key === 'F5') {
@@ -337,13 +343,18 @@ document.addEventListener('keydown', (event) => {
                 window.location.reload();
             }
         } else {
-            ejecutarF5(); 
+            window.ejecutarF5();
         }
         return;
     }
 
-    // 2. Manejo de otros comandos (F4, F6, F9)
-    const comandos = { 'F4': ejecutarF4, 'F6': ejecutarF6, 'F9': abrirModalCobro };
+    // 2. Manejo de otros comandos
+    const comandos = {
+        'F4': window.ejecutarF4,
+        'F6': window.ejecutarF6,
+        'F9': window.abrirModalCobro
+    };
+
     if (comandos[event.key]) {
         event.preventDefault();
         comandos[event.key]();
