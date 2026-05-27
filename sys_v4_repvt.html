@@ -3,107 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YOU CONTROL | Reporte de Ventas</title>
+    <title>YOU CONTROL | Historial de Ventas</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* Fondo azul turquesa profundo */
-            --bg-page: #008080; 
+            --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
             --text-dark: #1E293B;
             --text-muted: #64748B;
             --emerald: #10B981;
             --sky: #0EA5E9;
         }
 
-        body { 
-            font-family: 'Poppins', sans-serif; 
-            background-color: var(--bg-page); 
-            margin: 0; padding: 20px 0; 
-            min-height: 100vh; 
-            color: var(--text-dark); 
-        }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 20px 0; min-height: 100vh; color: var(--text-dark); }
+        .layout-width { width: 92%; max-width: 1200px; margin: 0 auto; box-sizing: border-box; }
 
-        .layout-width { 
-            width: 94%; 
-            max-width: 1280px; 
-            margin: 0 auto; 
-            box-sizing: border-box; 
-        }
+        /* HEADER */
+        .header-panel { background: #ffffff; padding: 15px 30px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; height: 100px; }
+        .header-left { display: flex; align-items: center; gap: 20px; }
+        .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 8px 16px; border-radius: 12px; text-decoration: none; font-size: 0.8rem; font-weight: 700; border: 1px solid #E2E8F0; display: flex; align-items: center; gap: 8px; }
+        .page-title { font-size: 1.4rem; font-weight: 700; margin: 0; }
+        .logo-header { height: 100%; width: auto; object-fit: contain; }
 
-        /* --- HEADER CARD MODIFICADO --- */
-        .header-panel { 
-            background: #ffffff; 
-            border-radius: 16px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 20px;
-            /* Altura fija para el contenedor del logo */
-            height: 120px; 
-            overflow: hidden; /* Asegura que nada se salga */
-        }
+        /* CONTROLES */
+        .date-controls { display: flex; gap: 10px; background: #ffffff; padding: 10px 15px; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 2px 4px rgba(0,0,0,0.04); align-items: center; width: fit-content; margin-bottom: 15px; }
+        .date-controls input { border: 1px solid #E2E8F0; padding: 6px; border-radius: 8px; font-size: 0.85rem; }
+        .btn-gen { background: #0284C7; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
 
-        .header-left { 
-            display: flex; 
-            align-items: center; 
-            gap: 25px; 
-            padding-left: 30px; 
-        }
-        
-        .btn-back { 
-            background: #F1F5F9; 
-            color: var(--text-dark); 
-            padding: 12px 24px; 
-            border-radius: 12px; 
-            text-decoration: none; 
-            font-size: 0.9rem; 
-            font-weight: 700; 
-            border: 1px solid #E2E8F0; 
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
-        }
+        /* CARDS PEQUEÑAS (Tamaño original restaurado) */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 15px; }
+        .kpi-card { background: #ffffff; border-radius: 12px; padding: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border-left: 5px solid #0284C7; display: flex; justify-content: space-between; align-items: center; }
+        .kpi-info .p-label { font-size: 0.65rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
+        .kpi-info .p-val { font-size: 1.2rem; font-weight: 800; }
 
-        .page-title { 
-            font-size: 1.8rem; 
-            font-weight: 700; 
-            color: var(--text-dark); 
-            margin: 0; 
-        }
-        
-        /* --- EL LOGO AHORA ES GRANDE --- */
-        .logo-header { 
-            /* Ocupa el 100% de la altura de la tarjeta (120px) */
-            height: 100%; 
-            width: auto;
-            /* Se ajusta sin deformarse */
-            object-fit: contain; 
-            /* Eliminamos márgenes para que toque los bordes */
-            margin: 0; 
-            /* Un pequeño padding lateral para que no toque el borde derecho */
-            padding-right: 20px; 
-        }
-
-        /* --- RESTO DEL DISEÑO --- */
-        .date-controls { display: flex; gap: 15px; background: #ffffff; padding: 15px 25px; border-radius: 14px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); align-items: center; width: fit-content; margin-bottom: 20px; }
-        .date-controls input { border: 1px solid #E2E8F0; padding: 10px; border-radius: 8px; font-size: 0.95rem; }
-        .btn-gen { background: #0EA5E9; color: white; border: none; padding: 10px 25px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 0.95rem; }
-
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 20px; }
-        .kpi-card { background: #ffffff; border-radius: 14px; padding: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-left: 6px solid #0EA5E9; display: flex; justify-content: space-between; align-items: center; }
-        .kpi-info .p-label { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
-        .kpi-info .p-val { font-size: 1.6rem; font-weight: 800; color: var(--text-dark); margin-top: 5px; }
-
-        .table-panel { background: #ffffff; border-radius: 16px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
-        th { background: #F8FAFC; color: var(--text-muted); padding: 15px; text-align: left; text-transform: uppercase; font-size: 0.8rem; border-bottom: 2px solid #E2E8F0; }
-        td { padding: 15px; border-bottom: 1px solid #F1F5F9; }
+        /* TABLA */
+        .table-panel { background: #ffffff; border-radius: 16px; padding: 18px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); border: 1px solid #E2E8F0; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        th { color: var(--text-muted); padding: 10px; text-align: left; text-transform: uppercase; font-size: 0.68rem; border-bottom: 1px solid #F1F5F9; }
+        td { padding: 10px; border-bottom: 1px solid #F1F5F9; }
     </style>
 </head>
 <body>
-
     <main class="layout-width">
         <header class="header-panel">
             <div class="header-left">
@@ -114,50 +54,36 @@
         </header>
 
         <div class="date-controls">
-            <input type="date" id="filtro-desde">
-            <input type="date" id="filtro-hasta">
-            <button class="btn-gen" onclick="window.cargarReporteVentas()"><i class="fas fa-search"></i> BUSCAR</button>
+            <input type="date">
+            <input type="date">
+            <button class="btn-gen"><i class="fas fa-search"></i> BUSCAR</button>
         </div>
 
         <div class="kpi-grid">
             <div class="kpi-card" style="border-left-color: var(--emerald);">
                 <div class="kpi-info">
                     <span class="p-label">Venta Total USD</span>
-                    <div class="p-val" id="kpi-total-usd">$ 0.00</div>
+                    <div class="p-val">$ 0.00</div>
                 </div>
-                <i class="fas fa-dollar-sign" style="color: var(--emerald); font-size: 2rem;"></i>
             </div>
             <div class="kpi-card" style="border-left-color: var(--sky);">
                 <div class="kpi-info">
                     <span class="p-label">Facturas Emitidas</span>
-                    <div class="p-val" id="kpi-total-facturas">0</div>
+                    <div class="p-val">0</div>
                 </div>
-                <i class="fas fa-receipt" style="color: var(--sky); font-size: 2rem;"></i>
             </div>
         </div>
 
         <div class="table-panel">
             <table>
                 <thead>
-                    <tr>
-                        <th>Hora / Fecha</th>
-                        <th>Factura</th>
-                        <th>Cliente</th>
-                        <th>Detalle</th>
-                        <th>Total ($)</th>
-                    </tr>
+                    <tr><th>Hora / Fecha</th><th>Factura</th><th>Cliente</th><th>Detalle</th><th>Total ($)</th></tr>
                 </thead>
                 <tbody id="tabla-reporte-ventas">
-                    <tr>
-                        <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 50px;">
-                            Selecciona fechas para generar reporte.
-                        </td>
-                    </tr>
+                    <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">Selecciona fechas para generar reporte.</td></tr>
                 </tbody>
             </table>
         </div>
     </main>
-
-    <script type="module" src="./js/sys_v4_repvt.js"></script>
 </body>
 </html>
