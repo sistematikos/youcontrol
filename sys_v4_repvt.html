@@ -16,44 +16,44 @@
             --sky: #0EA5E9;
         }
 
-        body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; color: var(--text-dark); }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 0; min-height: 100vh; color: var(--text-dark); }
         .layout-width { width: 92%; max-width: 1200px; margin: 0 auto; box-sizing: border-box; }
 
-        /* HEADER: Título al lado de Volver y Logo libre */
-        .report-header { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+        /* ENCABEZADO CON LOGO PROTAGONISTA */
+        .report-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; }
         .header-left { display: flex; align-items: center; gap: 20px; }
         
-        .btn-back { background: #ffffff; color: var(--text-dark); padding: 8px 16px; border-radius: 12px; text-decoration: none; font-size: 0.8rem; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid #E2E8F0; display: flex; align-items: center; gap: 8px; }
-        .page-title { font-size: 1.25rem; font-weight: 700; color: var(--text-dark); margin: 0; }
+        .btn-back { background: #ffffff; color: var(--text-dark); padding: 10px 20px; border-radius: 12px; text-decoration: none; font-size: 0.85rem; font-weight: 700; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; display: flex; align-items: center; gap: 10px; }
+        .page-title { font-size: 1.6rem; font-weight: 700; color: var(--text-dark); margin: 0; }
         
-        .logo-header { height: 60px; width: auto; } /* Logo más grande */
+        .logo-header { height: 90px; width: auto; transition: transform 0.3s ease; } /* Logo grande y centrado en su espacio */
 
-        /* FECHAS ACORTADAS */
-        .date-controls { display: flex; gap: 10px; background: #ffffff; padding: 6px 12px; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 2px 4px rgba(0,0,0,0.04); align-items: center; width: fit-content; margin-top: 15px; }
-        .date-controls input { border: none; font-family: 'Poppins', sans-serif; font-size: 0.75rem; font-weight: 600; color: var(--text-dark); outline: none; width: 100px; }
-        .btn-gen { background: var(--bg-vivo); color: white; border: none; padding: 6px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.75rem; }
+        /* CONTROLES DE FECHA */
+        .date-controls { display: flex; gap: 12px; background: #ffffff; padding: 10px 15px; border-radius: 14px; border: 1px solid #E2E8F0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); align-items: center; width: fit-content; margin-bottom: 20px; }
+        .date-controls input { border: none; font-family: 'Poppins', sans-serif; font-size: 0.9rem; font-weight: 600; color: var(--text-dark); outline: none; width: 130px; }
+        .btn-gen { background: var(--bg-vivo); color: white; border: none; padding: 8px 20px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 0.9rem; }
 
         /* KPI Y TABLA */
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 15px; margin-bottom: 15px; }
-        .kpi-card { background: #ffffff; border-radius: 14px; padding: 14px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02); border-left: 5px solid var(--bg-vivo); display: flex; justify-content: space-between; align-items: center; }
-        .kpi-info .p-label { font-size: 0.65rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; display: block; }
-        .kpi-info .p-val { font-size: 1.2rem; font-weight: 800; color: var(--text-dark); }
-        .table-panel { background: #ffffff; border-radius: 16px; padding: 18px; box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04); border: 1px solid #E2E8F0; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-        th { background: #F8FAFC; color: var(--text-muted); padding: 10px; border-bottom: 1px solid #E2E8F0; text-align: left; text-transform: uppercase; font-size: 0.68rem; }
-        td { padding: 10px; border-bottom: 1px solid #F1F5F9; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .kpi-card { background: #ffffff; border-radius: 14px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 6px solid var(--bg-vivo); display: flex; justify-content: space-between; align-items: center; }
+        .kpi-info .p-label { font-size: 0.7rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; display: block; }
+        .kpi-info .p-val { font-size: 1.4rem; font-weight: 800; color: var(--text-dark); }
+        .table-panel { background: #ffffff; border-radius: 16px; padding: 20px; box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05); border: 1px solid #E2E8F0; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th { background: #F8FAFC; color: var(--text-muted); padding: 12px; border-bottom: 2px solid #E2E8F0; text-align: left; text-transform: uppercase; font-size: 0.75rem; }
+        td { padding: 12px; border-bottom: 1px solid #F1F5F9; }
     </style>
 </head>
 <body>
 
     <main class="layout-width">
-        <div class="report-header">
+        <header class="report-header">
             <div class="header-left">
                 <a href="index_menu.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
                 <h1 class="page-title">Reporte de Ventas</h1>
             </div>
             <img src="img/logo.png" alt="Logo" class="logo-header">
-        </div>
+        </header>
 
         <div class="date-controls">
             <input type="date" id="filtro-desde">
@@ -67,14 +67,14 @@
                     <span class="p-label">Venta Total USD</span>
                     <span class="p-val" id="kpi-total-usd">$ 0.00</span>
                 </div>
-                <i class="fas fa-dollar-sign" style="color: var(--emerald);"></i>
+                <i class="fas fa-dollar-sign" style="color: var(--emerald); font-size: 1.8rem;"></i>
             </div>
             <div class="kpi-card" style="border-left-color: var(--sky);">
                 <div class="kpi-info">
                     <span class="p-label">Facturas Emitidas</span>
                     <span class="p-val" id="kpi-total-facturas">0</span>
                 </div>
-                <i class="fas fa-receipt" style="color: var(--sky);"></i>
+                <i class="fas fa-receipt" style="color: var(--sky); font-size: 1.8rem;"></i>
             </div>
         </div>
 
