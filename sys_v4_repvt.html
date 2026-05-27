@@ -25,16 +25,16 @@
         .page-title { font-size: 1.4rem; font-weight: 700; margin: 0; }
         .logo-header { height: 100%; width: auto; object-fit: contain; }
 
-        /* CONTROLES */
+        /* CONTROLES DE BUSQUEDA */
         .date-controls { display: flex; gap: 10px; background: #ffffff; padding: 10px 15px; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 2px 4px rgba(0,0,0,0.04); align-items: center; width: fit-content; margin-bottom: 15px; }
-        .date-controls input { border: 1px solid #E2E8F0; padding: 6px; border-radius: 8px; font-size: 0.85rem; }
+        .date-controls input { border: 1px solid #E2E8F0; padding: 6px; border-radius: 8px; font-size: 0.85rem; outline: none; }
         .btn-gen { background: #0284C7; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
 
-        /* CARDS PEQUEÑAS (Tamaño original restaurado) */
+        /* KPI CARDS */
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 15px; }
         .kpi-card { background: #ffffff; border-radius: 12px; padding: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border-left: 5px solid #0284C7; display: flex; justify-content: space-between; align-items: center; }
         .kpi-info .p-label { font-size: 0.65rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
-        .kpi-info .p-val { font-size: 1.2rem; font-weight: 800; }
+        .kpi-info .p-val { font-size: 1.2rem; font-weight: 800; margin-top: 4px; }
 
         /* TABLA */
         .table-panel { background: #ffffff; border-radius: 16px; padding: 18px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); border: 1px solid #E2E8F0; }
@@ -44,46 +44,8 @@
     </style>
 </head>
 <body>
+
     <main class="layout-width">
         <header class="header-panel">
             <div class="header-left">
-                <a href="index_menu.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
-                <h1 class="page-title">Historial de Ventas</h1>
-            </div>
-            <img src="img/logo.png" alt="Logo" class="logo-header">
-        </header>
-
-        <div class="date-controls">
-            <input type="date">
-            <input type="date">
-            <button class="btn-gen"><i class="fas fa-search"></i> BUSCAR</button>
-        </div>
-
-        <div class="kpi-grid">
-            <div class="kpi-card" style="border-left-color: var(--emerald);">
-                <div class="kpi-info">
-                    <span class="p-label">Venta Total USD</span>
-                    <div class="p-val">$ 0.00</div>
-                </div>
-            </div>
-            <div class="kpi-card" style="border-left-color: var(--sky);">
-                <div class="kpi-info">
-                    <span class="p-label">Facturas Emitidas</span>
-                    <div class="p-val">0</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="table-panel">
-            <table>
-                <thead>
-                    <tr><th>Hora / Fecha</th><th>Factura</th><th>Cliente</th><th>Detalle</th><th>Total ($)</th></tr>
-                </thead>
-                <tbody id="tabla-reporte-ventas">
-                    <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">Selecciona fechas para generar reporte.</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </main>
-</body>
-</html>
+                <a href="index_menu.html" class="btn-
