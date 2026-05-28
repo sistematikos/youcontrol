@@ -16,21 +16,25 @@
         body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 10px 0; min-height: 100vh; color: var(--text-dark); }
         .layout-width { width: 95%; max-width: 1200px; margin: 0 auto; }
 
-        /* Cabecera idéntica a la de Compras */
+        /* Cabecera unificada */
         .header-panel { background: #ffffff; padding: 0 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; height: 70px; }
         .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 6px 12px; border-radius: 8px; text-decoration: none; font-size: 0.75rem; font-weight: 700; border: 1px solid var(--border); }
         .logo-header { height: 90%; width: auto; object-fit: contain; }
 
-        /* Tarjeta principal con borde de color */
-        .card { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); position: relative; border-left: 6px solid var(--amber); }
+        /* Tarjeta de inventario con borde ambar */
+        .card { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); position: relative; border-left: 6px solid var(--amber); margin-bottom: 20px; }
         h3 { margin-top: 0; font-size: 1.1rem; color: var(--text-dark); margin-bottom: 15px; }
 
-        /* Tabla estilizada */
+        /* Tabla */
         table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         th { color: #64748B; border-bottom: 2px solid #F1F5F9; padding: 12px; text-align: left; }
         td { padding: 12px; border-bottom: 1px solid #F1F5F9; }
         
-        #status-bar-inv { font-size: 0.75rem; padding: 5px 10px; border-radius: 6px; margin-bottom: 10px; display: none; }
+        /* Status bar */
+        #status-bar-inv { font-size: 0.75rem; padding: 8px 12px; border-radius: 8px; margin-bottom: 15px; display: none; text-align: center; font-weight: 600; }
+        
+        /* Botón eliminar */
+        button { background: #FEE2E2; color: #991B1B; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
     </style>
 </head>
 <body>
