@@ -1,6 +1,6 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * Módulo Completo de Entrada de Mercancía (sys_v3_comp.js)
+ * Módulo Completo con Cálculos de Costos y Precios
  */
 
 import { db } from './firebase-config.js';
@@ -23,9 +23,8 @@ const inputGanancia = document.getElementById('comp-ganancia');
 const inputPrecio = document.getElementById('comp-precio');
 const inputPrecioBs = document.getElementById('comp-precio-bs');
 const inputCantidad = document.getElementById('comp-cantidad');
-const inputBarras = document.getElementById('comp-barras');
 
-// 1. INICIALIZACIÓN Y DATOS
+// 1. INICIALIZACIÓN
 async function cargarConfiguracion() {
     if (!USER_ID) return;
     try {
@@ -39,18 +38,15 @@ async function cargarConfiguracion() {
     } catch (e) { console.error("Error al cargar:", e); }
 }
 
-document.addEventListener('DOMContentLoaded', cargarConfiguracion);
-
-// 2. BUSCADOR INTELIGENTE
-buscador.addEventListener('input', (e) => {
-    const val = e.target.value.toLowerCase();
-    if (!val) { dropdown.style.display = 'none'; return; }
-    const filtrados = productosLocales.filter(p => p.sku?.toLowerCase().includes(val) || p.nombre?.toLowerCase().includes(val));
-    
-    dropdown.innerHTML = filtrados.map(p => `<div class="search-item" onclick="window.seleccionar('${p.sku}')">${p.nombre} (SKU: ${p.sku})</div>`).join('');
-    dropdown.style.display = filtrados.length ? 'block' : 'none';
+document.addEventListener('DOMContentLoaded', () => {
+    cargarConfiguracion();
+    // Asignar eventos para cálculos automáticos
+    inputCosto.addEventListener('input', window.calcularPreciosCompra);
+    inputGanancia.addEventListener('input', window.calcularPreciosCompra);
+    inputPrecio.addEventListener('input', window.calcularGananciaCompra);
 });
 
+// 2. BUSCADOR INTELIGENTE
 buscador.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
         e.preventDefault();
@@ -83,12 +79,21 @@ window.seleccionar = (sku) => {
     }
 };
 
-// 3. MATEMÁTICA Y CÁLCULOS
+// 3. MATEMÁTICA Y CÁLCULOS (Aquí recuperamos tus funciones)
 window.calcularPreciosCompra = () => {
     const c = parseFloat(inputCosto.value) || 0;
     const g = parseFloat(inputGanancia.value) || 0;
     const p = c + (c * (g / 100));
     inputPrecio.value = p.toFixed(2);
+    inputPrecioBs.value = (p * tasaActual).toFixed(2).replace('.', ',') + " Bs.";
+};
+
+window.calcularGananciaCompra = () => {
+    const c = parseFloat(inputCosto.value) || 0;
+    const p = parseFloat(inputPrecio.value) || 0;
+    if (c > 0) {
+        inputGanancia.value = (((p - c) / c) * 100).toFixed(1);
+    }
     inputPrecioBs.value = (p * tasaActual).toFixed(2).replace('.', ',') + " Bs.";
 };
 
@@ -102,7 +107,7 @@ window.calcularDesdeBs = () => {
     }
 };
 
-// 4. GESTIÓN DE LISTA Y GUARDADO
+// 4. GESTIÓN DE LISTA
 window.agregarALista = () => {
     const item = {
         sku: inputSku.value, nombre: inputNombre.value,
@@ -129,7 +134,7 @@ window.procesarIngresoMercancia = async () => {
         const prodActual = productosLocales.find(p => p.sku === item.sku);
         await setDoc(doc(db, "usuarios", USER_ID, "productos", item.sku), {
             ...item,
-            stock: (prodActual?.stock || 0) + item.cant
+            stock: (parseInt(prodActual?.stock) || 0) + item.cant
         }, { merge: true });
     }
     alert("Operación Exitosa");
