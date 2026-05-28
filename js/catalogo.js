@@ -1,10 +1,10 @@
 import { db } from './firebase-config.js';
 import { collection, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const USER_ID = "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
+const USER_ID = localStorage.getItem('youcontrol_empresa_id') || "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
 let tasaActual = 1;
 let carrito = {};
-let productosGlobales = [];
+let productosGlobales = []; // Guardamos aquí para buscar
 
 function iniciarCatalogo() {
     onSnapshot(doc(db, "usuarios", USER_ID), (snap) => {
@@ -17,12 +17,14 @@ function iniciarCatalogo() {
 
     onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
         productosGlobales = [];
-        snapshot.forEach(d => productosGlobales.push({ id: d.id, ...d.data() }));
+        snapshot.forEach(doc => productosGlobales.push({ id: doc.id, ...doc.data() }));
         renderizarCatalogo(productosGlobales);
     });
 
+    // Evento del buscador
     document.getElementById('buscador-prod').addEventListener('input', (e) => {
-        const filtrados = productosGlobales.filter(p => p.nombre.toLowerCase().includes(e.target.value.toLowerCase()));
+        const busqueda = e.target.value.toLowerCase();
+        const filtrados = productosGlobales.filter(p => p.nombre.toLowerCase().includes(busqueda));
         renderizarCatalogo(filtrados);
     });
 }
@@ -31,9 +33,9 @@ function renderizarCatalogo(lista) {
     const contenedor = document.getElementById('contenedor-catalogo');
     contenedor.innerHTML = lista.map(p => {
         if (parseInt(p.stock || 0) <= 0) return '';
-        const precioBs = (Math.round((p.precio * tasaActual) * 100) / 100).toLocaleString('es-VE', { minimumFractionDigits: 2 });
+        const precioBs = (p.precio * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 });
         return `
-        <div class="card-prod" id="card-${p.id}">
+        <div class="card-prod">
             <div class="line-1"><h3>${p.nombre}</h3></div>
             <div class="line-2">
                 <span class="price-usd">$${parseFloat(p.precio).toFixed(2)}</span>
@@ -52,10 +54,6 @@ window.cambiarCant = (id, cambio, nombre, precio, stockMax) => {
     if (!carrito[id]) carrito[id] = { nombre, precio, cantidad: 0 };
     carrito[id].cantidad = Math.min(Math.max(carrito[id].cantidad + cambio, 0), stockMax);
     document.getElementById(`qty-${id}`).innerText = carrito[id].cantidad;
-    
-    const card = document.getElementById(`card-${id}`);
-    card.style.borderColor = carrito[id].cantidad > 0 ? 'var(--electric)' : 'var(--border)';
-    card.style.borderLeftColor = 'var(--emerald)';
     actualizarFooter();
 };
 
@@ -72,8 +70,8 @@ function actualizarFooter() {
 }
 
 window.enviarPedido = () => {
-    let m = "¡Hola! Mi pedido en Sistematikos:\n\n";
-    for(let id in carrito) if(carrito[id].cantidad > 0) m += `*${carrito[id].cantidad}x* ${carrito[id].nombre}\n`;
+    let m = "Hola, quisiera: \n";
+    for(let id in carrito) if(carrito[id].cantidad > 0) m += `${carrito[id].cantidad}x ${carrito[id].nombre}\n`;
     window.open(`https://wa.me/14845532789?text=${encodeURIComponent(m)}`, '_blank');
 };
 
