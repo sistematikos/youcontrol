@@ -1,6 +1,6 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * Módulo Completo con Cálculos de Costos y Precios
+ * Módulo Completo con Cálculos de Costos, Precios y Código de Barras
  */
 
 import { db } from './firebase-config.js';
@@ -17,6 +17,7 @@ const buscador = document.getElementById('buscador-dinamico');
 const dropdown = document.getElementById('dropdown-resultados');
 const aviso = document.getElementById('aviso-no-registrado');
 const inputSku = document.getElementById('comp-sku');
+const inputBarras = document.getElementById('comp-barras'); // Nuevo campo
 const inputNombre = document.getElementById('comp-nombre');
 const inputCosto = document.getElementById('comp-costo');
 const inputGanancia = document.getElementById('comp-ganancia');
@@ -40,7 +41,6 @@ async function cargarConfiguracion() {
 
 document.addEventListener('DOMContentLoaded', () => {
     cargarConfiguracion();
-    // Asignar eventos para cálculos automáticos
     inputCosto.addEventListener('input', window.calcularPreciosCompra);
     inputGanancia.addEventListener('input', window.calcularPreciosCompra);
     inputPrecio.addEventListener('input', window.calcularGananciaCompra);
@@ -69,6 +69,7 @@ window.seleccionar = (sku) => {
     const prod = productosLocales.find(p => p.sku === sku);
     if (prod) {
         inputSku.value = prod.sku;
+        inputBarras.value = prod.barras || ''; // Carga Barras
         inputNombre.value = prod.nombre;
         inputCosto.value = prod.costo || 0;
         inputGanancia.value = prod.ganancia || 0;
@@ -79,7 +80,7 @@ window.seleccionar = (sku) => {
     }
 };
 
-// 3. MATEMÁTICA Y CÁLCULOS (Aquí recuperamos tus funciones)
+// 3. MATEMÁTICA Y CÁLCULOS
 window.calcularPreciosCompra = () => {
     const c = parseFloat(inputCosto.value) || 0;
     const g = parseFloat(inputGanancia.value) || 0;
@@ -110,10 +111,13 @@ window.calcularDesdeBs = () => {
 // 4. GESTIÓN DE LISTA
 window.agregarALista = () => {
     const item = {
-        sku: inputSku.value, nombre: inputNombre.value,
+        sku: inputSku.value,
+        barras: inputBarras.value, // Guarda Barras
+        nombre: inputNombre.value,
         cant: parseInt(inputCantidad.value) || 0,
         precio: parseFloat(inputPrecio.value) || 0,
-        costo: inputCosto.value, ganancia: inputGanancia.value
+        costo: inputCosto.value, 
+        ganancia: inputGanancia.value
     };
     if (!item.sku || !item.nombre) return alert("Faltan datos");
     listaTemporal.push(item);
@@ -134,6 +138,7 @@ window.procesarIngresoMercancia = async () => {
         const prodActual = productosLocales.find(p => p.sku === item.sku);
         await setDoc(doc(db, "usuarios", USER_ID, "productos", item.sku), {
             ...item,
+            barras: item.barras, // Guarda Barras en Firebase
             stock: (parseInt(prodActual?.stock) || 0) + item.cant
         }, { merge: true });
     }
@@ -143,7 +148,12 @@ window.procesarIngresoMercancia = async () => {
 };
 
 function limpiarFormulario() {
-    inputSku.value = ''; inputNombre.value = ''; inputCantidad.value = '0';
-    inputCosto.value = '0.00'; inputPrecio.value = '0.00'; inputPrecioBs.value = '';
+    inputSku.value = ''; 
+    inputBarras.value = ''; // Limpia Barras
+    inputNombre.value = ''; 
+    inputCantidad.value = '0';
+    inputCosto.value = '0.00'; 
+    inputPrecio.value = '0.00'; 
+    inputPrecioBs.value = '';
     buscador.focus();
 }
