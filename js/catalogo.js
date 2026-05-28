@@ -1,29 +1,27 @@
 import { db } from './firebase-config.js';
 import { collection, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Usamos el mismo USER_ID del sistema estable
 const USER_ID = localStorage.getItem('youcontrol_empresa_id') || "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
 
 let tasaActual = 1;
 let carrito = {};
 
-/**
- * INICIALIZACIÓN
- * 1. Lee el documento principal del usuario para obtener la tasa BCV (igual que en inv)
- * 2. Escucha la colección 'productos' en tiempo real
- */
+// 1. Iniciar conexión en tiempo real
 function iniciarCatalogo() {
     // Escuchar datos del usuario para obtener la Tasa
     onSnapshot(doc(db, "usuarios", USER_ID), (snap) => {
         if (snap.exists()) {
             const data = snap.data();
             tasaActual = parseFloat(data.tasa_bcv || 1);
-            document.getElementById('tasa-cliente').innerText = tasaActual.toLocaleString('es-VE', { minimumFractionDigits: 2 });
+            document.getElementById('tasa-cliente').innerText = tasaActual.toLocaleString('es-VE', { 
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 2 
+            });
             renderizarCatalogo();
         }
     });
 
-    // Escuchar Productos
+    // Escuchar Productos en tiempo real
     onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
         let listaProductos = [];
         snapshot.forEach(doc => listaProductos.push({ id: doc.id, ...doc.data() }));
@@ -31,17 +29,22 @@ function iniciarCatalogo() {
     });
 }
 
+// 2. Renderizar productos
 function renderizarCatalogo(productos = []) {
     const contenedor = document.getElementById('contenedor-catalogo');
     if (!contenedor) return;
 
     contenedor.innerHTML = productos.map(p => {
-        // Validación de datos básicos
         const precio = parseFloat(p.precio || 0);
         const stock = parseInt(p.stock || 0);
-        const precioBs = (precio * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 });
+        
+        // Redondeo a 2 decimales para Bs
+        const precioBs = (Math.round((precio * tasaActual) * 100) / 100).toLocaleString('es-VE', { 
+            minimumFractionDigits: 2, 
+            maximumFractionDigits: 2 
+        });
 
-        if (stock <= 0) return ''; // Ocultar si no hay stock
+        if (stock <= 0) return '';
 
         return `
         <div class="card-prod" id="card-${p.id}">
@@ -60,7 +63,7 @@ function renderizarCatalogo(productos = []) {
     }).join('');
 }
 
-// Lógica de Carrito
+// 3. Lógica del Carrito
 window.cambiarCant = (id, cambio, nombre, precio, stockMax) => {
     if (!carrito[id]) carrito[id] = { nombre, precio, cantidad: 0 };
     
@@ -70,7 +73,6 @@ window.cambiarCant = (id, cambio, nombre, precio, stockMax) => {
 
     carrito[id].cantidad = nuevaCant;
     
-    // Actualizar UI
     const qtyEl = document.getElementById(`qty-${id}`);
     if (qtyEl) qtyEl.innerText = nuevaCant;
 
@@ -78,11 +80,11 @@ window.cambiarCant = (id, cambio, nombre, precio, stockMax) => {
     const check = document.getElementById(`check-${id}`);
     
     if (nuevaCant > 0) {
-        check.style.display = 'block';
-        card.style.borderColor = 'var(--electric)';
+        if (check) check.style.display = 'block';
+        if (card) card.style.borderColor = 'var(--electric)';
     } else {
-        check.style.display = 'none';
-        card.style.borderColor = 'var(--border)';
+        if (check) check.style.display = 'none';
+        if (card) card.style.borderColor = 'var(--border)';
     }
     actualizarFooter();
 };
@@ -101,7 +103,10 @@ function actualizarFooter() {
         footer.style.display = 'flex';
         const totalBs = totalUsd * tasaActual;
         document.getElementById('cart-total-usd').innerText = totalUsd.toFixed(2);
-        document.getElementById('cart-total-bs').innerText = totalBs.toLocaleString('es-VE', { minimumFractionDigits: 2 });
+        document.getElementById('cart-total-bs').innerText = totalBs.toLocaleString('es-VE', { 
+            minimumFractionDigits: 2, 
+            maximumFractionDigits: 2 
+        });
         document.getElementById('cart-count').innerText = items;
     } else {
         footer.style.display = 'none';
@@ -109,12 +114,19 @@ function actualizarFooter() {
 }
 
 window.enviarPedido = () => {
-    let m = "¡Hola! Realizo el siguiente pedido:\n\n";
+    let m = "¡Hola! Quisiera realizar el siguiente pedido:\n\n";
+    let tUsd = 0;
     for (let id in carrito) {
         if (carrito[id].cantidad > 0) {
-            m += `⭐ *${carrito[id].cantidad}x* ${carrito[id].nombre} - $${(carrito[id].precio * carrito[id].cantidad).toFixed(2)}\n`;
+            let sub = carrito[id].precio * carrito[id].cantidad;
+            m += `⭐ *${carrito[id].cantidad}x* ${carrito[id].nombre} - $${sub.toFixed(2)}\n`;
+            tUsd += sub;
         }
     }
+    const tBs = tUsd * tasaActual;
+    m += `\n*TOTAL USD: $${tUsd.toFixed(2)}*`;
+    m += `\n*TOTAL BS: ${tBs.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.*`;
+    
     window.open(`https://wa.me/14845532789?text=${encodeURIComponent(m)}`, '_blank');
 };
 
