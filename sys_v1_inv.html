@@ -3,398 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventario Pro | Sistematikos</title>
+    <title>INVENTARIO | YOU CONTROL</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { 
-            --bg: #F8FAFC; 
-            --primary: #3B82F6; 
-            --text: #1E293B; 
-            --border: #E2E8F0; 
-            --emerald: #10B981; 
-            --indigo: #6366F1;
+        :root {
+            --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
+            --text-dark: #1E293B;
+            --emerald: #10B981; --sky: #0EA5E9; --amber: #F59E0B; --rose: #F43F5E;
+            --border: #E2E8F0;
         }
-        body { 
-            font-family: 'Poppins', sans-serif; 
-            background: var(--bg); 
-            margin: 0; 
-            padding-bottom: 50px; 
-            color: var(--text); 
-            user-select: none;
-        }
-        .container { 
-            padding: 15px; 
-            max-width: 1300px; 
-            margin: auto; 
-        }
-        
-        .header-table { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 15px; 
-        }
-        .header-actions { 
-            display: flex; 
-            gap: 10px; 
-            align-items: center; 
-        }
-        
-        /* Paneles Superiores */
-        .top-panels { 
-            display: grid; 
-            grid-template-columns: 1.4fr 2fr; 
-            gap: 15px; 
-            margin-bottom: 10px; 
-        }
-        .panel-card { 
-            background: white; 
-            padding: 15px; 
-            border-radius: 12px; 
-            border: 1px solid var(--border); 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
-            display: flex; 
-            align-items: center; 
-            gap: 12px; 
-        }
-        
-        .tasa-input { 
-            padding: 8px; 
-            border-radius: 10px; 
-            border: 2px solid var(--primary); 
-            width: 100px; 
-            font-weight: 800; 
-            font-size: 1.1rem; 
-            text-align: center; 
-        }
-        .btn-save-tasa {
-            background: #EAFAF1; 
-            color: var(--emerald); 
-            border: none; 
-            padding: 10px 14px; 
-            border-radius: 10px; 
-            cursor: pointer; 
-            font-weight: 600;
-            font-size: 0.85rem;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: 0.2s ease;
-        }
-        .btn-save-tasa:hover {
-            background: #D1F2E1;
-        }
-        .search-container { 
-            display: flex; 
-            gap: 10px; 
-            width: 100%; 
-            align-items: center; 
-        }
-        .search-input { 
-            flex: 1; 
-            padding: 10px 15px; 
-            border-radius: 10px; 
-            border: 1px solid var(--border); 
-            font-size: 0.9rem; 
-            outline: none; 
-            transition: 0.3s; 
-        }
-        .search-input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-        
-        /* Estilos de la Tabla */
-        .table-responsive { 
-            overflow-x: auto; 
-            background: white; 
-            border-radius: 15px; 
-            border: 1px solid var(--border); 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
-        }
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            min-width: 1100px; 
-        }
-        th { 
-            background: #F1F5F9; 
-            padding: 14px; 
-            text-align: left; 
-            font-size: 0.75rem; 
-            text-transform: uppercase; 
-            color: #64748B; 
-            letter-spacing: 0.5px; 
-        }
-        td { 
-            padding: 12px 14px; 
-            border-bottom: 1px solid var(--border); 
-            font-size: 0.9rem; 
-        }
-        
-        .txt-bold { font-weight: 600; color: var(--text); }
-        .badge-bs { font-weight: 700; color: #059669; background: #ecfdf5; padding: 4px 8px; border-radius: 6px; }
-        .badge-stock { font-weight: 600; padding: 4px 8px; border-radius: 6px; background: #F1F5F9; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 10px 0; min-height: 100vh; color: var(--text-dark); }
+        .layout-width { width: 95%; max-width: 1200px; margin: 0 auto; }
 
-        /* Botones */
-        .btn-add { 
-            background: var(--primary); 
-            color: white; 
-            border: none; 
-            padding: 10px 18px; 
-            border-radius: 12px; 
-            cursor: pointer; 
-            font-weight: 600; 
-            display: flex; 
-            align-items: center; 
-            gap: 6px; 
-            font-size: 0.9rem;
-        }
-        .btn-compras { 
-            background: var(--indigo); 
-            color: white; 
-            border: none; 
-            padding: 10px 18px; 
-            border-radius: 12px; 
-            cursor: pointer; 
-            font-weight: 600; 
-            display: flex; 
-            align-items: center; 
-            gap: 6px; 
-            text-decoration: none; 
-            font-size: 0.9rem; 
-        }
-        .btn-edit { 
-            color: var(--primary); 
-            background: #EFF6FF; 
-            border: none; 
-            cursor: pointer; 
-            padding: 8px; 
-            border-radius: 8px; 
-            margin-right: 5px; 
-        }
-        .btn-remove { 
-            color: #EF4444; 
-            background: #FEE2E2; 
-            border: none; 
-            cursor: pointer; 
-            padding: 8px; 
-            border-radius: 8px; 
-        }
-        .btn-back { 
-            border: none; 
-            background: none; 
-            color: var(--primary); 
-            cursor: pointer; 
-            font-weight: bold; 
-            margin-bottom: 15px; 
-            display: flex; 
-            align-items: center; 
-            gap: 5px; 
-        }
+        /* Cabecera unificada */
+        .header-panel { background: #ffffff; padding: 0 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; height: 70px; }
+        .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 6px 12px; border-radius: 8px; text-decoration: none; font-size: 0.75rem; font-weight: 700; border: 1px solid var(--border); }
+        .logo-header { height: 90%; width: auto; object-fit: contain; }
 
-        /* Ventana Modal */
-        .modal { 
-            display: none; 
-            position: fixed; 
-            z-index: 1000; 
-            left: 0; 
-            top: 0; 
-            width: 100%; 
-            height: 100%; 
-            background: rgba(0,0,0,0.4); 
-            align-items: center; 
-            justify-content: center; 
-        }
-        .modal-content { 
-            background: white; 
-            padding: 25px; 
-            border-radius: 16px; 
-            width: 90%; 
-            max-width: 500px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
-        }
-        .modal-header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 20px; 
-            border-bottom: 1px solid var(--border); 
-            padding-bottom: 10px; 
-        }
-        .modal-grid { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 15px; 
-            margin-bottom: 15px; 
-        }
-        .form-group { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 5px; 
-        }
-        .form-group.full { 
-            grid-column: span 2; 
-        }
-        .form-group label { 
-            font-size: 0.8rem; 
-            font-weight: 600; 
-            color: #64748B; 
-        }
-        .form-group input { 
-            padding: 10px; 
-            border: 1px solid var(--border); 
-            border-radius: 8px; 
-            font-family: 'Poppins', sans-serif; 
-            font-size: 0.9rem; 
-        }
-        .form-group input:focus { 
-            border-color: var(--primary); 
-            outline: none; 
-        }
-        .modal-footer { 
-            display: flex; 
-            gap: 10px; 
-            justify-content: flex-end; 
-            margin-top: 20px; 
-        }
-        .btn-modal-save { 
-            background: var(--emerald); 
-            color: white; 
-            border: none; 
-            padding: 10px 20px; 
-            border-radius: 10px; 
-            cursor: pointer; 
-            font-weight: 600; 
-        }
-        .btn-modal-close { 
-            background: #94A3B8; 
-            color: white; 
-            border: none; 
-            padding: 10px 20px; 
-            border-radius: 10px; 
-            cursor: pointer; 
-            font-weight: 600; 
-        }
+        /* Tarjeta de inventario con borde ambar */
+        .card { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); position: relative; border-left: 6px solid var(--amber); margin-bottom: 20px; }
+        h3 { margin-top: 0; font-size: 1.1rem; color: var(--text-dark); margin-bottom: 15px; }
 
-        #status-bar-inv { 
-            width: 100%; 
-            padding: 8px; 
-            border-radius: 10px; 
-            font-size: 13px; 
-            font-weight: 600; 
-            text-align: center; 
-            margin-bottom: 15px; 
-            display: none; 
-        }
-        .status-loading { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
-        .status-success { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+        /* Tabla */
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { color: #64748B; border-bottom: 2px solid #F1F5F9; padding: 12px; text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid #F1F5F9; }
+        
+        /* Status bar */
+        #status-bar-inv { font-size: 0.75rem; padding: 8px 12px; border-radius: 8px; margin-bottom: 15px; display: none; text-align: center; font-weight: 600; }
+        
+        /* Botón eliminar */
+        button { background: #FEE2E2; color: #991B1B; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
     </style>
 </head>
-<body oncontextmenu="return false">
-    <div class="container">
-        <button class="btn-back" onclick="location.href='sys_v1_menu.html'">
-            <i class="fas fa-arrow-left"></i> VOLVER AL MENÚ
-        </button>
-
-        <div class="header-table">
-            <h3><i class="fas fa-boxes-stacked"></i> INVENTARIO GENERAL</h3>
-            <div class="header-actions">
-                <a href="sys_v3_comp.html" class="btn-compras"><i class="fas fa-cart-plus"></i> ENTRADA MERCANCÍA</a>
-                <button class="btn-add" onclick="window.abrirModalNuevo()"><i class="fas fa-plus"></i> NUEVO ITEM</button>
+<body>
+    <main class="layout-width">
+        <header class="header-panel">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <a href="sys_v1_menu.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
+                <h1 style="font-size: 1.2rem; margin: 0;">Inventario Actual</h1>
             </div>
-        </div>
+            <img src="img/logo.png" class="logo-header">
+        </header>
 
         <div id="status-bar-inv"></div>
 
-        <div class="table-responsive">
+        <section class="card">
+            <h3>Existencias en Almacén</h3>
             <table>
                 <thead>
-                    <tr>
-                        <th style="width: 12%;">Barras</th>
-                        <th style="width: 12%;">SKU</th>
-                        <th style="width: 30%;">Descripción</th>
-                        <th style="width: 10%;">Costo $</th>
-                        <th style="width: 8%;">% Gan.</th>
-                        <th style="width: 10%;">Precio $</th>
-                        <th style="width: 14%;">Precio BS</th>
-                        <th style="width: 8%;">Stock</th>
-                        <th style="width: 10%; text-align: center;">Acciones</th>
-                    </tr>
+                    <tr><th>Barras</th><th>SKU</th><th>Producto</th><th>Costo</th><th>%</th><th>Precio</th><th>Stock</th><th>Acción</th></tr>
                 </thead>
-                <tbody id="cuerpo-tabla">
-                    <tr><td colspan="9" style="text-align:center; padding:30px;">Cargando base de datos...</td></tr>
-                </tbody>
+                <tbody id="cuerpo-tabla"></tbody>
             </table>
-        </div>
-    </div>
-
-    <div class="modal" id="modalProducto">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 id="modalTitulo"><i class="fas fa-box"></i> Editar Producto</h4>
-                <button style="border:none; background:none; font-size:1.2rem; cursor:pointer;" onclick="window.cerrarModal()">&times;</button>
-            </div>
-            <input type="hidden" id="form-id">
-            <div class="modal-grid">
-                <div class="form-group">
-                    <label>Código Barras</label>
-                    <input type="text" id="form-barras">
-                </div>
-                <div class="form-group">
-                    <label>SKU / Código Interno</label>
-                    <input type="text" id="form-sku">
-                </div>
-                <div class="form-group full">
-                    <label>Descripción del Producto</label>
-                    <input type="text" id="form-nombre" required>
-                </div>
-                <div class="form-group">
-                    <label>Costo USD ($)</label>
-                    <input type="number" step="0.01" id="form-costo" oninput="window.calcularPrecioModal()">
-                </div>
-                <div class="form-group">
-                    <label>% Ganancia</label>
-                    <input type="number" step="0.1" id="form-ganancia" oninput="window.calcularPrecioModal()">
-                </div>
-                <div class="form-group">
-                    <label>Precio USD ($)</label>
-                    <input type="number" step="0.01" id="form-precio" oninput="window.calcularGananciaModal()">
-                </div>
-                <div class="form-group">
-                    <label>Stock Actual</label>
-                    <input type="number" id="form-stock">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-modal-close" onclick="window.cerrarModal()">Cancelar</button>
-                <button class="btn-modal-save" onclick="window.guardarCambiosModal()">Guardar (F9)</button>
-            </div>
-        </div>
-    </div>
-
+        </section>
+    </main>
     <script type="module" src="./js/sys_v1_inv.js"></script>
-
-    <script>
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'F12' || 
-                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) || 
-                (e.ctrlKey && e.key === 'u')) {
-                e.preventDefault();
-                return false;
-            }
-            
-            if (e.key === 'F9') {
-                const modal = document.getElementById('modalProducto');
-                if (modal && modal.style.display === 'flex') {
-                    e.preventDefault();
-                    if (typeof window.guardarCambiosModal === 'function') {
-                        window.guardarCambiosModal();
-                    }
-                }
-            }
-        });
-    </script>
 </body>
 </html>
