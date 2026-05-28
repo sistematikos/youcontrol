@@ -147,6 +147,26 @@ window.calcularGananciaCompra = () => {
     inputPrecioBs.value = (precio * tasaActual).toFixed(2).replace('.', ',') + " Bs.";
 };
 
+window.calcularDesdeBs = () => {
+    const inputPrecioBs = document.getElementById('comp-precio-bs');
+    const inputPrecio = document.getElementById('comp-precio');
+    const inputCosto = document.getElementById('comp-costo');
+    const inputGanancia = document.getElementById('comp-ganancia');
+
+    const valorBs = parseFloat(inputPrecioBs.value.replace(',', '.')) || 0;
+    
+    if (tasaActual > 0) {
+        const precioUsd = valorBs / tasaActual;
+        inputPrecio.value = precioUsd.toFixed(2);
+        
+        // Calcular ganancia inversa si existe costo
+        const costo = parseFloat(inputCosto.value) || 0;
+        if (costo > 0) {
+            inputGanancia.value = (((precioUsd - costo) / costo) * 100).toFixed(1);
+        }
+    }
+};
+
 // ==========================================
 // 4. LÓGICA DE LISTA
 // ==========================================
