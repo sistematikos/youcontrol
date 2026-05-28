@@ -153,17 +153,23 @@ window.calcularDesdeBs = () => {
     const inputCosto = document.getElementById('comp-costo');
     const inputGanancia = document.getElementById('comp-ganancia');
 
+    // Usamos replace para manejar tanto comas como puntos decimales
     const valorBs = parseFloat(inputPrecioBs.value.replace(',', '.')) || 0;
     
-    if (tasaActual > 0) {
+    // Si la tasa es válida y hay un valor en Bs mayor a 0
+    if (tasaActual > 0 && valorBs > 0) {
         const precioUsd = valorBs / tasaActual;
         inputPrecio.value = precioUsd.toFixed(2);
         
-        // Calcular ganancia inversa si existe costo
+        // Recalcular ganancia si existe costo
         const costo = parseFloat(inputCosto.value) || 0;
         if (costo > 0) {
+            // Se calcula el margen porcentual basado en el nuevo precio obtenido
             inputGanancia.value = (((precioUsd - costo) / costo) * 100).toFixed(1);
         }
+    } else if (valorBs === 0) {
+        // Opcional: si borran el precio en Bs, limpiar el precio en USD
+        inputPrecio.value = '';
     }
 };
 
