@@ -63,12 +63,28 @@ function actualizarFooter() {
         totalUsd += carrito[id].precio * carrito[id].cantidad;
         items += carrito[id].cantidad;
     }
+
     const footer = document.getElementById('cart-footer');
     footer.style.display = items > 0 ? 'flex' : 'none';
+
+    // Calculamos el total en Bs usando la tasaActual
+    const totalBs = (totalUsd * tasaActual).toLocaleString('es-VE', { 
+        minimumFractionDigits: 2, 
+        maximumFractionDigits: 2 
+    });
+
+    // Actualizamos ambos valores en el footer
+    // Asegúrate de que en tu HTML existan los elementos cart-total-usd y cart-total-bs
     document.getElementById('cart-total-usd').innerText = totalUsd.toFixed(2);
+    
+    // Aquí es donde mostramos los Bs en el botón o donde lo tengas configurado
+    const displayTotal = document.getElementById('cart-total-bs');
+    if (displayTotal) {
+        displayTotal.innerText = totalBs;
+    }
+    
     document.getElementById('cart-count').innerText = items;
 }
-
 window.enviarPedido = () => {
     let m = "Hola, quisiera: \n";
     for(let id in carrito) if(carrito[id].cantidad > 0) m += `${carrito[id].cantidad}x ${carrito[id].nombre}\n`;
