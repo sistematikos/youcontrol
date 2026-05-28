@@ -10,42 +10,42 @@
         :root {
             --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
             --text-dark: #1E293B;
-            --emerald: #10B981; --sky: #0EA5E9; --amber: #F59E0B; --rose: #F43F5E;
+            --emerald: #10B981; --sky: #0EA5E9; --rose: #F43F5E;
             --border: #E2E8F0;
         }
         body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 10px 0; min-height: 100vh; color: var(--text-dark); }
         .layout-width { width: 95%; max-width: 1200px; margin: 0 auto; }
 
-        /* CABECERA UNIFICADA */
+        /* CABECERA */
         .header-panel { background: #ffffff; padding: 0 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; height: 70px; }
         .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 6px 12px; border-radius: 8px; text-decoration: none; font-size: 0.75rem; font-weight: 700; border: 1px solid var(--border); transition: 0.3s; }
         .btn-back:hover { background: #E2E8F0; }
         .logo-header { height: 90%; width: auto; object-fit: contain; }
 
-        /* TARJETAS CON EFECTOS */
+        /* TARJETAS */
         .main-layout { display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
-        .card { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); position: relative; border-left: 6px solid var(--sky); }
-        h3 { margin-top: 0; font-size: 1rem; color: var(--text-dark); margin-bottom: 15px; }
+        .card { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); border-left: 6px solid var(--sky); }
+        h3 { margin-top: 0; font-size: 1rem; margin-bottom: 15px; }
 
-        /* FORMULARIOS Y BOTONES */
+        /* FORMULARIO */
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; font-size: 0.75rem; font-weight: 700; color: #64748B; margin-bottom: 5px; }
-        input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; font-size: 0.9rem; }
-        .btn-primary { width: 100%; background: var(--text-dark); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; }
+        .btn-primary { width: 100%; background: var(--text-dark); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.3s; }
         .btn-primary:hover { background: var(--sky); }
-        
+        #aviso-no-registrado { color: var(--rose); font-size: 0.75rem; font-weight: 700; display: none; margin-top: 5px; }
+
         /* TABLA */
         table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         th { color: #64748B; border-bottom: 2px solid #F1F5F9; padding: 12px; text-align: left; }
         td { padding: 12px; border-bottom: 1px solid #F1F5F9; }
-        .btn-table { border: none; background: none; cursor: pointer; padding: 5px; font-size: 1rem; }
     </style>
 </head>
 <body>
     <main class="layout-width">
         <header class="header-panel">
             <div style="display: flex; align-items: center; gap: 15px;">
-                <a href="sys_v1_vt.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
+                <a href="sys_v1_menu.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
                 <h1 style="font-size: 1.2rem; margin: 0;">Gestión de Clientes</h1>
             </div>
             <img src="img/logo.png" class="logo-header">
@@ -53,9 +53,16 @@
 
         <div class="main-layout">
             <section class="card">
-                <h3><i class="fas fa-user-plus"></i> Registrar Cliente</h3>
+                <h3><i class="fas fa-user-plus"></i> Ficha Cliente</h3>
                 <form id="form-cliente">
                     <input type="hidden" id="cliente-id">
+                    
+                    <div class="form-group">
+                        <label>Código del Cliente</label>
+                        <input type="text" id="cl-codigo" placeholder="Ej: CLT-001" required>
+                        <div id="aviso-no-registrado"><i class="fas fa-exclamation-circle"></i> Código no registrado</div>
+                    </div>
+
                     <div class="form-group"><label>Nombre / Cliente</label><input type="text" id="cl-nombre" required></div>
                     <div class="form-group"><label>RIF / Identificación</label><input type="text" id="cl-rif"></div>
                     <div class="form-group"><label>Teléfono</label><input type="text" id="cl-telefono"></div>
@@ -65,14 +72,12 @@
             </section>
 
             <section class="card" style="border-left-color: var(--emerald);">
-                <h3><i class="fas fa-list"></i> Clientes Registrados</h3>
-                <input type="text" id="buscar-cliente" placeholder="🔍 Filtrar clientes..." style="margin-bottom:15px;">
-                <div class="table-container">
-                    <table>
-                        <thead><tr><th>Nombre</th><th>RIF</th><th>Teléfono</th><th>Acciones</th></tr></thead>
-                        <tbody id="tabla-clientes"></tbody>
-                    </table>
-                </div>
+                <h3><i class="fas fa-list"></i> Listado de Clientes</h3>
+                <input type="text" id="buscar-cliente" placeholder="🔍 Filtrar por código, nombre o RIF..." style="margin-bottom:15px;">
+                <table>
+                    <thead><tr><th>Código</th><th>Nombre</th><th>RIF</th><th>Acción</th></tr></thead>
+                    <tbody id="tabla-clientes"></tbody>
+                </table>
             </section>
         </div>
     </main>
