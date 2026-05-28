@@ -233,3 +233,24 @@ function limpiarFormulario() {
     inputStockViejo.value = '0'; inputCantidad.value = '0';
     if (buscador) { buscador.value = ''; buscador.focus(); }
 }
+
+const buscador = document.getElementById('buscador-dinamico');
+const aviso = document.getElementById('aviso-no-registrado');
+
+buscador.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault(); // Evita que el formulario haga submit accidentalmente
+        const valor = buscador.value;
+        
+        // Aquí llamas a tu función de búsqueda existente
+        // Si no se encuentra el producto:
+        if (!productoEncontrado) { 
+            aviso.style.display = 'block'; 
+            document.getElementById('comp-sku').value = valor;
+            buscador.value = '';
+            document.getElementById('comp-nombre').focus(); // Salta al nombre
+        } else {
+            aviso.style.display = 'none';
+        }
+    }
+});
