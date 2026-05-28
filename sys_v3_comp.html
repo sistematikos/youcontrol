@@ -16,11 +16,9 @@
         body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 10px 0; min-height: 100vh; color: var(--text-dark); }
         .layout-width { width: 95%; max-width: 1200px; margin: 0 auto; }
 
-        /* Cabecera ajustada para logo vertical */
         .header-panel { background: #ffffff; padding: 0 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; height: 70px; }
         .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 6px 12px; border-radius: 8px; text-decoration: none; font-size: 0.75rem; font-weight: 700; border: 1px solid var(--border); }
         
-        /* Logo que ocupa el 90% de la altura de la cabecera */
         .logo-header { height: 90%; width: auto; object-fit: contain; }
 
         .grid-top { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
@@ -31,7 +29,7 @@
 
         h3 { margin-top: 0; font-size: 1rem; margin-bottom: 10px; }
         input { width: 100%; padding: 10px; margin: 4px 0; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; }
-        .btn-add { background: var(--text-dark); color: white; padding: 10px; border: none; border-radius: 8px; width: 100%; cursor: pointer; margin-top: 5px; }
+        .btn-add { background: var(--text-dark); color: white; padding: 10px; border: none; border-radius: 8px; width: 100%; cursor: pointer; margin-top: 10px; font-weight: 600; }
         .btn-save { background: var(--emerald); color: white; padding: 10px 25px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
     </style>
 </head>
@@ -52,12 +50,11 @@
                     <i class="fas fa-exclamation-circle"></i> Producto no registrado
                 </div>
                 <input type="text" id="buscador-dinamico" placeholder="Código o Nombre..." autocomplete="off">
-                    <div id="dropdown-resultados"></div>
-                    <input type="text" id="comp-sku" placeholder="SKU">
-                    <input type="text" id="comp-barras" placeholder="Código de Barras"> 
-                    <input type="text" id="comp-nombre" placeholder="Nombre">
-                    <input type="number" id="comp-cantidad" placeholder="Cantidad">
-                <button class="btn-add" onclick="window.agregarALista()">AGREGAR A LISTA</button>
+                <div id="dropdown-resultados"></div>
+                <input type="text" id="comp-sku" placeholder="SKU">
+                <input type="text" id="comp-barras" placeholder="Código de Barras"> 
+                <input type="text" id="comp-nombre" placeholder="Nombre">
+                <input type="number" id="comp-cantidad" placeholder="Cantidad">
             </section>
 
             <section class="card border-emerald">
@@ -66,6 +63,8 @@
                 <input type="number" id="comp-ganancia" placeholder="% Ganancia">
                 <input type="number" id="comp-precio" placeholder="Precio $">
                 <input type="text" id="comp-precio-bs" placeholder="Precio Bs." oninput="window.calcularDesdeBs()">
+                
+                <button class="btn-add" onclick="window.agregarALista()">AGREGAR A LISTA</button>
             </section>
         </div>
 
