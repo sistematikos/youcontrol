@@ -1,66 +1,79 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * Controlador de Gestión de Clientes en Firestore v2.2
+ * Controlador de Gestión de Clientes en Firestore v2.3
  */
 
 import { db } from './firebase-config.js';
-import { 
-    collection, onSnapshot, doc, updateDoc, deleteDoc, serverTimestamp, getDoc, setDoc 
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, onSnapshot, doc, updateDoc, deleteDoc, serverTimestamp, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const ID_LICENCIA = localStorage.getItem('youcontrol_empresa_id');
-
 if (!ID_LICENCIA) console.error("Error: No se encontró ID de licencia.");
 
 let clientesMaster = [];
 let editMode = false;
 
+// Elementos DOM
 const formCliente = document.getElementById('form-cliente');
 const tablaClientes = document.getElementById('tabla-clientes');
 const inputBuscar = document.getElementById('buscar-cliente');
 const btnCancelar = document.getElementById('btn-cancelar-edicion');
 const formTitle = document.getElementById('form-title');
 const btnGuardar = document.getElementById('btn-guardar-cliente');
-const empresaTitulo = document.getElementById('empresa-titulo'); 
+const inputCodigo = document.getElementById('cl-codigo');
+const inputNombre = document.getElementById('cl-nombre');
+const aviso = document.getElementById('aviso-no-registrado');
 
 // ==========================================
-// 1. ESCUCHAR CLIENTES
+// 1. BUSCADOR INTELIGENTE (ENTER EN CÓDIGO)
 // ==========================================
-async function inicializarClientes() {
-    if (!ID_LICENCIA) return;
-
-    const empSnap = await getDoc(doc(db, "usuarios", ID_LICENCIA));
-    if (empSnap.exists() && empresaTitulo) {
-        empresaTitulo.innerText = empSnap.data().nombre_empresa || "CONTROL DE CLIENTES";
+inputCodigo.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        const codigo = inputCodigo.value.trim().toUpperCase();
+        const cliente = clientesMaster.find(c => c.codigo === codigo);
+        
+        if (cliente) {
+            aviso.style.display = 'none';
+            cargarDatosCliente(cliente);
+        } else {
+            aviso.style.display = 'block';
+            inputNombre.focus();
+        }
     }
+});
 
-    onSnapshot(collection(db, "usuarios", ID_LICENCIA, "clientes"), (snapshot) => {
-        clientesMaster = [];
-        snapshot.forEach((docSnap) => {
-            // Guardamos el objeto completo incluyendo el ID (que es el RIF)
-            clientesMaster.push({ id: docSnap.id, ...docSnap.data() });
-        });
-        renderizarTabla(clientesMaster);
-    });
+function cargarDatosCliente(cl) {
+    document.getElementById('cliente-id').value = cl.id;
+    inputNombre.value = cl.nombre;
+    document.getElementById('cl-rif').value = cl.rif || '';
+    document.getElementById('cl-telefono').value = cl.telefono || '';
+    document.getElementById('cl-direccion').value = cl.direccion || '';
+    inputCodigo.readOnly = true;
+    editMode = true;
+    formTitle.innerHTML = `<i class="fas fa-user-edit"></i> Editar Cliente`;
+    btnGuardar.innerHTML = `<i class="fas fa-sync-alt"></i> ACTUALIZAR CLIENTE`;
+    if (btnCancelar) btnCancelar.style.display = 'block';
+    inputNombre.focus();
 }
 
 // ==========================================
-// 2. RENDERIZAR TABLA (LA FUNCIÓN QUE FALTABA)
+// 2. ESCUCHAR CLIENTES
+// ==========================================
+onSnapshot(collection(db, "usuarios", ID_LICENCIA, "clientes"), (snapshot) => {
+    clientesMaster = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    renderizarTabla(clientesMaster);
+});
+
+// ==========================================
+// 3. RENDERIZAR TABLA
 // ==========================================
 function renderizarTabla(lista) {
     if (!tablaClientes) return;
-    
-    if (lista.length === 0) {
-        tablaClientes.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px;">No hay clientes registrados.</td></tr>`;
-        return;
-    }
-
     tablaClientes.innerHTML = lista.map(c => `
         <tr>
+            <td>${c.codigo || 'N/A'}</td>
             <td><b>${c.nombre || 'N/A'}</b></td>
-            <td>${c.rif || c.id}</td>
-            <td>${c.telefono || '-'}</td>
-            <td>${c.direccion || '-'}</td>
+            <td>${c.rif || '-'}</td>
             <td style="text-align:center;">
                 <button class="btn-table" onclick="window.prepararEdicion('${c.id}')"><i class="fas fa-edit"></i></button>
                 <button class="btn-table" onclick="window.eliminarCliente('${c.id}', '${c.nombre}')"><i class="fas fa-trash"></i></button>
@@ -70,60 +83,32 @@ function renderizarTabla(lista) {
 }
 
 // ==========================================
-// 3. REGISTRAR O ACTUALIZAR
+// 4. GUARDAR / ACTUALIZAR
 // ==========================================
-if (formCliente) {
-    formCliente.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if (!ID_LICENCIA) return;
-        
-        const nombre = document.getElementById('cl-nombre').value.trim().toUpperCase();
-        const rif = document.getElementById('cl-rif').value.trim().toUpperCase();
-        const telefono = document.getElementById('cl-telefono').value.trim();
-        const direccion = document.getElementById('cl-direccion').value.trim().toUpperCase();
+formCliente.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const codigo = inputCodigo.value.trim().toUpperCase();
+    const datos = {
+        codigo,
+        nombre: inputNombre.value.trim().toUpperCase(),
+        rif: document.getElementById('cl-rif').value.trim().toUpperCase(),
+        telefono: document.getElementById('cl-telefono').value.trim(),
+        direccion: document.getElementById('cl-direccion').value.trim().toUpperCase()
+    };
 
-        if (!rif) { alert("El RIF es obligatorio"); return; }
-
-        btnGuardar.disabled = true;
-        btnGuardar.innerText = "PROCESANDO...";
-
-        try {
-            const clienteRef = doc(db, "usuarios", ID_LICENCIA, "clientes", rif);
-            
-            if (editMode) {
-                await updateDoc(clienteRef, { nombre, rif, telefono, direccion, fecha_modificacion: serverTimestamp() });
-                alert("✅ Ficha actualizada");
-            } else {
-                await setDoc(clienteRef, { nombre, rif, telefono, direccion, fecha_creacion: serverTimestamp() });
-                alert("✅ Cliente registrado");
-            }
-            cancelarEdicion();
-        } catch (error) {
-            console.error("Error:", error);
-            alert("Error al guardar");
-        }
-        btnGuardar.disabled = false;
-        btnGuardar.innerHTML = `<i class="fas fa-save"></i> GUARDAR CLIENTE`;
-    });
-}
+    try {
+        await setDoc(doc(db, "usuarios", ID_LICENCIA, "clientes", codigo), { ...datos, updatedAt: serverTimestamp() });
+        alert("✅ Operación exitosa");
+        cancelarEdicion();
+    } catch (e) { alert("Error al guardar: " + e.message); }
+});
 
 // ==========================================
-// 4. FUNCIONES DE EDICIÓN Y ELIMINACIÓN
+// 5. UTILIDADES
 // ==========================================
 window.prepararEdicion = (id) => {
     const c = clientesMaster.find(x => x.id === id);
-    if (!c) return;
-
-    document.getElementById('cl-rif').readOnly = true; 
-    document.getElementById('cl-nombre').value = c.nombre;
-    document.getElementById('cl-rif').value = c.rif;
-    document.getElementById('cl-telefono').value = c.telefono || '';
-    document.getElementById('cl-direccion').value = c.direccion || '';
-
-    editMode = true;
-    formTitle.innerHTML = `<i class="fas fa-user-edit"></i> Editar Cliente`;
-    btnGuardar.innerHTML = `<i class="fas fa-sync-alt"></i> ACTUALIZAR FICHA`;
-    if (btnCancelar) btnCancelar.style.display = 'block';
+    if (c) cargarDatosCliente(c);
 };
 
 window.eliminarCliente = async (id, nombre) => {
@@ -134,15 +119,21 @@ window.eliminarCliente = async (id, nombre) => {
 
 function cancelarEdicion() {
     formCliente.reset();
-    document.getElementById('cl-rif').readOnly = false;
+    inputCodigo.readOnly = false;
     editMode = false;
+    aviso.style.display = 'none';
     formTitle.innerHTML = `<i class="fas fa-user-plus"></i> Registrar Cliente`;
     if (btnCancelar) btnCancelar.style.display = 'none';
+    btnGuardar.innerHTML = `<i class="fas fa-save"></i> GUARDAR CLIENTE`;
+    inputCodigo.focus();
 }
 
 if (btnCancelar) btnCancelar.addEventListener('click', cancelarEdicion);
 
-// ==========================================
-// 5. INICIALIZACIÓN
-// ==========================================
-inicializarClientes();
+// Buscador tabla
+inputBuscar.addEventListener('input', (e) => {
+    const val = e.target.value.toLowerCase();
+    document.querySelectorAll('#tabla-clientes tr').forEach(tr => {
+        tr.style.display = tr.textContent.toLowerCase().includes(val) ? '' : 'none';
+    });
+});
