@@ -47,21 +47,33 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // 2. BUSCADOR INTELIGENTE
-buscador.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        const criterio = buscador.value.trim();
-        const prod = productosLocales.find(p => p.sku === criterio || p.barras === criterio);
-        
-        if (!prod) {
-            aviso.style.display = 'block';
-            inputSku.value = criterio;
-            buscador.value = '';
-            inputNombre.focus();
-        } else {
-            aviso.style.display = 'none';
-            window.seleccionar(prod.sku);
-        }
+// 2. BUSCADOR (Reemplaza tu bloque actual por este)
+buscador.addEventListener('input', (e) => {
+    const val = e.target.value.toLowerCase().trim();
+    if (!val) { 
+        dropdown.style.display = 'none'; 
+        return; 
+    }
+    
+    // Filtramos por SKU, Barras o Nombre
+    const filtrados = productosLocales.filter(p => 
+        (p.sku && p.sku.toLowerCase().includes(val)) || 
+        (p.barras && p.barras.toLowerCase().includes(val)) || 
+        (p.nombre && p.nombre.toLowerCase().includes(val))
+    );
+    
+    if (filtrados.length > 0) {
+        dropdown.innerHTML = filtrados.map(p => `
+            <div class="search-item" style="padding:10px; cursor:pointer; border-bottom:1px solid #eee;" 
+                 onclick="window.seleccionar('${p.sku}')">
+                <strong>${p.nombre}</strong><br>
+                <small>SKU: ${p.sku} | Barras: ${p.barras || 'N/A'}</small>
+            </div>
+        `).join('');
+        dropdown.style.display = 'block';
+    } else {
+        dropdown.style.display = 'none';
+        aviso.style.display = 'block'; // Muestra aviso si no encuentra nada al escribir
     }
 });
 
