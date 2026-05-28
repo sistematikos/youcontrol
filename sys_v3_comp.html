@@ -43,14 +43,29 @@
                 <button class="btn-add" onclick="window.agregarALista()">AGREGAR A LISTA</button>
             </section>
 
-            <section class="card">
-                <h3>Costos y Precios</h3>
-                <input type="number" id="comp-costo" placeholder="Costo USD" step="0.01">
-                <input type="number" id="comp-ganancia" placeholder="% Ganancia" step="0.1">
-                <input type="number" id="comp-precio" placeholder="Precio $" step="0.01">
-                <input type="text" id="comp-precio-bs" placeholder="Precio Bs." readonly>
-            </section>
-        </div>
+           <section class="card">
+    <h3>Costos y Precios</h3>
+    
+    <div style="display: grid; grid-template-columns: 100px 1fr; gap: 10px; align-items: center; margin-bottom: 10px;">
+        <label>Costo USD:</label>
+        <input type="number" id="comp-costo" placeholder="0.00" step="0.01">
+    </div>
+
+    <div style="display: grid; grid-template-columns: 100px 1fr; gap: 10px; align-items: center; margin-bottom: 10px;">
+        <label>% Ganancia:</label>
+        <input type="number" id="comp-ganancia" placeholder="0.0" step="0.1">
+    </div>
+
+    <div style="display: grid; grid-template-columns: 100px 1fr; gap: 10px; align-items: center; margin-bottom: 10px;">
+        <label>Precio $:</label>
+        <input type="number" id="comp-precio" placeholder="0.00" step="0.01">
+    </div>
+
+    <div style="display: grid; grid-template-columns: 100px 1fr; gap: 10px; align-items: center;">
+        <label>Precio Bs:</label>
+        <input type="text" id="comp-precio-bs" placeholder="0.00" readonly style="background:#F8FAFC; font-weight:bold;">
+    </div>
+</section>
 
         <section class="card">
             <h3>Lista de Ingreso</h3>
