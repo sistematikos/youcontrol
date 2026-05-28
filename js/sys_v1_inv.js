@@ -1,17 +1,16 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
  * Módulo de Gestión de Inventario (sys_v1_inv.js)
- * Versión con Diagnóstico Visual para PWA
+ * Versión optimizada sin gestión de tasa
  */
 
 import { db } from './firebase-config.js'; 
 import { 
-    collection, onSnapshot, doc, getDoc, setDoc, deleteDoc 
+    collection, onSnapshot, doc, deleteDoc 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // --- MOTOR DE DETECCIÓN DINÁMICA ---
 const getEmpresaId = () => {
-    // Intenta leer el ID guardado. Si no existe, usa el respaldo.
     const idGuardado = localStorage.getItem('youcontrol_empresa_id');
     const idRespaldo = "sUhfZI9Fy3M9UlInTYw2wFWZmB12"; 
     return idGuardado || idRespaldo;
@@ -23,29 +22,28 @@ const USER_ID = getEmpresaId();
 const cuerpoTabla = document.getElementById('cuerpo-tabla');
 const statusBar = document.getElementById('status-bar-inv');
 
-// --- STATUS BAR MEJORADO PARA PWA ---
+// --- STATUS BAR MEJORADO ---
 function mostrarStatusBar(msg, tipo) { 
     if (statusBar) {
         statusBar.innerText = msg;
         statusBar.style.display = 'block';
-        // Colores para diferenciar errores
         statusBar.style.backgroundColor = (tipo === 'error') ? '#f8d7da' : '#d4edda';
         statusBar.style.color = (tipo === 'error') ? '#721c24' : '#155724';
     }
 }
 
 // ==========================================
-// INICIALIZACIÓN CON DIAGNÓSTICO
+// INICIALIZACIÓN
 // ==========================================
 async function inicializarInventario() {
-    mostrarStatusBar("Conectando a ruta: usuarios/" + USER_ID + "/productos", "loading");
+    mostrarStatusBar("Cargando inventario...", "loading");
     
     try {
         const productosCollection = collection(db, "usuarios", USER_ID, "productos");
         
         onSnapshot(productosCollection, (snapshot) => {
             if (snapshot.empty) {
-                mostrarStatusBar("Aviso: La ruta está vacía (0 productos).", "error");
+                mostrarStatusBar("Inventario vacío.", "error");
             } else {
                 mostrarStatusBar("¡Conexión exitosa! Productos: " + snapshot.size, "success");
             }
