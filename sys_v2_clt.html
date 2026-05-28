@@ -3,213 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YOU CONTROL | Gestión de Clientes v2.0</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>CLIENTES | YOU CONTROL</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #1E3A8A; /* Azul Oscuro Ejecutivo */
-            --accent-color: #3B82F6;  /* Azul Eléctrico */
-            --bg-color: #F8FAFC;     /* Fondo Claro */
-            --card-bg: #FFFFFF;
-            --text-main: #0F172A;
-            --text-muted: #64748B;
-            --border-color: #E2E8F0;
+            --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
+            --text-dark: #1E293B;
+            --emerald: #10B981; --sky: #0EA5E9; --amber: #F59E0B; --rose: #F43F5E;
+            --border: #E2E8F0;
         }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 10px 0; min-height: 100vh; color: var(--text-dark); }
+        .layout-width { width: 95%; max-width: 1200px; margin: 0 auto; }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            user-select: none;
-        }
+        /* CABECERA UNIFICADA */
+        .header-panel { background: #ffffff; padding: 0 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; height: 70px; }
+        .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 6px 12px; border-radius: 8px; text-decoration: none; font-size: 0.75rem; font-weight: 700; border: 1px solid var(--border); transition: 0.3s; }
+        .btn-back:hover { background: #E2E8F0; }
+        .logo-header { height: 90%; width: auto; object-fit: contain; }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            padding: 20px;
-        }
+        /* TARJETAS CON EFECTOS */
+        .main-layout { display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
+        .card { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); position: relative; border-left: 6px solid var(--sky); }
+        h3 { margin-top: 0; font-size: 1rem; color: var(--text-dark); margin-bottom: 15px; }
 
-        .header-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-            padding: 20px;
-            border-radius: 12px;
-            color: white;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-
-        .btn-volver {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-            transition: background 0.3s;
-        }
-
-        .btn-volver:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        .main-layout {
-            display: grid;
-            grid-template-columns: 350px 1fr;
-            gap: 20px;
-        }
-
-        @media (max-width: 900px) {
-            .main-layout {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            padding: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-
-        .card-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--primary-color);
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border-bottom: 2px solid var(--bg-color);
-            padding-bottom: 8px;
-        }
-
+        /* FORMULARIOS Y BOTONES */
         .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; }
-        .form-group input { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.9rem; font-weight: 600; outline: none; transition: border-color 0.3s; }
-        .form-group input:focus { border-color: var(--accent-color); }
-
-        .btn-primary { width: 100%; background: var(--primary-color); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: background 0.3s; display: flex; justify-content: center; align-items: center; gap: 8px; }
-        .btn-primary:hover { background: #111827; }
-
-        .search-box { position: relative; margin-bottom: 15px; }
-        .search-box input { width: 100%; padding: 12px 12px 12px 40px; border: 1px solid var(--border-color); border-radius: 8px; font-weight: 600; outline: none; }
-        .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
-
-        .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; text-align: left; }
-        th { background: var(--bg-color); color: var(--text-muted); padding: 12px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; border-bottom: 1px solid var(--border-color); }
-        td { padding: 14px 12px; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
-        tr:hover td { background-color: #F1F5F9; }
-
-        .badge-rif { background: #E2E8F0; color: var(--text-main); padding: 3px 8px; border-radius: 6px; font-family: monospace; font-weight: 700; font-size: 0.8rem; }
-        .btn-table { background: none; border: none; cursor: pointer; padding: 4px 8px; border-radius: 4px; transition: background 0.3s; }
-        .btn-edit { color: var(--accent-color); }
-        .btn-delete { color: #EF4444; }
-        .btn-table:hover { background: #E2E8F0; }
-
-        .footer-credit { text-align: center; margin-top: 30px; font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
+        .form-group label { display: block; font-size: 0.75rem; font-weight: 700; color: #64748B; margin-bottom: 5px; }
+        input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; font-size: 0.9rem; }
+        .btn-primary { width: 100%; background: var(--text-dark); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .btn-primary:hover { background: var(--sky); }
+        
+        /* TABLA */
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { color: #64748B; border-bottom: 2px solid #F1F5F9; padding: 12px; text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid #F1F5F9; }
+        .btn-table { border: none; background: none; cursor: pointer; padding: 5px; font-size: 1rem; }
     </style>
 </head>
 <body>
-
-    <div class="header-container">
-        <div>
-            <h1 style="font-size: 1.5rem; font-weight: 800;" id="empresa-titulo">Cargando...</h1>
-            <p style="font-size: 0.85rem; opacity: 0.9;">Administración de Carteras de Clientes v2.0</p>
-        </div>
-        <a href="sys_v1_vt.html" class="btn-volver">
-            <i class="fas fa-arrow-left"></i> Volver al Menú
-        </a>
-    </div>
-
-    <div class="main-layout">
-        <div class="card">
-            <h2 class="card-title" id="form-title">
-                <i class="fas fa-user-plus"></i> Registrar Cliente
-            </h2>
-            <form id="form-cliente">
-                <input type="hidden" id="cliente-id">
-                
-                <div class="form-group">
-                    <label for="cl-nombre">Nombre de Empresa / Cliente</label>
-                    <input type="text" id="cl-nombre" required placeholder="Ej: Repuestos El Chamo C.A.">
-                </div>
-
-                <div class="form-group">
-                    <label for="cl-rif">RIF / Identificación Fiscal</label>
-                    <input type="text" id="cl-rif" placeholder="Ej: J-12345678-9">
-                </div>
-
-                <div class="form-group">
-                    <label for="cl-telefono">Teléfono de Contacto</label>
-                    <input type="text" id="cl-telefono" placeholder="Ej: 0414-1234567">
-                </div>
-
-                <div class="form-group">
-                    <label for="cl-direccion">Dirección Comercial</label>
-                    <input type="text" id="cl-direccion" placeholder="Ej: Av. Principal Local 12">
-                </div>
-
-                <button type="submit" class="btn-primary" id="btn-guardar-cliente">
-                    <i class="fas fa-save"></i> GUARDAR CLIENTE
-                </button>
-                
-                <button type="button" class="btn-primary" id="btn-cancelar-edicion" style="background:#64748B; margin-top:10px; display:none;">
-                    CANCELAR EDICIÓN
-                </button>
-            </form>
-        </div>
-
-        <div class="card">
-            <div class="search-box">
-                <i class="fas fa-search"></i>
-                <input type="text" id="buscar-cliente" placeholder="Filtrar clientes por nombre, RIF o teléfono...">
+    <main class="layout-width">
+        <header class="header-panel">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <a href="sys_v1_vt.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
+                <h1 style="font-size: 1.2rem; margin: 0;">Gestión de Clientes</h1>
             </div>
+            <img src="img/logo.png" class="logo-header">
+        </header>
 
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Cliente / Razón Social</th>
-                            <th>Identificación</th>
-                            <th>Teléfono</th>
-                            <th>Dirección</th>
-                            <th style="text-align: center;">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-clientes">
-                    </tbody>
-                </table>
-            </div>
+        <div class="main-layout">
+            <section class="card">
+                <h3><i class="fas fa-user-plus"></i> Registrar Cliente</h3>
+                <form id="form-cliente">
+                    <input type="hidden" id="cliente-id">
+                    <div class="form-group"><label>Nombre / Cliente</label><input type="text" id="cl-nombre" required></div>
+                    <div class="form-group"><label>RIF / Identificación</label><input type="text" id="cl-rif"></div>
+                    <div class="form-group"><label>Teléfono</label><input type="text" id="cl-telefono"></div>
+                    <div class="form-group"><label>Dirección</label><input type="text" id="cl-direccion"></div>
+                    <button type="submit" class="btn-primary">GUARDAR CLIENTE</button>
+                </form>
+            </section>
+
+            <section class="card" style="border-left-color: var(--emerald);">
+                <h3><i class="fas fa-list"></i> Clientes Registrados</h3>
+                <input type="text" id="buscar-cliente" placeholder="🔍 Filtrar clientes..." style="margin-bottom:15px;">
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th>Nombre</th><th>RIF</th><th>Teléfono</th><th>Acciones</th></tr></thead>
+                        <tbody id="tabla-clientes"></tbody>
+                    </table>
+                </div>
+            </section>
         </div>
-    </div>
-
-    <div class="footer-credit">
-        &copy; 2026 YOU CONTROL. Diseñado y Desarrollado por <b>Sistematikos - Frank Hernandez</b>. Todos los derechos reservados.
-    </div>
-
+    </main>
     <script type="module" src="js/sys_v2_clt.js"></script>
-    
-    <script>
-        document.addEventListener('contextmenu', e => e.preventDefault());
-        document.addEventListener('keydown', e => {
-            if (e.key === 'F12' || 
-                (e.ctrlKey && e.key === 'u') || 
-                (e.ctrlKey && e.shiftKey && e.key === 'I') ||
-                (e.ctrlKey && e.shiftKey && e.key === 'J')) {
-                e.preventDefault();
-            }
-        });
-    </script>
 </body>
 </html>
