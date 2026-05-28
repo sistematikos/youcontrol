@@ -14,6 +14,8 @@
         .btn-add { background: #1E293B; color: white; padding: 12px; border: none; border-radius: 6px; width: 100%; cursor: pointer; margin-top: 10px; }
         .btn-save { background: #10B981; color: white; padding: 15px; border: none; border-radius: 6px; width: 100%; font-weight: bold; cursor: pointer; }
         .table-container { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        /* Ocultar inputs auxiliares necesarios para el JS */
+        .hidden { display: none; }
     </style>
 </head>
 <body>
@@ -31,14 +33,19 @@
                 <input type="text" id="comp-sku" placeholder="SKU">
                 <input type="text" id="comp-nombre" placeholder="Nombre">
                 <input type="number" id="comp-cantidad" placeholder="Cantidad">
+                
+                <input type="text" id="comp-barras" class="hidden">
+                <input type="text" id="comp-stock-viejo" class="hidden">
+                <input type="date" id="comp-fecha" class="hidden">
+                
                 <button class="btn-add" onclick="window.agregarALista()">AGREGAR A LISTA</button>
             </section>
 
             <section class="card">
                 <h3>Costos y Precios</h3>
-                <input type="number" id="comp-costo" placeholder="Costo USD">
-                <input type="number" id="comp-ganancia" placeholder="% Ganancia">
-                <input type="number" id="comp-precio" placeholder="Precio $">
+                <input type="number" id="comp-costo" placeholder="Costo USD" step="0.01">
+                <input type="number" id="comp-ganancia" placeholder="% Ganancia" step="0.1">
+                <input type="number" id="comp-precio" placeholder="Precio $" step="0.01">
                 <input type="text" id="comp-precio-bs" placeholder="Precio Bs." readonly>
             </section>
         </div>
