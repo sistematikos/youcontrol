@@ -79,3 +79,35 @@
                 </div>
                 <div style="display: grid; grid-template-columns: 100px 1fr; gap: 10px; align-items: center; margin-bottom: 10px;">
                     <label>Precio $:</label><input type="number" id="comp-precio" placeholder="0.00" step="0.01">
+                </div>
+                <div style="display: grid; grid-template-columns: 100px 1fr; gap: 10px; align-items: center;">
+                    <label>Precio Bs:</label>
+                    <input type="text" id="comp-precio-bs" placeholder="0.00" 
+                           oninput="window.calcularDesdeBs()" 
+                           style="background:#FFF; font-weight:700; border: 1px solid var(--emerald);">
+                </div>
+            </section>
+        </div>
+
+        <section class="card border-amber">
+            <h3>Lista de Ingreso</h3>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem;">
+                <thead>
+                    <tr style="color: #64748B; border-bottom: 2px solid #F1F5F9;">
+                        <th style="padding:10px; text-align:left;">SKU</th>
+                        <th style="text-align:left;">Producto</th>
+                        <th style="text-align:left;">Cant.</th>
+                        <th style="text-align:left;">Precio</th>
+                        <th>X</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-items-compra"></tbody>
+            </table>
+            <br>
+            <button class="btn-save" onclick="window.procesarIngresoMercancia()">GUARDAR ENTRADA DE MERCANCÍA</button>
+        </section>
+    </main>
+
+    <script type="module" src="./js/sys_v3_comp.js"></script>
+</body>
+</html>
