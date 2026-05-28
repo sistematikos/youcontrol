@@ -11,25 +11,29 @@
             --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
             --text-dark: #1E293B;
             --emerald: #10B981;
+            --sky: #0EA5E9;
+            --amber: #F59E0B;
             --border: #E2E8F0;
         }
         body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 20px 0; min-height: 100vh; color: var(--text-dark); }
         .layout-width { width: 92%; max-width: 1200px; margin: 0 auto; }
 
-        /* CABECERA */
+        /* CABECERA IDÉNTICA */
         .header-panel { background: #ffffff; padding: 15px 30px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; height: 80px; }
         .header-left { display: flex; align-items: center; gap: 20px; }
         .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 8px 16px; border-radius: 12px; text-decoration: none; font-size: 0.8rem; font-weight: 700; border: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
         .page-title { font-size: 1.4rem; font-weight: 700; margin: 0; }
         .logo-header { height: 60px; width: auto; object-fit: contain; }
 
-        /* TARJETAS CON BORDES REDONDEADOS Y SOMBRA */
+        /* TARJETAS CON BORDE IZQUIERDO */
         .grid-top { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-        .card { background: white; padding: 20px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.04); position: relative; }
-        
+        .card { background: white; padding: 20px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.04); position: relative; border-left: 6px solid var(--border); }
+        .border-sky { border-left-color: var(--sky); }
+        .border-emerald { border-left-color: var(--emerald); }
+        .border-amber { border-left-color: var(--amber); }
+
         input { width: 100%; padding: 12px; margin: 6px 0; border: 1px solid var(--border); border-radius: 10px; box-sizing: border-box; font-family: 'Poppins'; }
         
-        /* BOTONES */
         .btn-add { background: var(--text-dark); color: white; padding: 12px; border: none; border-radius: 10px; width: 100%; cursor: pointer; font-weight: 600; margin-top: 10px; }
         .btn-save { background: var(--emerald); color: white; padding: 15px; border: none; border-radius: 12px; width: 100%; font-weight: 800; cursor: pointer; }
         
@@ -45,14 +49,14 @@
     <main class="layout-width">
         <header class="header-panel">
             <div class="header-left">
-                <a href="sys_v1_menu.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
+                <a href="index_menu.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
                 <h1 class="page-title">Entrada de Mercancía</h1>
             </div>
             <img src="img/logo.png" class="logo-header">
         </header>
 
         <div class="grid-top">
-            <section class="card">
+            <section class="card border-sky">
                 <h3>Datos Producto</h3>
                 <input type="text" id="buscador-dinamico" placeholder="Código o Nombre..." autocomplete="off">
                 <div id="dropdown-resultados"></div>
@@ -65,7 +69,7 @@
                 <button class="btn-add" onclick="window.agregarALista()">AGREGAR A LISTA</button>
             </section>
 
-            <section class="card">
+            <section class="card border-emerald">
                 <h3>Costos y Precios</h3>
                 <div style="display: grid; grid-template-columns: 100px 1fr; gap: 10px; align-items: center; margin-bottom: 10px;">
                     <label>Costo USD:</label><input type="number" id="comp-costo" placeholder="0.00" step="0.01">
@@ -75,35 +79,3 @@
                 </div>
                 <div style="display: grid; grid-template-columns: 100px 1fr; gap: 10px; align-items: center; margin-bottom: 10px;">
                     <label>Precio $:</label><input type="number" id="comp-precio" placeholder="0.00" step="0.01">
-                </div>
-                <div style="display: grid; grid-template-columns: 100px 1fr; gap: 10px; align-items: center;">
-                    <label>Precio Bs:</label>
-                    <input type="text" id="comp-precio-bs" placeholder="0.00" 
-                           oninput="window.calcularDesdeBs()" 
-                           style="background:#FFF; font-weight:700; border: 1px solid var(--emerald);">
-                </div>
-            </section>
-        </div>
-
-        <section class="card">
-            <h3>Lista de Ingreso</h3>
-            <table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem;">
-                <thead>
-                    <tr style="color: #64748B; border-bottom: 2px solid #F1F5F9;">
-                        <th style="padding:10px; text-align:left;">SKU</th>
-                        <th style="text-align:left;">Producto</th>
-                        <th style="text-align:left;">Cant.</th>
-                        <th style="text-align:left;">Precio</th>
-                        <th>X</th>
-                    </tr>
-                </thead>
-                <tbody id="tabla-items-compra"></tbody>
-            </table>
-            <br>
-            <button class="btn-save" onclick="window.procesarIngresoMercancia()">GUARDAR ENTRADA DE MERCANCÍA</button>
-        </section>
-    </main>
-
-    <script type="module" src="./js/sys_v3_comp.js"></script>
-</body>
-</html>
