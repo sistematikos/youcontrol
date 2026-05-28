@@ -1,28 +1,20 @@
-/**
- * YOU CONTROL - SISTEMATIKOS
- * Módulo de Gestión de Inventario (sys_v1_inv.js)
- * Versión optimizada sin gestión de tasa
- */
-
 import { db } from './firebase-config.js'; 
-import { 
-    collection, onSnapshot, doc, deleteDoc 
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// --- MOTOR DE DETECCIÓN DINÁMICA ---
-const getEmpresaId = () => {
-    const idGuardado = localStorage.getItem('youcontrol_empresa_id');
-    const idRespaldo = "sUhfZI9Fy3M9UlInTYw2wFWZmB12"; 
-    return idGuardado || idRespaldo;
-};
-
-const USER_ID = getEmpresaId();
-
-// --- ELEMENTOS DEL DOM ---
+const USER_ID = localStorage.getItem('youcontrol_empresa_id') || "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
 const cuerpoTabla = document.getElementById('cuerpo-tabla');
 const statusBar = document.getElementById('status-bar-inv');
+const buscadorInv = document.getElementById('buscador-inv');
 
-// --- STATUS BAR MEJORADO ---
+// --- BUSCADOR ---
+buscadorInv.addEventListener('input', (e) => {
+    const termino = e.target.value.toLowerCase();
+    const filas = document.querySelectorAll('#cuerpo-tabla tr');
+    filas.forEach(fila => {
+        fila.style.display = fila.textContent.toLowerCase().includes(termino) ? '' : 'none';
+    });
+});
+
 function mostrarStatusBar(msg, tipo) { 
     if (statusBar) {
         statusBar.innerText = msg;
@@ -32,39 +24,15 @@ function mostrarStatusBar(msg, tipo) {
     }
 }
 
-// ==========================================
-// INICIALIZACIÓN
-// ==========================================
 async function inicializarInventario() {
-    mostrarStatusBar("Cargando inventario...", "loading");
-    
-    try {
-        const productosCollection = collection(db, "usuarios", USER_ID, "productos");
-        
-        onSnapshot(productosCollection, (snapshot) => {
-            if (snapshot.empty) {
-                mostrarStatusBar("Inventario vacío.", "error");
-            } else {
-                mostrarStatusBar("¡Conexión exitosa! Productos: " + snapshot.size, "success");
-            }
-            
-            let listaProductos = [];
-            snapshot.forEach(doc => {
-                listaProductos.push({ id: doc.id, ...doc.data() });
-            });
-            renderizarTabla(listaProductos);
-        }, (error) => {
-            mostrarStatusBar("Error Firebase: " + error.message, "error");
-        });
-
-    } catch (e) {
-        mostrarStatusBar("Error crítico: " + e.message, "error");
-    }
+    onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
+        let listaProductos = [];
+        snapshot.forEach(doc => listaProductos.push({ id: doc.id, ...doc.data() }));
+        renderizarTabla(listaProductos);
+        mostrarStatusBar(`Total: ${snapshot.size} productos`, "success");
+    });
 }
 
-// ==========================================
-// FUNCIONES DE UI
-// ==========================================
 function renderizarTabla(productos) {
     if (!cuerpoTabla) return;
     cuerpoTabla.innerHTML = productos.map(p => `
@@ -76,24 +44,14 @@ function renderizarTabla(productos) {
             <td>${p.ganancia || 0}%</td>
             <td>$ ${parseFloat(p.precio || 0).toFixed(2)}</td>
             <td>${p.stock || 0}</td>
-            <td>
-                <button onclick="window.eliminarProducto('${p.id}', '${p.nombre}')">🗑️</button>
-            </td>
+            <td><button onclick="window.eliminarProducto('${p.id}', '${p.nombre}')">🗑️</button></td>
         </tr>
     `).join('');
 }
 
-// ==========================================
-// CRUD
-// ==========================================
-window.eliminarProducto = async function(id, nombre) {
+window.eliminarProducto = async (id, nombre) => {
     if (confirm(`¿Eliminar ${nombre}?`)) {
-        try {
-            await deleteDoc(doc(db, "usuarios", USER_ID, "productos", id));
-            mostrarStatusBar("Producto eliminado con éxito.", "success");
-        } catch (e) {
-            mostrarStatusBar("Error al eliminar: " + e.message, "error");
-        }
+        await deleteDoc(doc(db, "usuarios", USER_ID, "productos", id));
     }
 };
 
