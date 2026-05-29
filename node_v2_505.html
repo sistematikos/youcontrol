@@ -5,20 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Catálogo Digital | Sistematikos</title>
     <style>
-        :root { --bg-light: #F8FAFC; --card-bg: #FFFFFF; --text-main: #1E293B; --electric: #3B82F6; --emerald: #10B981; --border: #E2E8F0; }
+        :root { --bg-light: #F8FAFC; --text-main: #1E293B; --electric: #3B82F6; --emerald: #10B981; --border: #E2E8F0; }
         body { font-family: 'Poppins', sans-serif; background: var(--bg-light); margin: 0; padding-bottom: 140px; color: var(--text-main); }
 
-        /* Cabecera con 4 tarjetas */
+        /* Cabecera de 4 tarjetas */
         .app-header { padding: 15px; position: sticky; top: 0; z-index: 100; background: var(--bg-light); }
-        .header-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-        .header-card { background: white; padding: 10px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); display: flex; align-items: center; justify-content: center; min-height: 45px; }
+        .header-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .header-card { background: white; padding: 10px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); display: flex; align-items: center; justify-content: center; min-height: 50px; }
         
         .logo-mini { height: 30px; width: auto; }
         .tasa-card { flex-direction: column; }
         .tasa-label { font-size: 0.5rem; color: #64748B; font-weight: 700; }
         .tasa-val { font-size: 0.85rem; font-weight: 800; color: var(--electric); }
-        
-        .search-bar { width: 100%; padding: 12px 15px; border: 1px solid var(--border); border-radius: 12px; background: white; box-sizing: border-box; font-size: 0.9rem; }
+        #buscador-prod { border: none; width: 100%; font-size: 0.85rem; outline: none; padding: 5px; }
 
         .container { padding: 15px; max-width: 800px; margin: auto; }
         .grid-catalog { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
@@ -42,9 +41,8 @@
                 <span class="tasa-label">TASA BCV</span>
                 <span class="tasa-val" id="tasa-cliente">0.00</span>
             </div>
-            <div class="header-card"><span style="font-size: 0.7rem; font-weight:700; color:var(--electric);">CATÁLOGO V2</span></div>
+            <div class="header-card"><input type="text" id="buscador-prod" placeholder="🔍 Buscar..."></div>
         </div>
-        <input type="text" id="buscador-prod" placeholder="🔍 Buscar productos..." class="search-bar">
     </header>
 
     <main class="container"><div class="grid-catalog" id="contenedor-catalogo"></div></main>
