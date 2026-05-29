@@ -66,22 +66,7 @@ function actualizarFooter() {
 
     const footer = document.getElementById('cart-footer');
     footer.style.display = items > 0 ? 'flex' : 'none';
-
-    // Calculamos el total en Bs usando la tasaActual
-    const totalBs = (totalUsd * tasaActual).toLocaleString('es-VE', { 
-        minimumFractionDigits: 2, 
-        maximumFractionDigits: 2 
-    });
-
-    // Actualizamos valores
     document.getElementById('cart-total-usd').innerText = totalUsd.toFixed(2);
-    
-    // Mostramos en Bs (asegúrate de que en el HTML exista este ID)
-    const displayTotalBs = document.getElementById('cart-total-bs');
-    if (displayTotalBs) {
-        displayTotalBs.innerText = totalBs;
-    }
-    
     document.getElementById('cart-count').innerText = items;
 }
 
