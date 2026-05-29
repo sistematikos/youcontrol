@@ -36,6 +36,31 @@ function iniciarCatalogo() {
     });
 }
 
+// Función para obtener el nombre desde la licencia guardada
+function obtenerNombreEmpresa() {
+    try {
+        const token = localStorage.getItem('licencia_youcontrol');
+        if (token) {
+            const data = JSON.parse(atob(token));
+            const nombre = data.n || "Mi Empresa";
+            // Asigna el nombre al elemento en tu cabecera
+            const nombreEl = document.getElementById('nombre-empresa');
+            if (nombreEl) {
+                nombreEl.innerText = nombre.toUpperCase();
+            }
+        }
+    } catch (e) {
+        console.error("Error al cargar nombre de licencia:", e);
+    }
+}
+
+// Llama a esta función dentro de tu iniciarCatalogo()
+function iniciarCatalogo() {
+    obtenerNombreEmpresa(); // <-- AGREGA ESTA LÍNEA AQUÍ
+    
+    // ... el resto de tu código de onSnapshot sigue igual ...
+}
+
 function renderizarCatalogo(lista) {
     const contenedor = document.getElementById('contenedor-catalogo');
     contenedor.innerHTML = lista.filter(p => parseInt(p.stock || 0) > 0).map(p => {
