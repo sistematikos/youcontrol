@@ -7,17 +7,23 @@ const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 
 let tasaActual = 1, carrito = {}, productosGlobales = [];
 
+// Asegúrate de tener este evento en tu función iniciarCatalogo()
 function iniciarCatalogo() {
-    if (!USER_ID) { console.error("No hay ID de empresa"); return; }
+    // ... (resto de tu código anterior) ...
 
-    // 1. Cargar Nombre de la licencia
-    if (token) {
-        try {
-            const data = JSON.parse(atob(token));
-            document.getElementById('nombre-empresa').innerText = (data.n || "EMPRESA").toUpperCase();
-        } catch(e) { console.log("Error nombre", e); }
-    }
-
+    // EL BUSCADOR DEBE ESCUCHAR LA LISTA GLOBAL
+    document.getElementById('buscador-prod').addEventListener('input', (e) => {
+        const busqueda = e.target.value.toLowerCase();
+        
+        // Filtramos la lista global de productos
+        const productosFiltrados = productosGlobales.filter(p => 
+            p.nombre.toLowerCase().includes(busqueda)
+        );
+        
+        // Volvemos a renderizar solo los filtrados
+        renderizarCatalogo(productosFiltrados);
+    });
+}
     // 2. Cargar Tasa BCV
     onSnapshot(doc(db, "usuarios", USER_ID), (snap) => {
         if (snap.exists()) {
