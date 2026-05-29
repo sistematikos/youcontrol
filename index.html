@@ -2,18 +2,55 @@
 <html lang="es">
 <head>
 
-    <script>
-    // --- GUARD DE AUTENTICACIÓN AUTOMÁTICA ---
-    (function() {
-        // Verificamos si existe la bandera de licencia válida o el ID de empresa
-        const licenciaGuardada = localStorage.getItem('licencia_youcontrol');
-        
-        if (licenciaGuardada) {
-            // Si ya existe licencia, redirigimos al menú inmediatamente
-            window.location.replace('sys_v1_menu.html');
+   <script>
+        let deferredPrompt;
+        const btnInstall = document.getElementById('btnInstallPWA');
+        const btnEnter = document.getElementById('btnEnterSystem');
+
+        // Registro de Service Worker
+        if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
+
+        // --- SOLUCIÓN: Verificación al cargar ---
+        window.addEventListener('load', () => {
+            // Si ya hay una licencia validada, activar botón inmediatamente
+            if (localStorage.getItem('licencia_validada') === 'true') {
+                activarIngreso();
+            }
+        });
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+        });
+
+        btnInstall.addEventListener('click', () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') activarIngreso();
+                });
+            } else {
+                // Si no hay prompt, asumimos que ya está instalado o es iOS
+                activarIngreso(); 
+            }
+        });
+
+        window.addEventListener('appinstalled', () => activarIngreso());
+
+        function activarIngreso() {
+            btnInstall.disabled = true;
+            btnInstall.innerHTML = '<i class="fas fa-check"></i> SOFTWARE LISTO';
+            btnInstall.style.opacity = "0.5";
+            
+            btnEnter.disabled = false;
+            btnEnter.classList.add('active');
+            btnEnter.innerHTML = '<i class="fas fa-unlock"></i> INGRESAR AL SISTEMA';
+            
+            btnEnter.onclick = () => {
+                location.href = "sys_lic.html";
+            };
         }
-    })();
-</script>
+    </script>
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
