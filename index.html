@@ -3,54 +3,43 @@
 <head>
 
    <script>
-        let deferredPrompt;
-        const btnInstall = document.getElementById('btnInstallPWA');
-        const btnEnter = document.getElementById('btnEnterSystem');
+    const btnInstall = document.getElementById('btnInstallPWA');
+    const btnEnter = document.getElementById('btnEnterSystem');
 
-        // Registro de Service Worker
-        if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
+    // Detectar si es iOS (iPhone/iPad)
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-        // --- SOLUCIÓN: Verificación al cargar ---
-        window.addEventListener('load', () => {
-            // Si ya hay una licencia validada, activar botón inmediatamente
-            if (localStorage.getItem('licencia_validada') === 'true') {
-                activarIngreso();
-            }
-        });
+    window.addEventListener('load', () => {
+        // Si ya está validado, entrar directo
+        if (localStorage.getItem('licencia_validada') === 'true') {
+            activarIngreso();
+        }
+    });
 
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-        });
-
-        btnInstall.addEventListener('click', () => {
+    btnInstall.addEventListener('click', () => {
+        if (isIOS) {
+            alert("Para instalar en iPhone: \n1. Toca el botón 'Compartir' (el cuadrado con flecha abajo).\n2. Desliza hacia abajo y selecciona 'Añadir a pantalla de inicio'.\n3. Una vez hecho, abre el icono que aparecerá en tu escritorio.");
+            // Permitimos el acceso aunque no sea una instalación "técnica" perfecta
+            activarIngreso();
+        } else {
+            // Lógica normal para Android/PC
             if (deferredPrompt) {
                 deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') activarIngreso();
-                });
             } else {
-                // Si no hay prompt, asumimos que ya está instalado o es iOS
-                activarIngreso(); 
+                activarIngreso();
             }
-        });
-
-        window.addEventListener('appinstalled', () => activarIngreso());
-
-        function activarIngreso() {
-            btnInstall.disabled = true;
-            btnInstall.innerHTML = '<i class="fas fa-check"></i> SOFTWARE LISTO';
-            btnInstall.style.opacity = "0.5";
-            
-            btnEnter.disabled = false;
-            btnEnter.classList.add('active');
-            btnEnter.innerHTML = '<i class="fas fa-unlock"></i> INGRESAR AL SISTEMA';
-            
-            btnEnter.onclick = () => {
-                location.href = "sys_lic.html";
-            };
         }
-    </script>
+    });
+
+    function activarIngreso() {
+        btnInstall.disabled = true;
+        btnInstall.innerHTML = '<i class="fas fa-check"></i> SOFTWARE LISTO';
+        btnEnter.disabled = false;
+        btnEnter.classList.add('active');
+        btnEnter.innerHTML = '<i class="fas fa-unlock"></i> INGRESAR AL SISTEMA';
+        btnEnter.onclick = () => { location.href = "sys_lic.html"; };
+    }
+</script>
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
