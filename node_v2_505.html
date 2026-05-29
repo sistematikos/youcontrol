@@ -3,28 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catálogo Digital</title>
+    <title>Catálogo Digital | Sistematikos</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         :root { --bg-light: #F8FAFC; --card-bg: #FFFFFF; --text-main: #1E293B; --electric: #3B82F6; --emerald: #10B981; --border: #E2E8F0; }
         body { font-family: 'Poppins', sans-serif; background: var(--bg-light); margin: 0; padding-bottom: 140px; color: var(--text-main); }
-        .app-header { background: white; padding: 15px; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--border); }
+
+        .app-header { background: white; padding: 15px; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
         .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .logo-mini { height: 35px; width: auto; }
         .tasa-box { background: #F1F5F9; padding: 6px 14px; border-radius: 10px; text-align: right; border: 1px solid var(--border); }
         .tasa-label { font-size: 0.6rem; color: #64748B; font-weight: 700; display: block; }
         .tasa-val { font-size: 0.95rem; font-weight: 800; color: var(--electric); }
         .search-bar { width: 100%; padding: 12px 15px; border: 1px solid var(--border); border-radius: 12px; font-family: inherit; font-size: 0.9rem; }
-        .category-scroll { display: flex; gap: 8px; padding: 10px 15px; overflow-x: auto; background: white; border-bottom: 1px solid var(--border); }
-        .cat-btn { padding: 6px 14px; border-radius: 15px; border: 1px solid var(--border); background: white; font-size: 0.75rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
-        .cat-btn.active { background: var(--electric); color: white; border-color: var(--electric); }
+
         .container { padding: 15px; max-width: 800px; margin: auto; }
         .grid-catalog { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-        .card-prod { background: var(--card-bg); border-radius: 12px; padding: 14px; border: 1px solid var(--border); border-left: 6px solid var(--emerald); display: flex; flex-direction: column; gap: 8px; }
-        .line-1 h3 { margin: 0; font-size: 0.85rem; font-weight: 700; }
+        
+        .card-prod { background: var(--card-bg); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--border); border-left: 6px solid var(--emerald); box-shadow: 0 2px 4px rgba(0,0,0,0.03); transition: transform 0.2s; }
+        .card-prod:hover { transform: translateY(-3px); }
+        .line-1 h3 { margin: 0; font-size: 0.85rem; font-weight: 700; color: #0F172A; }
+        .price-usd { font-size: 0.75rem; color: #64748B; }
         .price-bs { font-size: 1.1rem; font-weight: 900; color: var(--emerald); display: block; }
         .line-3 { display: flex; align-items: center; justify-content: space-between; margin-top: 5px; }
-        .btn-qty { background: #F8FAFC; border: 1px solid var(--border); width: 35px; height: 35px; border-radius: 10px; cursor: pointer; }
+        .btn-qty { background: #F8FAFC; border: 1px solid var(--border); width: 35px; height: 35px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+        
+        /* Footer actualizado */
         #cart-footer { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 380px; background: white; padding: 15px 20px; border-radius: 20px; display: none; align-items: center; justify-content: space-between; box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 1000; border: 1px solid var(--border); }
+        .total-box { display: flex; flex-direction: column; }
+        .total-box span { font-weight: 800; color: var(--text-main); }
+        .total-box small { font-size: 0.75rem; color: var(--emerald); font-weight: 700; }
         .btn-whatsapp { background: var(--emerald); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 800; cursor: pointer; }
     </style>
 </head>
@@ -37,17 +45,21 @@
                 <span class="tasa-val" id="tasa-cliente">0.00</span>
             </div>
         </div>
-        <input type="text" id="buscador-prod" placeholder="🔍 Buscar..." class="search-bar">
-        <div class="category-scroll" id="lista-categorias"></div>
+        <input type="text" id="buscador-prod" placeholder="🔍 Buscar productos..." class="search-bar">
     </header>
-    <main class="container"><div class="grid-catalog" id="contenedor-catalogo"></div></main>
+
+    <main class="container">
+        <div class="grid-catalog" id="contenedor-catalogo"></div>
+    </main>
+
     <div id="cart-footer">
         <div class="total-box">
-            <span>$<span id="cart-total-usd">0.00</span></span><br>
+            <span>$<span id="cart-total-usd">0.00</span></span>
             <small><span id="cart-total-bs">0.00</span> Bs</small>
         </div>
         <button class="btn-whatsapp" onclick="enviarPedido()">Pedir (<span id="cart-count">0</span>)</button>
     </div>
+
     <script type="module" src="js/catalogo.js"></script>
 </body>
 </html>
