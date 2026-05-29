@@ -8,7 +8,6 @@ let tasaActual = 1, carrito = {}, productosGlobales = [];
 function iniciarCatalogo() {
     if (!USER_ID) return;
 
-    // Cargar nombre de empresa
     if (token) {
         try {
             const data = JSON.parse(atob(token));
@@ -16,7 +15,6 @@ function iniciarCatalogo() {
         } catch(e) {}
     }
 
-    // Datos de Firebase
     onSnapshot(doc(db, "usuarios", USER_ID), (snap) => {
         if (snap.exists()) {
             tasaActual = parseFloat(snap.data().tasa_bcv || 1);
@@ -31,7 +29,6 @@ function iniciarCatalogo() {
         renderizarCatalogo(productosGlobales);
     });
 
-    // Buscador corregido
     document.getElementById('buscador-prod').addEventListener('input', (e) => {
         const busqueda = e.target.value.toLowerCase();
         renderizarCatalogo(productosGlobales.filter(p => p.nombre.toLowerCase().includes(busqueda)));
@@ -68,5 +65,4 @@ function actualizarFooter() {
     document.getElementById('cart-count').innerText = items;
 }
 
-// Ejecutar al cargar la página
 document.addEventListener('DOMContentLoaded', iniciarCatalogo);
