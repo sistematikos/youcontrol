@@ -8,29 +8,28 @@
         :root { --bg-light: #F8FAFC; --card-bg: #FFFFFF; --text-main: #1E293B; --electric: #3B82F6; --emerald: #10B981; --border: #E2E8F0; }
         body { font-family: 'Poppins', sans-serif; background: var(--bg-light); margin: 0; padding-bottom: 140px; color: var(--text-main); }
 
-        /* Cabecera con tarjetas */
-        .app-header { padding: 15px; position: sticky; top: 0; z-index: 100; }
-        .header-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
-        .header-card { background: white; padding: 12px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; }
-        .tasa-card { flex-direction: column; text-align: center; }
-        .logo-mini { height: 35px; width: auto; }
-        .tasa-label { font-size: 0.6rem; color: #64748B; font-weight: 700; display: block; }
-        .tasa-val { font-size: 0.95rem; font-weight: 800; color: var(--electric); }
-        .search-bar { width: 100%; padding: 12px 15px; border: 1px solid var(--border); border-radius: 12px; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05); box-sizing: border-box; }
+        /* Cabecera con 4 tarjetas */
+        .app-header { padding: 15px; position: sticky; top: 0; z-index: 100; background: var(--bg-light); }
+        .header-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .header-card { background: white; padding: 10px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); display: flex; align-items: center; justify-content: center; min-height: 45px; }
+        
+        .logo-mini { height: 30px; width: auto; }
+        .tasa-card { flex-direction: column; }
+        .tasa-label { font-size: 0.5rem; color: #64748B; font-weight: 700; }
+        .tasa-val { font-size: 0.85rem; font-weight: 800; color: var(--electric); }
+        
+        .search-bar { width: 100%; padding: 12px 15px; border: 1px solid var(--border); border-radius: 12px; background: white; box-sizing: border-box; font-size: 0.9rem; }
 
         .container { padding: 15px; max-width: 800px; margin: auto; }
         .grid-catalog { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
         
-        .card-prod { background: var(--card-bg); border-radius: 12px; padding: 14px; border: 1px solid var(--border); border-left: 6px solid var(--emerald); display: flex; flex-direction: column; gap: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
-        .line-1 h3 { margin: 0; font-size: 0.85rem; font-weight: 700; color: #0F172A; }
-        .price-usd { font-size: 0.75rem; color: #64748B; }
+        .card-prod { background: white; border-radius: 12px; padding: 14px; border: 1px solid var(--border); border-left: 6px solid var(--emerald); display: flex; flex-direction: column; gap: 8px; }
+        .line-1 h3 { margin: 0; font-size: 0.85rem; font-weight: 700; }
         .price-bs { font-size: 1.1rem; font-weight: 900; color: var(--emerald); display: block; }
         .line-3 { display: flex; align-items: center; justify-content: space-between; margin-top: 5px; }
-        .btn-qty { background: #F8FAFC; border: 1px solid var(--border); width: 35px; height: 35px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+        .btn-qty { background: #F8FAFC; border: 1px solid var(--border); width: 35px; height: 35px; border-radius: 10px; cursor: pointer; }
         
         #cart-footer { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 380px; background: white; padding: 15px 20px; border-radius: 20px; display: none; align-items: center; justify-content: space-between; box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 1000; border: 1px solid var(--border); }
-        .total-box span { font-weight: 800; }
-        .total-box small { font-size: 0.75rem; color: var(--emerald); font-weight: 700; }
         .btn-whatsapp { background: var(--emerald); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 800; cursor: pointer; }
     </style>
 </head>
@@ -38,10 +37,12 @@
     <header class="app-header">
         <div class="header-cards">
             <div class="header-card"><img src="img/logo.png" alt="Logo" class="logo-mini"></div>
+            <div class="header-card"><span style="font-weight:800; font-size:0.8rem;">SISTEMATIKOS</span></div>
             <div class="header-card tasa-card">
                 <span class="tasa-label">TASA BCV</span>
                 <span class="tasa-val" id="tasa-cliente">0.00</span>
             </div>
+            <div class="header-card"><span style="font-size: 0.7rem; font-weight:700; color:var(--electric);">CATÁLOGO V2</span></div>
         </div>
         <input type="text" id="buscador-prod" placeholder="🔍 Buscar productos..." class="search-bar">
     </header>
