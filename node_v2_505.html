@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catálogo Digital | Sistematikos</title>
+    <title>Catálogo Digital | ZeroKilometros</title>
     <style>
         :root { --bg-light: #F8FAFC; --text-main: #1E293B; --electric: #3B82F6; --emerald: #10B981; --border: #E2E8F0; }
         body { font-family: 'Poppins', sans-serif; background: var(--bg-light); margin: 0; padding-bottom: 140px; color: var(--text-main); }
@@ -35,12 +35,16 @@
 <body>
     <header class="app-header">
         <div class="header-cards">
+            <!-- 1. Logo -->
             <div class="header-card"><img src="img/logo.png" alt="Logo" class="logo-mini"></div>
-            <div class="header-card"><span style="font-weight:900; font-size:0.9rem; color:var(--electric);">SISTEMATIKOS</span></div>
+            <!-- 2. Nombre Empresa Licenciataria -->
+            <div class="header-card"><span style="font-weight:900; font-size:0.8rem; color:var(--electric);">ZEROKILOMETROS</span></div>
+            <!-- 3. Tasa -->
             <div class="header-card tasa-card">
                 <span class="tasa-label">TASA BCV</span>
                 <span class="tasa-val" id="tasa-cliente">0.00</span>
             </div>
+            <!-- 4. Buscador -->
             <div class="header-card"><input type="text" id="buscador-prod" placeholder="🔍 Buscar..."></div>
         </div>
     </header>
