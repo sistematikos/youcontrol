@@ -35,7 +35,7 @@ function renderizarCatalogo(lista) {
         if (parseInt(p.stock || 0) <= 0) return '';
         const precioBs = (p.precio * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 });
         return `
-        <div class="card-prod">
+        <div class="card-prod" id="card-${p.id}">
             <div class="line-1"><h3>${p.nombre}</h3></div>
             <div class="line-2">
                 <span class="price-usd">$${parseFloat(p.precio).toFixed(2)}</span>
@@ -43,7 +43,7 @@ function renderizarCatalogo(lista) {
             </div>
             <div class="line-3">
                 <button class="btn-qty" onclick="cambiarCant('${p.id}', -1, '${p.nombre}', ${p.precio}, ${p.stock})">-</button>
-                <span class="qty-val" id="qty-${p.id}">0</span>
+                <span class="qty-val" id="qty-${p.id}">${carrito[p.id]?.cantidad || 0}</span>
                 <button class="btn-qty" onclick="cambiarCant('${p.id}', 1, '${p.nombre}', ${p.precio}, ${p.stock})">+</button>
             </div>
         </div>`;
@@ -54,6 +54,11 @@ window.cambiarCant = (id, cambio, nombre, precio, stockMax) => {
     if (!carrito[id]) carrito[id] = { nombre, precio, cantidad: 0 };
     carrito[id].cantidad = Math.min(Math.max(carrito[id].cantidad + cambio, 0), stockMax);
     document.getElementById(`qty-${id}`).innerText = carrito[id].cantidad;
+    
+    // Feedback visual opcional: borde azul si hay cantidad > 0
+    const card = document.getElementById(`card-${id}`);
+    if(card) card.style.borderColor = carrito[id].cantidad > 0 ? '#3B82F6' : '#E2E8F0';
+    
     actualizarFooter();
 };
 
@@ -73,11 +78,8 @@ function actualizarFooter() {
         maximumFractionDigits: 2 
     });
 
-    // Actualizamos ambos valores en el footer
-    // Asegúrate de que en tu HTML existan los elementos cart-total-usd y cart-total-bs
     document.getElementById('cart-total-usd').innerText = totalUsd.toFixed(2);
     
-    // Aquí es donde mostramos los Bs en el botón o donde lo tengas configurado
     const displayTotal = document.getElementById('cart-total-bs');
     if (displayTotal) {
         displayTotal.innerText = totalBs;
@@ -85,6 +87,7 @@ function actualizarFooter() {
     
     document.getElementById('cart-count').innerText = items;
 }
+
 window.enviarPedido = () => {
     let m = "Hola, quisiera: \n";
     for(let id in carrito) if(carrito[id].cantidad > 0) m += `${carrito[id].cantidad}x ${carrito[id].nombre}\n`;
