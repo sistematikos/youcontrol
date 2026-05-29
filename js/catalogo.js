@@ -2,36 +2,43 @@ import { db } from './firebase-config.js';
 import { collection, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const USER_ID = localStorage.getItem('youcontrol_empresa_id') || "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
-let tasaActual = 1;
-let carrito = {};
-let productosGlobales = [];
+let tasaActual = 1, carrito = {}, productosGlobales = [];
 
 function iniciarCatalogo() {
+    // Escuchar cambios en el documento de la empresa (Nombre y Tasa)
     onSnapshot(doc(db, "usuarios", USER_ID), (snap) => {
         if (snap.exists()) {
-            tasaActual = parseFloat(snap.data().tasa_bcv || 1);
+            const data = snap.data();
+            
+            // Actualizar Tasa BCV
+            tasaActual = parseFloat(data.tasa_bcv || 1);
             document.getElementById('tasa-cliente').innerText = tasaActual.toLocaleString('es-VE', { minimumFractionDigits: 2 });
+            
+            // Actualizar Nombre de Empresa Dinámico
+            const nombreEmpresa = data.nombre_empresa || "Mi Empresa";
+            document.getElementById('nombre-empresa').innerText = nombreEmpresa.toUpperCase();
+            
             renderizarCatalogo(productosGlobales);
         }
     });
 
+    // Escuchar cambios en la colección de productos
     onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
         productosGlobales = [];
-        snapshot.forEach(doc => productosGlobales.push({ id: doc.id, ...doc.data() }));
+        snapshot.forEach(d => productosGlobales.push({ id: d.id, ...d.data() }));
         renderizarCatalogo(productosGlobales);
     });
 
+    // Evento del buscador
     document.getElementById('buscador-prod').addEventListener('input', (e) => {
         const busqueda = e.target.value.toLowerCase();
-        const filtrados = productosGlobales.filter(p => p.nombre.toLowerCase().includes(busqueda));
-        renderizarCatalogo(filtrados);
+        renderizarCatalogo(productosGlobales.filter(p => p.nombre.toLowerCase().includes(busqueda)));
     });
 }
 
 function renderizarCatalogo(lista) {
     const contenedor = document.getElementById('contenedor-catalogo');
-    contenedor.innerHTML = lista.map(p => {
-        if (parseInt(p.stock || 0) <= 0) return '';
+    contenedor.innerHTML = lista.filter(p => parseInt(p.stock || 0) > 0).map(p => {
         const precioBs = (p.precio * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 });
         return `
         <div class="card-prod" id="card-${p.id}">
@@ -52,9 +59,13 @@ function renderizarCatalogo(lista) {
 window.cambiarCant = (id, cambio, nombre, precio, stockMax) => {
     if (!carrito[id]) carrito[id] = { nombre, precio, cantidad: 0 };
     carrito[id].cantidad = Math.min(Math.max(carrito[id].cantidad + cambio, 0), stockMax);
-    document.getElementById(`qty-${id}`).innerText = carrito[id].cantidad;
+    
+    const qtyEl = document.getElementById(`qty-${id}`);
+    if (qtyEl) qtyEl.innerText = carrito[id].cantidad;
+    
     const card = document.getElementById(`card-${id}`);
-    if(card) card.style.borderColor = carrito[id].cantidad > 0 ? '#3B82F6' : '#E2E8F0';
+    if (card) card.style.borderColor = carrito[id].cantidad > 0 ? '#3B82F6' : '#10B981';
+    
     actualizarFooter();
 };
 
@@ -64,8 +75,10 @@ function actualizarFooter() {
         totalUsd += carrito[id].precio * carrito[id].cantidad;
         items += carrito[id].cantidad;
     }
+    
     const footer = document.getElementById('cart-footer');
     footer.style.display = items > 0 ? 'flex' : 'none';
+    
     document.getElementById('cart-total-usd').innerText = totalUsd.toFixed(2);
     document.getElementById('cart-total-bs').innerText = (totalUsd * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 });
     document.getElementById('cart-count').innerText = items;
