@@ -4,7 +4,7 @@ import { collection, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/
 const USER_ID = localStorage.getItem('youcontrol_empresa_id') || "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
 let tasaActual = 1;
 let carrito = {};
-let productosGlobales = []; // Guardamos aquí para buscar
+let productosGlobales = [];
 
 function iniciarCatalogo() {
     onSnapshot(doc(db, "usuarios", USER_ID), (snap) => {
@@ -21,7 +21,6 @@ function iniciarCatalogo() {
         renderizarCatalogo(productosGlobales);
     });
 
-    // Evento del buscador
     document.getElementById('buscador-prod').addEventListener('input', (e) => {
         const busqueda = e.target.value.toLowerCase();
         const filtrados = productosGlobales.filter(p => p.nombre.toLowerCase().includes(busqueda));
@@ -54,11 +53,8 @@ window.cambiarCant = (id, cambio, nombre, precio, stockMax) => {
     if (!carrito[id]) carrito[id] = { nombre, precio, cantidad: 0 };
     carrito[id].cantidad = Math.min(Math.max(carrito[id].cantidad + cambio, 0), stockMax);
     document.getElementById(`qty-${id}`).innerText = carrito[id].cantidad;
-    
-    // Feedback visual opcional: borde azul si hay cantidad > 0
     const card = document.getElementById(`card-${id}`);
     if(card) card.style.borderColor = carrito[id].cantidad > 0 ? '#3B82F6' : '#E2E8F0';
-    
     actualizarFooter();
 };
 
@@ -68,23 +64,10 @@ function actualizarFooter() {
         totalUsd += carrito[id].precio * carrito[id].cantidad;
         items += carrito[id].cantidad;
     }
-
     const footer = document.getElementById('cart-footer');
     footer.style.display = items > 0 ? 'flex' : 'none';
-
-    // Calculamos el total en Bs usando la tasaActual
-    const totalBs = (totalUsd * tasaActual).toLocaleString('es-VE', { 
-        minimumFractionDigits: 2, 
-        maximumFractionDigits: 2 
-    });
-
     document.getElementById('cart-total-usd').innerText = totalUsd.toFixed(2);
-    
-    const displayTotal = document.getElementById('cart-total-bs');
-    if (displayTotal) {
-        displayTotal.innerText = totalBs;
-    }
-    
+    document.getElementById('cart-total-bs').innerText = (totalUsd * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 });
     document.getElementById('cart-count').innerText = items;
 }
 
