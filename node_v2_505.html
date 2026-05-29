@@ -3,64 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catálogo Digital | ZeroKilometros</title>
+    <title>Catálogo Digital</title>
     <style>
         :root { --bg-light: #F8FAFC; --text-main: #1E293B; --electric: #3B82F6; --emerald: #10B981; --border: #E2E8F0; }
-        body { font-family: 'Poppins', sans-serif; background: var(--bg-light); margin: 0; padding-bottom: 140px; color: var(--text-main); }
-
-        /* Cabecera de 4 tarjetas */
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-light); margin: 0; padding-bottom: 140px; }
         .app-header { padding: 15px; position: sticky; top: 0; z-index: 100; background: var(--bg-light); }
         .header-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .header-card { background: white; padding: 10px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); display: flex; align-items: center; justify-content: center; min-height: 50px; }
-        
-        .logo-mini { height: 30px; width: auto; }
+        .header-card { background: white; padding: 10px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); display: flex; align-items: center; justify-content: center; min-height: 50px; text-align: center; }
         .tasa-card { flex-direction: column; }
         .tasa-label { font-size: 0.5rem; color: #64748B; font-weight: 700; }
         .tasa-val { font-size: 0.85rem; font-weight: 800; color: var(--electric); }
         #buscador-prod { border: none; width: 100%; font-size: 0.85rem; outline: none; padding: 5px; }
-
         .container { padding: 15px; max-width: 800px; margin: auto; }
         .grid-catalog { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-        
-        .card-prod { background: white; border-radius: 12px; padding: 14px; border: 1px solid var(--border); border-left: 6px solid var(--emerald); display: flex; flex-direction: column; gap: 8px; }
-        .line-1 h3 { margin: 0; font-size: 0.85rem; font-weight: 700; }
-        .price-bs { font-size: 1.1rem; font-weight: 900; color: var(--emerald); display: block; }
-        .line-3 { display: flex; align-items: center; justify-content: space-between; margin-top: 5px; }
-        .btn-qty { background: #F8FAFC; border: 1px solid var(--border); width: 35px; height: 35px; border-radius: 10px; cursor: pointer; }
-        
+        .card-prod { background: white; border-radius: 12px; padding: 14px; border: 1px solid var(--border); border-left: 6px solid var(--emerald); }
         #cart-footer { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 380px; background: white; padding: 15px 20px; border-radius: 20px; display: none; align-items: center; justify-content: space-between; box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 1000; border: 1px solid var(--border); }
-        .btn-whatsapp { background: var(--emerald); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 800; cursor: pointer; }
     </style>
 </head>
 <body>
     <header class="app-header">
         <div class="header-cards">
-            <!-- 1. Logo -->
-            <div class="header-card"><img src="img/logo.png" alt="Logo" class="logo-mini"></div>
-            <!-- 2. Nombre Empresa Licenciataria -->
-            <div class="header-card">
-               <span id="nombre-empresa" style="font-weight:900; font-size:0.8rem; color:var(--electric);">CARGANDO...</span>
-            </div>
-            <!-- 3. Tasa -->
+            <div class="header-card"><img src="img/logo.png" style="height:30px;" onerror="this.style.display='none'"></div>
+            <div class="header-card"><span id="nombre-empresa" style="font-weight:900; font-size:0.8rem; color:var(--electric);">Cargando...</span></div>
             <div class="header-card tasa-card">
                 <span class="tasa-label">TASA BCV</span>
                 <span class="tasa-val" id="tasa-cliente">0.00</span>
             </div>
-            <!-- 4. Buscador -->
             <div class="header-card"><input type="text" id="buscador-prod" placeholder="🔍 Buscar..."></div>
         </div>
     </header>
-
     <main class="container"><div class="grid-catalog" id="contenedor-catalogo"></div></main>
-
     <div id="cart-footer">
-        <div class="total-box">
-            <span>$<span id="cart-total-usd">0.00</span></span><br>
-            <small><span id="cart-total-bs">0.00</span> Bs</small>
-        </div>
-        <button class="btn-whatsapp" onclick="enviarPedido()">Pedir (<span id="cart-count">0</span>)</button>
+        <div class="total-box"><span>$<span id="cart-total-usd">0.00</span></span><br><small><span id="cart-total-bs">0.00</span> Bs</small></div>
+        <button onclick="enviarPedido()" style="background:var(--emerald); color:white; border:none; padding:10px 20px; border-radius:12px; font-weight:800;">Pedir (<span id="cart-count">0</span>)</button>
     </div>
-
     <script type="module" src="js/catalogo.js"></script>
 </body>
 </html>
