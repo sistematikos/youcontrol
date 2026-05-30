@@ -50,19 +50,19 @@ async function inicializarInventario() {
 function renderizarTabla(productos) {
     if (!cuerpoTabla) return;
     cuerpoTabla.innerHTML = productos.map(p => {
-        const precioUsd = parseFloat(p.precio || 0);
-        const precioBs = (precioUsd * tasaActual).toFixed(2).replace('.', ',');
-        
         return `
-        <tr>
+        <tr data-id="${p.id}">
             <td>${p.barras || 'N/A'}</td>
             <td>${p.sku || 'N/A'}</td>
             <td>${p.nombre || 'Sin nombre'}</td>
             <td>$ ${parseFloat(p.costo || 0).toFixed(2)}</td>
             <td>${p.ganancia || 0}%</td>
-            <td>$ ${precioUsd.toFixed(2)}<br><small style="color:gray;">${precioBs} Bs</small></td>
+            <td>$ ${parseFloat(p.precio || 0).toFixed(2)}</td>
             <td>${p.stock || 0}</td>
-            <td><button onclick="window.eliminarProducto('${p.id}', '${p.nombre}')">🗑️</button></td>
+            <td>
+                <button onclick="window.editarProducto('${p.id}', '${p.nombre}', ${p.precio}, ${p.stock})">✏️</button>
+                <button onclick="window.eliminarProducto('${p.id}', '${p.nombre}')">🗑️</button>
+            </td>
         </tr>
     `}).join('');
 }
