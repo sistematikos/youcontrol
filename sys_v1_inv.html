@@ -14,7 +14,7 @@
         .btn-back { background: #F1F5F9; color: #1E293B; padding: 8px 15px; border-radius: 8px; text-decoration: none; font-size: 0.8rem; font-weight: 700; border: 1px solid var(--border); }
         .card-container { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; }
         .table-container { width: 100%; overflow-x: auto; }
-        table { width: 100%; min-width: 900px; border-collapse: collapse; font-size: 0.85rem; }
+        table { width: 100%; min-width: 1000px; border-collapse: collapse; font-size: 0.85rem; }
         th { color: #64748B; padding: 12px; text-align: left; border-bottom: 2px solid var(--border); }
         td { padding: 12px; border-bottom: 1px solid #F1F5F9; }
         input, select { width: 90%; padding: 5px; border: 1px solid var(--border); border-radius: 4px; }
@@ -31,8 +31,6 @@
             <img src="img/logo.png" style="height: 60%;" onerror="this.style.display='none'">
         </header>
 
-        <div id="status-bar-inv" style="padding:10px; border-radius:8px; margin-bottom:10px; display:none;"></div>
-
         <section class="card-container" style="border-left: 6px solid var(--sky);">
             <input type="text" id="buscador-inv" placeholder="🔍 Buscar por Nombre, SKU o Barras...">
         </section>
@@ -41,7 +39,7 @@
             <div class="table-container">
                 <table>
                     <thead>
-                        <tr><th>Barras</th><th>SKU</th><th>Producto</th><th>Depto</th><th>Costo</th><th>%</th><th>Precio</th><th>Stock</th><th>Acción</th></tr>
+                        <tr><th>Barras</th><th>SKU</th><th>Producto</th><th>Depto</th><th>Costo</th><th>%</th><th>Precio ($)</th><th>Precio (Bs)</th><th>Stock</th><th>Acción</th></tr>
                     </thead>
                     <tbody id="cuerpo-tabla"></tbody>
                 </table>
@@ -57,7 +55,6 @@
         const cuerpoTabla = document.getElementById('cuerpo-tabla');
         let tasaActual = 1.00;
 
-        // Cargar tasa y productos
         async function init() {
             const userDoc = await getDoc(doc(db, "usuarios", USER_ID));
             if (userDoc.exists()) tasaActual = parseFloat(userDoc.data().tasa_bcv) || 1.00;
@@ -75,6 +72,7 @@
                             <td>$${parseFloat(p.costo || 0).toFixed(2)}</td>
                             <td>${p.ganancia || 0}%</td>
                             <td>$${parseFloat(p.precio || 0).toFixed(2)}</td>
+                            <td>${(parseFloat(p.precio || 0) * tasaActual).toFixed(2)} Bs</td>
                             <td>${p.stock || 0}</td>
                             <td>
                                 <button class="btn-act" onclick="window.editarProducto('${d.id}')">✏️</button>
@@ -85,41 +83,62 @@
             });
         }
 
+        window.calc = (origen) => {
+            let costo = parseFloat(document.getElementById('e-costo').value) || 0;
+            let ganancia = parseFloat(document.getElementById('e-ganancia').value) || 0;
+            let precio = parseFloat(document.getElementById('e-precio').value) || 0;
+            let bs = parseFloat(document.getElementById('e-bs').value) || 0;
+
+            if (origen === 'costo' || origen === 'ganancia') {
+                precio = costo + (costo * (ganancia / 100));
+                document.getElementById('e-precio').value = precio.toFixed(2);
+                document.getElementById('e-bs').value = (precio * tasaActual).toFixed(2);
+            } else if (origen === 'precio') {
+                ganancia = costo > 0 ? ((precio - costo) / costo) * 100 : 0;
+                document.getElementById('e-ganancia').value = ganancia.toFixed(1);
+                document.getElementById('e-bs').value = (precio * tasaActual).toFixed(2);
+            } else if (origen === 'bs') {
+                precio = bs / tasaActual;
+                ganancia = costo > 0 ? ((precio - costo) / costo) * 100 : 0;
+                document.getElementById('e-precio').value = precio.toFixed(2);
+                document.getElementById('e-ganancia').value = ganancia.toFixed(1);
+            }
+        };
+
         window.editarProducto = async (id) => {
             const fila = document.querySelector(`tr[data-id="${id}"]`);
-            const celdas = fila.cells;
-            const deptoActual = celdas[3].innerText;
-
+            const c = fila.cells;
             const deptoSnap = await getDocs(collection(db, "usuarios", USER_ID, "departamentos"));
             let opciones = '';
             deptoSnap.forEach(d => {
-                const nombreDepto = d.data().nombre;
-                opciones += `<option value="${nombreDepto}" ${nombreDepto === deptoActual ? 'selected' : ''}>${nombreDepto}</option>`;
+                const n = d.data().nombre;
+                opciones += `<option value="${n}" ${n === c[3].innerText ? 'selected' : ''}>${n}</option>`;
             });
 
             fila.innerHTML = `
-                <td><input type="text" id="edit-barras-${id}" value="${celdas[0].innerText}"></td>
-                <td><input type="text" id="edit-sku-${id}" value="${celdas[1].innerText}"></td>
-                <td><input type="text" id="edit-nombre-${id}" value="${celdas[2].innerText}"></td>
-                <td><select id="edit-depto-${id}">${opciones}</select></td>
-                <td><input type="number" id="edit-costo-${id}" value="${parseFloat(celdas[4].innerText.replace('$',''))}"></td>
-                <td><input type="number" id="edit-ganancia-${id}" value="${parseFloat(celdas[5].innerText)}"></td>
-                <td><input type="number" id="edit-precio-${id}" value="${parseFloat(celdas[6].innerText.replace('$',''))}"></td>
-                <td><input type="number" id="edit-stock-${id}" value="${parseInt(celdas[7].innerText)}"></td>
+                <td><input type="text" id="e-barras" value="${c[0].innerText}"></td>
+                <td><input type="text" id="e-sku" value="${c[1].innerText}"></td>
+                <td><input type="text" id="e-nombre" value="${c[2].innerText}"></td>
+                <td><select id="e-depto">${opciones}</select></td>
+                <td><input type="number" id="e-costo" value="${c[4].innerText.replace('$','')}" oninput="window.calc('costo')"></td>
+                <td><input type="number" id="e-ganancia" value="${c[5].innerText.replace('%','')}" oninput="window.calc('ganancia')"></td>
+                <td><input type="number" id="e-precio" value="${c[6].innerText.replace('$','')}" oninput="window.calc('precio')"></td>
+                <td><input type="number" id="e-bs" value="${c[7].innerText.replace(' Bs','')}" oninput="window.calc('bs')"></td>
+                <td><input type="number" id="e-stock" value="${c[8].innerText}"></td>
                 <td><button class="btn-act" onclick="window.guardarEdicion('${id}')">💾</button></td>
             `;
         };
 
         window.guardarEdicion = async (id) => {
             await updateDoc(doc(db, "usuarios", USER_ID, "productos", id), {
-                barras: document.getElementById(`edit-barras-${id}`).value,
-                sku: document.getElementById(`edit-sku-${id}`).value,
-                nombre: document.getElementById(`edit-nombre-${id}`).value,
-                departamento: document.getElementById(`edit-depto-${id}`).value,
-                costo: parseFloat(document.getElementById(`edit-costo-${id}`).value),
-                ganancia: parseFloat(document.getElementById(`edit-ganancia-${id}`).value),
-                precio: parseFloat(document.getElementById(`edit-precio-${id}`).value),
-                stock: parseInt(document.getElementById(`edit-stock-${id}`).value)
+                barras: document.getElementById('e-barras').value,
+                sku: document.getElementById('e-sku').value,
+                nombre: document.getElementById('e-nombre').value,
+                departamento: document.getElementById('e-depto').value,
+                costo: parseFloat(document.getElementById('e-costo').value),
+                ganancia: parseFloat(document.getElementById('e-ganancia').value),
+                precio: parseFloat(document.getElementById('e-precio').value),
+                stock: parseInt(document.getElementById('e-stock').value)
             });
             alert("Producto actualizado");
         };
