@@ -3,45 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Departamentos | You Control</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>DEPARTAMENTOS | YOU CONTROL</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { --main-blue: #001432; --accent: #0052D4; --bg: #F1F5F9; }
-        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; }
-        .page-wrapper { max-width: 800px; margin: 0 auto; width: 100%; box-sizing: border-box; padding: 20px; }
+        :root {
+            --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
+            --text-dark: #1E293B;
+            --sky: #0EA5E9; 
+            --emerald: #10B981; 
+            --border: #E2E8F0;
+        }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 10px 0; min-height: 100vh; color: var(--text-dark); }
+        .layout-width { width: 95%; max-width: 1200px; margin: 0 auto; }
         
-        /* Cabecera de Módulo Administrativo */
-        .admin-header { background: var(--main-blue); color: white; padding: 30px; border-radius: 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 20px; }
-        .icon-box { background: var(--accent); width: 60px; height: 60px; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+        .header-panel { background: #ffffff; padding: 0 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; height: 70px; }
+        .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 8px 15px; border-radius: 8px; text-decoration: none; font-size: 0.8rem; font-weight: 700; border: 1px solid var(--border); }
+        .logo-header { height: 90%; width: auto; object-fit: contain; }
         
-        /* Input y lista */
-        .form-dep { background: white; padding: 20px; border-radius: 15px; display: flex; gap: 10px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        input { flex: 1; padding: 12px; border: 2px solid #E2E8F0; border-radius: 10px; outline: none; }
-        .btn-create { background: var(--main-blue); color: white; border: none; padding: 0 25px; border-radius: 10px; font-weight: 700; cursor: pointer; }
+        .card-search { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); border-left: 6px solid var(--sky); margin-bottom: 20px; display: flex; gap: 10px; }
+        .card-list { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); border-left: 6px solid var(--emerald); }
         
-        /* Lista de Tarjetas (Diferente al catálogo) */
-        .grid-list { display: flex; flex-direction: column; gap: 10px; }
-        .item-dep { background: white; padding: 15px 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--accent); }
+        input#nombre-dep { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; }
+        .btn-save { background: var(--sky); color: white; border: none; padding: 0 20px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+        
+        .list-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #F1F5F9; align-items: center; }
+        .list-item:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
-    <div class="page-wrapper">
-        <div class="admin-header">
-            <div class="icon-box"><i class="fas fa-sitemap"></i></div>
-            <div>
-                <h1 style="margin:0; font-size: 1.5rem;">Departamentos</h1>
-                <p style="margin:0; opacity: 0.7;">Gestión interna de categorías de productos</p>
+    <main class="layout-width">
+        <header class="header-panel">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <a href="sys_v1_menu.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
+                <h1 style="font-size: 1.2rem; margin: 0;">Gestión de Departamentos</h1>
             </div>
-        </div>
+            <img src="img/logo.png" class="logo-header">
+        </header>
 
-        <div class="form-dep">
-            <input type="text" id="depNombre" placeholder="Nuevo nombre de departamento...">
-            <button class="btn-create" onclick="guardarDep()">GUARDAR</button>
-        </div>
+        <section class="card-search">
+            <input type="text" id="nombre-dep" placeholder="Nuevo nombre de departamento (Ej: Partes Eléctricas)">
+            <button class="btn-save" onclick="guardarDep()">GUARDAR</button>
+        </section>
 
-        <div id="contenedorDeps" class="grid-list"></div>
-    </div>
+        <section class="card-list">
+            <h3>Departamentos Creados</h3>
+            <div id="contenedor-deps"></div>
+        </section>
+    </main>
 
     <script type="module">
         import { db } from './js/firebase-config.js';
@@ -50,26 +59,26 @@
         const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 
         window.guardarDep = async () => {
-            const input = document.getElementById('depNombre');
-            if (!input.value) return;
-            await addDoc(collection(db, "usuarios", USER_ID, "departamentos"), { nombre: input.value });
+            const input = document.getElementById('nombre-dep');
+            if (!input.value.trim()) return;
+            await addDoc(collection(db, "usuarios", USER_ID, "departamentos"), { nombre: input.value.trim() });
             input.value = "";
         };
 
         onSnapshot(query(collection(db, "usuarios", USER_ID, "departamentos"), orderBy("nombre")), (snap) => {
-            const cont = document.getElementById('contenedorDeps');
+            const cont = document.getElementById('contenedor-deps');
             cont.innerHTML = "";
             snap.forEach(d => {
                 const dep = d.data();
                 cont.innerHTML += `
-                    <div class="item-dep">
-                        <span style="font-weight:600;">${dep.nombre}</span>
-                        <i class="fas fa-trash-alt" style="color:#94A3B8; cursor:pointer;" onclick="eliminar('${d.id}')"></i>
+                    <div class="list-item">
+                        <span><strong>${dep.nombre.toUpperCase()}</strong></span>
+                        <i class="fas fa-trash-alt" style="color:#F87171; cursor:pointer;" onclick="eliminar('${d.id}')"></i>
                     </div>`;
             });
         });
 
-        window.eliminar = async (id) => { if(confirm('¿Borrar?')) await deleteDoc(doc(db, "usuarios", USER_ID, "departamentos", id)); };
+        window.eliminar = async (id) => { if(confirm('¿Borrar departamento?')) await deleteDoc(doc(db, "usuarios", USER_ID, "departamentos", id)); };
     </script>
 </body>
 </html>
