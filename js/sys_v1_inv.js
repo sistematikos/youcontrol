@@ -1,5 +1,6 @@
 import { db } from './firebase-config.js'; 
 import { collection, onSnapshot, doc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const USER_ID = localStorage.getItem('youcontrol_empresa_id') || "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
 const cuerpoTabla = document.getElementById('cuerpo-tabla');
@@ -65,6 +66,32 @@ function renderizarTabla(productos) {
         </tr>
     `}).join('');
 }
+
+window.editarProducto = (id, nombre, precio, stock) => {
+    const fila = document.querySelector(`tr[data-id="${id}"]`);
+    fila.innerHTML = `
+        <td>${fila.cells[0].innerText}</td>
+        <td>${fila.cells[1].innerText}</td>
+        <td>${fila.cells[2].innerText}</td>
+        <td>${fila.cells[3].innerText}</td>
+        <td>${fila.cells[4].innerText}</td>
+        <td><input type="number" id="edit-precio-${id}" value="${precio}"></td>
+        <td><input type="number" id="edit-stock-${id}" value="${stock}"></td>
+        <td><button onclick="window.guardarEdicion('${id}')">💾</button></td>
+    `;
+};
+
+// Función para guardar cambios
+window.guardarEdicion = async (id) => {
+    const nuevoPrecio = document.getElementById(`edit-precio-${id}`).value;
+    const nuevoStock = document.getElementById(`edit-stock-${id}`).value;
+    
+    await updateDoc(doc(db, "usuarios", USER_ID, "productos", id), {
+        precio: parseFloat(nuevoPrecio),
+        stock: parseInt(nuevoStock)
+    });
+    alert("Producto actualizado");
+};
 
 window.eliminarProducto = async (id, nombre) => {
     if (confirm(`¿Eliminar ${nombre}?`)) {
