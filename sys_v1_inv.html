@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>INVENTARIO | YOU CONTROL</title>
+    <title>DEPARTAMENTOS | YOU CONTROL</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -18,18 +18,17 @@
         .layout-width { width: 95%; max-width: 1200px; margin: 0 auto; }
         
         .header-panel { background: #ffffff; padding: 0 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; height: 70px; }
-        .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 6px 12px; border-radius: 8px; text-decoration: none; font-size: 0.75rem; font-weight: 700; border: 1px solid var(--border); }
+        .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 8px 15px; border-radius: 8px; text-decoration: none; font-size: 0.8rem; font-weight: 700; border: 1px solid var(--border); }
         .logo-header { height: 90%; width: auto; object-fit: contain; }
         
-        /* Tarjetas con bordes Azul y Verde */
-        .card-search { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); border-left: 6px solid var(--sky); margin-bottom: 20px; }
-        .card-table { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); border-left: 6px solid var(--emerald); margin-bottom: 20px; }
+        .card-search { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); border-left: 6px solid var(--sky); margin-bottom: 20px; display: flex; gap: 10px; }
+        .card-list { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); border-left: 6px solid var(--emerald); }
         
-        input#buscador-inv { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; font-size: 0.9rem; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th { color: #64748B; border-bottom: 2px solid #F1F5F9; padding: 12px; text-align: left; }
-        td { padding: 12px; border-bottom: 1px solid #F1F5F9; }
-        #status-bar-inv { font-size: 0.75rem; padding: 8px; border-radius: 8px; margin-bottom: 10px; display: none; text-align: center; }
+        input#nombre-dep { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; }
+        .btn-save { background: var(--sky); color: white; border: none; padding: 0 20px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+        
+        .list-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #F1F5F9; align-items: center; }
+        .list-item:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
@@ -37,27 +36,49 @@
         <header class="header-panel">
             <div style="display: flex; align-items: center; gap: 15px;">
                 <a href="sys_v1_menu.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
-                <h1 style="font-size: 1.2rem; margin: 0;">Inventario Actual</h1>
+                <h1 style="font-size: 1.2rem; margin: 0;">Gestión de Departamentos</h1>
             </div>
             <img src="img/logo.png" class="logo-header">
         </header>
 
-        <div id="status-bar-inv"></div>
-
         <section class="card-search">
-            <input type="text" id="buscador-inv" placeholder="🔍 Buscar por Nombre, SKU o Barras...">
+            <input type="text" id="nombre-dep" placeholder="Nuevo nombre de departamento (Ej: Partes Eléctricas)">
+            <button class="btn-save" onclick="guardarDep()">GUARDAR</button>
         </section>
 
-        <section class="card-table">
-            <h3>Existencias en Almacén</h3>
-            <table>
-                <thead>
-                    <tr><th>Barras</th><th>SKU</th><th>Producto</th><th>Costo</th><th>%</th><th>Precio</th><th>Stock</th><th>Acción</th></tr>
-                </thead>
-                <tbody id="cuerpo-tabla"></tbody>
-            </table>
+        <section class="card-list">
+            <h3>Departamentos Creados</h3>
+            <div id="contenedor-deps"></div>
         </section>
     </main>
-    <script type="module" src="./js/sys_v1_inv.js"></script>
+
+    <script type="module">
+        import { db } from './js/firebase-config.js';
+        import { collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        
+        const USER_ID = localStorage.getItem('youcontrol_empresa_id');
+
+        window.guardarDep = async () => {
+            const input = document.getElementById('nombre-dep');
+            if (!input.value.trim()) return;
+            await addDoc(collection(db, "usuarios", USER_ID, "departamentos"), { nombre: input.value.trim() });
+            input.value = "";
+        };
+
+        onSnapshot(query(collection(db, "usuarios", USER_ID, "departamentos"), orderBy("nombre")), (snap) => {
+            const cont = document.getElementById('contenedor-deps');
+            cont.innerHTML = "";
+            snap.forEach(d => {
+                const dep = d.data();
+                cont.innerHTML += `
+                    <div class="list-item">
+                        <span><strong>${dep.nombre.toUpperCase()}</strong></span>
+                        <i class="fas fa-trash-alt" style="color:#F87171; cursor:pointer;" onclick="eliminar('${d.id}')"></i>
+                    </div>`;
+            });
+        });
+
+        window.eliminar = async (id) => { if(confirm('¿Borrar departamento?')) await deleteDoc(doc(db, "usuarios", USER_ID, "departamentos", id)); };
+    </script>
 </body>
 </html>
