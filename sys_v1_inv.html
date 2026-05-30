@@ -56,29 +56,44 @@
         let tasaActual = 1.00;
 
         async function init() {
+            // Configurar Buscador
+            const buscador = document.getElementById('buscador-inv');
+            if(buscador) {
+                buscador.addEventListener('input', (e) => {
+                    const termino = e.target.value.toLowerCase();
+                    const filas = cuerpoTabla.querySelectorAll('tr');
+                    filas.forEach(fila => {
+                        fila.style.display = fila.innerText.toLowerCase().includes(termino) ? '' : 'none';
+                    });
+                });
+            }
+
+            // Obtener tasa
             const userDoc = await getDoc(doc(db, "usuarios", USER_ID));
             if (userDoc.exists()) tasaActual = parseFloat(userDoc.data().tasa_bcv) || 1.00;
 
+            // Renderizado
             onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snap) => {
                 cuerpoTabla.innerHTML = "";
                 snap.forEach(d => {
                     const p = d.data();
-                    cuerpoTabla.innerHTML += `
-                        <tr data-id="${d.id}">
-                            <td>${p.barras || ''}</td>
-                            <td>${p.sku || ''}</td>
-                            <td>${p.nombre || ''}</td>
-                            <td>${p.departamento || 'N/A'}</td>
-                            <td>$${parseFloat(p.costo || 0).toFixed(2)}</td>
-                            <td>${p.ganancia || 0}%</td>
-                            <td>$${parseFloat(p.precio || 0).toFixed(2)}</td>
-                            <td>${(parseFloat(p.precio || 0) * tasaActual).toFixed(2)} Bs</td>
-                            <td>${p.stock || 0}</td>
-                            <td>
-                                <button class="btn-act" onclick="window.editarProducto('${d.id}')">✏️</button>
-                                <button class="btn-act" onclick="window.eliminarProducto('${d.id}', '${p.nombre}')">🗑️</button>
-                            </td>
-                        </tr>`;
+                    const tr = document.createElement('tr');
+                    tr.setAttribute('data-id', d.id);
+                    tr.innerHTML = `
+                        <td>${p.barras || ''}</td>
+                        <td>${p.sku || ''}</td>
+                        <td>${p.nombre || ''}</td>
+                        <td>${p.departamento || 'N/A'}</td>
+                        <td>$${parseFloat(p.costo || 0).toFixed(2)}</td>
+                        <td>${p.ganancia || 0}%</td>
+                        <td>$${parseFloat(p.precio || 0).toFixed(2)}</td>
+                        <td>${(parseFloat(p.precio || 0) * tasaActual).toFixed(2)} Bs</td>
+                        <td>${p.stock || 0}</td>
+                        <td>
+                            <button class="btn-act" onclick="window.editarProducto('${d.id}')">✏️</button>
+                            <button class="btn-act" onclick="window.eliminarProducto('${d.id}', '${p.nombre}')">🗑️</button>
+                        </td>`;
+                    cuerpoTabla.appendChild(tr);
                 });
             });
         }
