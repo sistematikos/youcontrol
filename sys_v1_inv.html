@@ -17,14 +17,14 @@
         body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 10px 0; min-height: 100vh; color: var(--text-dark); }
         .layout-width { width: 95%; max-width: 1200px; margin: 0 auto; }
         
-        /* Header optimizado */
+        /* Header Unificado */
         .header-panel { background: #ffffff; padding: 0 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; height: 65px; }
-        .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 6px 12px; border-radius: 8px; text-decoration: none; font-size: 0.75rem; font-weight: 700; border: 1px solid var(--border); }
+        .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 8px 12px; border-radius: 8px; text-decoration: none; font-size: 0.8rem; font-weight: 700; border: 1px solid var(--border); }
         .logo-header { height: 60%; width: auto; max-width: 120px; object-fit: contain; }
         
-        /* Tarjetas */
-        .card-search { background: white; padding: 15px; border-radius: 12px; border: 1px solid var(--border); border-left: 6px solid var(--sky); margin-bottom: 15px; }
-        .card-table { background: white; padding: 15px; border-radius: 12px; border: 1px solid var(--border); border-left: 6px solid var(--emerald); }
+        /* Tarjetas con Borde de Color */
+        .card-search { background: white; padding: 15px; border-radius: 12px; border: 1px solid var(--border); border-left: 6px solid var(--sky); margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
+        .card-table { background: white; padding: 15px; border-radius: 12px; border: 1px solid var(--border); border-left: 6px solid var(--emerald); box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
         
         /* Tabla Responsiva */
         .table-container { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px; }
@@ -35,13 +35,21 @@
         td { padding: 12px; border-bottom: 1px solid #F1F5F9; color: var(--text-dark); }
         
         h3 { margin: 0 0 10px 0; font-size: 1rem; color: var(--text-dark); }
+        
+        /* Adaptación móvil */
+        @media (max-width: 600px) {
+            th:nth-child(1), td:nth-child(1), /* Ocultar Barras en móvil */
+            th:nth-child(4), td:nth-child(4) { /* Ocultar Costo en móvil */
+                display: none; 
+            }
+        }
     </style>
 </head>
 <body>
     <main class="layout-width">
         <header class="header-panel">
             <div style="display: flex; align-items: center; gap: 10px;">
-                <a href="sys_v1_menu.html" class="btn-back"><i class="fas fa-arrow-left"></i></a>
+                <a href="sys_v1_menu.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
                 <h1 style="font-size: 1.1rem; margin: 0;">Inventario</h1>
             </div>
             <img src="img/logo.png" class="logo-header" onerror="this.style.display='none'">
