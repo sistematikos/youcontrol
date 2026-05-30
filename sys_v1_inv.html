@@ -5,33 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>INVENTARIO | YOU CONTROL</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
-            --text-dark: #1E293B;
-            --sky: #0EA5E9; 
-            --emerald: #10B981; 
-            --border: #E2E8F0;
-        }
-        body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 10px 0; min-height: 100vh; color: var(--text-dark); }
-        .layout-width { width: 95%; max-width: 1200px; margin: 0 auto; }
-        
-        /* CABECERA MAESTRA (Estilo unificado) */
-        .header-panel { background: #ffffff; padding: 0 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; height: 70px; }
-        .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 8px 15px; border-radius: 8px; text-decoration: none; font-size: 0.8rem; font-weight: 700; border: 1px solid var(--border); }
-        .logo-header { height: 90%; width: auto; object-fit: contain; }
-        
-        /* TARJETAS DE CONTENIDO */
-        .card-container { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); margin-bottom: 20px; }
-        .card-search { border-left: 6px solid var(--sky); }
-        .card-table { border-left: 6px solid var(--emerald); }
-        
-        input#buscador-inv { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; }
-        
+        :root { --bg: #F1F5F9; --sky: #0EA5E9; --emerald: #10B981; --border: #E2E8F0; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding: 10px; }
+        .layout-width { max-width: 1200px; margin: 0 auto; }
+        .header-panel { background: #fff; padding: 0 20px; border-radius: 12px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; height: 70px; margin-bottom: 15px; }
+        .card-table { background: white; padding: 20px; border-radius: 12px; border-left: 6px solid var(--emerald); box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
         .table-container { width: 100%; overflow-x: auto; }
-        table { width: 100%; min-width: 600px; border-collapse: collapse; font-size: 0.85rem; }
-        th { color: #64748B; padding: 12px; text-align: left; border-bottom: 2px solid #F1F5F9; }
+        table { width: 100%; min-width: 800px; border-collapse: collapse; font-size: 0.85rem; }
+        th { color: #64748B; padding: 12px; text-align: left; border-bottom: 2px solid var(--border); }
         td { padding: 12px; border-bottom: 1px solid #F1F5F9; }
     </style>
 </head>
@@ -39,22 +22,17 @@
     <main class="layout-width">
         <header class="header-panel">
             <div style="display: flex; align-items: center; gap: 15px;">
-                <a href="sys_v1_menu.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
+                <a href="sys_v1_menu.html" style="text-decoration:none; color:#1E293B;"><i class="fas fa-arrow-left"></i> VOLVER</a>
                 <h1 style="font-size: 1.2rem; margin: 0;">Inventario Actual</h1>
             </div>
-            <img src="img/logo.png" class="logo-header">
+            <img src="img/logo.png" style="height: 60%;" onerror="this.style.display='none'">
         </header>
 
-        <section class="card-container card-search">
-            <input type="text" id="buscador-inv" placeholder="🔍 Buscar por Nombre, SKU o Barras...">
-        </section>
-
-        <section class="card-container card-table">
-            <h3>Existencias en Almacén</h3>
+        <section class="card-table">
             <div class="table-container">
                 <table>
                     <thead>
-                        <tr><th>Barras</th><th>SKU</th><th>Producto</th><th>Costo</th><th>%</th><th>Precio</th><th>Stock</th><th>Acción</th></tr>
+                        <tr><th>Barras</th><th>Producto</th><th>Depto</th><th>Precio</th><th>Stock</th><th>Acción</th></tr>
                     </thead>
                     <tbody id="cuerpo-tabla"></tbody>
                 </table>
