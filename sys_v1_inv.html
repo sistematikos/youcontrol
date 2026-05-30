@@ -11,12 +11,13 @@
         body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding: 10px; color: #1E293B; }
         .layout-width { max-width: 1200px; margin: 0 auto; }
         .header-panel { background: #fff; padding: 0 20px; border-radius: 12px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; height: 70px; margin-bottom: 15px; }
+        .btn-back { background: #F1F5F9; color: #1E293B; padding: 8px 15px; border-radius: 8px; text-decoration: none; font-size: 0.8rem; font-weight: 700; border: 1px solid var(--border); }
         .card-container { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; }
         .table-container { width: 100%; overflow-x: auto; }
         table { width: 100%; min-width: 900px; border-collapse: collapse; font-size: 0.85rem; }
         th { color: #64748B; padding: 12px; text-align: left; border-bottom: 2px solid var(--border); }
         td { padding: 12px; border-bottom: 1px solid #F1F5F9; }
-        input[type="text"], input[type="number"] { width: 90%; padding: 5px; border: 1px solid var(--border); border-radius: 4px; }
+        input, select { width: 90%; padding: 5px; border: 1px solid var(--border); border-radius: 4px; }
         .btn-act { cursor: pointer; border: none; background: none; font-size: 1.1rem; margin: 0 5px; }
     </style>
 </head>
@@ -24,7 +25,7 @@
     <main class="layout-width">
         <header class="header-panel">
             <div style="display: flex; align-items: center; gap: 15px;">
-                <a href="sys_v1_menu.html" style="text-decoration:none; color:#1E293B;"><i class="fas fa-arrow-left"></i> VOLVER</a>
+                <a href="sys_v1_menu.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
                 <h1 style="font-size: 1.2rem; margin: 0;">Inventario</h1>
             </div>
             <img src="img/logo.png" style="height: 60%;" onerror="this.style.display='none'">
@@ -50,42 +51,57 @@
 
     <script type="module">
         import { db } from './js/firebase-config.js';
-        import { collection, onSnapshot, doc, deleteDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { collection, onSnapshot, doc, deleteDoc, updateDoc, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const USER_ID = localStorage.getItem('youcontrol_empresa_id') || "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
         const cuerpoTabla = document.getElementById('cuerpo-tabla');
+        let tasaActual = 1.00;
 
-        // Renderizado y Edición
-        onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snap) => {
-            cuerpoTabla.innerHTML = "";
-            snap.forEach(d => {
-                const p = d.data();
-                cuerpoTabla.innerHTML += `
-                    <tr data-id="${d.id}">
-                        <td>${p.barras || ''}</td>
-                        <td>${p.sku || ''}</td>
-                        <td>${p.nombre || ''}</td>
-                        <td>${p.departamento || 'N/A'}</td>
-                        <td>$${parseFloat(p.costo || 0).toFixed(2)}</td>
-                        <td>${p.ganancia || 0}%</td>
-                        <td>$${parseFloat(p.precio || 0).toFixed(2)}</td>
-                        <td>${p.stock || 0}</td>
-                        <td>
-                            <button class="btn-act" onclick="window.editarProducto('${d.id}')">✏️</button>
-                            <button class="btn-act" onclick="window.eliminarProducto('${d.id}', '${p.nombre}')">🗑️</button>
-                        </td>
-                    </tr>`;
+        // Cargar tasa y productos
+        async function init() {
+            const userDoc = await getDoc(doc(db, "usuarios", USER_ID));
+            if (userDoc.exists()) tasaActual = parseFloat(userDoc.data().tasa_bcv) || 1.00;
+
+            onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snap) => {
+                cuerpoTabla.innerHTML = "";
+                snap.forEach(d => {
+                    const p = d.data();
+                    cuerpoTabla.innerHTML += `
+                        <tr data-id="${d.id}">
+                            <td>${p.barras || ''}</td>
+                            <td>${p.sku || ''}</td>
+                            <td>${p.nombre || ''}</td>
+                            <td>${p.departamento || 'N/A'}</td>
+                            <td>$${parseFloat(p.costo || 0).toFixed(2)}</td>
+                            <td>${p.ganancia || 0}%</td>
+                            <td>$${parseFloat(p.precio || 0).toFixed(2)}</td>
+                            <td>${p.stock || 0}</td>
+                            <td>
+                                <button class="btn-act" onclick="window.editarProducto('${d.id}')">✏️</button>
+                                <button class="btn-act" onclick="window.eliminarProducto('${d.id}', '${p.nombre}')">🗑️</button>
+                            </td>
+                        </tr>`;
+                });
             });
-        });
+        }
 
-        window.editarProducto = (id) => {
+        window.editarProducto = async (id) => {
             const fila = document.querySelector(`tr[data-id="${id}"]`);
             const celdas = fila.cells;
+            const deptoActual = celdas[3].innerText;
+
+            const deptoSnap = await getDocs(collection(db, "usuarios", USER_ID, "departamentos"));
+            let opciones = '';
+            deptoSnap.forEach(d => {
+                const nombreDepto = d.data().nombre;
+                opciones += `<option value="${nombreDepto}" ${nombreDepto === deptoActual ? 'selected' : ''}>${nombreDepto}</option>`;
+            });
+
             fila.innerHTML = `
                 <td><input type="text" id="edit-barras-${id}" value="${celdas[0].innerText}"></td>
                 <td><input type="text" id="edit-sku-${id}" value="${celdas[1].innerText}"></td>
                 <td><input type="text" id="edit-nombre-${id}" value="${celdas[2].innerText}"></td>
-                <td><input type="text" id="edit-depto-${id}" value="${celdas[3].innerText}"></td>
+                <td><select id="edit-depto-${id}">${opciones}</select></td>
                 <td><input type="number" id="edit-costo-${id}" value="${parseFloat(celdas[4].innerText.replace('$',''))}"></td>
                 <td><input type="number" id="edit-ganancia-${id}" value="${parseFloat(celdas[5].innerText)}"></td>
                 <td><input type="number" id="edit-precio-${id}" value="${parseFloat(celdas[6].innerText.replace('$',''))}"></td>
@@ -111,6 +127,8 @@
         window.eliminarProducto = async (id, nombre) => {
             if(confirm(`¿Eliminar ${nombre}?`)) await deleteDoc(doc(db, "usuarios", USER_ID, "productos", id));
         };
+
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
