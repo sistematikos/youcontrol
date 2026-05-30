@@ -1,63 +1,68 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>INVENTARIO | YOU CONTROL</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
-            --text-dark: #1E293B;
-            --sky: #0EA5E9; 
-            --emerald: #10B981; 
-            --border: #E2E8F0;
-        }
-        body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 10px 0; min-height: 100vh; color: var(--text-dark); }
-        .layout-width { width: 95%; max-width: 1200px; margin: 0 auto; }
-        
-        .header-panel { background: #ffffff; padding: 0 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; height: 70px; }
-        .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 6px 12px; border-radius: 8px; text-decoration: none; font-size: 0.75rem; font-weight: 700; border: 1px solid var(--border); }
-        .logo-header { height: 90%; width: auto; object-fit: contain; }
-        
-        /* Tarjetas con bordes Azul y Verde */
-        .card-search { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); border-left: 6px solid var(--sky); margin-bottom: 20px; }
-        .card-table { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); border-left: 6px solid var(--emerald); margin-bottom: 20px; }
-        
-        input#buscador-inv { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; font-size: 0.9rem; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th { color: #64748B; border-bottom: 2px solid #F1F5F9; padding: 12px; text-align: left; }
-        td { padding: 12px; border-bottom: 1px solid #F1F5F9; }
-        #status-bar-inv { font-size: 0.75rem; padding: 8px; border-radius: 8px; margin-bottom: 10px; display: none; text-align: center; }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>INVENTARIO | YOU CONTROL</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
+            --text-dark: #1E293B;
+            --sky: #0EA5E9; 
+            --emerald: #10B981; 
+            --border: #E2E8F0;
+        }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 10px 0; min-height: 100vh; color: var(--text-dark); }
+        .layout-width { width: 95%; max-width: 1200px; margin: 0 auto; }
+        
+        /* Header optimizado */
+        .header-panel { background: #ffffff; padding: 0 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; height: 65px; }
+        .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 6px 12px; border-radius: 8px; text-decoration: none; font-size: 0.75rem; font-weight: 700; border: 1px solid var(--border); }
+        .logo-header { height: 60%; width: auto; max-width: 120px; object-fit: contain; }
+        
+        /* Tarjetas */
+        .card-search { background: white; padding: 15px; border-radius: 12px; border: 1px solid var(--border); border-left: 6px solid var(--sky); margin-bottom: 15px; }
+        .card-table { background: white; padding: 15px; border-radius: 12px; border: 1px solid var(--border); border-left: 6px solid var(--emerald); }
+        
+        /* Tabla Responsiva */
+        .table-container { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 10px; }
+        input#buscador-inv { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; font-size: 0.9rem; }
+        
+        table { width: 100%; min-width: 700px; border-collapse: collapse; font-size: 0.85rem; }
+        th { color: #64748B; background: #F8FAFC; padding: 12px; text-align: left; border-bottom: 2px solid var(--border); }
+        td { padding: 12px; border-bottom: 1px solid #F1F5F9; color: var(--text-dark); }
+        
+        h3 { margin: 0 0 10px 0; font-size: 1rem; color: var(--text-dark); }
+    </style>
 </head>
 <body>
-    <main class="layout-width">
-        <header class="header-panel">
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <a href="sys_v1_menu.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
-                <h1 style="font-size: 1.2rem; margin: 0;">Inventario Actual</h1>
-            </div>
-            <img src="img/logo.png" class="logo-header">
-        </header>
+    <main class="layout-width">
+        <header class="header-panel">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <a href="sys_v1_menu.html" class="btn-back"><i class="fas fa-arrow-left"></i></a>
+                <h1 style="font-size: 1.1rem; margin: 0;">Inventario</h1>
+            </div>
+            <img src="img/logo.png" class="logo-header" onerror="this.style.display='none'">
+        </header>
 
-        <div id="status-bar-inv"></div>
+        <section class="card-search">
+            <input type="text" id="buscador-inv" placeholder="🔍 Buscar por nombre, SKU o barras...">
+        </section>
 
-        <section class="card-search">
-            <input type="text" id="buscador-inv" placeholder="🔍 Buscar por Nombre, SKU o Barras...">
-        </section>
-
-        <section class="card-table">
-            <h3>Existencias en Almacén</h3>
-            <table>
-                <thead>
-                    <tr><th>Barras</th><th>SKU</th><th>Producto</th><th>Costo</th><th>%</th><th>Precio</th><th>Stock</th><th>Acción</th></tr>
-                </thead>
-                <tbody id="cuerpo-tabla"></tbody>
-            </table>
-        </section>
-    </main>
-    <script type="module" src="./js/sys_v1_inv.js"></script>
+        <section class="card-table">
+            <h3>Existencias en Almacén</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr><th>Barras</th><th>SKU</th><th>Producto</th><th>Costo</th><th>%</th><th>Precio</th><th>Stock</th><th>Acción</th></tr>
+                    </thead>
+                    <tbody id="cuerpo-tabla"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <script type="module" src="./js/sys_v1_inv.js"></script>
 </body>
 </html>
