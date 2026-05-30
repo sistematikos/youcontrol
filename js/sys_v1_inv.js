@@ -3,18 +3,20 @@ import { collection, onSnapshot, doc, deleteDoc, getDoc, updateDoc, getDocs } fr
 
 const USER_ID = localStorage.getItem('youcontrol_empresa_id') || "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
 const cuerpoTabla = document.getElementById('cuerpo-tabla');
-const statusBar = document.getElementById('status-bar-inv');
 const buscadorInv = document.getElementById('buscador-inv');
 
 let tasaActual = 1.00;
 
-// --- BUSCADOR ---
+// --- BUSCADOR CORREGIDO ---
+// Buscamos directamente en el elemento de búsqueda y filtramos las filas existentes
 buscadorInv.addEventListener('input', (e) => {
     const termino = e.target.value.toLowerCase();
-    const filas = document.querySelectorAll('#cuerpo-tabla tr');
-    filas.forEach(fila => {
-        fila.style.display = fila.textContent.toLowerCase().includes(termino) ? '' : 'none';
-    });
+    const filas = cuerpoTabla.getElementsByTagName('tr');
+    for (let fila of filas) {
+        // Obtenemos el texto de la fila (ignorando los inputs para que no molesten al buscar)
+        const texto = fila.innerText.toLowerCase();
+        fila.style.display = texto.includes(termino) ? '' : 'none';
+    }
 });
 
 async function inicializarInventario() {
@@ -24,16 +26,18 @@ async function inicializarInventario() {
     } catch (e) { console.error("Error al obtener tasa:", e); }
 
     onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
-        let listaProductos = [];
-        snapshot.forEach(doc => listaProductos.push({ id: doc.id, ...doc.data() }));
-        renderizarTabla(listaProductos);
+        renderizarTabla(snapshot);
     });
 }
 
-function renderizarTabla(productos) {
+function renderizarTabla(snapshot) {
     if (!cuerpoTabla) return;
-    cuerpoTabla.innerHTML = productos.map(p => `
-        <tr data-id="${p.id}">
+    cuerpoTabla.innerHTML = "";
+    snapshot.forEach(doc => {
+        const p = doc.data();
+        const tr = document.createElement('tr');
+        tr.setAttribute('data-id', doc.id);
+        tr.innerHTML = `
             <td>${p.barras || 'N/A'}</td>
             <td>${p.sku || 'N/A'}</td>
             <td>${p.nombre || 'Sin nombre'}</td>
@@ -44,17 +48,19 @@ function renderizarTabla(productos) {
             <td>$ ${(parseFloat(p.precio || 0) * tasaActual).toFixed(2)} Bs</td>
             <td>${p.stock || 0}</td>
             <td>
-                <button onclick="window.editarProducto('${p.id}')">✏️</button>
-                <button onclick="window.eliminarProducto('${p.id}', '${p.nombre}')">🗑️</button>
+                <button onclick="window.editarProducto('${doc.id}')">✏️</button>
+                <button onclick="window.eliminarProducto('${doc.id}', '${p.nombre}')">🗑️</button>
             </td>
-        </tr>`).join('');
+        `;
+        cuerpoTabla.appendChild(tr);
+    });
 }
 
 // --- EDICIÓN DINÁMICA ---
 window.editarProducto = async (id) => {
     const fila = document.querySelector(`tr[data-id="${id}"]`);
-    const celdas = fila.cells;
-    const deptoActual = celdas[3].innerText;
+    const c = fila.cells;
+    const deptoActual = c[3].innerText;
 
     const deptoSnap = await getDocs(collection(db, "usuarios", USER_ID, "departamentos"));
     let opciones = '';
@@ -63,16 +69,17 @@ window.editarProducto = async (id) => {
         opciones += `<option value="${n}" ${n === deptoActual ? 'selected' : ''}>${n}</option>`;
     });
 
+    // Cambiamos el contenido de la fila a modo edición
     fila.innerHTML = `
-        <td><input type="text" id="e-barras" value="${celdas[0].innerText}"></td>
-        <td><input type="text" id="e-sku" value="${celdas[1].innerText}"></td>
-        <td><input type="text" id="e-nombre" value="${celdas[2].innerText}"></td>
+        <td><input type="text" id="e-barras" value="${c[0].innerText}"></td>
+        <td><input type="text" id="e-sku" value="${c[1].innerText}"></td>
+        <td><input type="text" id="e-nombre" value="${c[2].innerText}"></td>
         <td><select id="e-depto">${opciones}</select></td>
-        <td><input type="number" id="e-costo" value="${parseFloat(celdas[4].innerText.replace('$',''))}" oninput="window.calc('costo')"></td>
-        <td><input type="number" id="e-ganancia" value="${parseFloat(celdas[5].innerText)}" oninput="window.calc('ganancia')"></td>
-        <td><input type="number" id="e-precio" value="${parseFloat(celdas[6].innerText.replace('$',''))}" oninput="window.calc('precio')"></td>
-        <td><input type="number" id="e-bs" value="${parseFloat(celdas[7].innerText.replace(' Bs',''))}" oninput="window.calc('bs')"></td>
-        <td><input type="number" id="e-stock" value="${parseInt(celdas[8].innerText)}"></td>
+        <td><input type="number" id="e-costo" value="${c[4].innerText.replace('$ ','')}" oninput="window.calc('costo')"></td>
+        <td><input type="number" id="e-ganancia" value="${c[5].innerText.replace('%','').trim()}" oninput="window.calc('ganancia')"></td>
+        <td><input type="number" id="e-precio" value="${c[6].innerText.replace('$ ','')}" oninput="window.calc('precio')"></td>
+        <td><input type="number" id="e-bs" value="${c[7].innerText.replace('$ ','').replace(' Bs','')}" oninput="window.calc('bs')"></td>
+        <td><input type="number" id="e-stock" value="${c[8].innerText}"></td>
         <td><button onclick="window.guardarEdicion('${id}')">💾</button></td>
     `;
 };
@@ -110,7 +117,6 @@ window.guardarEdicion = async (id) => {
         precio: parseFloat(document.getElementById('e-precio').value),
         stock: parseInt(document.getElementById('e-stock').value)
     });
-    alert("Producto actualizado");
 };
 
 window.eliminarProducto = async (id, nombre) => {
