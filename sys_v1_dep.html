@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Departamentos | You Control</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root { --main-blue: #001432; --accent: #0052D4; --bg: #F1F5F9; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; }
+        .page-wrapper { max-width: 800px; margin: 0 auto; width: 100%; box-sizing: border-box; padding: 20px; }
+        
+        /* Cabecera de Módulo Administrativo */
+        .admin-header { background: var(--main-blue); color: white; padding: 30px; border-radius: 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 20px; }
+        .icon-box { background: var(--accent); width: 60px; height: 60px; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+        
+        /* Input y lista */
+        .form-dep { background: white; padding: 20px; border-radius: 15px; display: flex; gap: 10px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        input { flex: 1; padding: 12px; border: 2px solid #E2E8F0; border-radius: 10px; outline: none; }
+        .btn-create { background: var(--main-blue); color: white; border: none; padding: 0 25px; border-radius: 10px; font-weight: 700; cursor: pointer; }
+        
+        /* Lista de Tarjetas (Diferente al catálogo) */
+        .grid-list { display: flex; flex-direction: column; gap: 10px; }
+        .item-dep { background: white; padding: 15px 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--accent); }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <div class="admin-header">
+            <div class="icon-box"><i class="fas fa-sitemap"></i></div>
+            <div>
+                <h1 style="margin:0; font-size: 1.5rem;">Departamentos</h1>
+                <p style="margin:0; opacity: 0.7;">Gestión interna de categorías de productos</p>
+            </div>
+        </div>
+
+        <div class="form-dep">
+            <input type="text" id="depNombre" placeholder="Nuevo nombre de departamento...">
+            <button class="btn-create" onclick="guardarDep()">GUARDAR</button>
+        </div>
+
+        <div id="contenedorDeps" class="grid-list"></div>
+    </div>
+
+    <script type="module">
+        import { db } from './js/firebase-config.js';
+        import { collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        
+        const USER_ID = localStorage.getItem('youcontrol_empresa_id');
+
+        window.guardarDep = async () => {
+            const input = document.getElementById('depNombre');
+            if (!input.value) return;
+            await addDoc(collection(db, "usuarios", USER_ID, "departamentos"), { nombre: input.value });
+            input.value = "";
+        };
+
+        onSnapshot(query(collection(db, "usuarios", USER_ID, "departamentos"), orderBy("nombre")), (snap) => {
+            const cont = document.getElementById('contenedorDeps');
+            cont.innerHTML = "";
+            snap.forEach(d => {
+                const dep = d.data();
+                cont.innerHTML += `
+                    <div class="item-dep">
+                        <span style="font-weight:600;">${dep.nombre}</span>
+                        <i class="fas fa-trash-alt" style="color:#94A3B8; cursor:pointer;" onclick="eliminar('${d.id}')"></i>
+                    </div>`;
+            });
+        });
+
+        window.eliminar = async (id) => { if(confirm('¿Borrar?')) await deleteDoc(doc(db, "usuarios", USER_ID, "departamentos", id)); };
+    </script>
+</body>
+</html>
