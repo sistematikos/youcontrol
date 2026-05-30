@@ -16,17 +16,23 @@
         }
         body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 10px 0; min-height: 100vh; color: var(--text-dark); }
         .layout-width { width: 95%; max-width: 1200px; margin: 0 auto; }
+        
+        /* CABECERA MAESTRA */
         .header-panel { background: #ffffff; padding: 0 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; height: 70px; }
         .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 8px 15px; border-radius: 8px; text-decoration: none; font-size: 0.8rem; font-weight: 700; border: 1px solid var(--border); }
         .logo-header { height: 90%; width: auto; object-fit: contain; }
+        
+        /* STATUS BAR Y BUSCADOR */
+        #status-bar-inv { font-size: 0.8rem; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: none; text-align: center; font-weight: 600; }
         .card-container { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); margin-bottom: 20px; }
-        .card-search { border-left: 6px solid var(--sky); }
-        .card-table { border-left: 6px solid var(--emerald); }
-        input#buscador-inv { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; }
+        input#buscador-inv { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; font-size: 0.9rem; }
+        
+        /* TABLA */
         .table-container { width: 100%; overflow-x: auto; }
-        table { width: 100%; min-width: 600px; border-collapse: collapse; font-size: 0.85rem; }
+        table { width: 100%; min-width: 700px; border-collapse: collapse; font-size: 0.85rem; }
         th { color: #64748B; padding: 12px; text-align: left; border-bottom: 2px solid #F1F5F9; }
         td { padding: 12px; border-bottom: 1px solid #F1F5F9; }
+        button { cursor: pointer; border: none; background: none; font-size: 1.1rem; }
     </style>
 </head>
 <body>
@@ -34,21 +40,23 @@
         <header class="header-panel">
             <div style="display: flex; align-items: center; gap: 15px;">
                 <a href="sys_v1_menu.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
-                <h1 style="font-size: 1.2rem; margin: 0;">Inventario Actual</h1>
+                <h1 style="font-size: 1.2rem; margin: 0;">Inventario</h1>
             </div>
             <img src="img/logo.png" class="logo-header">
         </header>
 
-        <section class="card-container card-search">
+        <div id="status-bar-inv"></div>
+
+        <section class="card-container" style="border-left: 6px solid var(--sky);">
             <input type="text" id="buscador-inv" placeholder="🔍 Buscar por Nombre, SKU o Barras...">
         </section>
 
-        <section class="card-container card-table">
+        <section class="card-container" style="border-left: 6px solid var(--emerald);">
             <h3>Existencias en Almacén</h3>
             <div class="table-container">
                 <table>
                     <thead>
-                        <tr><th>Barras</th><th>SKU</th><th>Producto</th><th>Depto</th><th>Precio</th><th>Stock</th><th>Acción</th></tr>
+                        <tr><th>Barras</th><th>SKU</th><th>Producto</th><th>Costo</th><th>%</th><th>Precio</th><th>Stock</th><th>Acción</th></tr>
                     </thead>
                     <tbody id="cuerpo-tabla"></tbody>
                 </table>
@@ -56,37 +64,6 @@
         </section>
     </main>
 
-    <script type="module">
-        import { db } from './js/firebase-config.js';
-        import { collection, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-        const USER_ID = localStorage.getItem('youcontrol_empresa_id');
-        const cuerpoTabla = document.getElementById('cuerpo-tabla');
-
-        // Cargar datos en tiempo real
-        onSnapshot(collection(db, "usuarios", USER_ID, "inventario"), (snap) => {
-            cuerpoTabla.innerHTML = "";
-            snap.forEach(d => {
-                const p = d.data();
-                cuerpoTabla.innerHTML += `
-                    <tr>
-                        <td>${p.barras || ''}</td>
-                        <td>${p.sku || ''}</td>
-                        <td>${p.nombre || ''}</td>
-                        <td>${p.departamento || 'Sin Depto'}</td>
-                        <td>$${p.precio || 0}</td>
-                        <td>${p.stock || 0}</td>
-                        <td><i class="fas fa-trash" style="color:red; cursor:pointer;" onclick="eliminar('${d.id}')"></i></td>
-                    </tr>`;
-            });
-        });
-
-        // Función de eliminar global
-        window.eliminar = async (id) => {
-            if(confirm('¿Eliminar producto?')) {
-                await deleteDoc(doc(db, "usuarios", USER_ID, "inventario", id));
-            }
-        };
-    </script>
+    <script type="module" src="./js/sys_v1_inv.js"></script>
 </body>
 </html>
