@@ -15,15 +15,22 @@
         }
         body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; }
         
-        .banner-menu-container { width: 92%; max-width: 1200px; margin: 15px auto 0px auto; border-radius: 16px; overflow: hidden; background: #002A54; }
+        /* Banner */
+        .banner-menu-container { width: 92%; max-width: 1200px; margin: 25px auto 0px auto; border-radius: 16px; overflow: hidden; background: #002A54; }
         .banner-menu-img { width: 100%; max-height: 280px; object-fit: cover; display: block; }
         
-        .menu-container { max-width: 1200px; width: 92%; margin: -10px auto 5px auto; padding: 5px 0; flex-grow: 1; display: flex; align-items: center; }
-        .menu-grid-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; width: 100%; }
+        /* Contenedor tarjetas - Separado del banner con 30px */
+        .menu-container { max-width: 1200px; width: 92%; margin: 30px auto 20px auto; padding: 5px 0; flex-grow: 1; display: flex; align-items: center; }
+        .menu-grid-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; width: 100%; }
         
-        .menu-card { background: #fff; border-radius: 12px; padding: 15px 10px; text-align: center; text-decoration: none; color: var(--text-dark); box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; border: 2px solid #E2E8F0; transition: 0.2s; }
-        .menu-card:hover { transform: translateY(-3px); }
+        /* Tarjetas */
+        .menu-card { background: #fff; border-radius: 12px; padding: 20px 10px; text-align: center; text-decoration: none; color: var(--text-dark); box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; border: 2px solid #E2E8F0; transition: 0.2s; }
+        .menu-card:hover { transform: translateY(-3px); border-color: var(--accent-blue); }
+        .menu-card i { font-size: 1.8rem; margin-bottom: 10px; }
+        .menu-card span { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; }
+        .menu-card p { font-size: 0.75rem; color: var(--text-muted); margin: 0; }
         
+        /* Colores de Bordes */
         .card-inv { border-color: #10B981; } .card-inv i { color: #10B981; }
         .card-depto { border-color: #A855F7; } .card-depto i { color: #A855F7; }
         .card-comp { border-color: #6366F1; } .card-comp i { color: #6366F1; }
@@ -31,28 +38,24 @@
         .card-reportes { border-color: #F59E0B; } .card-reportes i { color: #F59E0B; }
         .card-config { border-color: #6B7280; } .card-config i { color: #6B7280; }
         
-        .menu-card i { font-size: 1.6rem; margin-bottom: 6px; }
-        .menu-card span { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }
-        .menu-card p { font-size: 0.7rem; color: var(--text-muted); margin: 0; }
-        
-        /* Footer integrado al ancho del contenedor */
+        /* Pie de página alineado */
         .footer-core {
             width: 92%;
             max-width: 1200px;
-            margin: 0 auto 20px auto; /* Centrado y con margen inferior */
-            padding: 15px;
-            font-size: 0.8rem;
+            margin: 0 auto 30px auto;
+            padding: 20px;
+            font-size: 0.85rem;
             color: var(--accent-blue);
             background: #fff;
             border-radius: 12px;
             border: 2px solid #E2E8F0;
             display: flex;
             flex-direction: column;
-            align-items: flex-end; /* Alinea los datos a la derecha dentro del bloque */
-            gap: 4px;
+            align-items: flex-end;
+            gap: 5px;
             box-sizing: border-box;
         }
-        .license-info { font-weight: 700; text-align: right; }
+        .license-info { font-weight: 700; }
     </style>
 </head>
 <body oncontextmenu="return false">
@@ -69,21 +72,13 @@
             <a href="sys_v1_vt.html" class="menu-card card-ventas"><i class="fas fa-cash-register"></i><span>Ventas (POS)</span><p>Facturación rápida.</p></a>
             <a href="sys_v2_clt.html" class="menu-card card-ventas"><i class="fas fa-users"></i><span>Clientes</span><p>Base de datos.</p></a>
             <a href="sys_v4_reportes.html" class="menu-card card-reportes"><i class="fas fa-chart-line"></i><span>Reportes</span><p>Estadísticas del negocio.</p></a>
-            
-            <a href="#" id="btn-catalogo" class="menu-card card-ventas">
-                <i class="fas fa-store"></i>
-                <span>Catálogo Digital</span>
-                <p>Vitrina virtual para clientes.</p>
-            </a>
-            
-            <a href="sys_config.html" class="menu-card card-config"><i class="fas fa-cog"></i><span>Configuración</span><p>Parámetros generales.</p></a>
+            <a href="#" id="btn-catalogo" class="menu-card card-ventas"><i class="fas fa-store"></i><span>Catálogo Digital</span><p>Vitrina virtual.</p></a>
+            <a href="sys_config.html" class="menu-card card-config"><i class="fas fa-cog"></i><span>Configuración</span><p>Parámetros.</p></a>
         </div>
     </main>
 
     <footer class="footer-core">
-        <div class="license-info" id="lblEmpresa">
-            Cargando datos de licencia...
-        </div>
+        <div class="license-info" id="lblEmpresa">Cargando datos...</div>
     </footer>
 
     <script type="module">
@@ -91,7 +86,7 @@
         import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
         const firebaseConfig = {
-            apiKey: "TU_API_KEY", 
+            apiKey: "TU_API_KEY",
             authDomain: "youcontrol-1d60a.firebaseapp.com",
             projectId: "youcontrol-1d60a",
             storageBucket: "youcontrol-1d60a.appspot.com",
@@ -105,41 +100,27 @@
         async function cargarDatosEmpresa() {
             const empresaID = localStorage.getItem('youcontrol_empresa_id');
             const lblEmpresa = document.getElementById('lblEmpresa');
-
             if (empresaID) {
                 try {
-                    const docRef = doc(db, "empresas_config", empresaID);
-                    const docSnap = await getDoc(docRef);
-
+                    const docSnap = await getDoc(doc(db, "empresas_config", empresaID));
                     if (docSnap.exists()) {
-                        const datos = docSnap.data();
+                        const d = docSnap.data();
                         lblEmpresa.innerHTML = `
-                            <div style="display:block;">Empresa: ${datos.nombre || 'Nombre no configurado'}</div>
-                            <div style="display:block;">RIF: ${datos.rif || 'N/A'}</div>
-                            <div style="display:block;">Dir: ${datos.direccion || 'N/A'}</div>
+                            <div>Empresa: ${d.nombre || 'N/A'}</div>
+                            <div>RIF: ${d.rif || 'N/A'}</div>
+                            <div>Dir: ${d.direccion || 'N/A'}</div>
                         `;
-                    } else {
-                        lblEmpresa.innerText = "Datos no encontrados";
                     }
-                } catch (e) {
-                    console.error("Error:", e);
-                    lblEmpresa.innerText = "Error al cargar";
-                }
-            } else {
-                lblEmpresa.innerText = "Sin ID de empresa";
+                } catch (e) { lblEmpresa.innerText = "Error al cargar"; }
             }
         }
-
         cargarDatosEmpresa();
 
         document.getElementById('btn-catalogo').addEventListener('click', (e) => {
             e.preventDefault();
-            const empresaID = localStorage.getItem('youcontrol_empresa_id');
-            if (empresaID) {
-                window.open(`node_v2_505.html?empresa=${empresaID}`, '_blank');
-            } else {
-                alert("Error de sesión: Reinicie el sistema.");
-            }
+            const id = localStorage.getItem('youcontrol_empresa_id');
+            if (id) window.open(`node_v2_505.html?empresa=${id}`, '_blank');
+            else alert("Error de sesión.");
         });
     </script>
 </body>
