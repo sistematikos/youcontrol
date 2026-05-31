@@ -20,7 +20,7 @@
 
     <div id="pantallaCarga" style="color:white; text-align:center;">
         <i class="fas fa-circle-notch" style="font-size:3rem; animation: spin 1s linear infinite;"></i>
-        <p>Iniciando sistema...</p>
+        <p>Verificando seguridad...</p>
     </div>
 
     <div id="capaSeguridad" class="oculto">
@@ -37,7 +37,6 @@
         import { db } from './js/firebase-config.js';
         import { doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Identificador único para el dispositivo
         const getHardwareID = () => btoa(navigator.userAgent + navigator.language);
 
         window.procesarActivacion = async () => {
@@ -59,26 +58,33 @@
 
                 if (snap.exists()) {
                     const dbData = snap.data();
-                    if (!dbData.equipos.includes(hwID) && dbData.equipos.length >= dbData.limite) {
+                    // Limpieza y validación de array de equipos
+                    const equipos = Array.isArray(dbData.equipos) ? dbData.equipos.filter(e => e && e.length > 0) : [];
+                    
+                    if (!equipos.includes(hwID) && equipos.length >= dbData.limite) {
                         throw new Error("Límite de dispositivos alcanzado.");
                     }
-                    if (!dbData.equipos.includes(hwID)) {
-                        await updateDoc(docRef, { equipos: [...dbData.equipos, hwID] });
+                    if (!equipos.includes(hwID)) {
+                        await updateDoc(docRef, { equipos: [...equipos, hwID] });
                     }
                 } else {
-                    await setDoc(docRef, { cliente: data.n, limite: data.l, equipos: [hwID], fecha: new Date().toISOString() });
+                    // Creación inicial si no existe
+                    await setDoc(docRef, { 
+                        cliente: data.n, 
+                        limite: data.l, 
+                        equipos: [hwID], 
+                        fecha: new Date().toISOString() 
+                    });
                 }
 
-                // Guardar en almacenamiento seguro
                 localStorage.setItem('licencia_youcontrol', rawToken);
                 localStorage.setItem('youcontrol_empresa_id', data.activation_id);
                 localStorage.setItem('licencia_validada', 'true');
                 
-                // Redirección segura para iOS
                 window.location.replace("sys_v1_menu.html");
                 
             } catch (e) {
-                msgError.innerText = "Error: " + (e.message || "Licencia inválida");
+                msgError.innerText = "Error: " + e.message;
                 msgError.style.display = 'block';
                 btn.disabled = false;
                 btn.innerText = "ACTIVAR SISTEMA";
@@ -86,15 +92,11 @@
         };
 
         window.addEventListener('load', () => {
-            // Protección: Si ya está validado, redirigir directo
             if (localStorage.getItem('licencia_validada') === 'true') {
                 window.location.replace("sys_v1_menu.html");
             } else {
-                // Pequeño delay para una transición suave
-                setTimeout(() => {
-                    document.getElementById('pantallaCarga').classList.add('oculto');
-                    document.getElementById('capaSeguridad').classList.remove('oculto');
-                }, 500);
+                document.getElementById('pantallaCarga').classList.add('oculto');
+                document.getElementById('capaSeguridad').classList.remove('oculto');
             }
         });
     </script>
