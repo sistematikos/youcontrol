@@ -3,13 +3,9 @@ import { collection, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/
 
 // --- ESTRATEGIA DE DETECCIÓN DE ID ---
 const getID = () => {
-    // 1. Prioridad: URL (por si el localStorage falla en el móvil)
+    // Tomamos el ID de la URL. Si no existe, devuelve null.
     const params = new URLSearchParams(window.location.search);
-    const idUrl = params.get('empresa');
-    if (idUrl) return idUrl;
-    
-    // 2. Respaldo: LocalStorage
-    return localStorage.getItem('youcontrol_empresa_id');
+    return params.get('empresa');
 };
 
 const USER_ID = getID();
@@ -22,18 +18,23 @@ function iniciarCatalogo() {
     
     if (!USER_ID) {
         document.getElementById('nombre-empresa').innerText = "ID NO DETECTADO";
+        document.getElementById('contenedor-catalogo').innerHTML = 
+            "<p style='text-align:center; padding:20px;'>Por favor, abre el catálogo desde el enlace compartido por la empresa.</p>";
         return;
     }
 
-    // Carga de datos
+    // Carga de datos de la empresa (tasa)
     onSnapshot(doc(db, "usuarios", USER_ID), (snap) => {
         if (snap.exists()) {
-            tasaActual = parseFloat(snap.data().tasa_bcv || 1);
+            const data = snap.data();
+            tasaActual = parseFloat(data.tasa_bcv || 1);
+            document.getElementById('nombre-empresa').innerText = data.empresa_nombre || "Catálogo";
             document.getElementById('tasa-cliente').innerText = tasaActual.toLocaleString('es-VE', { minimumFractionDigits: 2 });
             renderizarCatalogo(productosGlobales);
         }
     });
 
+    // Carga de productos
     onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
         productosGlobales = [];
         snapshot.forEach(d => productosGlobales.push({ id: d.id, ...d.data() }));
@@ -62,16 +63,39 @@ function renderizarCatalogo(lista) {
 // Exposición global
 window.cambiarCant = (id, cambio, nombre, precio, stockMax) => {
     if (!carrito[id]) carrito[id] = { nombre, precio, cantidad: 0 };
+    
+    // Ajustar cantidad
     carrito[id].cantidad = Math.min(Math.max(carrito[id].cantidad + cambio, 0), stockMax);
     document.getElementById(`qty-${id}`).innerText = carrito[id].cantidad;
     
-    // Footer
-    let total = 0, items = 0;
-    for (let k in carrito) { total += carrito[k].precio * carrito[k].cantidad; items += carrito[k].cantidad; }
+    // Recalcular Totales
+    let totalUSD = 0, items = 0;
+    for (let k in carrito) { 
+        totalUSD += carrito[k].precio * carrito[k].cantidad; 
+        items += carrito[k].cantidad; 
+    }
+    
+    // Actualizar Footer
     const footer = document.getElementById('cart-footer');
     footer.style.display = items > 0 ? 'flex' : 'none';
-    document.getElementById('cart-total-usd').innerText = total.toFixed(2);
+    document.getElementById('cart-total-usd').innerText = totalUSD.toFixed(2);
+    document.getElementById('cart-total-bs').innerText = (totalUSD * tasaActual).toFixed(2);
     document.getElementById('cart-count').innerText = items;
+};
+
+// Función para enviar pedido a WhatsApp
+window.enviarPedido = () => {
+    let mensaje = "Hola, quiero realizar este pedido:%0A%0A";
+    Object.values(carrito).forEach(item => {
+        if (item.cantidad > 0) {
+            mensaje += `* ${item.nombre} x${item.cantidad} - $${(item.precio * item.cantidad).toFixed(2)}%0A`;
+        }
+    });
+    const total = document.getElementById('cart-total-usd').innerText;
+    mensaje += `%0A*Total: $${total}*`;
+    
+    // Reemplaza el número por el número de WhatsApp de la empresa
+    window.open(`https://wa.me/584120000000?text=${mensaje}`, '_blank');
 };
 
 document.addEventListener('DOMContentLoaded', iniciarCatalogo);
