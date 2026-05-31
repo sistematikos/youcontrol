@@ -1,33 +1,47 @@
 import { db } from './firebase-config.js';
 import { collection, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+// --- LOGICA DE ID: Prioriza LocalStorage, si falla, intenta leerlo de la URL ---
+const getEmpresaID = () => {
+    let id = localStorage.getItem('youcontrol_empresa_id');
+    if (!id) {
+        const params = new URLSearchParams(window.location.search);
+        id = params.get('empresa');
+    }
+    return id;
+};
+
+const USER_ID = getEmpresaID();
 const token = localStorage.getItem('licencia_youcontrol');
-const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 let tasaActual = 1;
 let carrito = {};
 let productosGlobales = [];
 
 function iniciarCatalogo() {
-    console.log("Iniciando catálogo para:", USER_ID);
+    console.log("Iniciando catálogo. ID Empresa:", USER_ID);
+    
     if (!USER_ID) {
-        console.error("USER_ID no encontrado en localStorage");
+        document.getElementById('nombre-empresa').innerText = "ID EMPRESA NO ENCONTRADO";
         return;
     }
 
-    // Carga de nombre de empresa
+    // Carga de nombre de empresa desde token o placeholder
     if (token) {
         try {
             const data = JSON.parse(atob(token));
             document.getElementById('nombre-empresa').innerText = (data.n || "EMPRESA").toUpperCase();
-        } catch(e) { console.error("Error al decodificar token", e); }
+        } catch(e) { document.getElementById('nombre-empresa').innerText = "EMPRESA"; }
     }
 
-    // Cargar Tasa BCV
+    // Cargar Tasa BCV y Datos Empresa
     onSnapshot(doc(db, "usuarios", USER_ID), (snap) => {
         if (snap.exists()) {
-            tasaActual = parseFloat(snap.data().tasa_bcv || 1);
+            const data = snap.data();
+            tasaActual = parseFloat(data.tasa_bcv || 1);
             document.getElementById('tasa-cliente').innerText = tasaActual.toLocaleString('es-VE', { minimumFractionDigits: 2 });
             renderizarCatalogo(productosGlobales);
+        } else {
+            console.error("El documento de la empresa no existe en Firestore.");
         }
     });
 
@@ -38,6 +52,7 @@ function iniciarCatalogo() {
         renderizarCatalogo(productosGlobales);
     }, (error) => {
         console.error("Error al cargar productos:", error);
+        alert("Error de conexión al catálogo: " + error.message);
     });
 
     // Buscador
@@ -51,6 +66,11 @@ function iniciarCatalogo() {
 function renderizarCatalogo(lista) {
     const contenedor = document.getElementById('contenedor-catalogo');
     if (!contenedor) return;
+
+    if (lista.length === 0) {
+        contenedor.innerHTML = "<p style='grid-column: span 2; text-align: center; padding: 20px;'>No hay productos cargados.</p>";
+        return;
+    }
 
     contenedor.innerHTML = lista.map(p => `
         <div class="card-prod">
@@ -66,7 +86,6 @@ function renderizarCatalogo(lista) {
         </div>`).join('');
 }
 
-// EXPOSICIÓN DE FUNCIONES AL OBJETO WINDOW (Necesario para el onclick en HTML)
 window.cambiarCant = (id, cambio, nombre, precio, stockMax) => {
     if (!carrito[id]) carrito[id] = { nombre, precio, cantidad: 0 };
     
@@ -75,17 +94,9 @@ window.cambiarCant = (id, cambio, nombre, precio, stockMax) => {
     if (nuevaCant > stockMax) nuevaCant = stockMax;
     
     carrito[id].cantidad = nuevaCant;
-    
     const spanQty = document.getElementById(`qty-${id}`);
     if (spanQty) spanQty.innerText = nuevaCant;
-    
     actualizarFooter();
-};
-
-window.enviarPedido = () => {
-    // Aquí puedes añadir tu lógica de WhatsApp o confirmación
-    console.log("Pedido actual:", carrito);
-    alert("Pedido listo para procesar.");
 };
 
 function actualizarFooter() {
@@ -100,5 +111,9 @@ function actualizarFooter() {
     document.getElementById('cart-total-bs').innerText = (total * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 });
     document.getElementById('cart-count').innerText = items;
 }
+
+window.enviarPedido = () => {
+    alert("Pedido listo. Implementa aquí tu lógica de envío a WhatsApp.");
+};
 
 document.addEventListener('DOMContentLoaded', iniciarCatalogo);
