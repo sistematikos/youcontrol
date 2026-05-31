@@ -40,22 +40,26 @@
         .menu-card p { font-size: 0.7rem; color: var(--text-muted); margin: 0; }
         
         /* Pie de página con letras en azul */
+
         .footer-core {
-    position: fixed; /* Lo fija en la esquina */
-    bottom: 10px;
-    left: 10px;
-    text-align: left; /* Alineado a la izquierda */
-    padding: 10px;
+    position: fixed; 
+    bottom: 20px;    /* Margen desde abajo */
+    right: 20px;     /* Margen desde la derecha */
+    text-align: right; /* Alineado a la derecha */
+    padding: 15px;
     font-size: 0.8rem;
     color: var(--accent-blue);
-    background: rgba(241, 245, 249, 0.9); /* Un fondo suave */
-    border-radius: 8px;
+    background: rgba(241, 245, 249, 0.95); /* Un fondo un poco más sólido */
+    border-radius: 12px;
     border: 1px solid #E2E8F0;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Sombra para que destaque */
     display: flex;
-    flex-direction: column; /* Apila los elementos */
-    gap: 2px; /* Espacio entre líneas */
+    flex-direction: column; 
+    align-items: flex-end; /* Alinea el contenido a la derecha */
+    gap: 4px; 
     z-index: 1000;
 }
+        
 .license-info { font-weight: 700; }
     </style>
 </head>
