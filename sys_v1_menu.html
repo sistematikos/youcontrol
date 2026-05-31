@@ -12,89 +12,86 @@
             --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
             --text-dark: #1E293B;
             --text-muted: #64748B;
-            --vinotinto: #800020;
             --color-inv: #10B981;       
             --color-comp: #6366F1;      
             --color-ventas: #0EA5E9;    
             --color-reportes: #F59E0B;  
         }
         body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; color: var(--text-dark); }
-        .banner-menu-container { width: 100%; max-width: 1200px; margin: 15px auto 5px auto; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08); position: relative; background: linear-gradient(135deg, #004687 0%, #002A54 100%); }
+        .banner-menu-container { width: 92%; max-width: 1200px; margin: 15px auto 5px auto; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08); background: linear-gradient(135deg, #004687 0%, #002A54 100%); }
         .banner-menu-img { width: 100%; height: auto; max-height: 240px; object-fit: cover; display: block; }
-        .banner-tag-version { position: absolute; bottom: 12px; right: 18px; background: rgba(255, 255, 255, 0.16); padding: 4px 12px; border-radius: 30px; backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.25); color: #ffffff; font-size: 0.75rem; font-weight: 600; }
-        .menu-container { max-width: 1200px; width: 92%; margin: 0 auto; padding: 10px 0; flex-grow: 1; display: flex; align-items: center; box-sizing: border-box; }
+        .banner-tag-version { position: absolute; bottom: 12px; right: 18px; color: #ffffff; font-size: 0.75rem; }
+        
+        /* REJILLA COMPACTA */
+        .menu-container { max-width: 1200px; width: 92%; margin: 0 auto; padding: 10px 0; flex-grow: 1; display: flex; align-items: center; }
         .menu-grid-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; width: 100%; }
-        .menu-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-radius: 12px; padding: 14px 12px; text-align: center; text-decoration: none; color: var(--text-dark); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02); display: flex; flex-direction: column; align-items: center; min-height: 165px; border: 2px solid transparent; transition: all 0.25s; }
+        
+        /* TARJETAS COMPACTAS (Tus medidas originales) */
+        .menu-card { background: rgba(255, 255, 255, 0.9); border-radius: 12px; padding: 14px 12px; text-align: center; text-decoration: none; color: var(--text-dark); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 165px; border: 2px solid transparent; transition: all 0.2s; }
         .menu-card:hover { transform: translateY(-3px); background: #FFFFFF; }
-        .card-inv { border-color: rgba(16, 185, 129, 0.15); } .card-inv i { color: var(--color-inv); }
-        .card-depto { border-color: rgba(168, 85, 247, 0.15); } .card-depto i { color: #A855F7; }
-        .card-comp { border-color: rgba(99, 102, 241, 0.15); } .card-comp i { color: var(--color-comp); }
-        .card-ventas { border-color: rgba(14, 165, 233, 0.15); } .card-ventas i { color: var(--color-ventas); }
-        .card-reportes { border-color: rgba(245, 158, 11, 0.15); } .card-reportes i { color: var(--color-reportes); }
-        .card-config { border-color: rgba(107, 114, 128, 0.15); } .card-config i { color: #6B7280; }
+        
+        /* COLORES Y BORDES */
+        .card-inv { border-color: rgba(16, 185, 129, 0.15); } .card-inv i { color: var(--color-inv); } .card-inv:hover { border-color: var(--color-inv); }
+        .card-depto { border-color: rgba(168, 85, 247, 0.15); } .card-depto i { color: #A855F7; } .card-depto:hover { border-color: #A855F7; }
+        .card-comp { border-color: rgba(99, 102, 241, 0.15); } .card-comp i { color: var(--color-comp); } .card-comp:hover { border-color: var(--color-comp); }
+        .card-ventas { border-color: rgba(14, 165, 233, 0.15); } .card-ventas i { color: var(--color-ventas); } .card-ventas:hover { border-color: var(--color-ventas); }
+        .card-reportes { border-color: rgba(245, 158, 11, 0.15); } .card-reportes i { color: var(--color-reportes); } .card-reportes:hover { border-color: var(--color-reportes); }
+        .card-config { border-color: rgba(107, 114, 128, 0.15); } .card-config i { color: #6B7280; } .card-config:hover { border-color: #6B7280; }
+        
         .menu-card i { font-size: 1.8rem; margin-bottom: 8px; }
-        .menu-card span { font-size: 0.88rem; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; }
+        .menu-card span { font-size: 0.88rem; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; display: block; }
         .menu-card p { font-size: 0.74rem; color: var(--text-muted); margin: 0; line-height: 1.35; }
+        
         .footer-core { text-align: center; padding: 10px 20px 20px; color: var(--text-muted); font-size: 0.75rem; }
-        .license-info { background: rgba(255, 255, 255, 0.7); padding: 6px 20px; border-radius: 12px; font-weight: 500; color: #475569; display: inline-block; }
-        .license-company { font-weight: 700; color: #0284C7; display: block; }
+        .license-info { background: rgba(255, 255, 255, 0.7); padding: 6px 20px; border-radius: 12px; font-weight: 500; display: inline-block; }
     </style>
 </head>
-<body oncontextmenu="return false">
-
-    <div style="width: 92%; max-width: 1200px; margin: 0 auto;">
-        <div class="banner-menu-container">
-            <img src="img/youcontrol.png" alt="You Control" class="banner-menu-img">
-            <div class="banner-tag-version">v3.0 Pro</div>
-        </div>
+<body>
+    <div class="banner-menu-container">
+        <img src="img/youcontrol.png" alt="You Control" class="banner-menu-img">
     </div>
 
     <main class="menu-container">
         <div class="menu-grid-layout">
-            <a href="sys_v1_inv.html" class="menu-card card-inv"><i class="fas fa-boxes-stacked"></i><span>Inventario</span><p>Gestiona tus existencias y precios.</p></a>
-            <a href="sys_v1_dep.html" class="menu-card card-depto"><i class="fas fa-sitemap"></i><span>Departamentos</span><p>Organiza tus categorías.</p></a>
+            <a href="sys_v1_inv.html" class="menu-card card-inv"><i class="fas fa-boxes-stacked"></i><span>Inventario</span><p>Visualiza existencias y precios.</p></a>
+            <a href="sys_v1_dep.html" class="menu-card card-depto"><i class="fas fa-sitemap"></i><span>Departamentos</span><p>Clasifica tus productos.</p></a>
             <a href="sys_v3_comp.html" class="menu-card card-comp"><i class="fas fa-cart-plus"></i><span>Entrada</span><p>Registra nuevas compras.</p></a>
             <a href="sys_v1_vt.html" class="menu-card card-ventas"><i class="fas fa-cash-register"></i><span>Ventas (POS)</span><p>Facturación rápida.</p></a>
-            <a href="sys_v2_clt.html" class="menu-card card-clientes"><i class="fas fa-users"></i><span>Clientes</span><p>Base de datos.</p></a>
+            <a href="sys_v2_clt.html" class="menu-card card-ventas"><i class="fas fa-users"></i><span>Clientes</span><p>Base de datos.</p></a>
             <a href="sys_v4_reportes.html" class="menu-card card-reportes"><i class="fas fa-chart-line"></i><span>Reportes</span><p>Estadísticas del negocio.</p></a>
             
             <a href="#" id="btn-catalogo" class="menu-card card-ventas">
                 <i class="fas fa-store"></i>
                 <span>Catálogo Digital</span>
-                <p>Vitrina virtual para tus clientes.</p>
+                <p>Vitrina virtual para clientes.</p>
             </a>
             
-            <a href="sys_config.html" class="menu-card card-config"><i class="fas fa-cog"></i><span>Configuración</span><p>Parámetros del sistema.</p></a>
+            <a href="sys_config.html" class="menu-card card-config"><i class="fas fa-cog"></i><span>Configuración</span><p>Parámetros generales.</p></a>
         </div>
     </main>
 
     <footer class="footer-core">
         <div class="license-info">
-            <span class="license-title">Licencia registrada a:</span>
-            <span class="license-company" id="lblEmpresa">Cargando...</span>
+            Licencia: <span id="lblEmpresa">Cargando...</span>
         </div>
     </footer>
 
     <script>
-        // Lógica de validación
-        function renderizarLicenciatario() {
+        // Cargar Nombre Empresa
+        try {
             const token = localStorage.getItem('licencia_youcontrol');
-            if (!token) { location.href = "index.html"; return; }
-            try {
-                const data = JSON.parse(atob(token));
-                document.getElementById('lblEmpresa').innerText = data.n || "Cliente";
-            } catch(e) { location.href = "index.html"; }
-        }
-        renderizarLicenciatario();
+            const data = JSON.parse(atob(token));
+            document.getElementById('lblEmpresa').innerText = data.n;
+        } catch(e) { location.href = "index.html"; }
 
-        // Lógica dinámica del Catálogo
+        // Navegación Dinámica Catálogo
         document.getElementById('btn-catalogo').addEventListener('click', (e) => {
             e.preventDefault();
             const empresaID = localStorage.getItem('youcontrol_empresa_id');
             if (empresaID) {
                 window.location.href = `node_v2_505.html?empresa=${empresaID}`;
             } else {
-                alert("Error: Identificación no encontrada.");
+                alert("Error de sesión: Reinicie el sistema.");
             }
         });
     </script>
