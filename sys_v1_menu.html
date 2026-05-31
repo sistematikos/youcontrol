@@ -14,19 +14,19 @@
         }
         body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; }
         
-        /* Banner */
-        .banner-menu-container { width: 92%; max-width: 1200px; margin: 15px auto 10px auto; border-radius: 16px; overflow: hidden; background: #002A54; }
-        .banner-menu-img { width: 100%; max-height: 160px; object-fit: cover; display: block; }
+        /* Banner con mayor altura */
+        .banner-menu-container { width: 92%; max-width: 1200px; margin: 15px auto 5px auto; border-radius: 16px; overflow: hidden; background: #002A54; }
+        .banner-menu-img { width: 100%; max-height: 220px; object-fit: cover; display: block; }
         
-        /* Contenedor Rejilla - Sin espacios extra */
-        .menu-container { max-width: 1200px; width: 92%; margin: 0 auto; padding: 0; flex-grow: 1; display: flex; align-items: center; }
+        /* Contenedor Rejilla - Margen superior reducido para acercar al banner */
+        .menu-container { max-width: 1200px; width: 92%; margin: 0 auto; padding: 5px 0; flex-grow: 1; display: flex; align-items: center; }
         .menu-grid-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; width: 100%; }
         
-        /* Tarjetas - Diseño limpio y compacto */
+        /* Tarjetas - Diseño compacto */
         .menu-card { background: #fff; border-radius: 12px; padding: 15px 10px; text-align: center; text-decoration: none; color: var(--text-dark); box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; border: 2px solid #E2E8F0; transition: 0.2s; }
         .menu-card:hover { transform: translateY(-3px); }
         
-        /* COLORES PERSONALIZADOS (Iconos y Bordes) */
+        /* COLORES */
         .card-inv { border-color: #10B981; } .card-inv i { color: #10B981; }
         .card-depto { border-color: #A855F7; } .card-depto i { color: #A855F7; }
         .card-comp { border-color: #6366F1; } .card-comp i { color: #6366F1; }
@@ -38,9 +38,8 @@
         .menu-card span { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }
         .menu-card p { font-size: 0.7rem; color: var(--text-muted); margin: 0; }
         
-        /* PIE DE PÁGINA (Footer) */
-        .footer-core { text-align: center; padding: 15px; font-size: 0.75rem; color: #475569; background: #E2E8F0; border-top: 1px solid #CBD5E1; }
-        .license-info { font-weight: 700; color: #0284C7; }
+        /* PIE DE PÁGINA */
+        .footer-core { text-align: center; padding: 10px; font-size: 0.75rem; color: #475569; background: #E2E8F0; border-top: 1px solid #CBD5E1; }
     </style>
 </head>
 <body oncontextmenu="return false">
