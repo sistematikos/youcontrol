@@ -15,19 +15,15 @@
         }
         body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; }
         
-        /* Banner ajustado a 280px */
         .banner-menu-container { width: 92%; max-width: 1200px; margin: 15px auto 0px auto; border-radius: 16px; overflow: hidden; background: #002A54; }
         .banner-menu-img { width: 100%; max-height: 280px; object-fit: cover; display: block; }
         
-        /* Contenedor tarjetas con margen negativo para acercar al banner */
         .menu-container { max-width: 1200px; width: 92%; margin: -10px auto 5px auto; padding: 5px 0; flex-grow: 1; display: flex; align-items: center; }
         .menu-grid-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; width: 100%; }
         
-        /* Tarjetas compactas */
         .menu-card { background: #fff; border-radius: 12px; padding: 15px 10px; text-align: center; text-decoration: none; color: var(--text-dark); box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; border: 2px solid #E2E8F0; transition: 0.2s; }
         .menu-card:hover { transform: translateY(-3px); }
         
-        /* Colores de Bordes e Iconos */
         .card-inv { border-color: #10B981; } .card-inv i { color: #10B981; }
         .card-depto { border-color: #A855F7; } .card-depto i { color: #A855F7; }
         .card-comp { border-color: #6366F1; } .card-comp i { color: #6366F1; }
@@ -39,28 +35,24 @@
         .menu-card span { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }
         .menu-card p { font-size: 0.7rem; color: var(--text-muted); margin: 0; }
         
-        /* Pie de página con letras en azul */
-
+        /* Footer integrado al ancho del contenedor */
         .footer-core {
-    position: fixed; 
-    bottom: 20px;    /* Margen desde abajo */
-    right: 20px;     /* Margen desde la derecha */
-    text-align: right; /* Alineado a la derecha */
-    padding: 15px;
-    font-size: 0.8rem;
-    color: var(--accent-blue);
-    background: rgba(241, 245, 249, 0.95); /* Un fondo un poco más sólido */
-    border-radius: 12px;
-    border: 1px solid #E2E8F0;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Sombra para que destaque */
-    display: flex;
-    flex-direction: column; 
-    align-items: flex-end; /* Alinea el contenido a la derecha */
-    gap: 4px; 
-    z-index: 1000;
-}
-        
-.license-info { font-weight: 700; }
+            width: 92%;
+            max-width: 1200px;
+            margin: 0 auto 20px auto; /* Centrado y con margen inferior */
+            padding: 15px;
+            font-size: 0.8rem;
+            color: var(--accent-blue);
+            background: #fff;
+            border-radius: 12px;
+            border: 2px solid #E2E8F0;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end; /* Alinea los datos a la derecha dentro del bloque */
+            gap: 4px;
+            box-sizing: border-box;
+        }
+        .license-info { font-weight: 700; text-align: right; }
     </style>
 </head>
 <body oncontextmenu="return false">
@@ -89,68 +81,66 @@
     </main>
 
     <footer class="footer-core">
-        <div class="license-info">
-            Licencia: <span id="lblEmpresa">Cargando...</span>
+        <div class="license-info" id="lblEmpresa">
+            Cargando datos de licencia...
         </div>
     </footer>
 
     <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-        apiKey: "TU_API_KEY", 
-        authDomain: "youcontrol-1d60a.firebaseapp.com",
-        projectId: "youcontrol-1d60a",
-        storageBucket: "youcontrol-1d60a.appspot.com",
-        messagingSenderId: "812100760013",
-        appId: "1:812100760013:web:7574906aa285555faf5484"
-    };
+        const firebaseConfig = {
+            apiKey: "TU_API_KEY", 
+            authDomain: "youcontrol-1d60a.firebaseapp.com",
+            projectId: "youcontrol-1d60a",
+            storageBucket: "youcontrol-1d60a.appspot.com",
+            messagingSenderId: "812100760013",
+            appId: "1:812100760013:web:7574906aa285555faf5484"
+        };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-    async function cargarDatosEmpresa() {
-        const empresaID = localStorage.getItem('youcontrol_empresa_id');
-        const lblEmpresa = document.getElementById('lblEmpresa');
+        async function cargarDatosEmpresa() {
+            const empresaID = localStorage.getItem('youcontrol_empresa_id');
+            const lblEmpresa = document.getElementById('lblEmpresa');
 
-        if (empresaID) {
-            try {
-                const docRef = doc(db, "empresas_config", empresaID);
-                const docSnap = await getDoc(docRef);
+            if (empresaID) {
+                try {
+                    const docRef = doc(db, "empresas_config", empresaID);
+                    const docSnap = await getDoc(docRef);
 
-                if (docSnap.exists()) {
-                    const datos = docSnap.data();
-                    lblEmpresa.innerHTML = `
-                        <div style="display:block;">Empresa: ${datos.nombre || 'Nombre no configurado'}</div>
-                        <div style="display:block;">RIF: ${datos.rif || 'N/A'}</div>
-                        <div style="display:block;">Dir: ${datos.direccion || 'N/A'}</div>
-                    `;
-                } else {
-                    lblEmpresa.innerText = "Datos no encontrados";
+                    if (docSnap.exists()) {
+                        const datos = docSnap.data();
+                        lblEmpresa.innerHTML = `
+                            <div style="display:block;">Empresa: ${datos.nombre || 'Nombre no configurado'}</div>
+                            <div style="display:block;">RIF: ${datos.rif || 'N/A'}</div>
+                            <div style="display:block;">Dir: ${datos.direccion || 'N/A'}</div>
+                        `;
+                    } else {
+                        lblEmpresa.innerText = "Datos no encontrados";
+                    }
+                } catch (e) {
+                    console.error("Error:", e);
+                    lblEmpresa.innerText = "Error al cargar";
                 }
-            } catch (e) {
-                console.error("Error:", e);
-                lblEmpresa.innerText = "Error al cargar";
+            } else {
+                lblEmpresa.innerText = "Sin ID de empresa";
             }
-        } else {
-            lblEmpresa.innerText = "Sin ID de empresa";
         }
-    }
 
-    // Ejecutar al cargar
-    cargarDatosEmpresa();
+        cargarDatosEmpresa();
 
-    // Navegación Catálogo
-    document.getElementById('btn-catalogo').addEventListener('click', (e) => {
-        e.preventDefault();
-        const empresaID = localStorage.getItem('youcontrol_empresa_id');
-        if (empresaID) {
-            window.open(`node_v2_505.html?empresa=${empresaID}`, '_blank');
-        } else {
-            alert("Error de sesión: Reinicie el sistema.");
-        }
-    });
-</script>
+        document.getElementById('btn-catalogo').addEventListener('click', (e) => {
+            e.preventDefault();
+            const empresaID = localStorage.getItem('youcontrol_empresa_id');
+            if (empresaID) {
+                window.open(`node_v2_505.html?empresa=${empresaID}`, '_blank');
+            } else {
+                alert("Error de sesión: Reinicie el sistema.");
+            }
+        });
+    </script>
 </body>
 </html>
