@@ -91,61 +91,62 @@
     </footer>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-        const firebaseConfig = {
-            apiKey: "TU_API_KEY", // ¡No olvides poner tu API KEY real aquí!
-            authDomain: "youcontrol-1d60a.firebaseapp.com",
-            projectId: "youcontrol-1d60a",
-            storageBucket: "youcontrol-1d60a.appspot.com",
-            messagingSenderId: "812100760013",
-            appId: "1:812100760013:web:7574906aa285555faf5484"
-        };
+    const firebaseConfig = {
+        apiKey: "TU_API_KEY", 
+        authDomain: "youcontrol-1d60a.firebaseapp.com",
+        projectId: "youcontrol-1d60a",
+        storageBucket: "youcontrol-1d60a.appspot.com",
+        messagingSenderId: "812100760013",
+        appId: "1:812100760013:web:7574906aa285555faf5484"
+    };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-        async function cargarDatosEmpresa() {
-    const empresaID = localStorage.getItem('youcontrol_empresa_id');
-    const lblEmpresa = document.getElementById('lblEmpresa');
+    async function cargarDatosEmpresa() {
+        const empresaID = localStorage.getItem('youcontrol_empresa_id');
+        const lblEmpresa = document.getElementById('lblEmpresa');
 
-    if (empresaID) {
-        try {
-            const docRef = doc(db, "empresas_config", empresaID);
-            const docSnap = await getDoc(docRef);
+        if (empresaID) {
+            try {
+                const docRef = doc(db, "empresas_config", empresaID);
+                const docSnap = await getDoc(docRef);
 
-            if (docSnap.exists()) {
-                const datos = docSnap.data();
-                // Ahora usamos el campo "nombre" que acabas de guardar
-                lblEmpresa.innerHTML = `
-                    <div style="display:block;">Empresa: ${datos.nombre || 'Nombre no configurado'}</div>
-                    <div style="display:block;">RIF: ${datos.rif || 'N/A'}</div>
-                    <div style="display:block;">Dir: ${datos.direccion || 'N/A'}</div>
-                `;
+                if (docSnap.exists()) {
+                    const datos = docSnap.data();
+                    lblEmpresa.innerHTML = `
+                        <div style="display:block;">Empresa: ${datos.nombre || 'Nombre no configurado'}</div>
+                        <div style="display:block;">RIF: ${datos.rif || 'N/A'}</div>
+                        <div style="display:block;">Dir: ${datos.direccion || 'N/A'}</div>
+                    `;
+                } else {
+                    lblEmpresa.innerText = "Datos no encontrados";
+                }
+            } catch (e) {
+                console.error("Error:", e);
+                lblEmpresa.innerText = "Error al cargar";
             }
-        } catch (e) {
-            console.error("Error:", e);
+        } else {
+            lblEmpresa.innerText = "Sin ID de empresa";
         }
     }
-}            } else {
-                lblEmpresa.innerText = "Sin ID de empresa";
-            }
+
+    // Ejecutar al cargar
+    cargarDatosEmpresa();
+
+    // Navegación Catálogo
+    document.getElementById('btn-catalogo').addEventListener('click', (e) => {
+        e.preventDefault();
+        const empresaID = localStorage.getItem('youcontrol_empresa_id');
+        if (empresaID) {
+            window.open(`node_v2_505.html?empresa=${empresaID}`, '_blank');
+        } else {
+            alert("Error de sesión: Reinicie el sistema.");
         }
-
-        // Ejecutar al cargar
-        cargarDatosEmpresa();
-
-        // Navegación Catálogo (Ventana nueva) - Conservamos la lógica original
-        document.getElementById('btn-catalogo').addEventListener('click', (e) => {
-            e.preventDefault();
-            const empresaID = localStorage.getItem('youcontrol_empresa_id');
-            if (empresaID) {
-                window.open(`node_v2_505.html?empresa=${empresaID}`, '_blank');
-            } else {
-                alert("Error de sesión: Reinicie el sistema.");
-            }
-        });
-    </script>
+    });
+</script>
 </body>
 </html>
