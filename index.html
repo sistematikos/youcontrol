@@ -1,147 +1,53 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-
-   <script>
-    const btnInstall = document.getElementById('btnInstallPWA');
-    const btnEnter = document.getElementById('btnEnterSystem');
-
-    // Detectar si es iOS (iPhone/iPad)
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-
-    window.addEventListener('load', () => {
-        // Si ya está validado, entrar directo
-        if (localStorage.getItem('licencia_validada') === 'true') {
-            activarIngreso();
-        }
-    });
-
-    btnInstall.addEventListener('click', () => {
-        if (isIOS) {
-            alert("Para instalar en iPhone: \n1. Toca el botón 'Compartir' (el cuadrado con flecha abajo).\n2. Desliza hacia abajo y selecciona 'Añadir a pantalla de inicio'.\n3. Una vez hecho, abre el icono que aparecerá en tu escritorio.");
-            // Permitimos el acceso aunque no sea una instalación "técnica" perfecta
-            activarIngreso();
-        } else {
-            // Lógica normal para Android/PC
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-            } else {
-                activarIngreso();
-            }
-        }
-    });
-
-    function activarIngreso() {
-        btnInstall.disabled = true;
-        btnInstall.innerHTML = '<i class="fas fa-check"></i> SOFTWARE LISTO';
-        btnEnter.disabled = false;
-        btnEnter.classList.add('active');
-        btnEnter.innerHTML = '<i class="fas fa-unlock"></i> INGRESAR AL SISTEMA';
-        btnEnter.onclick = () => { location.href = "sys_lic.html"; };
-    }
-</script>
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistematikos | You Control v4</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <link rel="manifest" href="./manifest.json">
-    <link rel="shortcut icon" href="./assets/logo_512.png" type="image/png">
-    <meta name="theme-color" content="#001432">
-
-   <script>
-    // --- GUARD DE AUTENTICACIÓN ---
-    // Esto se ejecuta antes de mostrar cualquier cosa en pantalla
-    (function() {
-        if (localStorage.getItem('licencia_validada') === 'true') {
-            window.location.replace('sys_v1_menu.html');
-        }
-    })();
-</script>
-
+    <title>YOU CONTROL | Acceso</title>
     <style>
-        :root {
-            --bg-dark: #001432;
-            --primary-blue: #002D72; 
-            --electric-blue: #0052D4;
-            --text-light: #F8FAFC;
-            --text-muted: #94A3B8;
-        }
-
-        body { font-family: 'Poppins', sans-serif; background: var(--bg-dark); margin: 0; height: 100vh; display: flex; align-items: center; justify-content: center; color: var(--text-light); }
-        .main-container { display: flex; flex-direction: column; align-items: center; gap: 25px; width: 90%; max-width: 600px; }
-        .brand-header { text-align: center; }
-        .brand-logo { width: 100px; height: 100px; background: rgba(255, 255, 255, 0.05); border-radius: 25px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); overflow: hidden; }
-        .brand-logo img { width: 100%; height: 100%; object-fit: cover; }
-        .activation-panel { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); padding: 40px; border-radius: 30px; width: 100%; box-sizing: border-box; text-align: center; }
-        .btn-act { padding: 18px 25px; border-radius: 16px; font-weight: 700; cursor: pointer; border: none; width: 100%; margin-bottom: 15px; transition: all 0.3s; font-size: 1rem; }
-        .btn-download { background: var(--electric-blue); color: white; }
-        .btn-entry { background: rgba(255, 255, 255, 0.05); color: var(--text-muted); cursor: not-allowed; }
-        .btn-entry.active { background: #10B981; color: white; cursor: pointer; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+        body { font-family: 'Poppins', sans-serif; background: #F1F5F9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 90%; max-width: 400px; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #E2E8F0; border-radius: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #0EA5E9; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
     </style>
 </head>
 <body>
-
-    <div class="main-container">
-        <div class="brand-header">
-            <div class="brand-logo">
-                <img src="./assets/logo_512.png" alt="Logo You Control">
-            </div>
-            <h1>You Control v4</h1>
-            <p style="color: var(--text-muted)">Sistema de Gestión Inteligente</p>
-        </div>
-
-        <div class="activation-panel">
-            <button id="btnInstallPWA" class="btn-act btn-download">
-                <i class="fas fa-download"></i> INSTALAR SOFTWARE
-            </button>
-            <button id="btnEnterSystem" class="btn-act btn-entry" disabled>
-                <i class="fas fa-lock"></i> ACCESO BLOQUEADO
-            </button>
-        </div>
+    <div class="card">
+        <img src="img/logo.png" style="width: 100px; margin-bottom: 20px;" onerror="this.style.display='none'">
+        <h2>Bienvenido</h2>
+        <p>Ingrese su código de licencia para continuar:</p>
+        <input type="text" id="input-licencia" placeholder="Código de acceso">
+        <button onclick="validarLicencia()">VALIDAR LICENCIA</button>
     </div>
 
-    <script>
-        let deferredPrompt;
-        const btnInstall = document.getElementById('btnInstallPWA');
-        const btnEnter = document.getElementById('btnEnterSystem');
+    <script type="module">
+        import { db } from './js/firebase-config.js';
+        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
+        window.validarLicencia = async () => {
+            const codigo = document.getElementById('input-licencia').value.trim();
+            if (!codigo) return alert("Por favor ingresa un código.");
 
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-        });
-
-        btnInstall.addEventListener('click', () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') activarIngreso();
-                });
-            } else {
-                alert("El software ya está instalado o no disponible.");
+            try {
+                // Suponiendo que tus licencias están en la colección "licencias"
+                const docRef = await getDoc(doc(db, "licencias", codigo));
+                
+                if (docRef.exists()) {
+                    const data = docRef.data();
+                    // Guardamos la info necesaria en localStorage
+                    localStorage.setItem('youcontrol_empresa_id', data.empresa_id);
+                    localStorage.setItem('licencia_youcontrol', btoa(JSON.stringify({ n: data.nombre_empresa })));
+                    
+                    alert("Licencia verificada. Redirigiendo...");
+                    window.location.href = "sys_v1_menu.html";
+                } else {
+                    alert("Código de licencia inválido.");
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Error al validar, intenta de nuevo.");
             }
-        });
-
-        window.addEventListener('appinstalled', () => activarIngreso());
-
-        function activarIngreso() {
-            btnInstall.disabled = true;
-            btnInstall.innerHTML = '<i class="fas fa-check"></i> SOFTWARE INSTALADO';
-            btnInstall.style.opacity = "0.5";
-            
-            btnEnter.disabled = false;
-            btnEnter.classList.add('active');
-            btnEnter.innerHTML = '<i class="fas fa-unlock"></i> INGRESAR AL SISTEMA';
-            
-            // MODIFICACIÓN AQUÍ: Redirección inteligente
-            btnEnter.onclick = () => {
-                location.href = "sys_lic.html";
-            };
-        }
+        };
     </script>
 </body>
 </html>
