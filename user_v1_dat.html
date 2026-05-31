@@ -16,36 +16,45 @@
 <body>
 
 <div class="admin-card">
-    <h2>Gestión Fiscal: Clientes</h2>
+    <h2>Gestión Fiscal: Firestore</h2>
     <input type="text" id="empresaID" placeholder="ID de Empresa (Ej: YC-2026-001)">
     <input type="text" id="rif" placeholder="RIF">
     <input type="text" id="dir" placeholder="Dirección">
     <input type="text" id="tel" placeholder="Teléfono">
     <input type="email" id="email" placeholder="Correo Electrónico">
-    <button onclick="guardarDatos()">Actualizar Datos en Servidor</button>
+    <button onclick="guardarDatos()">Guardar en Firestore</button>
 </div>
 
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-<script>
-    // Configuración Firebase (la misma que usas en el sistema)
-    const firebaseConfig = { /* TU CONFIGURACIÓN AQUÍ */ };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    const firebaseConfig = { 
+        // COPIA AQUÍ TUS CREDENCIALES DE FIREBASE DESDE LA CONSOLA
+    };
 
-    function guardarDatos() {
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.guardarDatos = async () => {
         const id = document.getElementById('empresaID').value;
         if (!id) return alert("Ingrese un ID de empresa");
 
-        db.ref('configuracion_empresas/' + id).set({
-            rif: document.getElementById('rif').value,
-            direccion: document.getElementById('dir').value,
-            telefono: document.getElementById('tel').value,
-            email: document.getElementById('email').value
-        }).then(() => alert("Datos actualizados con éxito")).catch(e => alert("Error: " + e));
-    }
+        try {
+            // Guardamos en la colección 'empresas_config' usando el ID como documento
+            await setDoc(doc(db, "empresas_config", id), {
+                rif: document.getElementById('rif').value,
+                direccion: document.getElementById('dir').value,
+                telefono: document.getElementById('tel').value,
+                email: document.getElementById('email').value,
+                fecha_actualizacion: new Date().toISOString()
+            });
+            alert("¡Datos guardados correctamente en Firestore!");
+        } catch (e) {
+            console.error(e);
+            alert("Error al guardar: " + e.message);
+        }
+    };
 </script>
 
 </body>
