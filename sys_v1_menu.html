@@ -116,13 +116,15 @@
                 const docRef = doc(db, "empresas_config", empresaID);
                 const docSnap = await getDoc(docRef);
 
-                if (docSnap.exists()) {
-                    const datos = docSnap.data();
-                    // Aquí inyectamos los datos. Puedes personalizar este texto:
-                    lblEmpresa.innerHTML = `
-                        ${datos.rif ? `| RIF: ${datos.rif} ` : ''} 
-                        | Dir: ${datos.direccion || 'N/A'}
-                    `;
+                // ... dentro de tu función cargarDatosEmpresa
+if (docSnap.exists()) {
+    const datos = docSnap.data();
+    lblEmpresa.innerHTML = `
+        <div style="display:block;">Empresa: ${datos.cliente || 'YouControl'}</div>
+        <div style="display:block;">RIF: ${datos.rif || 'N/A'}</div>
+        <div style="display:block;">Dir: ${datos.direccion || 'N/A'}</div>
+    `;
+}
                 } else {
                     lblEmpresa.innerText = "Datos no configurados";
                 }
