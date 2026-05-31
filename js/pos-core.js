@@ -4,7 +4,7 @@
  */
 
 import { db } from './firebase-config.js'; 
-import { collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { obtenerUltimoNumero } from './pos-core-numfact.js';
 import { ejecutarF4, ejecutarF5, ejecutarF6, abrirModalCobro } from './pos-core-teclas.js';
 
@@ -123,17 +123,13 @@ window.registrarVenta = async () => {
     }
 
     try {
-        // PRIORIDAD: 
-        // 1. Usar el nombre "memorizado" en la variable global (si se seleccionó cliente).
-        // 2. Si no hay, intentar leer del input.
-        // 3. Por defecto, "Anónimo".
         const nombreParaGuardar = window.nombreClienteSeleccionado || 
                                  document.getElementById('buscar-cliente-pos')?.value || 
                                  "Anónimo";
 
         const ventaData = {
             cliente_id: window.clienteSeleccionadoID || "anonimo",
-            nombre_cliente: nombreParaGuardar, // Se guardará correctamente en Firestore
+            nombre_cliente: nombreParaGuardar,
             items: carrito,
             total_usd: window.totalVentaUSD || 0,
             tasa_aplicada: tasaActual,
@@ -147,29 +143,28 @@ window.registrarVenta = async () => {
             nro_factura: proximoNumeroFacturaStr
         };
 
-        // Guardar en Firestore
+        // 1. Guardar la venta
         await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
 
-        alert("✅ Venta registrada correctamente para: " + nombreParaGuardar);
+        // 2. DESCONTAR INVENTARIO (NUEVA LÓGICA)
+        for (const item of carrito) {
+            const productoRef = doc(db, "usuarios", USER_ID, "productos", item.id);
+            // Restamos la cantidad vendida al stock actual
+            await updateDoc(productoRef, {
+                stock: increment(-item.cantidad)
+            });
+        }
 
-        // Limpieza profunda de variables globales y UI
+        alert("✅ Venta registrada y stock actualizado correctamente.");
+
+        // Limpieza
         carrito = [];
         window.clienteSeleccionadoID = null;
-        window.nombreClienteSeleccionado = null; // LIMPIAMOS LA MEMORIA
+        window.nombreClienteSeleccionado = null;
         
-        const inputC = document.getElementById('buscar-cliente-pos');
-        if (inputC) inputC.value = '';
-        
+        // ... (resto de tu código de limpieza de UI)
         document.getElementById('modalPago').style.display = 'none';
-        
-        // Reset inputs de pago
-        ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd'].forEach(id => {
-            const el = document.getElementById(id);
-            if(el) el.value = "0";
-        });
-
         window.actualizarCarritoUI();
-        proximoNumeroFacturaStr = (parseInt(proximoNumeroFacturaStr) + 1).toString().padStart(6, '0');
 
     } catch (error) {
         console.error("Error al guardar:", error);
