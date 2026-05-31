@@ -8,7 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-vivo: #0284C7;          
             --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
             --text-dark: #1E293B;
             --text-muted: #64748B;
@@ -20,17 +19,16 @@
         body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; color: var(--text-dark); }
         .banner-menu-container { width: 92%; max-width: 1200px; margin: 15px auto 5px auto; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08); background: linear-gradient(135deg, #004687 0%, #002A54 100%); }
         .banner-menu-img { width: 100%; height: auto; max-height: 240px; object-fit: cover; display: block; }
-        .banner-tag-version { position: absolute; bottom: 12px; right: 18px; color: #ffffff; font-size: 0.75rem; }
         
-        /* REJILLA COMPACTA */
-        .menu-container { max-width: 1200px; width: 92%; margin: 0 auto; padding: 10px 0; flex-grow: 1; display: flex; align-items: center; }
+        /* Rejilla Compacta */
+        .menu-container { max-width: 1200px; width: 92%; margin: 0 auto; padding: 10px 0 5px 0; flex-grow: 1; display: flex; align-items: center; }
         .menu-grid-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; width: 100%; }
         
-        /* TARJETAS COMPACTAS (Tus medidas originales) */
-        .menu-card { background: rgba(255, 255, 255, 0.9); border-radius: 12px; padding: 14px 12px; text-align: center; text-decoration: none; color: var(--text-dark); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 165px; border: 2px solid transparent; transition: all 0.2s; }
+        /* Tarjetas Compactas */
+        .menu-card { background: rgba(255, 255, 255, 0.9); border-radius: 12px; padding: 12px 10px; text-align: center; text-decoration: none; color: var(--text-dark); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 140px; border: 2px solid transparent; transition: all 0.2s; }
         .menu-card:hover { transform: translateY(-3px); background: #FFFFFF; }
         
-        /* COLORES Y BORDES */
+        /* Colores y Bordes */
         .card-inv { border-color: rgba(16, 185, 129, 0.15); } .card-inv i { color: var(--color-inv); } .card-inv:hover { border-color: var(--color-inv); }
         .card-depto { border-color: rgba(168, 85, 247, 0.15); } .card-depto i { color: #A855F7; } .card-depto:hover { border-color: #A855F7; }
         .card-comp { border-color: rgba(99, 102, 241, 0.15); } .card-comp i { color: var(--color-comp); } .card-comp:hover { border-color: var(--color-comp); }
@@ -38,15 +36,16 @@
         .card-reportes { border-color: rgba(245, 158, 11, 0.15); } .card-reportes i { color: var(--color-reportes); } .card-reportes:hover { border-color: var(--color-reportes); }
         .card-config { border-color: rgba(107, 114, 128, 0.15); } .card-config i { color: #6B7280; } .card-config:hover { border-color: #6B7280; }
         
-        .menu-card i { font-size: 1.8rem; margin-bottom: 8px; }
-        .menu-card span { font-size: 0.88rem; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; display: block; }
-        .menu-card p { font-size: 0.74rem; color: var(--text-muted); margin: 0; line-height: 1.35; }
+        .menu-card i { font-size: 1.5rem; margin-bottom: 5px; }
+        .menu-card span { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; display: block; }
+        .menu-card p { font-size: 0.7rem; color: var(--text-muted); margin: 0; line-height: 1.35; }
         
         .footer-core { text-align: center; padding: 10px 20px 20px; color: var(--text-muted); font-size: 0.75rem; }
         .license-info { background: rgba(255, 255, 255, 0.7); padding: 6px 20px; border-radius: 12px; font-weight: 500; display: inline-block; }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false">
+
     <div class="banner-menu-container">
         <img src="img/youcontrol.png" alt="You Control" class="banner-menu-img">
     </div>
