@@ -2,15 +2,17 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Maestro | Gestión Fiscal</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Poppins', sans-serif; background: #F1F5F9; padding: 20px; }
-        .admin-card { background: #fff; max-width: 600px; margin: 0 auto; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 5px solid #002A54; }
-        h2 { color: #002A54; margin-top: 0; }
-        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #E2E8F0; border-radius: 8px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #002A54; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 10px; }
+        body { font-family: 'Poppins', sans-serif; background: #F1F5F9; padding: 20px; display: flex; justify-content: center; }
+        .admin-card { background: #fff; width: 100%; max-width: 500px; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 5px solid #002A54; }
+        h2 { color: #002A54; margin-top: 0; font-size: 1.4rem; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #E2E8F0; border-radius: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 14px; background: #002A54; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 15px; font-size: 1rem; }
         button:hover { background: #0284C7; }
+        .status-msg { margin-top: 15px; text-align: center; font-size: 0.9rem; }
     </style>
 </head>
 <body>
@@ -22,37 +24,54 @@
     <input type="text" id="dir" placeholder="Dirección">
     <input type="text" id="tel" placeholder="Teléfono">
     <input type="email" id="email" placeholder="Correo Electrónico">
-    <button onclick="guardarDatos()">Guardar en Firestore</button>
+    <button onclick="guardarDatos()">Guardar Datos</button>
+    <div id="status" class="status-msg"></div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
     import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-    const firebaseConfig = { 
-        // COPIA AQUÍ TUS CREDENCIALES DE FIREBASE DESDE LA CONSOLA
+    // --- CONFIGURACIÓN DE TU FIREBASE ---
+    const firebaseConfig = {
+        apiKey: "TU_API_KEY_AQUI",
+        authDomain: "TU_PROJECT_ID.firebaseapp.com",
+        projectId: "TU_PROJECT_ID",
+        storageBucket: "TU_PROJECT_ID.appspot.com",
+        messagingSenderId: "TU_ID",
+        appId: "TU_APP_ID"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    // Hacemos la función accesible globalmente para el botón
     window.guardarDatos = async () => {
         const id = document.getElementById('empresaID').value;
-        if (!id) return alert("Ingrese un ID de empresa");
+        const rif = document.getElementById('rif').value;
+        const dir = document.getElementById('dir').value;
+        const tel = document.getElementById('tel').value;
+        const email = document.getElementById('email').value;
+        const status = document.getElementById('status');
+
+        if (!id) {
+            alert("Por favor, ingrese el ID de la empresa.");
+            return;
+        }
 
         try {
-            // Guardamos en la colección 'empresas_config' usando el ID como documento
+            status.innerText = "Guardando...";
+            // Guardamos en la colección 'empresas_config'
             await setDoc(doc(db, "empresas_config", id), {
-                rif: document.getElementById('rif').value,
-                direccion: document.getElementById('dir').value,
-                telefono: document.getElementById('tel').value,
-                email: document.getElementById('email').value,
-                fecha_actualizacion: new Date().toISOString()
+                rif, direccion: dir, telefono: tel, email,
+                ultima_actualizacion: new Date().toLocaleString()
             });
-            alert("¡Datos guardados correctamente en Firestore!");
+            status.innerText = "¡Datos guardados con éxito!";
+            status.style.color = "green";
         } catch (e) {
             console.error(e);
-            alert("Error al guardar: " + e.message);
+            status.innerText = "Error: " + e.message;
+            status.style.color = "red";
         }
     };
 </script>
