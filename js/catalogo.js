@@ -8,6 +8,7 @@ let carrito = {};
 let productosGlobales = [];
 
 function iniciarCatalogo() {
+    console.log("Iniciando catálogo para:", USER_ID);
     if (!USER_ID) {
         console.error("USER_ID no encontrado en localStorage");
         return;
@@ -65,18 +66,26 @@ function renderizarCatalogo(lista) {
         </div>`).join('');
 }
 
-// EXPOSICIÓN DE FUNCIONES PARA EL HTML (Obligatorio en tipo module)
+// EXPOSICIÓN DE FUNCIONES AL OBJETO WINDOW (Necesario para el onclick en HTML)
 window.cambiarCant = (id, cambio, nombre, precio, stockMax) => {
     if (!carrito[id]) carrito[id] = { nombre, precio, cantidad: 0 };
     
-    // Lógica de suma/resta con límites
     let nuevaCant = carrito[id].cantidad + cambio;
     if (nuevaCant < 0) nuevaCant = 0;
     if (nuevaCant > stockMax) nuevaCant = stockMax;
     
     carrito[id].cantidad = nuevaCant;
-    document.getElementById(`qty-${id}`).innerText = nuevaCant;
+    
+    const spanQty = document.getElementById(`qty-${id}`);
+    if (spanQty) spanQty.innerText = nuevaCant;
+    
     actualizarFooter();
+};
+
+window.enviarPedido = () => {
+    // Aquí puedes añadir tu lógica de WhatsApp o confirmación
+    console.log("Pedido actual:", carrito);
+    alert("Pedido listo para procesar.");
 };
 
 function actualizarFooter() {
