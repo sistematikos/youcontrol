@@ -7,63 +7,76 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
-            --text-dark: #1E293B;
-            --text-muted: #64748B;
-            --accent-blue: #0284C7;
+        body { font-family: 'Poppins', sans-serif; background: #F1F5F9; padding: 20px; margin: 0; }
+        
+        /* Cabecera Estilo Panel */
+        .header-panel { 
+            background: #ffffff; 
+            padding: 0 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+            border: 1px solid #E2E8F0; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 20px; 
+            height: 70px; 
+            max-width: 1200px;
+            margin: 0 auto 20px auto;
         }
-        body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; }
-        
-        /* Banner compartido */
-        .banner-menu-container { width: 92%; max-width: 1200px; margin: 25px auto 0px auto; border-radius: 16px; overflow: hidden; background: #002A54; }
-        .banner-menu-img { width: 100%; max-height: 280px; object-fit: cover; display: block; }
-        
-        /* Contenedor tarjetas */
-        .menu-container { max-width: 1200px; width: 92%; margin: 30px auto 20px auto; padding: 5px 0; flex-grow: 1; display: flex; align-items: center; }
-        .menu-grid-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; width: 100%; }
-        
-        /* Tarjetas de Configuración */
-        .menu-card { background: #fff; border-radius: 12px; padding: 25px; text-align: center; text-decoration: none; color: var(--text-dark); box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; border: 2px solid #E2E8F0; transition: 0.2s; }
-        .menu-card:hover { transform: translateY(-5px); border-color: var(--accent-blue); }
-        .menu-card i { font-size: 2rem; margin-bottom: 15px; color: var(--accent-blue); }
-        .menu-card h3 { margin: 0 0 5px 0; font-size: 1rem; }
-        .menu-card p { font-size: 0.8rem; color: var(--text-muted); margin: 0; }
+        .btn-back { 
+            background: #F1F5F9; 
+            color: #1E293B; 
+            padding: 8px 15px; 
+            border-radius: 8px; 
+            text-decoration: none; 
+            font-size: 0.8rem; 
+            font-weight: 700; 
+            border: 1px solid #E2E8F0; 
+            transition: 0.2s;
+        }
+        .btn-back:hover { background: #E2E8F0; }
+        .logo-header { height: 60px; width: auto; object-fit: contain; }
 
-        /* Botón volver */
-        .back-link { text-align: center; margin-bottom: 30px; }
-        .back-link a { color: var(--text-muted); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
-        .back-link a:hover { color: var(--accent-blue); }
+        /* Contenedor Grid */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
+        
+        /* Tarjetas */
+        .card { background: white; padding: 25px; border-radius: 16px; text-decoration: none; color: #1E293B; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.3s; display: block; border: 2px solid transparent; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px rgba(0,0,0,0.1); border-color: #0284C7; }
+        .card i { font-size: 2rem; color: #0284C7; margin-bottom: 15px; }
+        .card h3 { margin: 0 0 5px 0; font-size: 1rem; }
+        .card p { font-size: 0.85rem; color: #64748B; margin: 0; }
     </style>
 </head>
 <body>
 
-    <div class="banner-menu-container">
-        <img src="img/youcontrol.png" alt="You Control" class="banner-menu-img">
-    </div>
-
-    <main class="menu-container">
-        <div class="menu-grid-layout">
-            <a href="sys_conf_ts.html" class="menu-card">
-                <i class="fas fa-dollar-sign"></i>
-                <h3>Ajuste de Tasa</h3>
-                <p>Configurar el valor de la tasa BCV del día.</p>
+    <header class="header-panel">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <a href="sys_v1_menu.html" class="btn-back">
+                <i class="fas fa-arrow-left"></i> VOLVER
             </a>
-            <a href="sys_config_usuarios.html" class="menu-card">
-                <i class="fas fa-users-cog"></i>
-                <h3>Usuarios</h3>
-                <p>Gestionar permisos y accesos al sistema.</p>
-            </a>
-            <a href="sys_config_factura.html" class="menu-card">
-                <i class="fas fa-file-invoice"></i>
-                <h3>Formato Factura</h3>
-                <p>Elegir el estilo y tamaño de tu facturación.</p>
-            </a>
+            <h1 style="font-size: 1.2rem; margin: 0; font-weight: 700; color: #1E293B;">CONFIGURACIÓN</h1>
         </div>
-    </main>
+        <img src="img/logo.png" class="logo-header" alt="Logo">
+    </header>
 
-    <div class="back-link">
-        <a href="sys_v1_menu.html">← Volver al Menú Principal</a>
+    <div class="grid">
+        <a href="sys_conf_ts.html" class="card">
+            <i class="fas fa-dollar-sign"></i>
+            <h3>Ajuste de Tasa</h3>
+            <p>Configurar el valor de la tasa BCV del día.</p>
+        </a>
+        <a href="sys_config_usuarios.html" class="card">
+            <i class="fas fa-users-cog"></i>
+            <h3>Usuarios</h3>
+            <p>Gestionar permisos y accesos al sistema.</p>
+        </a>
+        <a href="sys_config_factura.html" class="card">
+            <i class="fas fa-file-invoice"></i>
+            <h3>Formato Factura</h3>
+            <p>Elegir el estilo y tamaño de tu facturación.</p>
+        </a>
     </div>
 
 </body>
