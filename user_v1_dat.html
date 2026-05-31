@@ -8,31 +8,36 @@
         body { font-family: 'Poppins', sans-serif; background: #F1F5F9; padding: 20px; display: flex; justify-content: center; }
         .admin-card { background: #fff; width: 100%; max-width: 500px; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 5px solid #002A54; }
         h2 { color: #002A54; text-align: center; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #E2E8F0; border-radius: 8px; box-sizing: border-box; }
-        button { width: 100%; padding: 14px; background: #002A54; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 15px; }
-        button:disabled { background: #94A3B8; cursor: not-allowed; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #E2E8F0; border-radius: 8px; box-sizing: border-box; }
+        .btn-group { display: flex; gap: 10px; }
+        button { flex: 1; padding: 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 10px; }
+        #btnGuardar { background: #002A54; color: white; }
+        #btnBuscar { background: #64748B; color: white; }
+        button:disabled { background: #94A3B8; }
         #status { margin-top: 15px; text-align: center; font-weight: 500; }
     </style>
 </head>
 <body>
 
 <div class="admin-card">
-    <h2>Gestión Fiscal: Firestore</h2>
+    <h2>Gestión Fiscal</h2>
     <input type="text" id="empresaID" placeholder="ID de Empresa (Ej: YC-2026-001)">
+    <div class="btn-group">
+        <button id="btnBuscar">Buscar Datos</button>
+        <button id="btnGuardar">Guardar Cambios</button>
+    </div>
     <input type="text" id="nombreEmpresa" placeholder="Nombre de la Empresa">
     <input type="text" id="rif" placeholder="RIF">
     <input type="text" id="dir" placeholder="Dirección">
     <input type="text" id="tel" placeholder="Teléfono">
     <input type="email" id="email" placeholder="Correo Electrónico">
-    <button id="btnGuardar">Guardar en Firestore</button>
     <div id="status"></div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-    // --- COPIA AQUÍ TUS CREDENCIALES EXACTAS DE FIREBASE ---
     const firebaseConfig = {
         apiKey: "TU_API_KEY_COMPLETA_AQUI", 
         authDomain: "youcontrol-1d60a.firebaseapp.com",
@@ -45,39 +50,43 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const btn = document.getElementById('btnGuardar');
-    const status = document.getElementById('status');
-
-    btn.addEventListener('click', async () => {
+    // Botón Buscar
+    document.getElementById('btnBuscar').addEventListener('click', async () => {
         const id = document.getElementById('empresaID').value;
-        if (!id) {
-            alert("El ID de empresa es obligatorio");
-            return;
+        if (!id) return alert("Escribe un ID para buscar");
+        
+        const docSnap = await getDoc(doc(db, "empresas_config", id));
+        if (docSnap.exists()) {
+            const d = docSnap.data();
+            document.getElementById('nombreEmpresa').value = d.nombre || "";
+            document.getElementById('rif').value = d.rif || "";
+            document.getElementById('dir').value = d.direccion || "";
+            document.getElementById('tel').value = d.telefono || "";
+            document.getElementById('email').value = d.email || "";
+            document.getElementById('status').innerText = "Datos cargados.";
+        } else {
+            alert("No existe esa empresa, puedes crearla ahora.");
         }
+    });
 
-        btn.disabled = true;
-        status.innerText = "Guardando, espera un momento...";
-        status.style.color = "#0284C7";
+    // Botón Guardar
+    document.getElementById('btnGuardar').addEventListener('click', async () => {
+        const id = document.getElementById('empresaID').value;
+        if (!id) return alert("ID obligatorio");
 
         try {
             await setDoc(doc(db, "empresas_config", id), {
-                await setDoc(doc(db, "empresas_config", id), {
-    nombre: document.getElementById('nombreEmpresa').value, // Nuevo campo
-    rif: document.getElementById('rif').value,
-    direccion: document.getElementById('dir').value,
-    telefono: document.getElementById('tel').value,
-    email: document.getElementById('email').value,
-    timestamp: new Date().toISOString()
-});
-                        
-            status.innerText = "¡Datos guardados con éxito!";
-            status.style.color = "green";
+                nombre: document.getElementById('nombreEmpresa').value,
+                rif: document.getElementById('rif').value,
+                direccion: document.getElementById('dir').value,
+                telefono: document.getElementById('tel').value,
+                email: document.getElementById('email').value,
+                timestamp: new Date().toISOString()
+            });
+            document.getElementById('status').innerText = "¡Guardado exitosamente!";
+            document.getElementById('status').style.color = "green";
         } catch (e) {
-            console.error("Error detallado:", e);
-            status.innerText = "Error: " + e.message;
-            status.style.color = "red";
-        } finally {
-            btn.disabled = false;
+            document.getElementById('status').innerText = "Error: " + e.message;
         }
     });
 </script>
