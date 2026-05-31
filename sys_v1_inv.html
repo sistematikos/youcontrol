@@ -6,32 +6,20 @@
     <title>INVENTARIO | YOU CONTROL</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    
     <style>
-    :root { --bg: #F1F5F9; --sky: #0EA5E9; --emerald: #10B981; --border: #E2E8F0; }
-    body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding: 10px; color: #1E293B; }
-    .layout-width { max-width: 1200px; margin: 0 auto; }
-    .header-panel { background: #fff; padding: 0 20px; border-radius: 12px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; height: 70px; margin-bottom: 15px; }
-    .btn-back { background: #F1F5F9; color: #1E293B; padding: 8px 15px; border-radius: 8px; text-decoration: none; font-size: 0.8rem; font-weight: 700; border: 1px solid var(--border); }
-    .card-container { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; }
-    
-    .table-container { width: 100%; overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-    th { color: #64748B; padding: 12px; text-align: left; border-bottom: 2px solid var(--border); }
-    td { padding: 10px; border-bottom: 1px solid #F1F5F9; }
-    input, select { width: 90%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; }
-    .btn-act { cursor: pointer; border: none; background: none; font-size: 1.3rem; padding: 5px; }
-
-    /* ESTILOS PARA MÓVIL */
-    @media (max-width: 768px) {
-        table, thead, tbody, th, td, tr { display: block; }
-        thead { display: none; } /* Ocultamos los encabezados de tabla en móvil */
-        tr { background: #fff; margin-bottom: 15px; border-radius: 8px; padding: 10px; border: 1px solid var(--border); }
-        td { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f8fafc; }
-        td::before { content: attr(data-label); font-weight: bold; color: #64748B; }
-        input, select { width: 60%; }
-    }
-</style>
+        :root { --bg: #F1F5F9; --sky: #0EA5E9; --emerald: #10B981; --border: #E2E8F0; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding: 10px; color: #1E293B; }
+        .layout-width { max-width: 1200px; margin: 0 auto; }
+        .header-panel { background: #fff; padding: 0 20px; border-radius: 12px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; height: 70px; margin-bottom: 15px; }
+        .btn-back { background: #F1F5F9; color: #1E293B; padding: 8px 15px; border-radius: 8px; text-decoration: none; font-size: 0.8rem; font-weight: 700; border: 1px solid var(--border); }
+        .card-container { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; }
+        .table-container { width: 100%; overflow-x: auto; }
+        table { width: 100%; min-width: 1000px; border-collapse: collapse; font-size: 0.85rem; }
+        th { color: #64748B; padding: 12px; text-align: left; border-bottom: 2px solid var(--border); }
+        td { padding: 12px; border-bottom: 1px solid #F1F5F9; }
+        input, select { width: 90%; padding: 5px; border: 1px solid var(--border); border-radius: 4px; }
+        .btn-act { cursor: pointer; border: none; background: none; font-size: 1.1rem; margin: 0 5px; }
+    </style>
 </head>
 <body>
     <main class="layout-width">
@@ -91,21 +79,17 @@
                     const p = d.data();
                     const tr = document.createElement('tr');
                     tr.setAttribute('data-id', d.id);
-                   // Dentro de tu onSnapshot:
-                     tr.innerHTML = `
-    <td data-label="Barras">${p.barras || ''}</td>
-    <td data-label="SKU">${p.sku || ''}</td>
-    <td data-label="Producto">${p.nombre || ''}</td>
-    <td data-label="Depto">${p.departamento || 'N/A'}</td>
-    <td data-label="Costo">$${parseFloat(p.costo || 0).toFixed(2)}</td>
-    <td data-label="%">${p.ganancia || 0}%</td>
-    <td data-label="Precio $">$${parseFloat(p.precio || 0).toFixed(2)}</td>
-    <td data-label="Precio Bs">${(parseFloat(p.precio || 0) * tasaActual).toFixed(2)} Bs</td>
-    <td data-label="Stock">${p.stock || 0}</td>
-    <td>
-        <button class="btn-act" onclick="window.editarProducto('${d.id}')">✏️</button>
-        <button class="btn-act" onclick="window.eliminarProducto('${d.id}', '${p.nombre}')">🗑️</button>
-    </td>`;
+                    tr.innerHTML = `
+                        <td>${p.barras || ''}</td>
+                        <td>${p.sku || ''}</td>
+                        <td>${p.nombre || ''}</td>
+                        <td>${p.departamento || 'N/A'}</td>
+                        <td>$${parseFloat(p.costo || 0).toFixed(2)}</td>
+                        <td>${p.ganancia || 0}%</td>
+                        <td>$${parseFloat(p.precio || 0).toFixed(2)}</td>
+                        <td>${(parseFloat(p.precio || 0) * tasaActual).toFixed(2)} Bs</td>
+                        <td>${p.stock || 0}</td>
+                        <td>
                             <button class="btn-act" onclick="window.editarProducto('${d.id}')">✏️</button>
                             <button class="btn-act" onclick="window.eliminarProducto('${d.id}', '${p.nombre}')">🗑️</button>
                         </td>`;
