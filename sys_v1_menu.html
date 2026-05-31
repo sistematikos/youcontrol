@@ -75,24 +75,50 @@
         </div>
     </footer>
 
-    <script>
-        // Cargar Nombre Empresa
-        try {
-            const token = localStorage.getItem('licencia_youcontrol');
-            const data = JSON.parse(atob(token));
-            document.getElementById('lblEmpresa').innerText = data.n;
-        } catch(e) { location.href = "index.html"; }
+    <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-        // Navegación Catálogo (Ventana nueva)
-        document.getElementById('btn-catalogo').addEventListener('click', (e) => {
-            e.preventDefault();
-            const empresaID = localStorage.getItem('youcontrol_empresa_id');
-            if (empresaID) {
-                window.open(`node_v2_505.html?empresa=${empresaID}`, '_blank');
-            } else {
-                alert("Error de sesión: Reinicie el sistema.");
+    const firebaseConfig = {
+        // COPIA AQUÍ TUS CREDENCIALES DE FIREBASE
+        apiKey: "TU_API_KEY",
+        authDomain: "youcontrol-1d60a.firebaseapp.com",
+        projectId: "youcontrol-1d60a",
+        storageBucket: "youcontrol-1d60a.appspot.com",
+        messagingSenderId: "812100760013",
+        appId: "1:812100760013:web:7574906aa285555faf5484"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    async function cargarDatosEmpresa() {
+        const empresaID = localStorage.getItem('youcontrol_empresa_id');
+        const lblEmpresa = document.getElementById('lblEmpresa');
+
+        if (empresaID) {
+            try {
+                const docRef = doc(db, "empresas_config", empresaID);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const datos = docSnap.data();
+                    // Aquí inyectamos los datos. Puedes personalizar este texto:
+                    lblEmpresa.innerHTML = `
+                        ${datos.rif ? `| RIF: ${datos.rif} ` : ''} 
+                        | Dir: ${datos.direccion || 'N/A'}
+                    `;
+                } else {
+                    lblEmpresa.innerText = "Datos no configurados";
+                }
+            } catch (e) {
+                console.error("Error al leer Firestore:", e);
             }
-        });
-    </script>
+        }
+    }
+
+    // Ejecutar al cargar
+    cargarDatosEmpresa();
+</script>
 </body>
 </html>
