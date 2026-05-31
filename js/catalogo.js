@@ -85,17 +85,21 @@ window.cambiarCant = (id, cambio, nombre, precio, stockMax) => {
 
 // Función para enviar pedido a WhatsApp
 window.enviarPedido = () => {
+    // Tu número con formato internacional (quitando el 0 inicial del 0426)
+    const telefono = "584264570267"; 
+    
     let mensaje = "Hola, quiero realizar este pedido:%0A%0A";
     Object.values(carrito).forEach(item => {
         if (item.cantidad > 0) {
             mensaje += `* ${item.nombre} x${item.cantidad} - $${(item.precio * item.cantidad).toFixed(2)}%0A`;
         }
     });
+    
     const total = document.getElementById('cart-total-usd').innerText;
     mensaje += `%0A*Total: $${total}*`;
     
-    // Reemplaza el número por el número de WhatsApp de la empresa
-    window.open(`https://wa.me/584120000000?text=${mensaje}`, '_blank');
+    // Abre el chat de WhatsApp con el mensaje preconfigurado
+    window.open(`https://wa.me/${telefono}?text=${mensaje}`, '_blank');
 };
 
 document.addEventListener('DOMContentLoaded', iniciarCatalogo);
