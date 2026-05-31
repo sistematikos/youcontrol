@@ -61,13 +61,15 @@
 
         try {
             await setDoc(doc(db, "empresas_config", id), {
-                rif: document.getElementById('rif').value,
-                direccion: document.getElementById('dir').value,
-                telefono: document.getElementById('tel').value,
-                email: document.getElementById('email').value,
-                timestamp: new Date().toISOString()
-            });
-            
+                await setDoc(doc(db, "empresas_config", id), {
+    nombre: document.getElementById('nombreEmpresa').value, // Nuevo campo
+    rif: document.getElementById('rif').value,
+    direccion: document.getElementById('dir').value,
+    telefono: document.getElementById('tel').value,
+    email: document.getElementById('email').value,
+    timestamp: new Date().toISOString()
+});
+                        
             status.innerText = "¡Datos guardados con éxito!";
             status.style.color = "green";
         } catch (e) {
