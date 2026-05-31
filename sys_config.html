@@ -2,39 +2,69 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Configuración | You Control</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CONFIGURACIÓN | You Control</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { background: #F1F5F9; font-family: 'Poppins', sans-serif; padding: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; max-width: 900px; margin: 0 auto; }
-        .card { background: white; padding: 25px; border-radius: 16px; text-decoration: none; color: #1E293B; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.3s; display: block; }
-        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
-        .card i { font-size: 2rem; color: #0052D4; margin-bottom: 15px; }
-        .card h3 { margin: 0; }
-        .card p { font-size: 0.85rem; color: #64748B; }
+        :root {
+            --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
+            --accent-blue: #0284C7;
+        }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; }
+        
+        /* Banner compartido */
+        .banner-menu-container { width: 92%; max-width: 1200px; margin: 25px auto 0px auto; border-radius: 16px; overflow: hidden; background: #002A54; }
+        .banner-menu-img { width: 100%; max-height: 280px; object-fit: cover; display: block; }
+        
+        /* Contenedor tarjetas */
+        .menu-container { max-width: 1200px; width: 92%; margin: 30px auto 20px auto; padding: 5px 0; flex-grow: 1; display: flex; align-items: center; }
+        .menu-grid-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; width: 100%; }
+        
+        /* Tarjetas de Configuración */
+        .menu-card { background: #fff; border-radius: 12px; padding: 25px; text-align: center; text-decoration: none; color: var(--text-dark); box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; border: 2px solid #E2E8F0; transition: 0.2s; }
+        .menu-card:hover { transform: translateY(-5px); border-color: var(--accent-blue); }
+        .menu-card i { font-size: 2rem; margin-bottom: 15px; color: var(--accent-blue); }
+        .menu-card h3 { margin: 0 0 5px 0; font-size: 1rem; }
+        .menu-card p { font-size: 0.8rem; color: var(--text-muted); margin: 0; }
+
+        /* Botón volver */
+        .back-link { text-align: center; margin-bottom: 30px; }
+        .back-link a { color: var(--text-muted); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+        .back-link a:hover { color: var(--accent-blue); }
     </style>
 </head>
 <body>
-    <div class="grid">
-        <a href="sys_conf_ts.html" class="card">
-            <i class="fas fa-dollar-sign"></i>
-            <h3>Ajuste de Tasa</h3>
-            <p>Configurar el valor de la tasa BCV del día.</p>
-        </a>
-        <a href="sys_config_usuarios.html" class="card">
-            <i class="fas fa-users-cog"></i>
-            <h3>Usuarios</h3>
-            <p>Gestionar permisos y accesos al sistema.</p>
-        </a>
-        <a href="sys_config_factura.html" class="card">
-            <i class="fas fa-file-invoice"></i>
-            <h3>Formato Factura</h3>
-            <p>Elegir el estilo y tamaño de tu facturación.</p>
-        </a>
+
+    <div class="banner-menu-container">
+        <img src="img/youcontrol.png" alt="You Control" class="banner-menu-img">
     </div>
-    <div style="text-align: center; margin-top: 30px;">
-        <a href="sys_v1_menu.html" style="color: #0052D4; font-weight: 600;">← Volver al Menú</a>
+
+    <main class="menu-container">
+        <div class="menu-grid-layout">
+            <a href="sys_conf_ts.html" class="menu-card">
+                <i class="fas fa-dollar-sign"></i>
+                <h3>Ajuste de Tasa</h3>
+                <p>Configurar el valor de la tasa BCV del día.</p>
+            </a>
+            <a href="sys_config_usuarios.html" class="menu-card">
+                <i class="fas fa-users-cog"></i>
+                <h3>Usuarios</h3>
+                <p>Gestionar permisos y accesos al sistema.</p>
+            </a>
+            <a href="sys_config_factura.html" class="menu-card">
+                <i class="fas fa-file-invoice"></i>
+                <h3>Formato Factura</h3>
+                <p>Elegir el estilo y tamaño de tu facturación.</p>
+            </a>
+        </div>
+    </main>
+
+    <div class="back-link">
+        <a href="sys_v1_menu.html">← Volver al Menú Principal</a>
     </div>
+
 </body>
 </html>
