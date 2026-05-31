@@ -107,30 +107,28 @@
         const db = getFirestore(app);
 
         async function cargarDatosEmpresa() {
-            const empresaID = localStorage.getItem('youcontrol_empresa_id');
-            const lblEmpresa = document.getElementById('lblEmpresa');
+    const empresaID = localStorage.getItem('youcontrol_empresa_id');
+    const lblEmpresa = document.getElementById('lblEmpresa');
 
-            if (empresaID) {
-                try {
-                    const docRef = doc(db, "empresas_config", empresaID);
-                    const docSnap = await getDoc(docRef);
+    if (empresaID) {
+        try {
+            const docRef = doc(db, "empresas_config", empresaID);
+            const docSnap = await getDoc(docRef);
 
-                    if (docSnap.exists()) {
-                        const datos = docSnap.data();
-                        // Actualizamos el HTML con los datos en 3 líneas
-                        lblEmpresa.innerHTML = `
-                            <div style="display:block;">Empresa: ${datos.cliente || 'YouControl'}</div>
-                            <div style="display:block;">RIF: ${datos.rif || 'N/A'}</div>
-                            <div style="display:block;">Dir: ${datos.direccion || 'N/A'}</div>
-                        `;
-                    } else {
-                        lblEmpresa.innerText = "Datos no configurados en DB";
-                    }
-                } catch (e) {
-                    console.error("Error al leer Firestore:", e);
-                    lblEmpresa.innerText = "Error cargando datos";
-                }
-            } else {
+            if (docSnap.exists()) {
+                const datos = docSnap.data();
+                // Ahora usamos el campo "nombre" que acabas de guardar
+                lblEmpresa.innerHTML = `
+                    <div style="display:block;">Empresa: ${datos.nombre || 'Nombre no configurado'}</div>
+                    <div style="display:block;">RIF: ${datos.rif || 'N/A'}</div>
+                    <div style="display:block;">Dir: ${datos.direccion || 'N/A'}</div>
+                `;
+            }
+        } catch (e) {
+            console.error("Error:", e);
+        }
+    }
+}            } else {
                 lblEmpresa.innerText = "Sin ID de empresa";
             }
         }
