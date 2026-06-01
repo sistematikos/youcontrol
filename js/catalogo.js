@@ -59,8 +59,21 @@ function iniciarCatalogo() {
 function renderizarCatalogo(lista) {
     const contenedor = document.getElementById('contenedor-catalogo');
     if (!contenedor) return;
+
+    // Función simple para asignar color según el nombre del departamento
+    const getBorderColor = (depto) => {
+        const colores = {
+            'BEBIDAS': '#F59E0B',    // Ámbar
+            'COMIDA': '#EF4444',     // Rojo
+            'LIMPIEZA': '#3B82F6',   // Azul
+            'GENERAL': '#10B981'     // Esmeralda (por defecto)
+        };
+        // Si el producto tiene una propiedad 'depto', usamos su color, sino el verde
+        return colores[depto?.toUpperCase()] || '#10B981';
+    };
+
     contenedor.innerHTML = lista.filter(p => parseInt(p.stock || 0) > 0).map(p => `
-        <div class="card-prod">
+        <div class="card-prod" style="border-left: 6px solid ${getBorderColor(p.depto)}">
             <h3 style="font-size:0.85rem; margin:0;">${p.nombre}</h3>
             <span style="font-weight:900; color:#10B981; font-size:1.1rem;">${(p.precio * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 })} Bs</span>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
@@ -70,14 +83,6 @@ function renderizarCatalogo(lista) {
             </div>
         </div>`).join('');
 }
-
-window.cambiarCant = (id, cambio, nombre, precio, stockMax) => {
-    if (!carrito[id]) carrito[id] = { nombre, precio, cantidad: 0 };
-    carrito[id].cantidad = Math.min(Math.max(carrito[id].cantidad + cambio, 0), stockMax);
-    document.getElementById(`qty-${id}`).innerText = carrito[id].cantidad;
-    actualizarFooter();
-};
-
 function actualizarFooter() {
     let total = 0, items = 0;
     for (let id in carrito) { total += carrito[id].precio * carrito[id].cantidad; items += carrito[id].cantidad; }
