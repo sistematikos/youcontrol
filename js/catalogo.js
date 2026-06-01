@@ -46,17 +46,15 @@ function iniciarCatalogo() {
     });
 
     // --- CARGA DE PRODUCTOS ---
-    onSnapshot(collection(db, "productos"), (snapshot) => {
-        productosGlobales = [];
-        snapshot.forEach(d => {
-            const data = d.data();
-            if (data.empresaID === EMPRESA_ID) {
-                productosGlobales.push({ id: d.id, ...data });
-            }
-        });
-        renderizarCatalogo(productosGlobales);
+   onSnapshot(collection(db, "productos"), (snapshot) => {
+    productosGlobales = [];
+    snapshot.forEach(d => {
+        // Obtenemos todos los productos sin filtrar por empresaID
+        // para que vuelvan a aparecer como antes
+        productosGlobales.push({ id: d.id, ...d.data() });
     });
-}
+    renderizarCatalogo(productosGlobales);
+});
 
 function renderizarCatalogo(lista) {
     const contenedor = document.getElementById('contenedor-catalogo');
