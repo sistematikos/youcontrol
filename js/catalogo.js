@@ -8,30 +8,25 @@ let tasaActual = 1, carrito = {}, productosGlobales = [];
 function iniciarCatalogo() {
     if (!USER_ID) return;
 
-    // --- NUEVO: Carga de Logo y Nombre desde empresas_config ---
+    // --- CARGA DE LOGO Y NOMBRE ---
     onSnapshot(doc(db, "empresas_config", USER_ID), (snap) => {
         if (snap.exists()) {
             const data = snap.data();
-            // Actualizar Nombre
-            if (data.nombre) {
-                document.getElementById('nombre-empresa').innerText = data.nombre.toUpperCase();
-            }
-           // --- CARGA DE LOGO AUTOMATIZADA ---
-        // Ya no hace falta buscar logoUrl en el snap, lo construimos directo:
+            if (data.nombre) document.getElementById('nombre-empresa').innerText = data.nombre.toUpperCase();
+            
             const logoImg = document.getElementById('logo-empresa');
             if (logoImg) {
-        // Esto vincula automáticamente YC-2026-001.png con el ID del usuario
-            logoImg.src = `https://raw.githubusercontent.com/sistematikos/youcontrol/main/img/${USER_ID}.png`;
-            logoImg.style.display = 'block';
-    
-     // Opcional: ocultar si la imagen no carga (por si no has subido el logo aún)
-            logoImg.onerror = () => { logoImg.style.display = 'none'; };
+                logoImg.src = `https://raw.githubusercontent.com/sistematikos/youcontrol/main/img/${USER_ID}.png`;
+                logoImg.style.display = 'block';
+                logoImg.onerror = () => { logoImg.style.display = 'none'; };
             }
+        }
+    });
 
+    // --- RESPALDO DE NOMBRE ---
     if (token) {
         try {
             const data = JSON.parse(atob(token));
-            // Si el nombre no viene de empresas_config, usa el token como respaldo
             const nombreEl = document.getElementById('nombre-empresa');
             if (nombreEl.innerText === "CARGANDO..." || nombreEl.innerText === "") {
                 nombreEl.innerText = (data.n || "EMPRESA").toUpperCase();
@@ -39,6 +34,7 @@ function iniciarCatalogo() {
         } catch(e) {}
     }
 
+    // --- CARGA DE TASA ---
     onSnapshot(doc(db, "usuarios", USER_ID), (snap) => {
         if (snap.exists()) {
             tasaActual = parseFloat(snap.data().tasa_bcv || 1);
@@ -47,6 +43,7 @@ function iniciarCatalogo() {
         }
     });
 
+    // --- CARGA DE PRODUCTOS ---
     onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
         productosGlobales = [];
         snapshot.forEach(d => productosGlobales.push({ id: d.id, ...d.data() }));
@@ -61,6 +58,7 @@ function iniciarCatalogo() {
 
 function renderizarCatalogo(lista) {
     const contenedor = document.getElementById('contenedor-catalogo');
+    if (!contenedor) return;
     contenedor.innerHTML = lista.filter(p => parseInt(p.stock || 0) > 0).map(p => `
         <div class="card-prod">
             <h3 style="font-size:0.85rem; margin:0;">${p.nombre}</h3>
