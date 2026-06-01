@@ -87,19 +87,21 @@
         z-index: 1000; border: 1px solid var(--border); 
     }
 </style>
-</head>
-<body>
-    <div class="page-wrapper">
-        <header class="app-header">
+<header class="app-header">
     <div class="header-grid">
         <div class="card-logo">
-            <img id="logo-empresa" src="" class="logo-img" style="display:none;" onerror="this.style.display='none'">
+            <img id="logo-empresa" src="img/logo.png" class="logo-img" onerror="this.style.display='none'">
         </div>
         
-        <div class="card-right"><span id="nombre-empresa" style="color:var(--electric);">CARGANDO...</span></div>
-        <div class="card-right">TASA BCV: <span id="tasa-cliente" style="margin-left:5px;">0.00</span></div>
+        <div class="card-right">
+            <span id="nombre-empresa" style="color:var(--electric);">CARGANDO...</span>
+        </div>
         
-        <input type="text" id="buscador-prod" placeholder="🔍 Buscar productos..." class="search-bar" style="margin:0;">
+        <div class="card-right">
+            TASA BCV: <span id="tasa-cliente" style="margin-left:5px;">0.00</span>
+        </div>
+        
+        <input type="text" id="buscador-prod" placeholder="🔍 Buscar productos..." class="search-bar">
     </div>
 </header>
 
