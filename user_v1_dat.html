@@ -13,9 +13,9 @@
         button { flex: 1; padding: 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 10px; }
         #btnGuardar { background: #002A54; color: white; }
         #btnBuscar { background: #64748B; color: white; }
-        #btnSubirLogo { background: #10B981; color: white; width: 100%; margin-top: 5px; }
+        #btnGuardarLogo { background: #10B981; color: white; width: 100%; margin-top: 10px; }
         #status { margin-top: 15px; text-align: center; font-weight: 500; font-size: 0.9rem; }
-        .preview-logo { width: 80px; height: 80px; object-fit: contain; margin: 10px auto; display: none; border: 1px solid #E2E8F0; }
+        .preview-logo { width: 100px; height: 100px; object-fit: contain; margin: 10px auto; display: none; border: 1px solid #E2E8F0; border-radius: 8px; }
     </style>
 </head>
 <body>
@@ -34,11 +34,11 @@
     <input type="text" id="tel" placeholder="Teléfono">
     <input type="email" id="email" placeholder="Correo Electrónico">
     
-    <div style="margin-top: 15px; border-top: 1px solid #E2E8F0; padding-top: 15px;">
-        <label style="font-size: 0.8rem; color: #64748B;">Logo corporativo:</label>
+    <div style="margin-top: 20px; border-top: 2px solid #F1F5F9; padding-top: 15px;">
+        <label style="font-size: 0.8rem; color: #64748B; font-weight: 600;">URL DEL LOGO (GitHub Raw):</label>
         <img id="previewLogo" class="preview-logo">
-        <input type="file" id="inputLogo" accept="image/*">
-        <button id="btnSubirLogo">SUBIR LOGO</button>
+        <input type="text" id="inputUrlGitHub" placeholder="https://raw.githubusercontent.com/...">
+        <button id="btnGuardarLogo">ACTUALIZAR LOGO EN CATÁLOGO</button>
     </div>
     
     <div id="status"></div>
@@ -47,7 +47,6 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js";
 
     const firebaseConfig = {
         apiKey: "TU_API_KEY_COMPLETA_AQUI", 
@@ -60,12 +59,11 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const storage = getStorage(app);
 
-    // Buscar
+    // Buscar Datos
     document.getElementById('btnBuscar').addEventListener('click', async () => {
         const id = document.getElementById('empresaID').value;
-        if (!id) return alert("Escribe un ID");
+        if (!id) return alert("Escribe un ID para buscar");
         
         const docSnap = await getDoc(doc(db, "empresas_config", id));
         if (docSnap.exists()) {
@@ -76,23 +74,27 @@
             document.getElementById('tel').value = d.telefono || "";
             document.getElementById('email').value = d.email || "";
             
+            // Cargar URL del Logo
+            const url = d.logoUrl || "";
+            document.getElementById('inputUrlGitHub').value = url;
             const preview = document.getElementById('previewLogo');
-            if (d.logoUrl) {
-                preview.src = d.logoUrl;
+            if (url) {
+                preview.src = url;
                 preview.style.display = 'block';
             } else {
                 preview.style.display = 'none';
             }
             document.getElementById('status').innerText = "Datos cargados.";
         } else {
-            alert("Nueva empresa, puedes configurarla.");
+            alert("No existe esa empresa, puedes crearla ahora.");
         }
     });
 
-    // Guardar texto
+    // Guardar Cambios Generales
     document.getElementById('btnGuardar').addEventListener('click', async () => {
         const id = document.getElementById('empresaID').value;
         if (!id) return alert("ID obligatorio");
+
         try {
             await setDoc(doc(db, "empresas_config", id), {
                 nombre: document.getElementById('nombreEmpresa').value,
@@ -102,28 +104,20 @@
                 email: document.getElementById('email').value
             }, { merge: true });
             document.getElementById('status').innerText = "¡Guardado exitosamente!";
-        } catch (e) { alert("Error: " + e.message); }
+            document.getElementById('status').style.color = "green";
+        } catch (e) { document.getElementById('status').innerText = "Error: " + e.message; }
     });
 
-    // Subir Logo
-    document.getElementById('btnSubirLogo').addEventListener('click', async () => {
+    // Guardar Solo URL Logo
+    document.getElementById('btnGuardarLogo').addEventListener('click', async () => {
         const id = document.getElementById('empresaID').value;
-        const file = document.getElementById('inputLogo').files[0];
-        if (!id || !file) return alert("ID y archivo son obligatorios");
+        const url = document.getElementById('inputUrlGitHub').value;
+        if (!id || !url) return alert("ID y URL del logo son obligatorios");
 
-        const status = document.getElementById('status');
-        status.innerText = "Subiendo...";
         try {
-            const storageRef = ref(storage, `logos/${id}/logo.png`);
-            await uploadBytes(storageRef, file);
-            const url = await getDownloadURL(storageRef);
             await setDoc(doc(db, "empresas_config", id), { logoUrl: url }, { merge: true });
             document.getElementById('previewLogo').src = url;
             document.getElementById('previewLogo').style.display = 'block';
-            status.innerText = "✅ Logo actualizado";
-        } catch (e) { status.innerText = "Error: " + e.message; }
-    });
-</script>
-
-</body>
-</html>
+            document.getElementById('status').innerText = "✅ Logo actualizado en el catálogo";
+            document.getElementById('status').style.color = "green";
+        } catch (e) { document.getElementById('status').innerText = "Error: " + e.message; }
