@@ -13,8 +13,9 @@
         button { flex: 1; padding: 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 10px; }
         #btnGuardar { background: #002A54; color: white; }
         #btnBuscar { background: #64748B; color: white; }
-        button:disabled { background: #94A3B8; }
-        #status { margin-top: 15px; text-align: center; font-weight: 500; }
+        #btnSubirLogo { background: #10B981; color: white; width: 100%; margin-top: 5px; }
+        #status { margin-top: 15px; text-align: center; font-weight: 500; font-size: 0.9rem; }
+        .preview-logo { width: 80px; height: 80px; object-fit: contain; margin: 10px auto; display: none; border: 1px solid #E2E8F0; }
     </style>
 </head>
 <body>
@@ -26,17 +27,27 @@
         <button id="btnBuscar">Buscar Datos</button>
         <button id="btnGuardar">Guardar Cambios</button>
     </div>
+    
     <input type="text" id="nombreEmpresa" placeholder="Nombre de la Empresa">
     <input type="text" id="rif" placeholder="RIF">
     <input type="text" id="dir" placeholder="Dirección">
     <input type="text" id="tel" placeholder="Teléfono">
     <input type="email" id="email" placeholder="Correo Electrónico">
+    
+    <div style="margin-top: 15px; border-top: 1px solid #E2E8F0; padding-top: 15px;">
+        <label style="font-size: 0.8rem; color: #64748B;">Logo corporativo:</label>
+        <img id="previewLogo" class="preview-logo">
+        <input type="file" id="inputLogo" accept="image/*">
+        <button id="btnSubirLogo">SUBIR LOGO</button>
+    </div>
+    
     <div id="status"></div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js";
 
     const firebaseConfig = {
         apiKey: "TU_API_KEY_COMPLETA_AQUI", 
@@ -49,11 +60,12 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const storage = getStorage(app);
 
-    // Botón Buscar
+    // Buscar
     document.getElementById('btnBuscar').addEventListener('click', async () => {
         const id = document.getElementById('empresaID').value;
-        if (!id) return alert("Escribe un ID para buscar");
+        if (!id) return alert("Escribe un ID");
         
         const docSnap = await getDoc(doc(db, "empresas_config", id));
         if (docSnap.exists()) {
@@ -63,31 +75,53 @@
             document.getElementById('dir').value = d.direccion || "";
             document.getElementById('tel').value = d.telefono || "";
             document.getElementById('email').value = d.email || "";
+            
+            const preview = document.getElementById('previewLogo');
+            if (d.logoUrl) {
+                preview.src = d.logoUrl;
+                preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+            }
             document.getElementById('status').innerText = "Datos cargados.";
         } else {
-            alert("No existe esa empresa, puedes crearla ahora.");
+            alert("Nueva empresa, puedes configurarla.");
         }
     });
 
-    // Botón Guardar
+    // Guardar texto
     document.getElementById('btnGuardar').addEventListener('click', async () => {
         const id = document.getElementById('empresaID').value;
         if (!id) return alert("ID obligatorio");
-
         try {
             await setDoc(doc(db, "empresas_config", id), {
                 nombre: document.getElementById('nombreEmpresa').value,
                 rif: document.getElementById('rif').value,
                 direccion: document.getElementById('dir').value,
                 telefono: document.getElementById('tel').value,
-                email: document.getElementById('email').value,
-                timestamp: new Date().toISOString()
-            });
+                email: document.getElementById('email').value
+            }, { merge: true });
             document.getElementById('status').innerText = "¡Guardado exitosamente!";
-            document.getElementById('status').style.color = "green";
-        } catch (e) {
-            document.getElementById('status').innerText = "Error: " + e.message;
-        }
+        } catch (e) { alert("Error: " + e.message); }
+    });
+
+    // Subir Logo
+    document.getElementById('btnSubirLogo').addEventListener('click', async () => {
+        const id = document.getElementById('empresaID').value;
+        const file = document.getElementById('inputLogo').files[0];
+        if (!id || !file) return alert("ID y archivo son obligatorios");
+
+        const status = document.getElementById('status');
+        status.innerText = "Subiendo...";
+        try {
+            const storageRef = ref(storage, `logos/${id}/logo.png`);
+            await uploadBytes(storageRef, file);
+            const url = await getDownloadURL(storageRef);
+            await setDoc(doc(db, "empresas_config", id), { logoUrl: url }, { merge: true });
+            document.getElementById('previewLogo').src = url;
+            document.getElementById('previewLogo').style.display = 'block';
+            status.innerText = "✅ Logo actualizado";
+        } catch (e) { status.innerText = "Error: " + e.message; }
     });
 </script>
 
