@@ -38,24 +38,27 @@
         .card-reportes { border-color: #F59E0B; } .card-reportes i { color: #F59E0B; }
         .card-config { border-color: #6B7280; } .card-config i { color: #6B7280; }
         
-        /* Pie de página alineado */
+       /* Pie de página limpio y alineado a la derecha */
         .footer-core {
             width: 92%;
             max-width: 1200px;
             margin: 0 auto 30px auto;
-            padding: 20px;
+            padding: 10px 0; /* Padding reducido para que sea más plano */
             font-size: 0.85rem;
             color: var(--accent-blue);
-            background: #fff;
-            border-radius: 12px;
-            border: 2px solid #E2E8F0;
+            background: transparent; /* Quitamos el fondo blanco */
+            border: none;            /* Quitamos el borde */
+            box-shadow: none;        /* Quitamos la sombra */
             display: flex;
             flex-direction: column;
-            align-items: flex-end;
-            gap: 5px;
+            align-items: flex-end;   /* Alinea el texto a la derecha */
+            gap: 2px;                /* Menos espacio entre líneas */
             box-sizing: border-box;
         }
-        .license-info { font-weight: 700; }
+        .license-info { 
+            font-weight: 700; 
+            text-align: right; 
+        }
     </style>
 </head>
 <body oncontextmenu="return false">
