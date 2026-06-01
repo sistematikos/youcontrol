@@ -18,23 +18,32 @@ function iniciarCatalogo() {
     
     if (!USER_ID) {
         document.getElementById('nombre-empresa').innerText = "ID NO DETECTADO";
-        document.getElementById('contenedor-catalogo').innerHTML = 
-            "<p style='text-align:center; padding:20px;'>Por favor, abre el catálogo desde el enlace compartido por la empresa.</p>";
         return;
     }
 
-    // Carga de datos de la empresa (tasa)
+    // --- CARGA DE DATOS DE LA EMPRESA (Incluye Logo y Tasa) ---
     onSnapshot(doc(db, "usuarios", USER_ID), (snap) => {
         if (snap.exists()) {
             const data = snap.data();
             tasaActual = parseFloat(data.tasa_bcv || 1);
+            
+            // 1. Actualizar Nombre
             document.getElementById('nombre-empresa').innerText = data.empresa_nombre || "Catálogo";
+            
+            // 2. Actualizar Logo (Si existe la URL en Firebase)
+            const logoImg = document.getElementById('logo-empresa');
+            if (data.logoUrl) {
+                logoImg.src = data.logoUrl;
+                logoImg.style.display = 'block';
+            }
+
+            // 3. Actualizar Tasa
             document.getElementById('tasa-cliente').innerText = tasaActual.toLocaleString('es-VE', { minimumFractionDigits: 2 });
             renderizarCatalogo(productosGlobales);
         }
     });
 
-    // Carga de productos
+    // Carga de productos (Sin cambios)
     onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
         productosGlobales = [];
         snapshot.forEach(d => productosGlobales.push({ id: d.id, ...d.data() }));
