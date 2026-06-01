@@ -31,7 +31,7 @@
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; font-size: 0.75rem; font-weight: 700; color: #64748B; margin-bottom: 5px; }
         input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; }
-        .btn-primary { width: 100%; background: var(--text-dark); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.3s; }
+        .btn-primary { width: 100%; background: var(--text-dark); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.3s; margin-top: 10px; }
         .btn-primary:hover { background: var(--sky); }
         #aviso-no-registrado { color: var(--rose); font-size: 0.75rem; font-weight: 700; display: none; margin-top: 5px; }
 
@@ -39,6 +39,7 @@
         table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         th { color: #64748B; border-bottom: 2px solid #F1F5F9; padding: 12px; text-align: left; }
         td { padding: 12px; border-bottom: 1px solid #F1F5F9; }
+        .btn-table { border: none; background: #F1F5F9; padding: 5px 8px; border-radius: 4px; cursor: pointer; color: var(--text-dark); }
     </style>
 </head>
 <body>
@@ -53,7 +54,7 @@
 
         <div class="main-layout">
             <section class="card">
-                <h3><i class="fas fa-user-plus"></i> Ficha Cliente</h3>
+                <h3 id="form-title"><i class="fas fa-user-plus"></i> Ficha Cliente</h3>
                 <form id="form-cliente">
                     <input type="hidden" id="cliente-id">
                     
@@ -67,7 +68,9 @@
                     <div class="form-group"><label>RIF / Identificación</label><input type="text" id="cl-rif"></div>
                     <div class="form-group"><label>Teléfono</label><input type="text" id="cl-telefono"></div>
                     <div class="form-group"><label>Dirección</label><input type="text" id="cl-direccion"></div>
-                    <button type="submit" class="btn-primary">GUARDAR CLIENTE</button>
+                    
+                    <button type="submit" id="btn-guardar-cliente" class="btn-primary">GUARDAR CLIENTE</button>
+                    <button type="button" id="btn-cancelar-edicion" class="btn-primary" style="background:#64748B; display:none;">CANCELAR EDICIÓN</button>
                 </form>
             </section>
 
