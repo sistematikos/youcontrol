@@ -46,13 +46,20 @@ function iniciarCatalogo() {
     });
 
     // --- CARGA DE PRODUCTOS ---
-    onSnapshot(collection(db, "empresas_config", EMPRESA_ID, "productos"), (snapshot) => {
-        productosGlobales = [];
-        snapshot.forEach(d => productosGlobales.push({ id: d.id, ...d.data() }));
-        renderizarCatalogo(productosGlobales);
+   // Prueba esta ruta si los productos están en una colección llamada "productos" 
+// vinculados por un campo de ID o si están en una colección independiente
+onSnapshot(collection(db, "productos"), (snapshot) => {
+    productosGlobales = [];
+    snapshot.forEach(d => {
+        const data = d.data();
+        // Si necesitas filtrar por empresa, hazlo aquí:
+        if (data.empresaID === EMPRESA_ID) {
+            productosGlobales.push({ id: d.id, ...data });
+        }
     });
-}
-
+    renderizarCatalogo(productosGlobales);
+});
+    
 function renderizarCatalogo(lista) {
     const contenedor = document.getElementById('contenedor-catalogo');
     if (!contenedor) return;
