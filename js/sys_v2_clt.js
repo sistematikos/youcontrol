@@ -39,26 +39,45 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 3. GUARDAR / ACTUALIZAR (CORRECCIÓN DE RUTA)
-    formCliente.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const codigo = inputCodigo.value.trim().toUpperCase();
+   // ==========================================
+// 4. GUARDAR / ACTUALIZAR (CORREGIDO)
+// ==========================================
+formCliente.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    // Obtenemos el código y los valores del formulario
+    const codigo = inputCodigo.value.trim().toUpperCase();
+    const nombre = inputNombre.value.trim().toUpperCase();
+    const rif = document.getElementById('cl-rif').value.trim().toUpperCase();
+    const telefono = document.getElementById('cl-telefono').value.trim();
+    const direccion = document.getElementById('cl-direccion').value.trim().toUpperCase();
+
+    if (!codigo) {
+        alert("El código es obligatorio.");
+        return;
+    }
+
+    try {
+        // La ruta completa debe ser: usuarios -> ID_LICENCIA -> clientes -> código_del_cliente
+        // Esto tiene 4 segmentos (par), por lo que es una referencia válida a un documento.
+        const docRef = doc(db, "usuarios", ID_LICENCIA, "clientes", codigo);
         
-        try {
-            // Referencia correcta: usuarios -> ID_LICENCIA -> clientes -> código
-            const docRef = doc(db, "usuarios", ID_LICENCIA, "clientes", codigo);
-            await setDoc(docRef, {
-                codigo: codigo,
-                nombre: inputNombre.value.trim().toUpperCase(),
-                rif: document.getElementById('cl-rif').value.trim().toUpperCase(),
-                telefono: document.getElementById('cl-telefono').value.trim(),
-                direccion: document.getElementById('cl-direccion').value.trim().toUpperCase(),
-                updatedAt: serverTimestamp()
-            });
-            alert("✅ Operación exitosa");
-            cancelarEdicion();
-        } catch (e) { alert("Error: " + e.message); }
-    });
+        await setDoc(docRef, {
+            codigo,
+            nombre,
+            rif,
+            telefono,
+            direccion,
+            updatedAt: serverTimestamp()
+        }, { merge: true }); // 'merge: true' ayuda a actualizar sin sobrescribir campos innecesariamente
+
+        alert("✅ Operación exitosa");
+        cancelarEdicion();
+    } catch (e) { 
+        console.error("Error completo:", e);
+        alert("Error al guardar: " + e.message); 
+    }
+});
 
     function cargarDatosCliente(cl) {
         document.getElementById('cliente-id').value = cl.id;
