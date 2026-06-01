@@ -16,14 +16,17 @@ function iniciarCatalogo() {
             if (data.nombre) {
                 document.getElementById('nombre-empresa').innerText = data.nombre.toUpperCase();
             }
-            // Actualizar Logo
+           // --- CARGA DE LOGO AUTOMATIZADA ---
+        // Ya no hace falta buscar logoUrl en el snap, lo construimos directo:
             const logoImg = document.getElementById('logo-empresa');
-            if (logoImg && data.logoUrl) {
-                logoImg.src = data.logoUrl;
-                logoImg.style.display = 'block';
+            if (logoImg) {
+        // Esto vincula automáticamente YC-2026-001.png con el ID del usuario
+            logoImg.src = `https://raw.githubusercontent.com/sistematikos/youcontrol/main/img/${USER_ID}.png`;
+            logoImg.style.display = 'block';
+    
+     // Opcional: ocultar si la imagen no carga (por si no has subido el logo aún)
+            logoImg.onerror = () => { logoImg.style.display = 'none'; };
             }
-        }
-    });
 
     if (token) {
         try {
