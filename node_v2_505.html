@@ -11,7 +11,7 @@
         .page-wrapper { max-width: 800px; margin: 0 auto; width: 100%; box-sizing: border-box; }
         .app-header { padding: 15px; position: sticky; top: 0; z-index: 100; background: var(--bg-light); }
         
-        /* Layout Grid: 3 columnas (Logo, Nombre, Tasa), 2 filas */
+        /* Layout Grid: 3 columnas, 2 filas */
         .header-grid { 
             display: grid; 
             grid-template-columns: 110px 1fr 1fr; 
@@ -25,6 +25,14 @@
         .logo-img { width: 100%; height: 100%; object-fit: contain; padding: 5px; }
         
         .card-right { background: white; border-radius: 12px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; padding: 0 10px; font-weight: 800; font-size: 0.8rem; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
+        
+        /* Estilo para el nombre de la empresa modificado */
+        #nombre-empresa { 
+            color: black !important; 
+            font-size: 1.1rem; 
+            font-weight: 900; 
+            text-transform: uppercase;
+        }
         
         .search-bar { grid-column: 2 / 4; width: 100%; padding: 0 15px; border: 1px solid var(--border); border-radius: 12px; background: white; box-sizing: border-box; }
         
@@ -41,7 +49,9 @@
                 <div class="card-logo">
                     <img id="logo-empresa" src="img/logo.png" class="logo-img" onerror="this.style.display='none'">
                 </div>
-                <div class="card-right"><span id="nombre-empresa" style="color:var(--electric);">CARGANDO...</span></div>
+                <div class="card-right">
+                    <span id="nombre-empresa">CARGANDO...</span>
+                </div>
                 <div class="card-right">TASA BCV: <span id="tasa-cliente" style="margin-left:5px;">0.00</span></div>
                 <input type="text" id="buscador-prod" placeholder="🔍 Buscar productos..." class="search-bar">
             </div>
