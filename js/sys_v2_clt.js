@@ -80,16 +80,26 @@ formCliente.addEventListener('submit', async (e) => {
 });
 
     function cargarDatosCliente(cl) {
-        document.getElementById('cliente-id').value = cl.id;
-        inputNombre.value = cl.nombre;
-        document.getElementById('cl-rif').value = cl.rif || '';
-        document.getElementById('cl-telefono').value = cl.telefono || '';
-        document.getElementById('cl-direccion').value = cl.direccion || '';
-        inputCodigo.readOnly = true;
-        if(formTitle) formTitle.innerHTML = `<i class="fas fa-user-edit"></i> Editar Cliente`;
-        if(btnGuardar) btnGuardar.innerHTML = `<i class="fas fa-sync-alt"></i> ACTUALIZAR`;
-        if(btnCancelar) btnCancelar.style.display = 'block';
-    }
+    // 1. CARGAMOS EL CÓDIGO (Esto es lo que faltaba)
+    inputCodigo.value = cl.codigo; 
+    
+    // 2. EL RESTO DE LOS DATOS
+    document.getElementById('cliente-id').value = cl.id;
+    inputNombre.value = cl.nombre;
+    document.getElementById('cl-rif').value = cl.rif || '';
+    document.getElementById('cl-telefono').value = cl.telefono || '';
+    document.getElementById('cl-direccion').value = cl.direccion || '';
+    
+    // 3. BLOQUEAMOS EL CÓDIGO PARA QUE NO SE PUEDA EDITAR
+    inputCodigo.readOnly = true;
+    
+    // 4. ACTUALIZAMOS LA UI
+    if(formTitle) formTitle.innerHTML = `<i class="fas fa-user-edit"></i> Editar Cliente`;
+    if(btnGuardar) btnGuardar.innerHTML = `<i class="fas fa-sync-alt"></i> ACTUALIZAR CLIENTE`;
+    if(btnCancelar) btnCancelar.style.display = 'block';
+    
+    inputNombre.focus();
+}
 
     function cancelarEdicion() {
         formCliente.reset();
