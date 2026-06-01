@@ -60,24 +60,25 @@ function renderizarCatalogo(lista) {
     const contenedor = document.getElementById('contenedor-catalogo');
     if (!contenedor) return;
 
-    // Define aquí tus departamentos y colores
+    // Diccionario de colores (Asegúrate de que los nombres coincidan exactamente con Firestore)
     const coloresDepartamentos = {
-        'PARTES ELECTRICAS': '#F59E0B', // Ámbar
-        'REPUESTOS': '#EF4444',         // Rojo
-        'ACCESORIOS': '#8B5CF6',        // Violeta
-        'LUBRICANTES': '#3B82F6'        // Azul
+        'PARTES ELECTRICAS': '#F59E0B',  // Naranja
+        'BEBIDAS': '#3B82F6',           // Azul
+        'ALIMENTOS': '#10B981',         // Verde
+        'REPUESTOS': '#EF4444'          // Rojo
     };
 
     contenedor.innerHTML = lista.filter(p => parseInt(p.stock || 0) > 0).map(p => {
-        // Obtenemos el color según el departamento, o un gris por defecto si no existe
-        const colorBorde = coloresDepartamentos[p.departamento?.toUpperCase()] || '#94A3B8';
+        // Obtenemos el departamento, forzando mayúsculas y eliminando espacios extra
+        const depto = p.departamento ? p.departamento.trim().toUpperCase() : 'GENERAL';
+        const colorBorde = coloresDepartamentos[depto] || '#64748B'; // Gris si no se encuentra
         
         return `
-        <div class="card-prod" style="border-left: 6px solid ${colorBorde}">
-            <h3 style="font-size:0.85rem; margin:0;">${p.nombre}</h3>
-            <span style="font-weight:900; color:#10B981; font-size:1.1rem;">
+        <div class="card-prod" style="border-left: 6px solid ${colorBorde}; border-top: 1px solid #E2E8F0; border-right: 1px solid #E2E8F0; border-bottom: 1px solid #E2E8F0;">
+            <h3 style="font-size:0.85rem; margin:0 0 5px 0;">${p.nombre}</h3>
+            <div style="font-weight:900; color:#10B981; font-size:1.1rem;">
                 ${(p.precio * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 })} Bs
-            </span>
+            </div>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
                 <button onclick="cambiarCant('${p.id}', -1, '${p.nombre}', ${p.precio}, ${p.stock})">-</button>
                 <span id="qty-${p.id}">${carrito[p.id]?.cantidad || 0}</span>
