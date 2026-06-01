@@ -15,11 +15,16 @@
         }
         body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; }
         
-        /* Banner */
-        .banner-menu-container { width: 92%; max-width: 1200px; margin: 25px auto 0px auto; border-radius: 16px; overflow: hidden; background: #002A54; }
+        /* Banner con datos superpuestos */
+        .banner-menu-container { width: 92%; max-width: 1200px; margin: 25px auto 0px auto; border-radius: 16px; overflow: hidden; background: #002A54; position: relative; }
         .banner-menu-img { width: 100%; max-height: 280px; object-fit: cover; display: block; }
+        .banner-empresa-overlay {
+            position: absolute; top: 20px; left: 20px; color: white;
+            font-size: 0.9rem; font-weight: 600; z-index: 10;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5); pointer-events: none;
+        }
         
-        /* Contenedor tarjetas - Separado del banner con 30px */
+        /* Contenedor tarjetas */
         .menu-container { max-width: 1200px; width: 92%; margin: 30px auto 20px auto; padding: 5px 0; flex-grow: 1; display: flex; align-items: center; }
         .menu-grid-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; width: 100%; }
         
@@ -37,33 +42,12 @@
         .card-ventas { border-color: #0EA5E9; } .card-ventas i { color: #0EA5E9; }
         .card-reportes { border-color: #F59E0B; } .card-reportes i { color: #F59E0B; }
         .card-config { border-color: #6B7280; } .card-config i { color: #6B7280; }
-        
-       /* Pie de página limpio y alineado a la derecha */
-        .footer-core {
-            width: 92%;
-            max-width: 1200px;
-            margin: 0 auto 30px auto;
-            padding: 10px 0; /* Padding reducido para que sea más plano */
-            font-size: 0.85rem;
-            color: var(--accent-blue);
-            background: transparent; /* Quitamos el fondo blanco */
-            border: none;            /* Quitamos el borde */
-            box-shadow: none;        /* Quitamos la sombra */
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;   /* Alinea el texto a la derecha */
-            gap: 2px;                /* Menos espacio entre líneas */
-            box-sizing: border-box;
-        }
-        .license-info { 
-            font-weight: 700; 
-            text-align: right; 
-        }
     </style>
 </head>
 <body oncontextmenu="return false">
 
     <div class="banner-menu-container">
+        <div class="banner-empresa-overlay" id="lblEmpresa">Cargando datos...</div>
         <img src="img/youcontrol.png" alt="You Control" class="banner-menu-img">
     </div>
 
@@ -79,10 +63,6 @@
             <a href="sys_config.html" class="menu-card card-config"><i class="fas fa-cog"></i><span>Configuración</span><p>Parámetros.</p></a>
         </div>
     </main>
-
-    <footer class="footer-core">
-        <div class="license-info" id="lblEmpresa">Cargando datos...</div>
-    </footer>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
@@ -109,9 +89,9 @@
                     if (docSnap.exists()) {
                         const d = docSnap.data();
                         lblEmpresa.innerHTML = `
-                            <div>Empresa: ${d.nombre || 'N/A'}</div>
+                            <div style="font-size: 1.1rem;">${d.nombre || 'N/A'}</div>
                             <div>RIF: ${d.rif || 'N/A'}</div>
-                            <div>Dir: ${d.direccion || 'N/A'}</div>
+                            <div>${d.direccion || 'N/A'}</div>
                         `;
                     }
                 } catch (e) { lblEmpresa.innerText = "Error al cargar"; }
