@@ -60,20 +60,20 @@ function renderizarCatalogo(lista) {
     const contenedor = document.getElementById('contenedor-catalogo');
     if (!contenedor) return;
 
-    // Función para asignar color según el campo "departamento" de Firestore
-    const getBorderColor = (depto) => {
-        const colores = {
-            'PARTES ELECTRICAS': '#F59E0B',  // Color para este departamento
-            'REPUESTOS': '#EF4444',          // Ejemplo para otro
-            'GENERAL': '#10B981'             // Verde por defecto
-        };
-        // Convertimos a mayúsculas para asegurar coincidencia
-        const deptoKey = depto ? depto.toUpperCase() : 'GENERAL';
-        return colores[deptoKey] || '#10B981';
+    // Define aquí tus departamentos y colores
+    const coloresDepartamentos = {
+        'PARTES ELECTRICAS': '#F59E0B', // Ámbar
+        'REPUESTOS': '#EF4444',         // Rojo
+        'ACCESORIOS': '#8B5CF6',        // Violeta
+        'LUBRICANTES': '#3B82F6'        // Azul
     };
 
-    contenedor.innerHTML = lista.filter(p => parseInt(p.stock || 0) > 0).map(p => `
-        <div class="card-prod" style="border-left: 6px solid ${getBorderColor(p.departamento)}">
+    contenedor.innerHTML = lista.filter(p => parseInt(p.stock || 0) > 0).map(p => {
+        // Obtenemos el color según el departamento, o un gris por defecto si no existe
+        const colorBorde = coloresDepartamentos[p.departamento?.toUpperCase()] || '#94A3B8';
+        
+        return `
+        <div class="card-prod" style="border-left: 6px solid ${colorBorde}">
             <h3 style="font-size:0.85rem; margin:0;">${p.nombre}</h3>
             <span style="font-weight:900; color:#10B981; font-size:1.1rem;">
                 ${(p.precio * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 })} Bs
@@ -83,7 +83,8 @@ function renderizarCatalogo(lista) {
                 <span id="qty-${p.id}">${carrito[p.id]?.cantidad || 0}</span>
                 <button onclick="cambiarCant('${p.id}', 1, '${p.nombre}', ${p.precio}, ${p.stock})">+</button>
             </div>
-        </div>`).join('');
+        </div>`;
+    }).join('');
 }
 
 function actualizarFooter() {
