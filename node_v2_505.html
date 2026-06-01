@@ -11,7 +11,7 @@
         .page-wrapper { max-width: 800px; margin: 0 auto; width: 100%; box-sizing: border-box; }
         .app-header { padding: 15px; position: sticky; top: 0; z-index: 100; background: var(--bg-light); }
         
-        /* Layout Grid: 3 columnas, 2 filas */
+        /* Layout Grid: 3 columnas (Logo, Nombre, Tasa), 2 filas */
         .header-grid { 
             display: grid; 
             grid-template-columns: 110px 1fr 1fr; 
@@ -21,14 +21,11 @@
             margin-bottom: 10px; 
         }
         
-        /* Logo cuadrado: Ocupa las 2 filas de la columna 1 */
         .card-logo { grid-row: 1 / 3; background: white; border-radius: 12px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
         .logo-img { width: 100%; height: 100%; object-fit: contain; padding: 5px; }
         
-        /* Tarjetas derechas */
         .card-right { background: white; border-radius: 12px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; padding: 0 10px; font-weight: 800; font-size: 0.8rem; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
         
-        /* Buscador integrado en el grid: ocupa columnas 2 y 3 de la segunda fila */
         .search-bar { grid-column: 2 / 4; width: 100%; padding: 0 15px; border: 1px solid var(--border); border-radius: 12px; background: white; box-sizing: border-box; }
         
         .grid-catalog { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 0 15px; }
