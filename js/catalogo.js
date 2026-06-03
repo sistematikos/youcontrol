@@ -161,4 +161,27 @@ function renderizarCatalogo(lista) {
         </div>`;
     }).join('');
 }
+
+window.enviarPedido = function() {
+    if (Object.keys(carrito).length === 0) return;
+
+    let mensaje = "¡Hola! Quisiera realizar el siguiente pedido:\n\n";
+    let totalUSD = 0;
+
+    for (let id in carrito) {
+        const item = carrito[id];
+        const subtotal = item.precio * item.cantidad;
+        totalUSD += subtotal;
+        mensaje += `• ${item.nombre} x${item.cantidad} ($${item.precio.toFixed(2)} c/u) = $${subtotal.toFixed(2)}\n`;
+    }
+
+    mensaje += `\n*TOTAL:* $${totalUSD.toFixed(2)}`;
+    mensaje += `\n*TOTAL (Bs):* ${(totalUSD * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 })} Bs`;
+
+    // Codificar para URL de WhatsApp
+    const numeroWhatsApp = "584264570267"; // Tu número en formato internacional sin el '+'
+    const urlWhatsApp = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensaje)}`;
+
+    window.open(urlWhatsApp, '_blank');
+};
 document.addEventListener('DOMContentLoaded', iniciarCatalogo);
