@@ -61,6 +61,37 @@ function iniciarCatalogo() {
     });
 }
 
+// Función para añadir o quitar productos del carrito
+window.cambiarCant = function(id, cambio, nombre, precio, stock) {
+    if (!carrito[id]) {
+        if (cambio < 0) return; // No restar si no existe
+        carrito[id] = { nombre: nombre, precio: precio, cantidad: 0 };
+    }
+
+    // Calcular nueva cantidad
+    let nuevaCant = carrito[id].cantidad + cambio;
+
+    // Validar stock y mínimo
+    if (nuevaCant > stock) {
+        alert("¡Stock máximo alcanzado!");
+        return;
+    }
+    
+    if (nuevaCant <= 0) {
+        delete carrito[id];
+    } else {
+        carrito[id].cantidad = nuevaCant;
+    }
+
+    // Actualizar visualización
+    const qtySpan = document.getElementById(`qty-${id}`);
+    if (qtySpan) {
+        qtySpan.innerText = carrito[id] ? carrito[id].cantidad : 0;
+    }
+
+    actualizarFooter();
+};
+
 function renderizarCatalogo(lista) {
     const contenedor = document.getElementById('contenedor-catalogo');
     if (!contenedor) return;
