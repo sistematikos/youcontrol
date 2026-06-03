@@ -15,18 +15,22 @@ function iniciarCatalogo() {
     productosGlobales = []; // Vaciar memoria
     
     // --- CARGA DE LOGO Y NOMBRE ---
-    onSnapshot(doc(db, "empresas_config", USER_ID), (snap) => {
-        if (snap.exists()) {
-            const data = snap.data();
-            // Solo actualizamos si realmente hay cambio para evitar parpadeos
-            const nombreEl = document.getElementById('nombre-empresa');
-            if (data.nombre) nombreEl.innerText = data.nombre.toUpperCase();
-            
-            const logoImg = document.getElementById('logo-empresa');
-            logoImg.src = `https://raw.githubusercontent.com/sistematikos/youcontrol/main/img/${USER_ID}.png`;
-            logoImg.style.display = 'block';
+onSnapshot(doc(db, "empresas_config", USER_ID), (snap) => {
+    if (snap.exists()) {
+        const data = snap.data();
+        const nombreEl = document.getElementById('nombre-empresa');
+        const logoImg = document.getElementById('logo-empresa');
+
+        if (data.nombre) {
+            nombreEl.innerText = data.nombre.toUpperCase();
+            nombreEl.style.opacity = "1"; // Aquí revelamos el nombre nuevo
         }
-    });
+        
+        // Aquí revelamos el logo
+        logoImg.src = `https://raw.githubusercontent.com/sistematikos/youcontrol/main/img/${USER_ID}.png`;
+        logoImg.style.display = 'block';
+    }
+});
     
     // --- RESPALDO DE NOMBRE ---
     if (token) {
