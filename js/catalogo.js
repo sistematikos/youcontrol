@@ -8,27 +8,26 @@ let tasaActual = 1, carrito = {}, productosGlobales = [];
 function iniciarCatalogo() {
     if (!USER_ID) return;
 
-    // 1. LIMPIEZA INMEDIATA
+    // 1. LIMPIEZA TOTAL AL INICIAR
     document.getElementById('nombre-empresa').innerText = "CARGANDO...";
     document.getElementById('logo-empresa').style.display = 'none';
-    
-    if (!USER_ID) return;
+    document.getElementById('contenedor-catalogo').innerHTML = ""; // Limpiar productos viejos
+    productosGlobales = []; // Vaciar memoria
     
     // --- CARGA DE LOGO Y NOMBRE ---
     onSnapshot(doc(db, "empresas_config", USER_ID), (snap) => {
         if (snap.exists()) {
             const data = snap.data();
-            if (data.nombre) document.getElementById('nombre-empresa').innerText = data.nombre.toUpperCase();
+            // Solo actualizamos si realmente hay cambio para evitar parpadeos
+            const nombreEl = document.getElementById('nombre-empresa');
+            if (data.nombre) nombreEl.innerText = data.nombre.toUpperCase();
             
             const logoImg = document.getElementById('logo-empresa');
-            if (logoImg) {
-                logoImg.src = `https://raw.githubusercontent.com/sistematikos/youcontrol/main/img/${USER_ID}.png`;
-                logoImg.style.display = 'block';
-                logoImg.onerror = () => { logoImg.style.display = 'none'; };
-            }
+            logoImg.src = `https://raw.githubusercontent.com/sistematikos/youcontrol/main/img/${USER_ID}.png`;
+            logoImg.style.display = 'block';
         }
     });
-
+    
     // --- RESPALDO DE NOMBRE ---
     if (token) {
         try {
