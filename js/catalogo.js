@@ -5,29 +5,26 @@ const token = localStorage.getItem('licencia_youcontrol');
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 let tasaActual = 1, carrito = {}, productosGlobales = [];
 
-function iniciarCatalogo() {
-    // --- CARGA DE LOGO Y NOMBRE ---
-const docRef = doc(db, "empresas_config", USER_ID);
-
-onSnapshot(docRef, (snap) => {
+// --- CARGA DE LOGO Y NOMBRE ---
+onSnapshot(doc(db, "empresas_config", USER_ID), (snap) => {
     const nombreEl = document.getElementById('nombre-empresa');
     const logoImg = document.getElementById('logo-empresa');
 
     if (snap.exists()) {
         const data = snap.data();
-        console.log("Datos de empresa encontrados:", data); // Mira esto en la consola
-
+        
+        // FORZAR ACTUALIZACIÓN
         if (data.nombre) {
             nombreEl.innerText = data.nombre.toUpperCase();
             nombreEl.style.opacity = "1";
+            nombreEl.style.transition = "opacity 0.3s";
         }
         
-        logoImg.src = `https://raw.githubusercontent.com/sistematikos/youcontrol/main/img/${USER_ID}.png`;
+        // Usar una URL absoluta para asegurar que el celular la encuentre
+        logoImg.src = `https://raw.githubusercontent.com/sistematikos/youcontrol/main/img/${USER_ID}.png?t=${new Date().getTime()}`;
         logoImg.style.display = 'block';
-    } else {
-        console.warn("No se encontró documento en empresas_config para el ID:", USER_ID);
-        nombreEl.innerText = "EMPRESA NO REGISTRADA";
-        nombreEl.style.opacity = "1";
+        
+        console.log("Nombre aplicado:", data.nombre);
     }
 });
     
