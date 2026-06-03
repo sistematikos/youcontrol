@@ -2,12 +2,13 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Carga Masiva de Productos</title>
+    <title>Sys V6 - Carga de Productos</title>
     <style>
         body { font-family: 'Poppins', sans-serif; padding: 40px; background: #F1F5F9; }
         .card { background: white; padding: 30px; border-radius: 12px; max-width: 500px; margin: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         input, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
         button { background: #10B981; color: white; border: none; cursor: pointer; font-weight: bold; }
+        #log { font-size: 0.75rem; margin-top: 15px; color: #475569; max-height: 200px; overflow-y: auto; border: 1px solid #e2e8f0; padding: 10px; }
     </style>
 </head>
 <body>
@@ -17,42 +18,62 @@
     <input type="text" id="targetID" placeholder="ID de la Empresa (Ej: 04264570267)">
     <input type="file" id="csvFile" accept=".csv">
     <button onclick="procesarCSV()">Subir a Firebase</button>
-    <div id="log" style="font-size: 0.8rem; margin-top: 15px;"></div>
+    <div id="log">El registro de carga aparecerá aquí...</div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, doc, setDoc, collection } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // Reemplaza con tu configuración de firebase-config.js
-    const firebaseConfig = { /* TU CONFIGURACION AQUI */ };
+    // --- CONFIGURA TU FIREBASE AQUÍ ---
+    const firebaseConfig = {
+        apiKey: "TU_API_KEY",
+        authDomain: "TU_PROJECT.firebaseapp.com",
+        projectId: "TU_PROJECT",
+        storageBucket: "TU_PROJECT.appspot.com",
+        messagingSenderId: "TU_ID",
+        appId: "TU_APP_ID"
+    };
+    
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
     window.procesarCSV = async function() {
         const file = document.getElementById('csvFile').files[0];
         const targetID = document.getElementById('targetID').value;
-        if (!file || !targetID) return alert("Faltan datos");
+        const log = document.getElementById('log');
+        
+        if (!file || !targetID) return alert("Por favor ingresa el ID y selecciona un archivo.");
 
         const reader = new FileReader();
         reader.onload = async function(e) {
             const lines = e.target.result.split('\n');
-            const log = document.getElementById('log');
+            log.innerHTML = "Iniciando carga...<br>";
             
+            // Empezamos en 1 para saltar la fila de encabezados
             for (let i = 1; i < lines.length; i++) {
-                const [nombre, precio, stock, departamento] = lines[i].split(',');
-                if (nombre) {
-                    const prodRef = doc(collection(db, "usuarios", targetID, "productos"));
+                const fila = lines[i].split(',');
+                if (fila.length < 5) continue; 
+                
+                const [nombre, precio, stock, departamento, sku] = fila;
+                const skuLimpio = sku.trim();
+
+                try {
+                    // Usamos el SKU como ID del documento para evitar duplicados
+                    const prodRef = doc(db, "usuarios", targetID, "productos", skuLimpio);
                     await setDoc(prodRef, {
                         nombre: nombre.trim(),
-                        precio: parseFloat(precio),
-                        stock: parseInt(stock),
-                        departamento: departamento.trim().toUpperCase()
+                        precio: parseFloat(precio || 0),
+                        stock: parseInt(stock || 0),
+                        departamento: departamento.trim().toUpperCase(),
+                        sku: skuLimpio
                     });
-                    log.innerHTML += `✅ Cargado: ${nombre}<br>`;
+                    log.innerHTML += `✅ SKU ${skuLimpio}: ${nombre.trim()}<br>`;
+                } catch (error) {
+                    log.innerHTML += `❌ Error en ${skuLimpio}: ${error.message}<br>`;
                 }
             }
-            alert("Carga completada");
+            alert("Proceso de carga finalizado.");
         };
         reader.readAsText(file);
     };
