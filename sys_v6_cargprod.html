@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Carga Masiva de Productos</title>
+    <style>
+        body { font-family: 'Poppins', sans-serif; padding: 40px; background: #F1F5F9; }
+        .card { background: white; padding: 30px; border-radius: 12px; max-width: 500px; margin: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        input, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
+        button { background: #10B981; color: white; border: none; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Sys V6 - Carga de Productos</h2>
+    <input type="text" id="targetID" placeholder="ID de la Empresa (Ej: 04264570267)">
+    <input type="file" id="csvFile" accept=".csv">
+    <button onclick="procesarCSV()">Subir a Firebase</button>
+    <div id="log" style="font-size: 0.8rem; margin-top: 15px;"></div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, doc, setDoc, collection } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // Reemplaza con tu configuración de firebase-config.js
+    const firebaseConfig = { /* TU CONFIGURACION AQUI */ };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.procesarCSV = async function() {
+        const file = document.getElementById('csvFile').files[0];
+        const targetID = document.getElementById('targetID').value;
+        if (!file || !targetID) return alert("Faltan datos");
+
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            const lines = e.target.result.split('\n');
+            const log = document.getElementById('log');
+            
+            for (let i = 1; i < lines.length; i++) {
+                const [nombre, precio, stock, departamento] = lines[i].split(',');
+                if (nombre) {
+                    const prodRef = doc(collection(db, "usuarios", targetID, "productos"));
+                    await setDoc(prodRef, {
+                        nombre: nombre.trim(),
+                        precio: parseFloat(precio),
+                        stock: parseInt(stock),
+                        departamento: departamento.trim().toUpperCase()
+                    });
+                    log.innerHTML += `✅ Cargado: ${nombre}<br>`;
+                }
+            }
+            alert("Carga completada");
+        };
+        reader.readAsText(file);
+    };
+</script>
+</body>
+</html>
