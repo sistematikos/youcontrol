@@ -8,6 +8,12 @@ let tasaActual = 1, carrito = {}, productosGlobales = [];
 function iniciarCatalogo() {
     if (!USER_ID) return;
 
+    // 1. LIMPIEZA INMEDIATA
+    document.getElementById('nombre-empresa').innerText = "CARGANDO...";
+    document.getElementById('logo-empresa').style.display = 'none';
+    
+    if (!USER_ID) return;
+    
     // --- CARGA DE LOGO Y NOMBRE ---
     onSnapshot(doc(db, "empresas_config", USER_ID), (snap) => {
         if (snap.exists()) {
