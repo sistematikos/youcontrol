@@ -6,28 +6,23 @@ const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 let tasaActual = 1, carrito = {}, productosGlobales = [];
 
 function iniciarCatalogo() {
-    if (!USER_ID) return;
+    // 1. Intentar sacar el ID de la URL (ejemplo: pagina.com/?id=04264570267)
+    const urlParams = new URLSearchParams(window.location.search);
+    let idDeLaURL = urlParams.get('id');
 
-    // 1. LIMPIEZA TOTAL
-    const nombreEl = document.getElementById('nombre-empresa');
-    const logoImg = document.getElementById('logo-empresa');
-    nombreEl.style.opacity = "0";
-    logoImg.style.display = 'none';
-    document.getElementById('contenedor-catalogo').innerHTML = ""; 
-    productosGlobales = []; 
-    
-    // --- CARGA DE LOGO Y NOMBRE ---
-    onSnapshot(doc(db, "empresas_config", USER_ID), (snap) => {
-        if (snap.exists()) {
-            const data = snap.data();
-            if (data.nombre) {
-                nombreEl.innerText = data.nombre.toUpperCase();
-                nombreEl.style.opacity = "1";
-            }
-            logoImg.src = `https://raw.githubusercontent.com/sistematikos/youcontrol/main/img/${USER_ID}.png`;
-            logoImg.style.display = 'block';
-        }
-    });
+    // 2. Si hay ID en la URL, guárdalo en el teléfono para que no se borre
+    if (idDeLaURL) {
+        localStorage.setItem('youcontrol_empresa_id', idDeLaURL);
+    }
+
+    // 3. Obtener el ID final (prioridad a la URL, luego al localStorage)
+    const USER_ID = idDeLaURL || localStorage.getItem('youcontrol_empresa_id');
+
+    if (!USER_ID) {
+        document.getElementById('nombre-empresa').innerText = "ERROR: Empresa no encontrada";
+        console.error("No se detectó ID de empresa en URL ni en local storage.");
+        return;
+    }
 
     // --- CARGA DE TASA ---
     onSnapshot(doc(db, "usuarios", USER_ID), (snap) => {
