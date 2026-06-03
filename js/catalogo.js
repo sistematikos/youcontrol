@@ -8,40 +8,26 @@ let tasaActual = 1, carrito = {}, productosGlobales = [];
 function iniciarCatalogo() {
     if (!USER_ID) return;
 
-    // 1. LIMPIEZA TOTAL AL INICIAR
-    document.getElementById('nombre-empresa').innerText = "CARGANDO...";
-    document.getElementById('logo-empresa').style.display = 'none';
-    document.getElementById('contenedor-catalogo').innerHTML = ""; // Limpiar productos viejos
-    productosGlobales = []; // Vaciar memoria
+    // 1. LIMPIEZA TOTAL
+    const nombreEl = document.getElementById('nombre-empresa');
+    const logoImg = document.getElementById('logo-empresa');
+    nombreEl.style.opacity = "0";
+    logoImg.style.display = 'none';
+    document.getElementById('contenedor-catalogo').innerHTML = ""; 
+    productosGlobales = []; 
     
     // --- CARGA DE LOGO Y NOMBRE ---
-onSnapshot(doc(db, "empresas_config", USER_ID), (snap) => {
-    if (snap.exists()) {
-        const data = snap.data();
-        const nombreEl = document.getElementById('nombre-empresa');
-        const logoImg = document.getElementById('logo-empresa');
-
-        if (data.nombre) {
-            nombreEl.innerText = data.nombre.toUpperCase();
-            nombreEl.style.opacity = "1"; // Aquí revelamos el nombre nuevo
-        }
-        
-        // Aquí revelamos el logo
-        logoImg.src = `https://raw.githubusercontent.com/sistematikos/youcontrol/main/img/${USER_ID}.png`;
-        logoImg.style.display = 'block';
-    }
-});
-    
-    // --- RESPALDO DE NOMBRE ---
-    if (token) {
-        try {
-            const data = JSON.parse(atob(token));
-            const nombreEl = document.getElementById('nombre-empresa');
-            if (nombreEl.innerText === "CARGANDO..." || nombreEl.innerText === "") {
-                nombreEl.innerText = (data.n || "EMPRESA").toUpperCase();
+    onSnapshot(doc(db, "empresas_config", USER_ID), (snap) => {
+        if (snap.exists()) {
+            const data = snap.data();
+            if (data.nombre) {
+                nombreEl.innerText = data.nombre.toUpperCase();
+                nombreEl.style.opacity = "1";
             }
-        } catch(e) {}
-    }
+            logoImg.src = `https://raw.githubusercontent.com/sistematikos/youcontrol/main/img/${USER_ID}.png`;
+            logoImg.style.display = 'block';
+        }
+    });
 
     // --- CARGA DE TASA ---
     onSnapshot(doc(db, "usuarios", USER_ID), (snap) => {
@@ -65,38 +51,7 @@ onSnapshot(doc(db, "empresas_config", USER_ID), (snap) => {
     });
 }
 
-// Función para añadir o quitar productos del carrito
-window.cambiarCant = function(id, cambio, nombre, precio, stock) {
-    if (!carrito[id]) {
-        if (cambio < 0) return; // No restar si no existe
-        carrito[id] = { nombre: nombre, precio: precio, cantidad: 0 };
-    }
-
-    // Calcular nueva cantidad
-    let nuevaCant = carrito[id].cantidad + cambio;
-
-    // Validar stock y mínimo
-    if (nuevaCant > stock) {
-        alert("¡Stock máximo alcanzado!");
-        return;
-    }
-    
-    if (nuevaCant <= 0) {
-        delete carrito[id];
-    } else {
-        carrito[id].cantidad = nuevaCant;
-    }
-
-    // Actualizar visualización
-    const qtySpan = document.getElementById(`qty-${id}`);
-    if (qtySpan) {
-        qtySpan.innerText = carrito[id] ? carrito[id].cantidad : 0;
-    }
-
-    actualizarFooter();
-};
-
-// Aseguramos que las funciones sean globales para que el HTML las vea siempre
+// --- LÓGICA DE CARRITO ---
 window.cambiarCant = function(id, cambio, nombre, precio, stock) {
     if (!carrito[id]) {
         if (cambio < 0) return;
@@ -104,20 +59,13 @@ window.cambiarCant = function(id, cambio, nombre, precio, stock) {
     }
 
     let nuevaCant = carrito[id].cantidad + cambio;
-    if (nuevaCant > stock) {
-        alert("¡Stock máximo alcanzado!");
-        return;
-    }
+    if (nuevaCant > stock) { alert("¡Stock máximo alcanzado!"); return; }
     
-    if (nuevaCant <= 0) {
-        delete carrito[id];
-    } else {
-        carrito[id].cantidad = nuevaCant;
-    }
+    if (nuevaCant <= 0) { delete carrito[id]; } 
+    else { carrito[id].cantidad = nuevaCant; }
 
     const qtySpan = document.getElementById(`qty-${id}`);
     if (qtySpan) qtySpan.innerText = carrito[id] ? carrito[id].cantidad : 0;
-
     window.actualizarFooter();
 };
 
@@ -136,6 +84,20 @@ window.actualizarFooter = function() {
     }
 };
 
+window.enviarPedido = function() {
+    if (Object.keys(carrito).length === 0) return;
+    let mensaje = "¡Hola! Quisiera realizar el siguiente pedido:\n\n";
+    let totalUSD = 0;
+    for (let id in carrito) {
+        const item = carrito[id];
+        const subtotal = item.precio * item.cantidad;
+        totalUSD += subtotal;
+        mensaje += `• ${item.nombre} x${item.cantidad} ($${item.precio.toFixed(2)} c/u) = $${subtotal.toFixed(2)}\n`;
+    }
+    mensaje += `\n*TOTAL:* $${totalUSD.toFixed(2)}\n*TOTAL (Bs):* ${(totalUSD * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 })} Bs`;
+    window.open(`https://wa.me/584264570267?text=${encodeURIComponent(mensaje)}`, '_blank');
+};
+
 function renderizarCatalogo(lista) {
     const contenedor = document.getElementById('contenedor-catalogo');
     if (!contenedor) return;
@@ -150,42 +112,21 @@ function renderizarCatalogo(lista) {
     contenedor.innerHTML = lista.filter(p => parseInt(p.stock || 0) > 0).map(p => {
         const depto = p.departamento ? p.departamento.trim().toUpperCase() : 'GENERAL';
         const colorBorde = coloresDepartamentos[depto] || '#64748B';
+        const nombreLimpio = p.nombre.replace(/'/g, "\\'");
         
         return `
-        <div class="card-prod" style="border-left: 6px solid ${colorBorde}; border-top: 1px solid #E2E8F0; border-right: 1px solid #E2E8F0; border-bottom: 1px solid #E2E8F0;">
+        <div class="card-prod" style="border-left: 6px solid ${colorBorde}; border: 1px solid #E2E8F0;">
             <h3 style="font-size:0.85rem; margin:0 0 5px 0;">${p.nombre}</h3>
             <div style="font-weight:900; color:#10B981; font-size:1.1rem;">
                 ${(p.precio * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 })} Bs
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
-                <button onclick="window.cambiarCant('${p.id}', -1, '${p.nombre}', ${p.precio}, ${p.stock})">-</button>
+                <button onclick="window.cambiarCant('${p.id}', -1, '${nombreLimpio}', ${p.precio}, ${p.stock})">-</button>
                 <span id="qty-${p.id}">${carrito[p.id]?.cantidad || 0}</span>
-                <button onclick="window.cambiarCant('${p.id}', 1, '${p.nombre}', ${p.precio}, ${p.stock})">+</button>
+                <button onclick="window.cambiarCant('${p.id}', 1, '${nombreLimpio}', ${p.precio}, ${p.stock})">+</button>
             </div>
         </div>`;
     }).join('');
 }
 
-window.enviarPedido = function() {
-    if (Object.keys(carrito).length === 0) return;
-
-    let mensaje = "¡Hola! Quisiera realizar el siguiente pedido:\n\n";
-    let totalUSD = 0;
-
-    for (let id in carrito) {
-        const item = carrito[id];
-        const subtotal = item.precio * item.cantidad;
-        totalUSD += subtotal;
-        mensaje += `• ${item.nombre} x${item.cantidad} ($${item.precio.toFixed(2)} c/u) = $${subtotal.toFixed(2)}\n`;
-    }
-
-    mensaje += `\n*TOTAL:* $${totalUSD.toFixed(2)}`;
-    mensaje += `\n*TOTAL (Bs):* ${(totalUSD * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 })} Bs`;
-
-    // Codificar para URL de WhatsApp
-    const numeroWhatsApp = "584264570267"; // Tu número en formato internacional sin el '+'
-    const urlWhatsApp = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensaje)}`;
-
-    window.open(urlWhatsApp, '_blank');
-};
 document.addEventListener('DOMContentLoaded', iniciarCatalogo);
