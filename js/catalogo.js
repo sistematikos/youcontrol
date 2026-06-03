@@ -92,22 +92,60 @@ window.cambiarCant = function(id, cambio, nombre, precio, stock) {
     actualizarFooter();
 };
 
+// Aseguramos que las funciones sean globales para que el HTML las vea siempre
+window.cambiarCant = function(id, cambio, nombre, precio, stock) {
+    if (!carrito[id]) {
+        if (cambio < 0) return;
+        carrito[id] = { nombre: nombre, precio: precio, cantidad: 0 };
+    }
+
+    let nuevaCant = carrito[id].cantidad + cambio;
+    if (nuevaCant > stock) {
+        alert("¡Stock máximo alcanzado!");
+        return;
+    }
+    
+    if (nuevaCant <= 0) {
+        delete carrito[id];
+    } else {
+        carrito[id].cantidad = nuevaCant;
+    }
+
+    const qtySpan = document.getElementById(`qty-${id}`);
+    if (qtySpan) qtySpan.innerText = carrito[id] ? carrito[id].cantidad : 0;
+
+    window.actualizarFooter();
+};
+
+window.actualizarFooter = function() {
+    let total = 0, items = 0;
+    for (let id in carrito) { 
+        total += carrito[id].precio * carrito[id].cantidad; 
+        items += carrito[id].cantidad; 
+    }
+    const footer = document.getElementById('cart-footer');
+    if (footer) {
+        footer.style.display = items > 0 ? 'flex' : 'none';
+        document.getElementById('cart-total-usd').innerText = total.toFixed(2);
+        document.getElementById('cart-total-bs').innerText = (total * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 });
+        document.getElementById('cart-count').innerText = items;
+    }
+};
+
 function renderizarCatalogo(lista) {
     const contenedor = document.getElementById('contenedor-catalogo');
     if (!contenedor) return;
 
-    // Diccionario de colores (Asegúrate de que los nombres coincidan exactamente con Firestore)
     const coloresDepartamentos = {
-        'PARTES ELECTRICAS': '#F59E0B',  // Naranja
-        'BEBIDAS': '#3B82F6',           // Azul
-        'ALIMENTOS': '#10B981',         // Verde
-        'REPUESTOS': '#EF4444'          // Rojo
+        'PARTES ELECTRICAS': '#F59E0B',
+        'BEBIDAS': '#3B82F6',
+        'ALIMENTOS': '#10B981',
+        'REPUESTOS': '#EF4444'
     };
 
     contenedor.innerHTML = lista.filter(p => parseInt(p.stock || 0) > 0).map(p => {
-        // Obtenemos el departamento, forzando mayúsculas y eliminando espacios extra
         const depto = p.departamento ? p.departamento.trim().toUpperCase() : 'GENERAL';
-        const colorBorde = coloresDepartamentos[depto] || '#64748B'; // Gris si no se encuentra
+        const colorBorde = coloresDepartamentos[depto] || '#64748B';
         
         return `
         <div class="card-prod" style="border-left: 6px solid ${colorBorde}; border-top: 1px solid #E2E8F0; border-right: 1px solid #E2E8F0; border-bottom: 1px solid #E2E8F0;">
@@ -116,21 +154,11 @@ function renderizarCatalogo(lista) {
                 ${(p.precio * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 })} Bs
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
-                <button onclick="cambiarCant('${p.id}', -1, '${p.nombre}', ${p.precio}, ${p.stock})">-</button>
+                <button onclick="window.cambiarCant('${p.id}', -1, '${p.nombre}', ${p.precio}, ${p.stock})">-</button>
                 <span id="qty-${p.id}">${carrito[p.id]?.cantidad || 0}</span>
-                <button onclick="cambiarCant('${p.id}', 1, '${p.nombre}', ${p.precio}, ${p.stock})">+</button>
+                <button onclick="window.cambiarCant('${p.id}', 1, '${p.nombre}', ${p.precio}, ${p.stock})">+</button>
             </div>
         </div>`;
     }).join('');
 }
-
-function actualizarFooter() {
-    let total = 0, items = 0;
-    for (let id in carrito) { total += carrito[id].precio * carrito[id].cantidad; items += carrito[id].cantidad; }
-    document.getElementById('cart-footer').style.display = items > 0 ? 'flex' : 'none';
-    document.getElementById('cart-total-usd').innerText = total.toFixed(2);
-    document.getElementById('cart-total-bs').innerText = (total * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 });
-    document.getElementById('cart-count').innerText = items;
-}
-
 document.addEventListener('DOMContentLoaded', iniciarCatalogo);
