@@ -6,24 +6,23 @@ const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 let tasaActual = 1, carrito = {}, productosGlobales = [];
 
 function iniciarCatalogo() {
-    // 1. Intentar sacar el ID de la URL (ejemplo: pagina.com/?id=04264570267)
+    // 1. LEER EL ID DESDE LA URL (Ejemplo: ...?empresa=YC-2026-001)
     const urlParams = new URLSearchParams(window.location.search);
-    let idDeLaURL = urlParams.get('id');
+    let idDeLaURL = urlParams.get('empresa');
 
-    // 2. Si hay ID en la URL, guárdalo en el teléfono para que no se borre
+    // 2. Si hay ID en la URL, lo guardamos para futuras visitas en este dispositivo
     if (idDeLaURL) {
         localStorage.setItem('youcontrol_empresa_id', idDeLaURL);
     }
 
-    // 3. Obtener el ID final (prioridad a la URL, luego al localStorage)
+    // 3. DEFINIR EL USER_ID (Prioridad: URL > localStorage)
     const USER_ID = idDeLaURL || localStorage.getItem('youcontrol_empresa_id');
 
     if (!USER_ID) {
-        document.getElementById('nombre-empresa').innerText = "ERROR: Empresa no encontrada";
-        console.error("No se detectó ID de empresa en URL ni en local storage.");
+        console.error("No se encontró el ID de empresa");
         return;
     }
-
+    
     // --- CARGA DE TASA ---
     onSnapshot(doc(db, "usuarios", USER_ID), (snap) => {
         if (snap.exists()) {
