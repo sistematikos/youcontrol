@@ -112,7 +112,7 @@ function renderizarCatalogo(lista) {
     const colores = ['#F59E0B', '#3B82F6', '#10B981', '#EF4444', '#8B5CF6'];
     const productosFiltrados = lista.filter(p => parseInt(p.stock || 0) > 0);
     
-    // Agrupar por el CÓDIGO de departamento
+    // 1. Agrupamos usando el código que viene en el producto (p.departamento)
     const agrupados = productosFiltrados.reduce((acc, p) => {
         const cod = (p.departamento || 'GENERAL').toUpperCase();
         if (!acc[cod]) acc[cod] = [];
@@ -120,9 +120,12 @@ function renderizarCatalogo(lista) {
         return acc;
     }, {});
 
-    // Renderizar
-    contenedor.innerHTML = Object.keys(agrupados).sort().map((cod, idx) => {
-        // Obtenemos el nombre actual desde nuestro mapa dinámico
+    // 2. Ordenamos las llaves (los códigos) para que la lista no salte de posición
+    const codigosOrdenados = Object.keys(agrupados).sort();
+
+    // 3. Renderizamos
+    contenedor.innerHTML = codigosOrdenados.map((cod, idx) => {
+        // Obtenemos el nombre actual del mapa, si no existe ponemos el código
         const nombreMostrado = mapaNombresDepto[cod] || cod; 
         const color = colores[idx % colores.length];
         
@@ -151,5 +154,4 @@ function renderizarCatalogo(lista) {
                 </div>`;
     }).join('');
 }
-
 document.addEventListener('DOMContentLoaded', iniciarCatalogo);
