@@ -2,32 +2,42 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>FICHA DE PRODUCTO | YOU CONTROL</title>
+    <title>FICHA PRODUCTO | YOU CONTROL</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #F1F5F9; --emerald: #10B981; --text: #1E293B; }
+        :root { --bg: #F1F5F9; --emerald: #10B981; --sky: #0EA5E9; }
         body { font-family: 'Poppins', sans-serif; background: var(--bg); padding: 20px; }
-        .card { background: white; padding: 25px; border-radius: 12px; max-width: 600px; margin: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.05); position: relative; }
-        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #E2E8F0; border-radius: 8px; box-sizing: border-box; }
-        .btn-save { background: var(--emerald); color: white; padding: 15px; border: none; border-radius: 8px; width: 100%; font-weight: 800; cursor: pointer; margin-top: 15px; }
-        #lista-resultados { position: absolute; width: calc(100% - 50px); background: white; border: 1px solid #E2E8F0; border-radius: 0 0 8px 8px; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; }
-        .item-res { padding: 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
-        .item-res:hover, .item-res.selected { background: #F1F5F9; }
+        .card { background: white; padding: 25px; border-radius: 12px; max-width: 800px; margin: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        label { font-size: 0.8rem; font-weight: 600; color: #64748B; margin-bottom: 5px; display: block; }
+        input { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #E2E8F0; border-radius: 8px; box-sizing: border-box; }
+        .btn-save { background: var(--emerald); color: white; padding: 15px; border: none; border-radius: 8px; width: 100%; font-weight: 800; cursor: pointer; }
+        #lista-resultados { position: absolute; width: calc(100% - 50px); background: white; border: 1px solid #E2E8F0; z-index: 1000; display: none; }
+        .item-res { padding: 10px; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
     </style>
 </head>
 <body>
     <main class="card">
-        <h2><i class="fas fa-edit"></i> Ficha de Producto</h2>
-        <input type="text" id="buscador-prod" placeholder="Buscar por nombre o SKU..." autocomplete="off">
+        <h2><i class="fas fa-box-open"></i> Ficha Técnica</h2>
+        <input type="text" id="buscador-prod" placeholder="Buscar producto..." autocomplete="off">
         <div id="lista-resultados"></div>
-        <hr>
-        <input type="text" id="prod-sku" placeholder="SKU (Identificador único)">
-        <input type="text" id="prod-nombre" placeholder="Nombre del Producto">
-        <input type="number" id="prod-precio" placeholder="Precio USD">
-        <input type="number" id="prod-stock" placeholder="Stock Actual">
-        <input type="text" id="prod-depto" placeholder="Departamento">
-        <button class="btn-save" onclick="window.guardarProducto()">GUARDAR CAMBIOS</button>
+
+        <div class="grid-form">
+            <section>
+                <label>SKU</label><input type="text" id="prod-sku">
+                <label>Nombre</label><input type="text" id="prod-nombre">
+                <label>Barras</label><input type="text" id="prod-barras">
+                <label>Departamento</label><input type="text" id="prod-depto">
+                <label>Stock</label><input type="number" id="prod-stock">
+            </section>
+            <section>
+                <label>Costo USD</label><input type="number" id="prod-costo">
+                <label>% Ganancia</label><input type="number" id="prod-ganancia">
+                <label>Precio USD</label><input type="number" id="prod-precio">
+                <label>Precio Bs</label><input type="text" id="prod-precio-bs">
+            </section>
+        </div>
+        <button class="btn-save" onclick="window.guardarProducto()">GUARDAR PRODUCTO</button>
     </main>
     <script type="module" src="./js/sys_v3_ficha.js"></script>
 </body>
