@@ -1,5 +1,5 @@
 import { db } from './firebase-config.js';
-import { doc, getDoc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { doc, setDoc, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 let listaFiltrada = [];
@@ -8,15 +8,19 @@ let indiceSeleccionado = -1;
 const buscador = document.getElementById('buscador-prod');
 const listaResultados = document.getElementById('lista-resultados');
 
-// 1. CARGAR DEPARTAMENTOS
+// 1. CARGAR DEPARTAMENTOS (AHORA USA CÓDIGOS)
 async function cargarDepartamentos() {
     const deptoSelect = document.getElementById('prod-depto');
     try {
-        const snap = await getDocs(collection(db, "usuarios", USER_ID, "departamentos"));
+        // Ordenamos por código para que sea más organizado
+        const q = query(collection(db, "usuarios", USER_ID, "departamentos"), orderBy("codigo"));
+        const snap = await getDocs(q);
+        
         deptoSelect.innerHTML = '<option value="GENERAL">GENERAL</option>';
         snap.forEach(d => {
             const data = d.data();
-            deptoSelect.innerHTML += `<option value="${data.nombre.toUpperCase()}">${data.nombre.toUpperCase()}</option>`;
+            // El VALUE es el código (d.id), el texto es el nombre (data.nombre)
+            deptoSelect.innerHTML += `<option value="${d.id}">${data.nombre.toUpperCase()}</option>`;
         });
     } catch(e) { console.error("Error cargando deptos", e); }
 }
@@ -31,36 +35,7 @@ window.calcularPrecio = function() {
     document.getElementById('prod-precio').value = nuevoPrecio.toFixed(2);
 };
 
-// 3. BÚSQUEDA INTELIGENTE
-buscador.addEventListener('input', async (e) => {
-    const term = e.target.value.toLowerCase();
-    if (term.length < 2) { listaResultados.style.display = 'none'; return; }
-    const snap = await getDocs(collection(db, "usuarios", USER_ID, "productos"));
-    listaFiltrada = [];
-    snap.forEach(d => {
-        const data = d.data();
-        if (data.nombre?.toLowerCase().includes(term) || data.sku?.toLowerCase().includes(term)) {
-            listaFiltrada.push({ id: d.id, ...data });
-        }
-    });
-    renderizarLista();
-});
-
-function renderizarLista() {
-    listaResultados.style.display = listaFiltrada.length ? 'block' : 'none';
-    listaResultados.innerHTML = listaFiltrada.map((p, i) => `
-        <div class="item-res ${i === indiceSeleccionado ? 'selected' : ''}" 
-             onclick="window.seleccionarProducto(${i})">
-            ${p.nombre} (SKU: ${p.sku})
-        </div>
-    `).join('');
-}
-
-buscador.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowDown' && indiceSeleccionado < listaFiltrada.length - 1) { indiceSeleccionado++; renderizarLista(); }
-    else if (e.key === 'ArrowUp' && indiceSeleccionado > 0) { indiceSeleccionado--; renderizarLista(); }
-    else if (e.key === 'Enter' && indiceSeleccionado > -1) { e.preventDefault(); window.seleccionarProducto(indiceSeleccionado); }
-});
+// ... (BÚSQUEDA INTELIGENTE: Mantenla igual que tenías) ...
 
 window.seleccionarProducto = (i) => {
     const p = listaFiltrada[i];
@@ -71,15 +46,18 @@ window.seleccionarProducto = (i) => {
     document.getElementById('prod-ganancia').value = p.ganancia || 0;
     document.getElementById('prod-precio').value = p.precio || 0;
     document.getElementById('prod-stock').value = p.stock || 0;
-    document.getElementById('prod-depto').value = p.departamento?.toUpperCase() || "GENERAL";
+    
+    // Al seleccionar, asignamos el código del departamento
+    document.getElementById('prod-depto').value = p.departamento || "GENERAL";
     listaResultados.style.display = 'none';
     indiceSeleccionado = -1;
 };
 
-// 4. GUARDAR
+// 4. GUARDAR (AHORA GUARDA EL CÓDIGO)
 window.guardarProducto = async function() {
     const sku = document.getElementById('prod-sku').value.trim();
     if (!sku) return alert("El SKU es obligatorio.");
+    
     try {
         await setDoc(doc(db, "usuarios", USER_ID, "productos", sku), {
             sku: sku,
@@ -89,7 +67,8 @@ window.guardarProducto = async function() {
             ganancia: parseFloat(document.getElementById('prod-ganancia').value || 0),
             precio: parseFloat(document.getElementById('prod-precio').value || 0),
             stock: parseInt(document.getElementById('prod-stock').value || 0),
-            departamento: document.getElementById('prod-depto').value
+            // AQUÍ GUARDA EL CÓDIGO SELECCIONADO EN EL SELECT
+            departamento: document.getElementById('prod-depto').value 
         });
         alert("¡Producto guardado correctamente!");
         buscador.value = "";
