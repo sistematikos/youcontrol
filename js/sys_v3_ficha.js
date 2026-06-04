@@ -94,4 +94,48 @@ window.cargarProducto = (id) => {
     document.getElementById('lista-resultados').style.display = 'none';
 };
 
+// --- 1. Guardar con F9 ---
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'F9') {
+        e.preventDefault(); // Evita el comportamiento por defecto del navegador
+        window.guardarProducto();
+    }
+});
+
+// --- 2. Navegación con teclado en el buscador ---
+let indiceRes = -1;
+
+document.getElementById('buscador-prod').addEventListener('keydown', (e) => {
+    const lista = document.getElementById('lista-resultados');
+    const items = lista.querySelectorAll('.item-res');
+
+    if (e.key === 'ArrowDown') {
+        if (indiceRes < items.length - 1) {
+            indiceRes++;
+            actualizarSeleccion(items);
+        }
+    } else if (e.key === 'ArrowUp') {
+        if (indiceRes > 0) {
+            indiceRes--;
+            actualizarSeleccion(items);
+        }
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (indiceRes >= 0 && items[indiceRes]) {
+            items[indiceRes].click(); // Simula el click en el producto
+        }
+    }
+});
+
+function actualizarSeleccion(items) {
+    items.forEach((item, idx) => {
+        item.style.background = (idx === indiceRes) ? '#F1F5F9' : 'white';
+    });
+}
+
+// Nota: En la función de búsqueda (input), asegúrate de resetear el índice
+document.getElementById('buscador-prod').addEventListener('input', () => {
+    indiceRes = -1;
+});
+
 document.addEventListener('DOMContentLoaded', iniciarFicha);
