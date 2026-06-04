@@ -19,15 +19,54 @@ async function iniciarFicha() {
     // 2. Cargar Productos
     const snapProds = await getDocs(collection(db, "usuarios", USER_ID, "productos"));
     listaProductosGlobal = snapProds.docs.map(d => ({ id: d.id, ...d.data() }));
-    console.log("Productos cargados:", listaProductosGlobal.length);
 }
 
+// Función para limpiar el formulario
+window.limpiarFormulario = () => {
+    document.getElementById('buscador-prod').value = "";
+    document.getElementById('prod-sku').value = "";
+    document.getElementById('prod-nombre').value = "";
+    document.getElementById('prod-barras').value = "";
+    document.getElementById('prod-costo').value = "";
+    document.getElementById('prod-ganancia').value = "";
+    document.getElementById('prod-precio').value = "";
+    document.getElementById('prod-stock').value = "";
+    document.getElementById('prod-depto').value = "GENERAL";
+    document.getElementById('lista-resultados').style.display = 'none';
+};
+
+// Guardar y refrescar
+window.guardarProducto = async function() {
+    const sku = document.getElementById('prod-sku').value.trim();
+    if (!sku) return alert("El SKU es obligatorio.");
+    
+    try {
+        await setDoc(doc(db, "usuarios", USER_ID, "productos", sku), {
+            sku: sku,
+            nombre: document.getElementById('prod-nombre').value,
+            barras: document.getElementById('prod-barras').value,
+            costo: parseFloat(document.getElementById('prod-costo').value || 0),
+            ganancia: parseFloat(document.getElementById('prod-ganancia').value || 0),
+            precio: parseFloat(document.getElementById('prod-precio').value || 0),
+            stock: parseInt(document.getElementById('prod-stock').value || 0),
+            departamento: document.getElementById('prod-depto').value
+        });
+        
+        alert("¡Producto guardado correctamente!");
+        
+        // Refrescar lista en memoria y limpiar campos
+        await iniciarFicha();
+        window.limpiarFormulario();
+        
+    } catch (e) { alert("Error al guardar: " + e.message); }
+};
+
+// Buscador
 document.getElementById('buscador-prod').addEventListener('input', (e) => {
     const term = e.target.value.toLowerCase();
     const lista = document.getElementById('lista-resultados');
     if (term.length < 2) { lista.style.display = 'none'; return; }
 
-    // Filtro único por ID para evitar duplicados
     const filtrados = Array.from(new Set(listaProductosGlobal.map(p => p.id)))
         .map(id => listaProductosGlobal.find(p => p.id === id))
         .filter(p => p.nombre?.toLowerCase().includes(term) || p.sku?.toLowerCase().includes(term));
@@ -40,7 +79,6 @@ document.getElementById('buscador-prod').addEventListener('input', (e) => {
     `).join('');
 });
 
-// Función global para que el onclick funcione
 window.cargarProducto = (id) => {
     const p = listaProductosGlobal.find(x => x.id === id);
     if (!p) return;
@@ -52,11 +90,7 @@ window.cargarProducto = (id) => {
     document.getElementById('prod-ganancia').value = p.ganancia || 0;
     document.getElementById('prod-precio').value = p.precio || 0;
     document.getElementById('prod-stock').value = p.stock || 0;
-    
-    // Intento de asignar departamento
-    const sel = document.getElementById('prod-depto');
-    sel.value = p.departamento || "GENERAL";
-    
+    document.getElementById('prod-depto').value = p.departamento || "GENERAL";
     document.getElementById('lista-resultados').style.display = 'none';
 };
 
