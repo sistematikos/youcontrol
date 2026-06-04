@@ -34,9 +34,12 @@
                 <label>Stock</label><input type="number" id="prod-stock">
             </section>
             <section>
-                <label>Costo USD</label><input type="number" id="prod-costo" oninput="window.calcularPrecio()">
-                <label>% Ganancia</label><input type="number" id="prod-ganancia" oninput="window.calcularPrecio()">
-                <label>Precio USD</label><input type="number" id="prod-precio">
+                <label>Costo USD</label>
+                   <input type="text" id="prod-costo" onblur="window.calcularPrecio()"> 
+               <label>% Ganancia</label>
+                   <input type="text" id="prod-ganancia" onblur="window.calcularPrecio()">
+               <label>Precio USD</label>
+                   <input type="text" id="prod-precio" onblur="actualizarPrecioBs(this.value)">
                 <label>Precio Bs (Referencial)</label><input type="text" id="prod-precio-bs" disabled>
             </section>
         </div>
