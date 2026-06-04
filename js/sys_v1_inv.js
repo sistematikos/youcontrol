@@ -1,3 +1,8 @@
+/**
+ * YOU CONTROL - SISTEMATIKOS
+ * Inventario con Gestión de Departamentos
+ */
+
 import { db } from './firebase-config.js';
 import { collection, onSnapshot, doc, deleteDoc, getDoc, updateDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -7,13 +12,11 @@ const buscadorInv = document.getElementById('buscador-inv');
 
 let tasaActual = 1.00;
 
-// --- BUSCADOR CORREGIDO ---
-// Buscamos directamente en el elemento de búsqueda y filtramos las filas existentes
+// Buscador
 buscadorInv.addEventListener('input', (e) => {
     const termino = e.target.value.toLowerCase();
     const filas = cuerpoTabla.getElementsByTagName('tr');
     for (let fila of filas) {
-        // Obtenemos el texto de la fila (ignorando los inputs para que no molesten al buscar)
         const texto = fila.innerText.toLowerCase();
         fila.style.display = texto.includes(termino) ? '' : 'none';
     }
@@ -37,11 +40,12 @@ function renderizarTabla(snapshot) {
         const p = doc.data();
         const tr = document.createElement('tr');
         tr.setAttribute('data-id', doc.id);
+        // Usamos p.departamento directamente; si no existe, muestra GENERAL
         tr.innerHTML = `
             <td>${p.barras || 'N/A'}</td>
             <td>${p.sku || 'N/A'}</td>
             <td>${p.nombre || 'Sin nombre'}</td>
-            <td>${p.departamento || 'N/A'}</td>
+            <td>${p.departamento || 'GENERAL'}</td>
             <td>$ ${parseFloat(p.costo || 0).toFixed(2)}</td>
             <td>${p.ganancia || 0}%</td>
             <td>$ ${parseFloat(p.precio || 0).toFixed(2)}</td>
@@ -56,20 +60,20 @@ function renderizarTabla(snapshot) {
     });
 }
 
-// --- EDICIÓN DINÁMICA ---
+// --- EDICIÓN DINÁMICA CON DEPARTAMENTOS ---
 window.editarProducto = async (id) => {
     const fila = document.querySelector(`tr[data-id="${id}"]`);
     const c = fila.cells;
-    const deptoActual = c[3].innerText;
+    const deptoActual = c[3].innerText; // El valor que se muestra en la celda
 
     const deptoSnap = await getDocs(collection(db, "usuarios", USER_ID, "departamentos"));
-    let opciones = '';
+    let opciones = '<option value="GENERAL">GENERAL</option>';
+    
     deptoSnap.forEach(d => {
-        const n = d.data().nombre;
-        opciones += `<option value="${n}" ${n === deptoActual ? 'selected' : ''}>${n}</option>`;
+        const nombreDepto = d.data().nombre;
+        opciones += `<option value="${nombreDepto}" ${nombreDepto === deptoActual ? 'selected' : ''}>${nombreDepto}</option>`;
     });
 
-    // Cambiamos el contenido de la fila a modo edición
     fila.innerHTML = `
         <td><input type="text" id="e-barras" value="${c[0].innerText}"></td>
         <td><input type="text" id="e-sku" value="${c[1].innerText}"></td>
