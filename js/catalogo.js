@@ -16,6 +16,7 @@ function iniciarCatalogo() {
         return;
     }
 
+    // Configuración empresa y logo
     onSnapshot(doc(db, "empresas_config", USER_ID), (snap) => {
         const nombreEl = document.getElementById('nombre-empresa');
         const logoImg = document.getElementById('logo-empresa');
@@ -30,36 +31,44 @@ function iniciarCatalogo() {
         }
     });
 
+    // Tasa BCV
     onSnapshot(doc(db, "usuarios", USER_ID), (snap) => {
         if (snap.exists()) {
             tasaActual = parseFloat(snap.data().tasa_bcv || 1);
-            document.getElementById('tasa-cliente').innerText = tasaActual.toLocaleString('es-VE', { minimumFractionDigits: 2 });
+            const tasaEl = document.getElementById('tasa-cliente');
+            if (tasaEl) tasaEl.innerText = tasaActual.toLocaleString('es-VE', { minimumFractionDigits: 2 });
             renderizarCatalogo(productosGlobales);
         }
     });
 
-    // --- NUEVO: CARGA MAPA DE DEPARTAMENTOS ---
+    // Carga de Departamentos (Mapeo de código a nombre)
     onSnapshot(collection(db, "usuarios", USER_ID, "departamentos"), (snap) => {
         mapaNombresDepto = {};
         snap.forEach(d => {
             const data = d.data();
-            mapaNombresDepto[d.id] = data.nombre; // Mapea el código (ej: D01) al nombre (ej: "BEBIDAS")
+            mapaNombresDepto[d.id] = data.nombre; 
         });
         renderizarCatalogo(productosGlobales);
     });
     
+    // Carga de Productos
     onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
         productosGlobales = [];
         snapshot.forEach(d => productosGlobales.push({ id: d.id, ...d.data() }));
         renderizarCatalogo(productosGlobales);
     });
 
-    document.getElementById('buscador-prod').addEventListener('input', (e) => {
-        const busqueda = e.target.value.toLowerCase();
-        renderizarCatalogo(productosGlobales.filter(p => p.nombre.toLowerCase().includes(busqueda)));
-    });
+    // Buscador
+    const buscador = document.getElementById('buscador-prod');
+    if (buscador) {
+        buscador.addEventListener('input', (e) => {
+            const busqueda = e.target.value.toLowerCase();
+            renderizarCatalogo(productosGlobales.filter(p => p.nombre.toLowerCase().includes(busqueda)));
+        });
+    }
 }
 
+// Funciones del Carrito (sin cambios)
 window.cambiarCant = function(id, cambio, nombre, precio, stock) {
     if (!carrito[id]) {
         if (cambio < 0) return;
@@ -108,11 +117,9 @@ function renderizarCatalogo(lista) {
     if (!contenedor) return;
 
     contenedor.style.display = "block";
-    
     const colores = ['#F59E0B', '#3B82F6', '#10B981', '#EF4444', '#8B5CF6'];
     const productosFiltrados = lista.filter(p => parseInt(p.stock || 0) > 0);
     
-    // 1. Agrupamos usando el código que viene en el producto (p.departamento)
     const agrupados = productosFiltrados.reduce((acc, p) => {
         const cod = (p.departamento || 'GENERAL').toUpperCase();
         if (!acc[cod]) acc[cod] = [];
@@ -120,12 +127,7 @@ function renderizarCatalogo(lista) {
         return acc;
     }, {});
 
-    // 2. Ordenamos las llaves (los códigos) para que la lista no salte de posición
-    const codigosOrdenados = Object.keys(agrupados).sort();
-
-    // 3. Renderizamos
-    contenedor.innerHTML = codigosOrdenados.map((cod, idx) => {
-        // Obtenemos el nombre actual del mapa, si no existe ponemos el código
+    contenedor.innerHTML = Object.keys(agrupados).sort().map((cod, idx) => {
         const nombreMostrado = mapaNombresDepto[cod] || cod; 
         const color = colores[idx % colores.length];
         
@@ -154,4 +156,5 @@ function renderizarCatalogo(lista) {
                 </div>`;
     }).join('');
 }
+
 document.addEventListener('DOMContentLoaded', iniciarCatalogo);
