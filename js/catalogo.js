@@ -2,7 +2,7 @@ import { db } from './firebase-config.js';
 import { collection, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // Variables globales
-let tasaActual = 1, carrito = {}, productosGlobales = [], USER_ID = "";
+let tasaActual = 1, carrito = {}, productosGlobales = [], USER_ID = "", mapaNombresDepto = {};
 
 function iniciarCatalogo() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -38,6 +38,16 @@ function iniciarCatalogo() {
         }
     });
 
+    // --- NUEVO: CARGA MAPA DE DEPARTAMENTOS ---
+    onSnapshot(collection(db, "usuarios", USER_ID, "departamentos"), (snap) => {
+        mapaNombresDepto = {};
+        snap.forEach(d => {
+            const data = d.data();
+            mapaNombresDepto[d.id] = data.nombre; // Mapea el código (ej: D01) al nombre (ej: "BEBIDAS")
+        });
+        renderizarCatalogo(productosGlobales);
+    });
+    
     onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
         productosGlobales = [];
         snapshot.forEach(d => productosGlobales.push({ id: d.id, ...d.data() }));
