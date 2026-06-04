@@ -1,6 +1,6 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * Ficha de Producto: Cálculos al Enter + Navegación completa
+ * Módulo Completo: Ficha de Producto unificada
  */
 
 import { db } from './firebase-config.js';
@@ -10,7 +10,6 @@ const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 let listaProductosGlobal = [];
 let indiceRes = -1;
 
-// Inicialización
 async function iniciarFicha() {
     if (!USER_ID) return;
     const stockInput = document.getElementById('prod-stock');
@@ -28,7 +27,6 @@ async function iniciarFicha() {
     listaProductosGlobal = snapProds.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-// Matemática inteligente
 function evaluarCalculo(str) {
     let s = str.toString().replace(/,/g, '.');
     if (s.includes('+') && s.includes('%')) {
@@ -40,7 +38,6 @@ function evaluarCalculo(str) {
     try { return eval(s); } catch (e) { return parseFloat(s) || 0; }
 }
 
-// Funciones de Cálculo
 window.actualizarPrecioBs = function(precioUsd) {
     const tasa = parseFloat(localStorage.getItem('tasa_bcv') || 1);
     document.getElementById('prod-precio-bs').value = (precioUsd * tasa).toLocaleString('es-VE', {minimumFractionDigits: 2});
@@ -54,7 +51,7 @@ window.calcularPrecio = function() {
     window.actualizarPrecioBs(precio);
 };
 
-// --- AQUÍ ESTÁ LA LÓGICA DEL ENTER ---
+// Lógica de Enter
 window.procesarCalculoCosto = function(input) {
     input.value = evaluarCalculo(input.value).toFixed(2);
     window.calcularPrecio();
@@ -67,7 +64,18 @@ window.procesarCalculoGanancia = function(input) {
     document.getElementById('prod-precio').focus();
 };
 
-// Acciones principales
+// Nueva función: Cálculo inverso (Precio -> Ganancia)
+window.procesarCalculoPrecioManual = function(input) {
+    const p = evaluarCalculo(input.value);
+    const c = evaluarCalculo(document.getElementById('prod-costo').value);
+    if (c > 0) {
+        const ganancia = ((p - c) / c) * 100;
+        document.getElementById('prod-ganancia').value = ganancia.toFixed(1);
+    }
+    input.value = p.toFixed(2);
+    window.actualizarPrecioBs(p);
+};
+
 window.guardarProducto = async function() {
     const sku = document.getElementById('prod-sku').value.trim();
     if (!sku) return alert("El SKU es obligatorio.");
@@ -101,17 +109,14 @@ window.limpiarFormulario = () => {
     document.getElementById('lista-resultados').style.display = 'none';
 };
 
-// Buscador Inteligente
 document.getElementById('buscador-prod').addEventListener('input', (e) => {
     const term = e.target.value.toLowerCase();
     const lista = document.getElementById('lista-resultados');
     indiceRes = -1;
     if (term.length < 2) { lista.style.display = 'none'; return; }
-
     const filtrados = Array.from(new Set(listaProductosGlobal.map(p => p.id)))
         .map(id => listaProductosGlobal.find(p => p.id === id))
         .filter(p => p.nombre?.toLowerCase().includes(term) || p.sku?.toLowerCase().includes(term));
-
     lista.style.display = 'block';
     lista.innerHTML = filtrados.map((p, i) => `
         <div class="item-res" id="res-${i}" onclick="window.cargarProducto('${p.id}')">
