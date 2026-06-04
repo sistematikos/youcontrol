@@ -96,6 +96,9 @@ window.enviarPedido = function() {
 function renderizarCatalogo(lista) {
     const contenedor = document.getElementById('contenedor-catalogo');
     if (!contenedor) return;
+
+    // APLICAR ESTILO AL CONTENEDOR PARA FORZAR SALTO DE LÍNEA
+    contenedor.style.display = "block";
     
     const colores = ['#F59E0B', '#3B82F6', '#10B981', '#EF4444', '#8B5CF6'];
     const productosFiltrados = lista.filter(p => parseInt(p.stock || 0) > 0);
@@ -108,13 +111,13 @@ function renderizarCatalogo(lista) {
         return acc;
     }, {});
 
-    // Renderizado con salto de bloque para cada departamento
+    // Renderizar bloques que se apilan verticalmente
     contenedor.innerHTML = Object.keys(agrupados).sort().map((depto, idx) => {
         const color = colores[idx % colores.length];
         const itemsHTML = agrupados[depto].map(p => {
             const nombreLimpio = p.nombre.replace(/'/g, "\\'");
             return `
-            <div class="card-prod" style="border-left: 6px solid ${color}; border: 1px solid #E2E8F0; padding: 10px; border-radius: 8px; width: 100%; box-sizing: border-box;">
+            <div class="card-prod" style="border-left: 6px solid ${color}; border: 1px solid #E2E8F0; padding: 10px; border-radius: 8px; box-sizing: border-box;">
                 <h3 style="font-size:0.9rem; margin:0 0 5px 0;">${p.nombre}</h3>
                 <div style="display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px;">
                     <span style="font-size: 0.85rem; color: #64748B;">$${parseFloat(p.precio).toFixed(2)} USD</span>
@@ -128,9 +131,11 @@ function renderizarCatalogo(lista) {
             </div>`;
         }).join('');
         
-        // Cada departamento es un bloque que ocupa el ancho completo y obliga al siguiente a ir abajo
-        return `<div style="width: 100%; margin-top: 20px; display: block;">
-                    <div style="font-weight:900; color:#64748B; margin-bottom:10px; border-bottom:2px solid #E2E8F0; padding-bottom:5px;">${depto}</div>
+        // El bloque del departamento: Título + Grid de productos
+        return `<div style="width: 100%; margin-top: 30px; clear: both;">
+                    <div style="font-weight:900; color:#64748B; margin-bottom:15px; border-bottom:2px solid #E2E8F0; padding-bottom:5px; text-transform:uppercase;">
+                        ${depto}
+                    </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">${itemsHTML}</div>
                 </div>`;
     }).join('');
