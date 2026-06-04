@@ -24,15 +24,22 @@ async function iniciarFicha() {
     console.log("Productos cargados:", listaProductosGlobal.length);
 }
 
-// Búsqueda simple
+// Búsqueda simple y segura contra duplicados
 document.getElementById('buscador-prod').addEventListener('input', (e) => {
     const term = e.target.value.toLowerCase();
     const lista = document.getElementById('lista-resultados');
     if (term.length < 2) { lista.style.display = 'none'; return; }
 
-    const filtrados = listaProductosGlobal.filter(p => 
-        p.nombre?.toLowerCase().includes(term) || p.sku?.toLowerCase().includes(term)
-    );
+    // Usamos un objeto para filtrar IDs únicos y evitar duplicados en pantalla
+    const vistos = {};
+    const filtrados = listaProductosGlobal.filter(p => {
+        const coincide = p.nombre?.toLowerCase().includes(term) || p.sku?.toLowerCase().includes(term);
+        if (coincide && !vistos[p.id]) {
+            vistos[p.id] = true;
+            return true;
+        }
+        return false;
+    });
 
     lista.style.display = 'block';
     lista.innerHTML = filtrados.map(p => `
