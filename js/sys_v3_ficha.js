@@ -1,6 +1,6 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * Módulo Completo: Ficha de Producto unificada
+ * Ficha de Producto: Cálculos al Enter + Navegación completa
  */
 
 import { db } from './firebase-config.js';
@@ -8,7 +8,7 @@ import { collection, getDocs, doc, setDoc, query } from "https://www.gstatic.com
 
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 let listaProductosGlobal = [];
-let indiceRes = -1; // Variable necesaria para navegación con teclado
+let indiceRes = -1;
 
 // Inicialización
 async function iniciarFicha() {
@@ -28,7 +28,7 @@ async function iniciarFicha() {
     listaProductosGlobal = snapProds.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-// Lógica matemática
+// Matemática inteligente
 function evaluarCalculo(str) {
     let s = str.toString().replace(/,/g, '.');
     if (s.includes('+') && s.includes('%')) {
@@ -54,6 +54,7 @@ window.calcularPrecio = function() {
     window.actualizarPrecioBs(precio);
 };
 
+// --- AQUÍ ESTÁ LA LÓGICA DEL ENTER ---
 window.procesarCalculoCosto = function(input) {
     input.value = evaluarCalculo(input.value).toFixed(2);
     window.calcularPrecio();
@@ -81,7 +82,7 @@ window.guardarProducto = async function() {
             stock: parseInt(document.getElementById('prod-stock').value || 0),
             departamento: document.getElementById('prod-depto').value
         });
-        alert("¡Producto guardado exitosamente!");
+        alert("¡Producto guardado!");
         await iniciarFicha();
         window.limpiarFormulario();
     } catch (e) { alert("Error: " + e.message); }
@@ -119,27 +120,20 @@ document.getElementById('buscador-prod').addEventListener('input', (e) => {
     `).join('');
 });
 
-// Navegación con teclado en el buscador
 document.getElementById('buscador-prod').addEventListener('keydown', (e) => {
     const lista = document.getElementById('lista-resultados');
     const items = lista.querySelectorAll('.item-res');
     if (e.key === 'ArrowDown' && indiceRes < items.length - 1) {
         indiceRes++;
-        actualizarSeleccion(items);
+        items.forEach((it, i) => it.style.background = (i === indiceRes) ? '#F1F5F9' : 'white');
     } else if (e.key === 'ArrowUp' && indiceRes > 0) {
         indiceRes--;
-        actualizarSeleccion(items);
+        items.forEach((it, i) => it.style.background = (i === indiceRes) ? '#F1F5F9' : 'white');
     } else if (e.key === 'Enter' && indiceRes >= 0 && items[indiceRes]) {
         e.preventDefault();
         items[indiceRes].click();
     }
 });
-
-function actualizarSeleccion(items) {
-    items.forEach((item, idx) => {
-        item.style.background = (idx === indiceRes) ? '#F1F5F9' : 'white';
-    });
-}
 
 window.cargarProducto = (id) => {
     const p = listaProductosGlobal.find(x => x.id === id);
@@ -155,7 +149,6 @@ window.cargarProducto = (id) => {
     document.getElementById('lista-resultados').style.display = 'none';
 };
 
-// Atajos globales (F9)
 document.addEventListener('keydown', (e) => {
     if (e.key === 'F9') { e.preventDefault(); window.guardarProducto(); }
 });
