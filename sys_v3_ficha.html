@@ -35,14 +35,14 @@
                 <label>Stock</label><input type="number" id="prod-stock">
             </section>
             <section>
-                <label>Costo USD (Escribe fórmula y presiona Enter)</label>
+                <label>Costo USD</label>
                 <input type="text" id="prod-costo" onkeydown="if(event.key==='Enter') window.procesarCalculoCosto(this)">
-                
-                <label>% Ganancia (Presiona Enter al finalizar)</label>
+
+                <label>% Ganancia</label>
                 <input type="text" id="prod-ganancia" onkeydown="if(event.key==='Enter') window.procesarCalculoGanancia(this)">
-                
+
                 <label>Precio USD</label>
-                <input type="text" id="prod-precio">
+                <input type="text" id="prod-precio" onkeydown="if(event.key==='Enter') window.procesarCalculoPrecioManual(this)">
                 
                 <label>Precio Bs (Referencial)</label>
                 <input type="text" id="prod-precio-bs" disabled>
