@@ -6,12 +6,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #F1F5F9; --emerald: #10B981; --text: #1E293B; }
+        :root { --bg: #F1F5F9; --emerald: #10B981; }
         body { font-family: 'Poppins', sans-serif; background: var(--bg); padding: 20px; }
         .card { background: white; padding: 25px; border-radius: 12px; max-width: 800px; margin: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.05); position: relative; }
         .grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         label { font-size: 0.8rem; font-weight: 600; color: #64748B; margin-bottom: 5px; display: block; }
-        input { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #E2E8F0; border-radius: 8px; box-sizing: border-box; }
+        input, select { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #E2E8F0; border-radius: 8px; box-sizing: border-box; }
         .btn-save { background: var(--emerald); color: white; padding: 15px; border: none; border-radius: 8px; width: 100%; font-weight: 800; cursor: pointer; }
         #lista-resultados { position: absolute; width: calc(100% - 50px); background: white; border: 1px solid #E2E8F0; border-radius: 0 0 8px 8px; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; }
         .item-res { padding: 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
@@ -29,7 +29,14 @@
                 <label>SKU</label><input type="text" id="prod-sku">
                 <label>Nombre</label><input type="text" id="prod-nombre">
                 <label>Barras</label><input type="text" id="prod-barras">
-                <label>Departamento</label><input type="text" id="prod-depto">
+                <label>Departamento</label>
+                <select id="prod-depto">
+                    <option value="GENERAL">GENERAL</option>
+                    <option value="PARTES ELECTRICAS">PARTES ELECTRICAS</option>
+                    <option value="BEBIDAS">BEBIDAS</option>
+                    <option value="ALIMENTOS">ALIMENTOS</option>
+                    <option value="REPUESTOS">REPUESTOS</option>
+                </select>
                 <label>Stock</label><input type="number" id="prod-stock">
             </section>
             <section>
