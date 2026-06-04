@@ -8,6 +8,22 @@ let indiceSeleccionado = -1;
 const buscador = document.getElementById('buscador-prod');
 const listaResultados = document.getElementById('lista-resultados');
 
+// 1. CARGAR DEPARTAMENTOS
+async function cargarDepartamentos() {
+    const deptoSelect = document.getElementById('prod-depto');
+    try {
+        const snap = await getDocs(collection(db, "usuarios", USER_ID, "departamentos"));
+        deptoSelect.innerHTML = '<option value="GENERAL">GENERAL</option>';
+        snap.forEach(d => {
+            const data = d.data();
+            deptoSelect.innerHTML += `<option value="${data.nombre.toUpperCase()}">${data.nombre.toUpperCase()}</option>`;
+        });
+    } catch(e) { console.error("Error cargando deptos", e); }
+}
+
+document.addEventListener('DOMContentLoaded', cargarDepartamentos);
+
+// 2. CÁLCULOS
 window.calcularPrecio = function() {
     const costo = parseFloat(document.getElementById('prod-costo').value) || 0;
     const ganancia = parseFloat(document.getElementById('prod-ganancia').value) || 0;
@@ -15,6 +31,7 @@ window.calcularPrecio = function() {
     document.getElementById('prod-precio').value = nuevoPrecio.toFixed(2);
 };
 
+// 3. BÚSQUEDA INTELIGENTE
 buscador.addEventListener('input', async (e) => {
     const term = e.target.value.toLowerCase();
     if (term.length < 2) { listaResultados.style.display = 'none'; return; }
@@ -22,7 +39,7 @@ buscador.addEventListener('input', async (e) => {
     listaFiltrada = [];
     snap.forEach(d => {
         const data = d.data();
-        if (data.nombre.toLowerCase().includes(term) || (data.sku && data.sku.toLowerCase().includes(term))) {
+        if (data.nombre?.toLowerCase().includes(term) || data.sku?.toLowerCase().includes(term)) {
             listaFiltrada.push({ id: d.id, ...data });
         }
     });
@@ -54,11 +71,12 @@ window.seleccionarProducto = (i) => {
     document.getElementById('prod-ganancia').value = p.ganancia || 0;
     document.getElementById('prod-precio').value = p.precio || 0;
     document.getElementById('prod-stock').value = p.stock || 0;
-    document.getElementById('prod-depto').value = p.departamento || "GENERAL";
+    document.getElementById('prod-depto').value = p.departamento?.toUpperCase() || "GENERAL";
     listaResultados.style.display = 'none';
     indiceSeleccionado = -1;
 };
 
+// 4. GUARDAR
 window.guardarProducto = async function() {
     const sku = document.getElementById('prod-sku').value.trim();
     if (!sku) return alert("El SKU es obligatorio.");
