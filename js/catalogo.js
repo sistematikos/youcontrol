@@ -1,7 +1,7 @@
 import { db } from './firebase-config.js';
 import { collection, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Variables globales para que todas las funciones las vean
+// Variables globales
 let tasaActual = 1, carrito = {}, productosGlobales = [], USER_ID = "";
 
 function iniciarCatalogo() {
@@ -16,7 +16,6 @@ function iniciarCatalogo() {
         return;
     }
 
-    // --- CARGA DE LOGO Y NOMBRE ---
     onSnapshot(doc(db, "empresas_config", USER_ID), (snap) => {
         const nombreEl = document.getElementById('nombre-empresa');
         const logoImg = document.getElementById('logo-empresa');
@@ -31,7 +30,6 @@ function iniciarCatalogo() {
         }
     });
 
-    // --- CARGA DE TASA ---
     onSnapshot(doc(db, "usuarios", USER_ID), (snap) => {
         if (snap.exists()) {
             tasaActual = parseFloat(snap.data().tasa_bcv || 1);
@@ -40,7 +38,6 @@ function iniciarCatalogo() {
         }
     });
 
-    // --- CARGA DE PRODUCTOS ---
     onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
         productosGlobales = [];
         snapshot.forEach(d => productosGlobales.push({ id: d.id, ...d.data() }));
@@ -53,7 +50,6 @@ function iniciarCatalogo() {
     });
 }
 
-// --- FUNCIONES GLOBALES (FUERA DE INICIARCATALOGO) ---
 window.cambiarCant = function(id, cambio, nombre, precio, stock) {
     if (!carrito[id]) {
         if (cambio < 0) return;
@@ -100,24 +96,41 @@ window.enviarPedido = function() {
 function renderizarCatalogo(lista) {
     const contenedor = document.getElementById('contenedor-catalogo');
     if (!contenedor) return;
-    const coloresDepartamentos = { 'PARTES ELECTRICAS': '#F59E0B', 'BEBIDAS': '#3B82F6', 'ALIMENTOS': '#10B981', 'REPUESTOS': '#EF4444' };
-    contenedor.innerHTML = lista.filter(p => parseInt(p.stock || 0) > 0).map(p => {
-        const depto = p.departamento ? p.departamento.trim().toUpperCase() : 'GENERAL';
-        const colorBorde = coloresDepartamentos[depto] || '#64748B';
-        const nombreLimpio = p.nombre.replace(/'/g, "\\'");
-        return `
-        <div class="card-prod" style="border-left: 6px solid ${colorBorde}; border: 1px solid #E2E8F0; padding: 10px; margin-bottom: 10px; border-radius: 8px;">
-            <h3 style="font-size:0.9rem; margin:0 0 5px 0;">${p.nombre}</h3>
-            <div style="display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px;">
-                <span style="font-size: 0.85rem; color: #64748B;">$${parseFloat(p.precio).toFixed(2)} USD</span>
-                <span style="font-weight:900; color:#10B981; font-size:1.1rem;">${(p.precio * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 })} Bs</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <button onclick="window.cambiarCant('${p.id}', -1, '${nombreLimpio}', ${p.precio}, ${p.stock})">-</button>
-                <span id="qty-${p.id}" style="font-weight: bold;">${carrito[p.id]?.cantidad || 0}</span>
-                <button onclick="window.cambiarCant('${p.id}', 1, '${nombreLimpio}', ${p.precio}, ${p.stock})">+</button>
-            </div>
-        </div>`;
+    
+    const colores = ['#F59E0B', '#3B82F6', '#10B981', '#EF4444', '#8B5CF6'];
+    const productosFiltrados = lista.filter(p => parseInt(p.stock || 0) > 0);
+    
+    // Agrupar por depto
+    const agrupados = productosFiltrados.reduce((acc, p) => {
+        const d = (p.departamento || 'GENERAL').toUpperCase();
+        if (!acc[d]) acc[d] = [];
+        acc[d].push(p);
+        return acc;
+    }, {});
+
+    contenedor.innerHTML = Object.keys(agrupados).sort().map((depto, idx) => {
+        const color = colores[idx % colores.length];
+        const itemsHTML = agrupados[depto].map(p => {
+            const nombreLimpio = p.nombre.replace(/'/g, "\\'");
+            return `
+            <div class="card-prod" style="border-left: 6px solid ${color}; border: 1px solid #E2E8F0; padding: 10px; margin-bottom: 10px; border-radius: 8px;">
+                <h3 style="font-size:0.9rem; margin:0 0 5px 0;">${p.nombre}</h3>
+                <div style="display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px;">
+                    <span style="font-size: 0.85rem; color: #64748B;">$${parseFloat(p.precio).toFixed(2)} USD</span>
+                    <span style="font-weight:900; color:#10B981; font-size:1.1rem;">${(p.precio * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 })} Bs</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <button onclick="window.cambiarCant('${p.id}', -1, '${nombreLimpio}', ${p.precio}, ${p.stock})">-</button>
+                    <span id="qty-${p.id}" style="font-weight: bold;">${carrito[p.id]?.cantidad || 0}</span>
+                    <button onclick="window.cambiarCant('${p.id}', 1, '${nombreLimpio}', ${p.precio}, ${p.stock})">+</button>
+                </div>
+            </div>`;
+        }).join('');
+        
+        return `<div style="width:100%; margin-top:20px;">
+                    <div style="font-weight:900; color:#64748B; margin-bottom:10px; border-bottom:2px solid #E2E8F0;">${depto}</div>
+                    <div class="grid-catalog">${itemsHTML}</div>
+                </div>`;
     }).join('');
 }
 
