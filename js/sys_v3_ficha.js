@@ -16,14 +16,29 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function evaluarCalculo(str) {
-    str = str.toString().replace(/,/g, '.');
-    if (str.includes('+') && str.includes('%')) {
-        const partes = str.split('+');
+    if (!str) return 0;
+    // Reemplazamos coma por punto para decimales
+    let s = str.toString().replace(/,/g, '.');
+    
+    // Si contiene '+' y '%', hacemos el cálculo de porcentaje
+    if (s.includes('+') && s.includes('%')) {
+        const partes = s.split('+');
         const base = parseFloat(partes[0]);
         const porcentaje = parseFloat(partes[1].replace('%', ''));
+        if (isNaN(base) || isNaN(porcentaje)) return parseFloat(base) || 0;
         return base + (base * (porcentaje / 100));
     }
-    try { return eval(str); } catch (e) { return parseFloat(str) || 0; }
+    
+    // Si es una operación simple (ej: 8.31*1.30)
+    try {
+        // Solo evaluamos si tiene caracteres matemáticos permitidos
+        if (/^[0-9.+\-*/() ]+$/.test(s)) {
+            return eval(s);
+        }
+        return parseFloat(s) || 0;
+    } catch (e) { 
+        return parseFloat(s) || 0; 
+    }
 }
 
 async function iniciarFicha() {
