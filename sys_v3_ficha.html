@@ -4,22 +4,24 @@
     <meta charset="UTF-8">
     <title>FICHA PRODUCTO | YOU CONTROL</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #F1F5F9; --emerald: #10B981; --sky: #0EA5E9; }
+        :root { --bg: #F1F5F9; --emerald: #10B981; --text: #1E293B; }
         body { font-family: 'Poppins', sans-serif; background: var(--bg); padding: 20px; }
-        .card { background: white; padding: 25px; border-radius: 12px; max-width: 800px; margin: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .card { background: white; padding: 25px; border-radius: 12px; max-width: 800px; margin: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.05); position: relative; }
         .grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         label { font-size: 0.8rem; font-weight: 600; color: #64748B; margin-bottom: 5px; display: block; }
         input { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #E2E8F0; border-radius: 8px; box-sizing: border-box; }
         .btn-save { background: var(--emerald); color: white; padding: 15px; border: none; border-radius: 8px; width: 100%; font-weight: 800; cursor: pointer; }
-        #lista-resultados { position: absolute; width: calc(100% - 50px); background: white; border: 1px solid #E2E8F0; z-index: 1000; display: none; }
-        .item-res { padding: 10px; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
+        #lista-resultados { position: absolute; width: calc(100% - 50px); background: white; border: 1px solid #E2E8F0; border-radius: 0 0 8px 8px; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; }
+        .item-res { padding: 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
+        .item-res:hover, .item-res.selected { background: #F1F5F9; }
     </style>
 </head>
 <body>
     <main class="card">
-        <h2><i class="fas fa-box-open"></i> Ficha Técnica</h2>
-        <input type="text" id="buscador-prod" placeholder="Buscar producto..." autocomplete="off">
+        <h2><i class="fas fa-edit"></i> Ficha Técnica</h2>
+        <input type="text" id="buscador-prod" placeholder="Buscar por nombre o SKU..." autocomplete="off">
         <div id="lista-resultados"></div>
 
         <div class="grid-form">
@@ -31,10 +33,10 @@
                 <label>Stock</label><input type="number" id="prod-stock">
             </section>
             <section>
-                <label>Costo USD</label><input type="number" id="prod-costo">
-                <label>% Ganancia</label><input type="number" id="prod-ganancia">
+                <label>Costo USD</label><input type="number" id="prod-costo" oninput="window.calcularPrecio()">
+                <label>% Ganancia</label><input type="number" id="prod-ganancia" oninput="window.calcularPrecio()">
                 <label>Precio USD</label><input type="number" id="prod-precio">
-                <label>Precio Bs</label><input type="text" id="prod-precio-bs">
+                <label>Precio Bs (Referencial)</label><input type="text" id="prod-precio-bs" disabled>
             </section>
         </div>
         <button class="btn-save" onclick="window.guardarProducto()">GUARDAR PRODUCTO</button>
