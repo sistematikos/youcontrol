@@ -13,6 +13,7 @@
         .header { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; border: 1px solid var(--border); }
         .card { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; }
         input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; }
+        input:read-only { background-color: #F8FAFC; cursor: not-allowed; }
         .btn-save { background: var(--sky); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: 700; cursor: pointer; }
         .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #F1F5F9; }
         .badge { background: #E0F2FE; color: var(--sky); padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 0.8rem; }
@@ -42,24 +43,37 @@
         
         const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 
+        // Guardar o Actualizar
         window.guardarDep = async () => {
             const cod = document.getElementById('cod-dep').value.trim().toUpperCase();
             const nom = document.getElementById('nombre-dep').value.trim();
             if (!cod || !nom) return alert("Completa el código y el nombre");
             
-            // Guardamos usando el código como ID del documento
             await setDoc(doc(db, "usuarios", USER_ID, "departamentos", cod), { 
                 codigo: cod, 
                 nombre: nom 
             });
+            
+            // Limpiar y desbloquear
             document.getElementById('cod-dep').value = "";
+            document.getElementById('cod-dep').readOnly = false;
             document.getElementById('nombre-dep').value = "";
         };
 
+        // Editar: Carga los datos en los inputs y bloquea el código
+        window.editar = (cod, nombre) => {
+            document.getElementById('cod-dep').value = cod;
+            document.getElementById('cod-dep').readOnly = true;
+            document.getElementById('nombre-dep').value = nombre;
+            document.getElementById('nombre-dep').focus();
+        };
+
+        // Eliminar
         window.eliminar = async (id) => { 
             if(confirm('¿Borrar este departamento?')) await deleteDoc(doc(db, "usuarios", USER_ID, "departamentos", id)); 
         };
 
+        // Renderizar Lista
         onSnapshot(query(collection(db, "usuarios", USER_ID, "departamentos"), orderBy("codigo")), (snap) => {
             const cont = document.getElementById('contenedor-deps');
             cont.innerHTML = "";
@@ -71,7 +85,12 @@
                             <span class="badge">${dep.codigo}</span>
                             <span style="margin-left:10px;">${dep.nombre}</span>
                         </div>
-                        <i class="fas fa-trash-alt" style="color:#F87171; cursor:pointer;" onclick="eliminar('${d.id}')"></i>
+                        <div>
+                            <i class="fas fa-edit" style="color:#0EA5E9; cursor:pointer; margin-right:15px;" 
+                               onclick="editar('${dep.codigo}', '${dep.nombre}')"></i>
+                            <i class="fas fa-trash-alt" style="color:#F87171; cursor:pointer;" 
+                               onclick="eliminar('${d.id}')"></i>
+                        </div>
                     </div>`;
             });
         });
