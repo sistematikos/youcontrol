@@ -4,6 +4,19 @@ import { collection, getDocs, doc, setDoc, query } from "https://www.gstatic.com
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 let listaProductosGlobal = [];
 
+function evaluarCalculo(str) {
+    str = str.toString().replace(/,/g, '.');
+    // Soporte para "500+30%" -> 500 * 1.30
+    if (str.includes('+') && str.includes('%')) {
+        const partes = str.split('+');
+        const base = parseFloat(partes[0]);
+        const porcentaje = parseFloat(partes[1].replace('%', ''));
+        return base + (base * (porcentaje / 100));
+    }
+    // Soporte para "500*1.10" o "500+50"
+    try { return eval(str); } catch (e) { return parseFloat(str) || 0; }
+}
+
 async function iniciarFicha() {
     if (!USER_ID) return;
 
@@ -34,6 +47,26 @@ window.limpiarFormulario = () => {
     document.getElementById('prod-depto').value = "GENERAL";
     document.getElementById('lista-resultados').style.display = 'none';
 };
+
+window.calcularPrecio = function() {
+    let costoInput = document.getElementById('prod-costo');
+    let gananciaInput = document.getElementById('prod-ganancia');
+    
+    // Evaluamos el costo si tiene operaciones
+    let costo = evaluarCalculo(costoInput.value);
+    let ganancia = evaluarCalculo(gananciaInput.value);
+    
+    let precio = costo + (costo * (ganancia / 100));
+    
+    document.getElementById('prod-precio').value = precio.toFixed(2);
+    actualizarPrecioBs(precio);
+};
+
+// Nueva función para el Precio en Bs
+function actualizarPrecioBs(precioUsd) {
+    const tasa = parseFloat(localStorage.getItem('tasa_bcv') || 1); // Asegúrate de tener la tasa guardada
+    document.getElementById('prod-precio-bs').value = (precioUsd * tasa).toLocaleString('es-VE', {minimumFractionDigits: 2});
+}
 
 // Guardar y refrescar
 window.guardarProducto = async function() {
