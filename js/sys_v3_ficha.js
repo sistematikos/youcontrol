@@ -84,6 +84,23 @@ window.calcularPrecio = function() {
     actualizarPrecioBs(precio);
 };
 
+// 1. Añade este evento para procesar el cálculo al presionar Enter en el costo
+document.getElementById('prod-costo').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault(); // Evita que se dispare otro proceso
+        const input = e.target;
+        // Calcula el resultado y lo pone en el mismo input
+        const resultado = evaluarCalculo(input.value);
+        input.value = resultado.toFixed(2);
+        
+        // Ejecuta el cálculo de precios inmediatamente después
+        window.calcularPrecio();
+        
+        // Pasa el foco al siguiente campo (Ganancia)
+        document.getElementById('prod-ganancia').focus();
+    }
+});
+
 function actualizarPrecioBs(precioUsd) {
     const tasa = parseFloat(localStorage.getItem('tasa_bcv') || 1);
     document.getElementById('prod-precio-bs').value = (precioUsd * tasa).toLocaleString('es-VE', {minimumFractionDigits: 2});
