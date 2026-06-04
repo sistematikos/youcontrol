@@ -1,94 +1,53 @@
 import { db } from './firebase-config.js';
-import { doc, setDoc, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, getDocs, doc, setDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
-let listaProductosGlobal = []; // <-- LISTA GLOBAL PARA BUSCAR RÁPIDO
-let listaFiltrada = [];
-let indiceSeleccionado = -1;
+let listaProductosGlobal = [];
 
-const buscador = document.getElementById('buscador-prod');
-const listaResultados = document.getElementById('lista-resultados');
+async function iniciarFicha() {
+    if (!USER_ID) return console.error("No hay ID de empresa");
 
-// 1. CARGA INICIAL: Cargamos TODO una sola vez
-async function cargarDatosIniciales() {
-    // Cargar Departamentos
+    // 1. Cargar Departamentos
     const deptoSelect = document.getElementById('prod-depto');
-    const snapDeptos = await getDocs(query(collection(db, "usuarios", USER_ID, "departamentos"), orderBy("codigo")));
+    const snapDeptos = await getDocs(query(collection(db, "usuarios", USER_ID, "departamentos")));
+    
     deptoSelect.innerHTML = '<option value="GENERAL">GENERAL</option>';
     snapDeptos.forEach(d => {
-        deptoSelect.innerHTML += `<option value="${d.id}">${d.data().nombre.toUpperCase()}</option>`;
+        const data = d.data();
+        // Guardamos el ID del doc como value (ej: 020)
+        deptoSelect.innerHTML += `<option value="${d.id}">${data.nombre.toUpperCase()}</option>`;
     });
 
-    // Cargar Productos en memoria
+    // 2. Cargar Productos Globales
     const snapProds = await getDocs(collection(db, "usuarios", USER_ID, "productos"));
     listaProductosGlobal = snapProds.docs.map(d => ({ id: d.id, ...d.data() }));
+    console.log("Productos cargados:", listaProductosGlobal.length);
 }
 
-document.addEventListener('DOMContentLoaded', cargarDatosIniciales);
-
-// 2. BÚSQUEDA LOCAL (Mucho más rápida)
-buscador.addEventListener('input', (e) => {
+// Búsqueda simple
+document.getElementById('buscador-prod').addEventListener('input', (e) => {
     const term = e.target.value.toLowerCase();
-    if (term.length < 2) { listaResultados.style.display = 'none'; return; }
-    
-    listaFiltrada = listaProductosGlobal.filter(p => 
-        p.nombre?.toLowerCase().includes(term) || 
-        p.sku?.toLowerCase().includes(term)
-    );
-    
-    renderizarLista();
-});
+    const lista = document.getElementById('lista-resultados');
+    if (term.length < 2) { lista.style.display = 'none'; return; }
 
-function renderizarLista() {
-    listaResultados.style.display = listaFiltrada.length ? 'block' : 'none';
-    listaResultados.innerHTML = listaFiltrada.map((p, i) => `
-        <div class="item-res ${i === indiceSeleccionado ? 'selected' : ''}" 
-             onclick="window.seleccionarProducto(${i})">
+    const filtrados = listaProductosGlobal.filter(p => 
+        p.nombre?.toLowerCase().includes(term) || p.sku?.toLowerCase().includes(term)
+    );
+
+    lista.style.display = 'block';
+    lista.innerHTML = filtrados.map(p => `
+        <div class="item-res" onclick="window.seleccionar('${p.id}')">
             ${p.nombre} (SKU: ${p.sku})
         </div>
     `).join('');
-}
+});
 
-window.seleccionarProducto = (i) => {
-    const p = listaFiltrada[i];
-    document.getElementById('prod-sku').value = p.sku || "";
-    document.getElementById('prod-nombre').value = p.nombre || "";
-    document.getElementById('prod-barras').value = p.barras || "";
-    document.getElementById('prod-costo').value = p.costo || 0;
-    document.getElementById('prod-ganancia').value = p.ganancia || 0;
-    document.getElementById('prod-precio').value = p.precio || 0;
-    document.getElementById('prod-stock').value = p.stock || 0;
-    document.getElementById('prod-depto').value = p.departamento || "GENERAL";
-    
-    listaResultados.style.display = 'none';
-    indiceSeleccionado = -1;
+window.seleccionar = (id) => {
+    const p = listaProductosGlobal.find(x => x.id === id);
+    document.getElementById('prod-sku').value = p.sku;
+    document.getElementById('prod-nombre').value = p.nombre;
+    document.getElementById('prod-depto').value = p.departamento; // Esto pondrá 020
+    document.getElementById('lista-resultados').style.display = 'none';
 };
 
-// 3. CÁLCULOS Y GUARDADO
-window.calcularPrecio = function() {
-    const costo = parseFloat(document.getElementById('prod-costo').value) || 0;
-    const ganancia = parseFloat(document.getElementById('prod-ganancia').value) || 0;
-    const nuevoPrecio = costo + (costo * (ganancia / 100));
-    document.getElementById('prod-precio').value = nuevoPrecio.toFixed(2);
-};
-
-window.guardarProducto = async function() {
-    const sku = document.getElementById('prod-sku').value.trim();
-    if (!sku) return alert("El SKU es obligatorio.");
-    try {
-        await setDoc(doc(db, "usuarios", USER_ID, "productos", sku), {
-            sku: sku,
-            nombre: document.getElementById('prod-nombre').value,
-            barras: document.getElementById('prod-barras').value,
-            costo: parseFloat(document.getElementById('prod-costo').value || 0),
-            ganancia: parseFloat(document.getElementById('prod-ganancia').value || 0),
-            precio: parseFloat(document.getElementById('prod-precio').value || 0),
-            stock: parseInt(document.getElementById('prod-stock').value || 0),
-            departamento: document.getElementById('prod-depto').value
-        });
-        alert("¡Producto guardado!");
-        // Actualizar lista global tras guardar
-        await cargarDatosIniciales();
-        buscador.value = "";
-    } catch (e) { alert("Error: " + e.message); }
-};
+document.addEventListener('DOMContentLoaded', iniciarFicha);
