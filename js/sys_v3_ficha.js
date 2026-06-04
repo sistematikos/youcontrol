@@ -1,19 +1,28 @@
+/**
+ * YOU CONTROL - SISTEMATIKOS
+ * Módulo de Ficha de Producto
+ */
 import { db } from './firebase-config.js';
 import { collection, getDocs, doc, setDoc, query } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 let listaProductosGlobal = [];
 
+// Establecer Stock como SOLO LECTURA al cargar
+document.addEventListener('DOMContentLoaded', () => {
+    const stockInput = document.getElementById('prod-stock');
+    if (stockInput) stockInput.readOnly = true;
+    iniciarFicha();
+});
+
 function evaluarCalculo(str) {
     str = str.toString().replace(/,/g, '.');
-    // Soporte para "500+30%" -> 500 * 1.30
     if (str.includes('+') && str.includes('%')) {
         const partes = str.split('+');
         const base = parseFloat(partes[0]);
         const porcentaje = parseFloat(partes[1].replace('%', ''));
         return base + (base * (porcentaje / 100));
     }
-    // Soporte para "500*1.10" o "500+50"
     try { return eval(str); } catch (e) { return parseFloat(str) || 0; }
 }
 
@@ -34,7 +43,6 @@ async function iniciarFicha() {
     listaProductosGlobal = snapProds.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-// Función para limpiar el formulario
 window.limpiarFormulario = () => {
     document.getElementById('buscador-prod').value = "";
     document.getElementById('prod-sku').value = "";
@@ -52,7 +60,6 @@ window.calcularPrecio = function() {
     let costoInput = document.getElementById('prod-costo');
     let gananciaInput = document.getElementById('prod-ganancia');
     
-    // Evaluamos el costo si tiene operaciones
     let costo = evaluarCalculo(costoInput.value);
     let ganancia = evaluarCalculo(gananciaInput.value);
     
@@ -62,13 +69,11 @@ window.calcularPrecio = function() {
     actualizarPrecioBs(precio);
 };
 
-// Nueva función para el Precio en Bs
 function actualizarPrecioBs(precioUsd) {
-    const tasa = parseFloat(localStorage.getItem('tasa_bcv') || 1); // Asegúrate de tener la tasa guardada
+    const tasa = parseFloat(localStorage.getItem('tasa_bcv') || 1);
     document.getElementById('prod-precio-bs').value = (precioUsd * tasa).toLocaleString('es-VE', {minimumFractionDigits: 2});
 }
 
-// Guardar y refrescar
 window.guardarProducto = async function() {
     const sku = document.getElementById('prod-sku').value.trim();
     if (!sku) return alert("El SKU es obligatorio.");
@@ -86,15 +91,11 @@ window.guardarProducto = async function() {
         });
         
         alert("¡Producto guardado correctamente!");
-        
-        // Refrescar lista en memoria y limpiar campos
         await iniciarFicha();
         window.limpiarFormulario();
-        
     } catch (e) { alert("Error al guardar: " + e.message); }
 };
 
-// Buscador
 document.getElementById('buscador-prod').addEventListener('input', (e) => {
     const term = e.target.value.toLowerCase();
     const lista = document.getElementById('lista-resultados');
@@ -127,36 +128,26 @@ window.cargarProducto = (id) => {
     document.getElementById('lista-resultados').style.display = 'none';
 };
 
-// --- 1. Guardar con F9 ---
 document.addEventListener('keydown', (e) => {
     if (e.key === 'F9') {
-        e.preventDefault(); // Evita el comportamiento por defecto del navegador
+        e.preventDefault();
         window.guardarProducto();
     }
 });
 
-// --- 2. Navegación con teclado en el buscador ---
 let indiceRes = -1;
-
 document.getElementById('buscador-prod').addEventListener('keydown', (e) => {
     const lista = document.getElementById('lista-resultados');
     const items = lista.querySelectorAll('.item-res');
-
-    if (e.key === 'ArrowDown') {
-        if (indiceRes < items.length - 1) {
-            indiceRes++;
-            actualizarSeleccion(items);
-        }
-    } else if (e.key === 'ArrowUp') {
-        if (indiceRes > 0) {
-            indiceRes--;
-            actualizarSeleccion(items);
-        }
-    } else if (e.key === 'Enter') {
+    if (e.key === 'ArrowDown' && indiceRes < items.length - 1) {
+        indiceRes++;
+        actualizarSeleccion(items);
+    } else if (e.key === 'ArrowUp' && indiceRes > 0) {
+        indiceRes--;
+        actualizarSeleccion(items);
+    } else if (e.key === 'Enter' && indiceRes >= 0 && items[indiceRes]) {
         e.preventDefault();
-        if (indiceRes >= 0 && items[indiceRes]) {
-            items[indiceRes].click(); // Simula el click en el producto
-        }
+        items[indiceRes].click();
     }
 });
 
@@ -166,9 +157,4 @@ function actualizarSeleccion(items) {
     });
 }
 
-// Nota: En la función de búsqueda (input), asegúrate de resetear el índice
-document.getElementById('buscador-prod').addEventListener('input', () => {
-    indiceRes = -1;
-});
-
-document.addEventListener('DOMContentLoaded', iniciarFicha);
+document.getElementById('buscador-prod').addEventListener('input', () => indiceRes = -1);
