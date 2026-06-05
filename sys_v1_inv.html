@@ -5,13 +5,14 @@
     <title>INVENTARIO | YOU CONTROL</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        body { font-family: sans-serif; background: #F1F5F9; padding: 20px; }
-        .card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #E2E8F0; }
+        body { font-family: 'Poppins', sans-serif; background: #F1F5F9; padding: 20px; color: #1E293B; }
+        .card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #E2E8F0; margin-bottom: 20px; }
         .controls { display: flex; gap: 15px; margin-bottom: 20px; }
+        select, input { padding: 10px; border: 1px solid #E2E8F0; border-radius: 6px; }
         table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px; border-bottom: 1px solid #E2E8F0; text-align: left; }
-        input, select { padding: 8px; border: 1px solid #E2E8F0; border-radius: 6px; }
-        .input-stock { width: 70px; text-align: center; border: 1px solid #0EA5E9; }
+        th { text-align: left; padding: 12px; border-bottom: 2px solid #E2E8F0; color: #64748B; }
+        td { padding: 12px; border-bottom: 1px solid #F1F5F9; }
+        .input-stock { width: 80px; padding: 6px; text-align: center; border: 1px solid #0EA5E9; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -25,7 +26,7 @@
         <table>
             <thead>
                 <tr>
-                    <th>Producto</th><th>Depto</th><th>Costo</th><th>Precio</th><th>Stock</th>
+                    <th>Nombre</th><th>Depto</th><th>Costo</th><th>Precio</th><th>Stock</th>
                 </tr>
             </thead>
             <tbody id="cuerpo-tabla"></tbody>
