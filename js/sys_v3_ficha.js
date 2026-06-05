@@ -121,6 +121,7 @@ window.cargarProducto = (id) => {
     document.getElementById('prod-costo').value = p.costo || 0;
     document.getElementById('prod-ganancia').value = p.ganancia || 0;
     document.getElementById('prod-precio').value = p.precio || 0;
+    document.getElementById('prod-stock').value = p.stock !== undefined ? p.stock : ""; // Si no hay stock, deja vacío
     document.getElementById('prod-depto').value = p.departamento || "GENERAL";
     window.actualizarPrecioBs(p.precio || 0);
     document.getElementById('lista-resultados').style.display = 'none';
