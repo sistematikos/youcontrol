@@ -86,4 +86,31 @@ window.cargarProducto = (id) => {
     document.getElementById('lista-resultados').style.display = 'none';
 };
 
+// --- BLOQUE A MODIFICAR: EVENTO DE BÚSQUEDA ---
+document.getElementById('buscador-prod').addEventListener('input', (e) => {
+    const term = e.target.value.toLowerCase();
+    const lista = document.getElementById('lista-resultados');
+    
+    if (term.length < 2) { 
+        lista.style.display = 'none'; 
+        return; 
+    }
+    
+    // Filtramos sobre la lista que ya cargamos en iniciarFicha
+    const filtrados = listaProductosGlobal.filter(p => 
+        (p.nombre?.toLowerCase().includes(term) || p.sku?.toLowerCase().includes(term))
+    );
+    
+    if (filtrados.length > 0) {
+        lista.style.display = 'block';
+        lista.innerHTML = filtrados.map((p, i) => `
+            <div class="item-res" onclick="window.cargarProducto('${p.id}')" style="padding:10px; border-bottom:1px solid #eee; cursor:pointer;">
+                ${p.nombre || "Sin nombre"} (SKU: ${p.sku || "Sin SKU"})
+            </div>
+        `).join('');
+    } else {
+        lista.style.display = 'none';
+    }
+});
+
 document.addEventListener('DOMContentLoaded', iniciarFicha);
