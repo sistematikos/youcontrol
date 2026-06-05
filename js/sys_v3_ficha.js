@@ -76,18 +76,27 @@ window.procesarCalculoPrecioManual = (input) => {
 window.guardarProducto = async function() {
     const sku = document.getElementById('prod-sku').value.trim();
     if (!sku) return alert("El SKU es obligatorio.");
+    
+    // Obtenemos el valor del stock del input
+    const stockInput = document.getElementById('prod-stock').value;
+    
     try {
         await setDoc(doc(db, "usuarios", USER_ID, "productos", sku), {
             sku: sku,
             nombre: document.getElementById('prod-nombre').value,
+            barras: document.getElementById('prod-barras').value,
             costo: parseFloat(document.getElementById('prod-costo').value || 0),
             ganancia: parseFloat(document.getElementById('prod-ganancia').value || 0),
             precio: parseFloat(document.getElementById('prod-precio').value || 0),
+            // Aseguramos que se guarde el stock como número, por defecto 0
+            stock: parseInt(stockInput || 0),
             departamento: document.getElementById('prod-depto').value
         });
-        alert("¡Producto guardado!");
+        alert("¡Producto guardado correctamente!");
         window.limpiarFormulario();
-    } catch (e) { alert("Error: " + e.message); }
+    } catch (e) { 
+        alert("Error al guardar: " + e.message); 
+    }
 };
 
 window.limpiarFormulario = () => {
