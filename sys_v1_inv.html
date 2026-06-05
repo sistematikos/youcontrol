@@ -1,21 +1,122 @@
-<section class="card-container" style="border-left: 6px solid var(--sky); display: flex; gap: 15px;">
-    <select id="filtro-depto" onchange="window.filtrarPorDepto()">
-        <option value="TODOS">TODOS LOS DEPARTAMENTOS</option>
-    </select>
-    <input type="text" id="buscador-inv" placeholder="🔍 Buscar por Nombre, SKU o Barras...">
-</section>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INVENTARIO | YOU CONTROL</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #F1F5F9; --sky: #0EA5E9; --emerald: #10B981; --border: #E2E8F0; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #1E293B; }
+        .layout-width { max-width: 1200px; margin: 0 auto; }
+        .header-panel { background: #fff; padding: 0 20px; border-radius: 12px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; height: 70px; margin-bottom: 15px; }
+        .btn-back { background: #F1F5F9; color: #1E293B; padding: 8px 15px; border-radius: 8px; text-decoration: none; font-size: 0.8rem; font-weight: 700; border: 1px solid var(--border); }
+        .card-container { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; }
+        .table-container { width: 100%; overflow-x: auto; }
+        table { width: 100%; min-width: 1000px; border-collapse: collapse; font-size: 0.85rem; }
+        th { color: #64748B; padding: 12px; text-align: left; border-bottom: 2px solid var(--border); }
+        td { padding: 12px; border-bottom: 1px solid #F1F5F9; }
+        input, select { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; }
+        .input-stock { width: 70px; padding: 6px; border: 1px solid #E2E8F0; border-radius: 6px; text-align: center; font-weight: 600; color: #0EA5E9; }
+        .input-stock:focus { border-color: #10B981; outline: none; }
+    </style>
+</head>
+<body>
+    <main class="layout-width">
+        <header class="header-panel">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <a href="sys_v1_menu.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
+                <h1 style="font-size: 1.2rem; margin: 0;">Inventario</h1>
+            </div>
+        </header>
 
-<section class="card-container" style="border-left: 6px solid var(--emerald);">
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>Barras</th><th>SKU</th><th>Producto</th><th>Depto</th>
-                    <th>Costo</th><th>%</th><th>Precio ($)</th><th>Precio (Bs)</th>
-                    <th>Stock</th>
-                </tr>
-            </thead>
-            <tbody id="cuerpo-tabla"></tbody>
-        </table>
-    </div>
-</section>
+        <section class="card-container" style="border-left: 6px solid var(--sky); display: flex; gap: 15px;">
+            <select id="filtro-depto" onchange="window.filtrarPorDepto()">
+                <option value="TODOS">TODOS LOS DEPARTAMENTOS</option>
+            </select>
+            <input type="text" id="buscador-inv" placeholder="🔍 Buscar por Nombre, SKU o Barras...">
+        </section>
+
+        <section class="card-container" style="border-left: 6px solid var(--emerald);">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Barras</th><th>SKU</th><th>Producto</th><th>Depto</th>
+                            <th>Costo</th><th>%</th><th>Precio ($)</th><th>Precio (Bs)</th>
+                            <th>Stock</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpo-tabla"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script type="module">
+        import { db } from './js/firebase-config.js';
+        import { collection, onSnapshot, doc, updateDoc, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const USER_ID = localStorage.getItem('youcontrol_empresa_id') || "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
+        const cuerpoTabla = document.getElementById('cuerpo-tabla');
+        let tasaActual = 1.00;
+
+        // Filtro por Depto
+        window.filtrarPorDepto = () => {
+            const val = document.getElementById('filtro-depto').value;
+            document.querySelectorAll('#cuerpo-tabla tr').forEach(tr => {
+                tr.style.display = (val === "TODOS" || tr.cells[3].innerText === val) ? '' : 'none';
+            });
+        };
+
+        // Buscador
+        document.getElementById('buscador-inv').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            document.querySelectorAll('#cuerpo-tabla tr').forEach(tr => {
+                tr.style.display = tr.innerText.toLowerCase().includes(term) ? '' : 'none';
+            });
+        });
+
+        // Actualizar Stock
+        window.actualizarSoloStock = async (id, nuevoStock) => {
+            try {
+                await updateDoc(doc(db, "usuarios", USER_ID, "productos", id), { stock: parseInt(nuevoStock) || 0 });
+            } catch (e) { alert("Error al actualizar: " + e.message); }
+        };
+
+        async function init() {
+            const userDoc = await getDoc(doc(db, "usuarios", USER_ID));
+            if (userDoc.exists()) tasaActual = parseFloat(userDoc.data().tasa_bcv) || 1.00;
+
+            const deptoSnap = await getDocs(collection(db, "usuarios", USER_ID, "departamentos"));
+            const select = document.getElementById('filtro-depto');
+            deptoSnap.forEach(d => {
+                select.innerHTML += `<option value="${d.data().nombre}">${d.data().nombre.toUpperCase()}</option>`;
+            });
+
+            onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snap) => {
+                cuerpoTabla.innerHTML = "";
+                snap.forEach(d => {
+                    const p = d.data();
+                    cuerpoTabla.innerHTML += `
+                        <tr>
+                            <td>${p.barras || ''}</td>
+                            <td>${p.sku || ''}</td>
+                            <td>${p.nombre || ''}</td>
+                            <td>${p.departamento || 'GENERAL'}</td>
+                            <td>$${parseFloat(p.costo || 0).toFixed(2)}</td>
+                            <td>${p.ganancia || 0}%</td>
+                            <td>$${parseFloat(p.precio || 0).toFixed(2)}</td>
+                            <td>$${(parseFloat(p.precio || 0) * tasaActual).toFixed(2)} Bs</td>
+                            <td><input type="number" class="input-stock" value="${p.stock || 0}" 
+                                onchange="window.actualizarSoloStock('${d.id}', this.value)"></td>
+                        </tr>`;
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
