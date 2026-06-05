@@ -1,9 +1,10 @@
 import { db } from './firebase-config.js';
-import { collection, onSnapshot, doc, updateDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, onSnapshot, doc, updateDoc, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const USER_ID = "YC-2026-001"; 
 const cuerpoTabla = document.getElementById('cuerpo-tabla');
-const mapaDeptos = {}; // Diccionario para guardar ID -> Nombre
+const mapaDeptos = {};
+let tasaBCV = 1.00; // Variable para almacenar la tasa
 
 // --- FILTRO ---
 window.filtrarPorDepto = () => {
@@ -31,13 +32,18 @@ window.actualizarSoloStock = async (id, val) => {
 
 // --- INICIALIZACIÓN ---
 async function init() {
-    // 1. Cargar Departamentos y llenar el mapa
+    // 1. Obtener tasa y Departamentos
+    const userDoc = await getDoc(doc(db, "usuarios", USER_ID));
+    if (userDoc.exists()) {
+        tasaBCV = parseFloat(userDoc.data().tasa_bcv) || 1.00;
+    }
+
     const deptoSnap = await getDocs(collection(db, "usuarios", USER_ID, "departamentos"));
     const select = document.getElementById('filtro-depto');
     
     deptoSnap.forEach(d => {
         const nombre = d.data().nombre;
-        mapaDeptos[d.id] = nombre; // Guardamos en el diccionario
+        mapaDeptos[d.id] = nombre;
         select.innerHTML += `<option value="${d.id}">${nombre.toUpperCase()}</option>`;
     });
 
@@ -46,20 +52,20 @@ async function init() {
         cuerpoTabla.innerHTML = "";
         snap.forEach(d => {
             const p = d.data();
+            const precioUSD = parseFloat(p.precio || 0);
+            const precioBs = (precioUSD * tasaBCV).toFixed(2); // Cálculo del precio en Bs
+            
             const tr = document.createElement('tr');
+            tr.dataset.deptoId = p.departamento || ''; 
             
-            const deptoId = p.departamento || '';
-            tr.dataset.deptoId = deptoId; 
-            
-            // Usamos el mapa para mostrar el nombre bonito en la celda
-            const nombreDeptoMostrado = mapaDeptos[deptoId] || 'GENERAL';
+            const nombreDeptoMostrado = mapaDeptos[tr.dataset.deptoId] || 'GENERAL';
             
             tr.innerHTML = `
                 <td>${p.nombre || 'Sin nombre'}</td>
                 <td>${nombreDeptoMostrado}</td>
                 <td>$${parseFloat(p.costo || 0).toFixed(2)}</td>
-                <td style="color: #10B981; font-weight: bold;">${p.ganancia || 0}%</td>
-                <td>$${parseFloat(p.precio || 0).toFixed(2)}</td>
+                <td style="color: #6366f1; font-weight: bold;">${p.ganancia || 0}%</td>
+                <td>$${precioUSD.toFixed(2)} / <b>${precioBs} Bs</b></td>
                 <td><input type="number" class="input-stock" value="${p.stock || 0}" 
                     onchange="window.actualizarSoloStock('${d.id}', this.value)"></td>
             `;
