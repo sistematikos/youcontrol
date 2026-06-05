@@ -4,14 +4,26 @@
  */
 
 import { db } from './firebase-config.js';
-import { collection, getDocs, doc, setDoc, query } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, getDocs, doc, setDoc, query, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 let listaProductosGlobal = [];
 let indiceRes = -1;
+let tasaBCV = 1.00;
 
 async function iniciarFicha() {
     if (!USER_ID) return;
+    
+    // Cargar Tasa BCV desde el documento del usuario
+    try {
+        const userDoc = await getDoc(doc(db, "usuarios", USER_ID));
+        if (userDoc.exists()) {
+            tasaBCV = parseFloat(userDoc.data().tasa_bcv) || 1.00;
+        }
+    } catch (e) {
+        console.error("Error cargando tasa:", e);
+    }
+
     const stockInput = document.getElementById('prod-stock');
     if (stockInput) stockInput.readOnly = true;
 
@@ -39,8 +51,11 @@ function evaluarCalculo(str) {
 }
 
 window.actualizarPrecioBs = function(precioUsd) {
-    const tasa = parseFloat(localStorage.getItem('tasa_bcv') || 1);
-    document.getElementById('prod-precio-bs').value = (precioUsd * tasa).toLocaleString('es-VE', {minimumFractionDigits: 2});
+    const totalBs = precioUsd * tasaBCV;
+    const inputBs = document.getElementById('prod-precio-bs');
+    if(inputBs) {
+        inputBs.value = totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
 };
 
 window.calcularPrecio = function() {
@@ -64,7 +79,7 @@ window.procesarCalculoGanancia = function(input) {
     document.getElementById('prod-precio').focus();
 };
 
-// Nueva función: Cálculo inverso (Precio -> Ganancia)
+// Cálculo inverso (Precio -> Ganancia)
 window.procesarCalculoPrecioManual = function(input) {
     const p = evaluarCalculo(input.value);
     const c = evaluarCalculo(document.getElementById('prod-costo').value);
@@ -104,58 +119,7 @@ window.limpiarFormulario = () => {
     document.getElementById('prod-costo').value = "";
     document.getElementById('prod-ganancia').value = "";
     document.getElementById('prod-precio').value = "";
+    document.getElementById('prod-precio-bs').value = "";
     document.getElementById('prod-stock').value = "";
     document.getElementById('prod-depto').value = "GENERAL";
-    document.getElementById('lista-resultados').style.display = 'none';
-};
-
-document.getElementById('buscador-prod').addEventListener('input', (e) => {
-    const term = e.target.value.toLowerCase();
-    const lista = document.getElementById('lista-resultados');
-    indiceRes = -1;
-    if (term.length < 2) { lista.style.display = 'none'; return; }
-    const filtrados = Array.from(new Set(listaProductosGlobal.map(p => p.id)))
-        .map(id => listaProductosGlobal.find(p => p.id === id))
-        .filter(p => p.nombre?.toLowerCase().includes(term) || p.sku?.toLowerCase().includes(term));
-    lista.style.display = 'block';
-    lista.innerHTML = filtrados.map((p, i) => `
-        <div class="item-res" id="res-${i}" onclick="window.cargarProducto('${p.id}')">
-            ${p.nombre || "Sin nombre"} (SKU: ${p.sku || "Sin SKU"})
-        </div>
-    `).join('');
-});
-
-document.getElementById('buscador-prod').addEventListener('keydown', (e) => {
-    const lista = document.getElementById('lista-resultados');
-    const items = lista.querySelectorAll('.item-res');
-    if (e.key === 'ArrowDown' && indiceRes < items.length - 1) {
-        indiceRes++;
-        items.forEach((it, i) => it.style.background = (i === indiceRes) ? '#F1F5F9' : 'white');
-    } else if (e.key === 'ArrowUp' && indiceRes > 0) {
-        indiceRes--;
-        items.forEach((it, i) => it.style.background = (i === indiceRes) ? '#F1F5F9' : 'white');
-    } else if (e.key === 'Enter' && indiceRes >= 0 && items[indiceRes]) {
-        e.preventDefault();
-        items[indiceRes].click();
-    }
-});
-
-window.cargarProducto = (id) => {
-    const p = listaProductosGlobal.find(x => x.id === id);
-    if (!p) return;
-    document.getElementById('prod-sku').value = p.sku || "";
-    document.getElementById('prod-nombre').value = p.nombre || "";
-    document.getElementById('prod-barras').value = p.barras || "";
-    document.getElementById('prod-costo').value = p.costo || 0;
-    document.getElementById('prod-ganancia').value = p.ganancia || 0;
-    document.getElementById('prod-precio').value = p.precio || 0;
-    document.getElementById('prod-stock').value = p.stock || 0;
-    document.getElementById('prod-depto').value = p.departamento || "GENERAL";
-    document.getElementById('lista-resultados').style.display = 'none';
-};
-
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'F9') { e.preventDefault(); window.guardarProducto(); }
-});
-
-document.addEventListener('DOMContentLoaded', iniciarFicha);
+    document.getElementById('lista-resultados').style.display = 'none
