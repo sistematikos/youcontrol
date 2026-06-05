@@ -1,6 +1,6 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * Inventario con Gestión de Departamentos
+ * Inventario con Gestión de Departamentos y Filtro
  */
 
 import { db } from './firebase-config.js';
@@ -12,7 +12,17 @@ const buscadorInv = document.getElementById('buscador-inv');
 
 let tasaActual = 1.00;
 
-// Buscador
+// --- 1. FILTRO DE DEPARTAMENTOS ---
+window.filtrarPorDepto = () => {
+    const deptoSeleccionado = document.getElementById('filtro-depto').value;
+    const filas = cuerpoTabla.getElementsByTagName('tr');
+    for (let fila of filas) {
+        const deptoFila = fila.cells[3].innerText;
+        fila.style.display = (deptoSeleccionado === "TODOS" || deptoFila === deptoSeleccionado) ? '' : 'none';
+    }
+};
+
+// --- 2. BUSCADOR ---
 buscadorInv.addEventListener('input', (e) => {
     const termino = e.target.value.toLowerCase();
     const filas = cuerpoTabla.getElementsByTagName('tr');
@@ -22,11 +32,20 @@ buscadorInv.addEventListener('input', (e) => {
     }
 });
 
+// --- 3. INICIALIZACIÓN ---
 async function inicializarInventario() {
     try {
         const userDoc = await getDoc(doc(db, "usuarios", USER_ID));
         if (userDoc.exists()) tasaActual = parseFloat(userDoc.data().tasa_bcv) || 1.00;
-    } catch (e) { console.error("Error al obtener tasa:", e); }
+        
+        // Cargar departamentos al select
+        const deptoSnap = await getDocs(collection(db, "usuarios", USER_ID, "departamentos"));
+        const select = document.getElementById('filtro-depto');
+        deptoSnap.forEach(d => {
+            const nombre = d.data().nombre;
+            select.innerHTML += `<option value="${nombre}">${nombre.toUpperCase()}</option>`;
+        });
+    } catch (e) { console.error("Error al inicializar:", e); }
 
     onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
         renderizarTabla(snapshot);
@@ -40,7 +59,6 @@ function renderizarTabla(snapshot) {
         const p = doc.data();
         const tr = document.createElement('tr');
         tr.setAttribute('data-id', doc.id);
-        // Usamos p.departamento directamente; si no existe, muestra GENERAL
         tr.innerHTML = `
             <td>${p.barras || 'N/A'}</td>
             <td>${p.sku || 'N/A'}</td>
@@ -60,18 +78,17 @@ function renderizarTabla(snapshot) {
     });
 }
 
-// --- EDICIÓN DINÁMICA CON DEPARTAMENTOS ---
+// --- EDICIÓN DINÁMICA ---
 window.editarProducto = async (id) => {
     const fila = document.querySelector(`tr[data-id="${id}"]`);
     const c = fila.cells;
-    const deptoActual = c[3].innerText; // El valor que se muestra en la celda
+    const deptoActual = c[3].innerText;
 
     const deptoSnap = await getDocs(collection(db, "usuarios", USER_ID, "departamentos"));
     let opciones = '<option value="GENERAL">GENERAL</option>';
-    
     deptoSnap.forEach(d => {
-        const nombreDepto = d.data().nombre;
-        opciones += `<option value="${nombreDepto}" ${nombreDepto === deptoActual ? 'selected' : ''}>${nombreDepto}</option>`;
+        const n = d.data().nombre;
+        opciones += `<option value="${n}" ${n === deptoActual ? 'selected' : ''}>${n}</option>`;
     });
 
     fila.innerHTML = `
