@@ -126,4 +126,13 @@ window.cargarProducto = (id) => {
     document.getElementById('lista-resultados').style.display = 'none';
 };
 
+// Añade esto al final de tu archivo, justo antes de document.addEventListener('DOMContentLoaded', iniciarFicha);
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'F9') {
+        e.preventDefault();
+        window.guardarProducto();
+    }
+});
+
 document.addEventListener('DOMContentLoaded', iniciarFicha);
