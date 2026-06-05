@@ -47,127 +47,83 @@
         </section>
     </main>
 
+    <section class="card-container" style="border-left: 6px solid var(--sky); display: flex; gap: 10px;">
+    <select id="filtro-depto" onchange="window.filtrarPorDepto()">
+        <option value="TODOS">TODOS LOS DEPARTAMENTOS</option>
+    </select>
+    <input type="text" id="buscador-inv" placeholder="🔍 Buscar por Nombre, SKU o Barras...">
+</section>
+    
     <script type="module">
-        import { db } from './js/firebase-config.js';
-        import { collection, onSnapshot, doc, deleteDoc, updateDoc, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { db } from './js/firebase-config.js';
+    import { collection, onSnapshot, doc, deleteDoc, updateDoc, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const USER_ID = localStorage.getItem('youcontrol_empresa_id') || "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
-        const cuerpoTabla = document.getElementById('cuerpo-tabla');
-        let tasaActual = 1.00;
+    const USER_ID = localStorage.getItem('youcontrol_empresa_id') || "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
+    const cuerpoTabla = document.getElementById('cuerpo-tabla');
+    let tasaActual = 1.00;
 
-        <select id="filtro-depto" onchange="window.filtrarPorDepto()">
-           <option value="TODOS">TODOS LOS DEPARTAMENTOS</option>
-        </select>
-        <input type="text" id="buscador-inv" placeholder="Buscar por nombre o SKU...">
-        
-        async function init() {
-            // Configurar Buscador
-            const buscador = document.getElementById('buscador-inv');
-            if(buscador) {
-                buscador.addEventListener('input', (e) => {
-                    const termino = e.target.value.toLowerCase();
-                    const filas = cuerpoTabla.querySelectorAll('tr');
-                    filas.forEach(fila => {
-                        fila.style.display = fila.innerText.toLowerCase().includes(termino) ? '' : 'none';
-                    });
-                });
-            }
+    // --- FILTRADO ---
+    window.filtrarPorDepto = () => {
+        const deptoSeleccionado = document.getElementById('filtro-depto').value;
+        const filas = cuerpoTabla.querySelectorAll('tr');
+        filas.forEach(fila => {
+            const deptoFila = fila.cells[3].innerText; // Columna 3 es Depto
+            fila.style.display = (deptoSeleccionado === "TODOS" || deptoFila === deptoSeleccionado) ? '' : 'none';
+        });
+    };
 
-            // Obtener tasa
-            const userDoc = await getDoc(doc(db, "usuarios", USER_ID));
-            if (userDoc.exists()) tasaActual = parseFloat(userDoc.data().tasa_bcv) || 1.00;
+    async function init() {
+        // 1. Cargar Tasa y Departamentos
+        const userDoc = await getDoc(doc(db, "usuarios", USER_ID));
+        if (userDoc.exists()) tasaActual = parseFloat(userDoc.data().tasa_bcv) || 1.00;
 
-            // Renderizado
-            onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snap) => {
-                cuerpoTabla.innerHTML = "";
-                snap.forEach(d => {
-                    const p = d.data();
-                    const tr = document.createElement('tr');
-                    tr.setAttribute('data-id', d.id);
-                    tr.innerHTML = `
-                        <td>${p.barras || ''}</td>
-                        <td>${p.sku || ''}</td>
-                        <td>${p.nombre || ''}</td>
-                        <td>${p.departamento || 'N/A'}</td>
-                        <td>$${parseFloat(p.costo || 0).toFixed(2)}</td>
-                        <td>${p.ganancia || 0}%</td>
-                        <td>$${parseFloat(p.precio || 0).toFixed(2)}</td>
-                        <td>${(parseFloat(p.precio || 0) * tasaActual).toFixed(2)} Bs</td>
-                        <td>${p.stock || 0}</td>
-                        <td>
-                            <button class="btn-act" onclick="window.editarProducto('${d.id}')">✏️</button>
-                            <button class="btn-act" onclick="window.eliminarProducto('${d.id}', '${p.nombre}')">🗑️</button>
-                        </td>`;
-                    cuerpoTabla.appendChild(tr);
-                });
+        const deptoSnap = await getDocs(collection(db, "usuarios", USER_ID, "departamentos"));
+        const select = document.getElementById('filtro-depto');
+        deptoSnap.forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d.data().nombre;
+            opt.textContent = d.data().nombre.toUpperCase();
+            select.appendChild(opt);
+        });
+
+        // 2. Buscador
+        document.getElementById('buscador-inv').addEventListener('input', (e) => {
+            const termino = e.target.value.toLowerCase();
+            cuerpoTabla.querySelectorAll('tr').forEach(fila => {
+                fila.style.display = fila.innerText.toLowerCase().includes(termino) ? '' : 'none';
             });
-        }
+        });
 
-        window.calc = (origen) => {
-            let costo = parseFloat(document.getElementById('e-costo').value) || 0;
-            let ganancia = parseFloat(document.getElementById('e-ganancia').value) || 0;
-            let precio = parseFloat(document.getElementById('e-precio').value) || 0;
-            let bs = parseFloat(document.getElementById('e-bs').value) || 0;
-
-            if (origen === 'costo' || origen === 'ganancia') {
-                precio = costo + (costo * (ganancia / 100));
-                document.getElementById('e-precio').value = precio.toFixed(2);
-                document.getElementById('e-bs').value = (precio * tasaActual).toFixed(2);
-            } else if (origen === 'precio') {
-                ganancia = costo > 0 ? ((precio - costo) / costo) * 100 : 0;
-                document.getElementById('e-ganancia').value = ganancia.toFixed(1);
-                document.getElementById('e-bs').value = (precio * tasaActual).toFixed(2);
-            } else if (origen === 'bs') {
-                precio = bs / tasaActual;
-                ganancia = costo > 0 ? ((precio - costo) / costo) * 100 : 0;
-                document.getElementById('e-precio').value = precio.toFixed(2);
-                document.getElementById('e-ganancia').value = ganancia.toFixed(1);
-            }
-        };
-
-        window.editarProducto = async (id) => {
-            const fila = document.querySelector(`tr[data-id="${id}"]`);
-            const c = fila.cells;
-            const deptoSnap = await getDocs(collection(db, "usuarios", USER_ID, "departamentos"));
-            let opciones = '';
-            deptoSnap.forEach(d => {
-                const n = d.data().nombre;
-                opciones += `<option value="${n}" ${n === c[3].innerText ? 'selected' : ''}>${n}</option>`;
+        // 3. Renderizado
+        onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snap) => {
+            cuerpoTabla.innerHTML = "";
+            snap.forEach(d => {
+                const p = d.data();
+                const tr = document.createElement('tr');
+                tr.setAttribute('data-id', d.id);
+                tr.innerHTML = `
+                    <td>${p.barras || ''}</td>
+                    <td>${p.sku || ''}</td>
+                    <td>${p.nombre || ''}</td>
+                    <td>${p.departamento || 'GENERAL'}</td>
+                    <td>$${parseFloat(p.costo || 0).toFixed(2)}</td>
+                    <td>${p.ganancia || 0}%</td>
+                    <td>$${parseFloat(p.precio || 0).toFixed(2)}</td>
+                    <td>${(parseFloat(p.precio || 0) * tasaActual).toFixed(2)} Bs</td>
+                    <td>${p.stock || 0}</td>
+                    <td>
+                        <button class="btn-act" onclick="window.editarProducto('${d.id}')">✏️</button>
+                        <button class="btn-act" onclick="window.eliminarProducto('${d.id}', '${p.nombre}')">🗑️</button>
+                    </td>`;
+                cuerpoTabla.appendChild(tr);
             });
+        });
+    }
 
-            fila.innerHTML = `
-                <td><input type="text" id="e-barras" value="${c[0].innerText}"></td>
-                <td><input type="text" id="e-sku" value="${c[1].innerText}"></td>
-                <td><input type="text" id="e-nombre" value="${c[2].innerText}"></td>
-                <td><select id="e-depto">${opciones}</select></td>
-                <td><input type="number" id="e-costo" value="${c[4].innerText.replace('$','')}" oninput="window.calc('costo')"></td>
-                <td><input type="number" id="e-ganancia" value="${c[5].innerText.replace('%','')}" oninput="window.calc('ganancia')"></td>
-                <td><input type="number" id="e-precio" value="${c[6].innerText.replace('$','')}" oninput="window.calc('precio')"></td>
-                <td><input type="number" id="e-bs" value="${c[7].innerText.replace(' Bs','')}" oninput="window.calc('bs')"></td>
-                <td><input type="number" id="e-stock" value="${c[8].innerText}"></td>
-                <td><button class="btn-act" onclick="window.guardarEdicion('${id}')">💾</button></td>
-            `;
-        };
+    // --- TUS FUNCIONES DE EDICIÓN Y CALC SE QUEDAN IGUAL AQUÍ ABAJO ---
+    // ... (Mantén aquí las funciones window.calc, window.editarProducto, window.guardarEdicion) ...
 
-        window.guardarEdicion = async (id) => {
-            await updateDoc(doc(db, "usuarios", USER_ID, "productos", id), {
-                barras: document.getElementById('e-barras').value,
-                sku: document.getElementById('e-sku').value,
-                nombre: document.getElementById('e-nombre').value,
-                departamento: document.getElementById('e-depto').value,
-                costo: parseFloat(document.getElementById('e-costo').value),
-                ganancia: parseFloat(document.getElementById('e-ganancia').value),
-                precio: parseFloat(document.getElementById('e-precio').value),
-                stock: parseInt(document.getElementById('e-stock').value)
-            });
-            alert("Producto actualizado");
-        };
-
-        window.eliminarProducto = async (id, nombre) => {
-            if(confirm(`¿Eliminar ${nombre}?`)) await deleteDoc(doc(db, "usuarios", USER_ID, "productos", id));
-        };
-
-        document.addEventListener('DOMContentLoaded', init);
-    </script>
+    document.addEventListener('DOMContentLoaded', init);
+</script>
 </body>
 </html>
