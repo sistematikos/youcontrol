@@ -1,32 +1,17 @@
 import { db } from './firebase-config.js';
-import { collection, onSnapshot, doc, updateDoc, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, onSnapshot, doc, updateDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// CAMBIADO PARA QUE APUNTE A TU ESTRUCTURA REAL
 const USER_ID = "YC-2026-001"; 
 const cuerpoTabla = document.getElementById('cuerpo-tabla');
 
+// --- FILTRO INTELIGENTE ---
 window.filtrarPorDepto = () => {
-    // Obtenemos el valor seleccionado
     const select = document.getElementById('filtro-depto');
-    const val = select.value.trim().toLowerCase();
+    const valorFiltro = select.options[select.selectedIndex].text.toLowerCase();
     
-    // Obtenemos todas las filas
-    const filas = document.querySelectorAll('#cuerpo-tabla tr');
-    
-    console.log("Filtrando por:", val); // Para depurar en consola (F12)
-
-    filas.forEach(tr => {
-        // Obtenemos el depto guardado en el dataset de la fila
-        const deptoFila = (tr.dataset.depto || "").trim().toLowerCase();
-        
-        console.log("Comparando fila:", deptoFila, "con filtro:", val);
-
-        // Si es "todos" o coinciden, mostramos; si no, ocultamos
-        if (val === "todos" || deptoFila === val) {
-            tr.style.display = '';
-        } else {
-            tr.style.display = 'none';
-        }
+    document.querySelectorAll('#cuerpo-tabla tr').forEach(tr => {
+        const deptoFila = tr.dataset.nombreDepto.toLowerCase();
+        tr.style.display = (select.value === "TODOS" || deptoFila === valorFiltro) ? '' : 'none';
     });
 };
 
@@ -45,12 +30,12 @@ window.actualizarSoloStock = async (id, val) => {
 
 // --- INICIALIZACIÓN ---
 async function init() {
-    // 1. Cargar Departamentos
+    // 1. Cargar Departamentos para el filtro
     const deptoSnap = await getDocs(collection(db, "usuarios", USER_ID, "departamentos"));
     const select = document.getElementById('filtro-depto');
     deptoSnap.forEach(d => {
-        const nombre = d.data().nombre;
-        select.innerHTML += `<option value="${nombre}">${nombre.toUpperCase()}</option>`;
+        const nombre = d.data().nombre; // Asumimos que aquí dice "MOTOS"
+        select.innerHTML += `<option value="${nombre}">${nombre}</option>`;
     });
 
     // 2. Cargar Productos
@@ -59,10 +44,12 @@ async function init() {
         snap.forEach(d => {
             const p = d.data();
             const tr = document.createElement('tr');
-            tr.dataset.depto = p.departamento || 'GENERAL';
+            // Guardamos el nombre del departamento en el atributo de datos
+            tr.dataset.nombreDepto = p.departamento || 'GENERAL';
+            
             tr.innerHTML = `
                 <td>${p.nombre || 'Sin nombre'}</td>
-                <td>${tr.dataset.depto}</td>
+                <td>${tr.dataset.nombreDepto}</td>
                 <td>$${parseFloat(p.costo || 0).toFixed(2)}</td>
                 <td>$${parseFloat(p.precio || 0).toFixed(2)}</td>
                 <td><input type="number" class="input-stock" value="${p.stock || 0}" 
@@ -72,5 +59,4 @@ async function init() {
         });
     });
 }
-
 document.addEventListener('DOMContentLoaded', init);
