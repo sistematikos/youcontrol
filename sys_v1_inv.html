@@ -2,33 +2,69 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>INVENTARIO | YOU CONTROL</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        body { font-family: sans-serif; background: #F1F5F9; padding: 20px; }
-        .card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #E2E8F0; }
+        body { font-family: 'Poppins', sans-serif; background: #F1F5F9; padding: 20px; color: #1E293B; margin: 0; }
+        
+        /* Estilos de la Cabecera */
+        .header-panel { 
+            background: #ffffff; padding: 0 20px; border-radius: 12px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; 
+            display: flex; justify-content: space-between; align-items: center; 
+            margin-bottom: 15px; height: 70px; 
+        }
+        .btn-back { 
+            background: #F1F5F9; color: #1E293B; padding: 8px 15px; 
+            border-radius: 8px; text-decoration: none; font-size: 0.8rem; 
+            font-weight: 700; border: 1px solid #E2E8F0; 
+        }
+        .logo-header { height: 90%; width: auto; object-fit: contain; }
+
+        /* Contenido */
+        .card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #E2E8F0; margin-bottom: 20px; }
         .controls { display: flex; gap: 15px; margin-bottom: 20px; }
+        select, input { padding: 10px; border: 1px solid #E2E8F0; border-radius: 6px; }
         table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px; border-bottom: 1px solid #E2E8F0; text-align: left; }
-        .input-stock { width: 70px; text-align: center; border: 1px solid #0EA5E9; border-radius: 4px; padding: 5px; }
+        th { text-align: left; padding: 12px; border-bottom: 2px solid #E2E8F0; color: #64748B; }
+        td { padding: 12px; border-bottom: 1px solid #F1F5F9; }
+        .input-stock { width: 80px; padding: 6px; text-align: center; border: 1px solid #0EA5E9; border-radius: 4px; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <div class="controls">
-            <select id="filtro-depto" onchange="window.filtrarPorDepto()">
-                <option value="TODOS">TODOS LOS DEPARTAMENTOS</option>
-            </select>
-            <input type="text" id="buscador-inv" placeholder="🔍 Buscar por nombre...">
+
+    <header class="header-panel">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <a href="sys_v1_menu.html" class="btn-back">
+                <i class="fas fa-arrow-left"></i> VOLVER
+            </a>
+            <h1 style="font-size: 1.2rem; margin: 0; font-weight: 700; color: #1E293B;">
+                INVENTARIO
+            </h1>
         </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>Nombre</th><th>Depto</th><th>Costo</th><th>Precio</th><th>Stock</th>
-                </tr>
-            </thead>
-            <tbody id="cuerpo-tabla"></tbody>
-        </table>
-    </div>
+        <img src="img/logo.png" class="logo-header" alt="Logo">
+    </header>
+
+    <main>
+        <div class="card">
+            <div class="controls">
+                <select id="filtro-depto" onchange="window.filtrarPorDepto()">
+                    <option value="TODOS">TODOS LOS DEPARTAMENTOS</option>
+                </select>
+                <input type="text" id="buscador-inv" placeholder="🔍 Buscar producto...">
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre</th><th>Depto</th><th>Costo</th><th>Precio</th><th>Stock</th>
+                    </tr>
+                </thead>
+                <tbody id="cuerpo-tabla"></tbody>
+            </table>
+        </div>
+    </main>
+
     <script type="module" src="js/sys_v1_inv.js"></script>
 </body>
 </html>
