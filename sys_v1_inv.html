@@ -5,36 +5,32 @@
     <title>INVENTARIO | YOU CONTROL</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        /* Estilos base */
         body { font-family: sans-serif; background: #F1F5F9; padding: 20px; }
-        .card-container { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #E2E8F0; }
-        .input-stock { width: 70px; padding: 6px; border: 1px solid #E2E8F0; border-radius: 6px; text-align: center; }
+        .card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #E2E8F0; }
+        .controls { display: flex; gap: 15px; margin-bottom: 20px; }
         table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px; border-bottom: 1px solid #F1F5F9; text-align: left; }
+        th, td { padding: 12px; border-bottom: 1px solid #E2E8F0; text-align: left; }
+        input, select { padding: 8px; border: 1px solid #E2E8F0; border-radius: 6px; }
+        .input-stock { width: 70px; text-align: center; border: 1px solid #0EA5E9; }
     </style>
 </head>
 <body>
-    <main>
-        <section class="card-container" style="display: flex; gap: 15px;">
+    <div class="card">
+        <div class="controls">
             <select id="filtro-depto" onchange="window.filtrarPorDepto()">
                 <option value="TODOS">TODOS LOS DEPARTAMENTOS</option>
             </select>
             <input type="text" id="buscador-inv" placeholder="🔍 Buscar producto...">
-        </section>
-
-        <section class="card-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Barras</th><th>SKU</th><th>Producto</th><th>Depto</th>
-                        <th>Costo</th><th>%</th><th>Precio ($)</th><th>Precio (Bs)</th><th>Stock</th>
-                    </tr>
-                </thead>
-                <tbody id="cuerpo-tabla"></tbody>
-            </table>
-        </section>
-    </main>
-
-    <script type="module" src="./js/sys_v1_inv.js"></script>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Producto</th><th>Depto</th><th>Costo</th><th>Precio</th><th>Stock</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpo-tabla"></tbody>
+        </table>
+    </div>
+    <script type="module" src="js/sys_v1_inv.js"></script>
 </body>
 </html>
