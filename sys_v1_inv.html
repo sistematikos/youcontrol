@@ -55,6 +55,11 @@
         const cuerpoTabla = document.getElementById('cuerpo-tabla');
         let tasaActual = 1.00;
 
+        <select id="filtro-depto" onchange="window.filtrarPorDepto()">
+           <option value="TODOS">TODOS LOS DEPARTAMENTOS</option>
+        </select>
+        <input type="text" id="buscador-inv" placeholder="Buscar por nombre o SKU...">
+        
         async function init() {
             // Configurar Buscador
             const buscador = document.getElementById('buscador-inv');
