@@ -1,18 +1,22 @@
-import { db } from './js/firebase-config.js';
+import { db } from './firebase-config.js';
 import { collection, onSnapshot, doc, updateDoc, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const USER_ID = localStorage.getItem('youcontrol_empresa_id') || "sUhfZI9Fy3M9UlInTYw2wFWZmB12";
 const cuerpoTabla = document.getElementById('cuerpo-tabla');
 let tasaActual = 1.00;
 
-// --- FILTRO DEPTOS Y BUSCADOR ---
+// --- FILTRO DE DEPARTAMENTOS CORREGIDO ---
 window.filtrarPorDepto = () => {
-    const val = document.getElementById('filtro-depto').value;
-    document.querySelectorAll('#cuerpo-tabla tr').forEach(tr => {
-        tr.style.display = (val === "TODOS" || tr.cells[3].innerText === val) ? '' : 'none';
+    const val = document.getElementById('filtro-depto').value.toLowerCase();
+    const filas = document.querySelectorAll('#cuerpo-tabla tr');
+    
+    filas.forEach(tr => {
+        const deptoFila = tr.cells[3].innerText.trim().toLowerCase();
+        tr.style.display = (val === "todos" || deptoFila === val) ? '' : 'none';
     });
 };
 
+// --- BUSCADOR ---
 document.getElementById('buscador-inv').addEventListener('input', (e) => {
     const term = e.target.value.toLowerCase();
     document.querySelectorAll('#cuerpo-tabla tr').forEach(tr => {
@@ -20,25 +24,28 @@ document.getElementById('buscador-inv').addEventListener('input', (e) => {
     });
 });
 
-// --- ACTUALIZAR SOLO STOCK ---
+// --- ACTUALIZACIÓN DE STOCK ---
 window.actualizarSoloStock = async (id, nuevoStock) => {
     try {
         await updateDoc(doc(db, "usuarios", USER_ID, "productos", id), { stock: parseInt(nuevoStock) || 0 });
-    } catch (e) { alert("Error al actualizar: " + e.message); }
+    } catch (e) { alert("Error al guardar: " + e.message); }
 };
 
+// --- INICIALIZACIÓN ---
 async function init() {
-    // Cargar Tasa y Departamentos
     const userDoc = await getDoc(doc(db, "usuarios", USER_ID));
     if (userDoc.exists()) tasaActual = parseFloat(userDoc.data().tasa_bcv) || 1.00;
 
+    // Cargar Departamentos
     const deptoSnap = await getDocs(collection(db, "usuarios", USER_ID, "departamentos"));
     const select = document.getElementById('filtro-depto');
+    
     deptoSnap.forEach(d => {
-        select.innerHTML += `<option value="${d.data().nombre}">${d.data().nombre.toUpperCase()}</option>`;
+        const nombre = d.data().nombre;
+        select.innerHTML += `<option value="${nombre.toLowerCase()}">${nombre.toUpperCase()}</option>`;
     });
 
-    // Renderizar lista informativa
+    // Renderizar Productos
     onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snap) => {
         cuerpoTabla.innerHTML = "";
         snap.forEach(d => {
