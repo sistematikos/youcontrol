@@ -91,7 +91,12 @@ window.guardarProducto = async function() {
 };
 
 window.limpiarFormulario = () => {
-    ["prod-sku", "prod-nombre", "prod-costo", "prod-ganancia", "prod-precio", "prod-precio-bs", "buscador-prod"].forEach(id => document.getElementById(id).value = "");
+    // Añadido "prod-stock" al array de IDs
+    ["prod-sku", "prod-nombre", "prod-costo", "prod-ganancia", "prod-precio", "prod-precio-bs", "prod-stock", "buscador-prod"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = "";
+    });
+    document.getElementById('prod-depto').value = "GENERAL";
     document.getElementById('lista-resultados').style.display = 'none';
 };
 
