@@ -58,13 +58,15 @@ async function init() {
             // Aquí es donde vinculamos el ID del depto a la fila
             tr.dataset.deptoId = p.departamento || ''; 
             
+            // ... dentro de onSnapshot, en el bucle snap.forEach ...
             tr.innerHTML = `
-                <td>${p.nombre || 'Sin nombre'}</td>
-                <td>${p.departamento || 'N/A'}</td>
-                <td>$${parseFloat(p.costo || 0).toFixed(2)}</td>
-                <td>$${parseFloat(p.precio || 0).toFixed(2)}</td>
-                <td><input type="number" class="input-stock" value="${p.stock || 0}" 
-                    onchange="window.actualizarSoloStock('${d.id}', this.value)"></td>
+               <td>${p.nombre || 'Sin nombre'}</td>
+               <td>${tr.dataset.deptoId || 'GENERAL'}</td>
+               <td>$${parseFloat(p.costo || 0).toFixed(2)}</td>
+               <td style="color: #10B981; font-weight: bold;">${p.ganancia || 0}%</td>
+               <td>$${parseFloat(p.precio || 0).toFixed(2)}</td>
+               <td><input type="number" class="input-stock" value="${p.stock || 0}" 
+                   onchange="window.actualizarSoloStock('${d.id}', this.value)"></td>
             `;
             cuerpoTabla.appendChild(tr);
         });
