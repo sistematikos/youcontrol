@@ -1,6 +1,6 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * Módulo Completo: Ficha de Producto unificada
+ * Módulo: Ficha de Producto (Corregido)
  */
 
 import { db } from './firebase-config.js';
@@ -14,18 +14,12 @@ let tasaBCV = 1.00;
 async function iniciarFicha() {
     if (!USER_ID) return;
     
-    // Cargar Tasa BCV desde el documento del usuario
     try {
         const userDoc = await getDoc(doc(db, "usuarios", USER_ID));
         if (userDoc.exists()) {
             tasaBCV = parseFloat(userDoc.data().tasa_bcv) || 1.00;
         }
-    } catch (e) {
-        console.error("Error cargando tasa:", e);
-    }
-
-    const stockInput = document.getElementById('prod-stock');
-    if (stockInput) stockInput.readOnly = true;
+    } catch (e) { console.error("Error tasa:", e); }
 
     const deptoSelect = document.getElementById('prod-depto');
     const snapDeptos = await getDocs(query(collection(db, "usuarios", USER_ID, "departamentos")));
@@ -41,20 +35,13 @@ async function iniciarFicha() {
 
 function evaluarCalculo(str) {
     let s = str.toString().replace(/,/g, '.');
-    if (s.includes('+') && s.includes('%')) {
-        const partes = s.split('+');
-        const base = parseFloat(partes[0]);
-        const porcentaje = parseFloat(partes[1].replace('%', ''));
-        return base + (base * (porcentaje / 100));
-    }
-    try { return eval(s); } catch (e) { return parseFloat(s) || 0; }
+    try { return eval(s) || 0; } catch (e) { return parseFloat(s) || 0; }
 }
 
 window.actualizarPrecioBs = function(precioUsd) {
-    const totalBs = precioUsd * tasaBCV;
     const inputBs = document.getElementById('prod-precio-bs');
-    if(inputBs) {
-        inputBs.value = totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (inputBs) {
+        inputBs.value = (precioUsd * tasaBCV).toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     }
 };
 
@@ -66,30 +53,8 @@ window.calcularPrecio = function() {
     window.actualizarPrecioBs(precio);
 };
 
-// Lógica de Enter
-window.procesarCalculoCosto = function(input) {
-    input.value = evaluarCalculo(input.value).toFixed(2);
-    window.calcularPrecio();
-    document.getElementById('prod-ganancia').focus();
-};
-
-window.procesarCalculoGanancia = function(input) {
-    input.value = evaluarCalculo(input.value).toFixed(1);
-    window.calcularPrecio();
-    document.getElementById('prod-precio').focus();
-};
-
-// Cálculo inverso (Precio -> Ganancia)
-window.procesarCalculoPrecioManual = function(input) {
-    const p = evaluarCalculo(input.value);
-    const c = evaluarCalculo(document.getElementById('prod-costo').value);
-    if (c > 0) {
-        const ganancia = ((p - c) / c) * 100;
-        document.getElementById('prod-ganancia').value = ganancia.toFixed(1);
-    }
-    input.value = p.toFixed(2);
-    window.actualizarPrecioBs(p);
-};
+window.procesarCalculoCosto = (input) => { window.calcularPrecio(); document.getElementById('prod-ganancia').focus(); };
+window.procesarCalculoGanancia = (input) => { window.calcularPrecio(); document.getElementById('prod-precio').focus(); };
 
 window.guardarProducto = async function() {
     const sku = document.getElementById('prod-sku').value.trim();
@@ -98,28 +63,27 @@ window.guardarProducto = async function() {
         await setDoc(doc(db, "usuarios", USER_ID, "productos", sku), {
             sku: sku,
             nombre: document.getElementById('prod-nombre').value,
-            barras: document.getElementById('prod-barras').value,
             costo: parseFloat(document.getElementById('prod-costo').value || 0),
             ganancia: parseFloat(document.getElementById('prod-ganancia').value || 0),
             precio: parseFloat(document.getElementById('prod-precio').value || 0),
-            stock: parseInt(document.getElementById('prod-stock').value || 0),
             departamento: document.getElementById('prod-depto').value
         });
-        alert("¡Producto guardado!");
-        await iniciarFicha();
-        window.limpiarFormulario();
+        alert("¡Guardado!");
+        window.location.reload();
     } catch (e) { alert("Error: " + e.message); }
 };
 
-window.limpiarFormulario = () => {
-    document.getElementById('buscador-prod').value = "";
-    document.getElementById('prod-sku').value = "";
-    document.getElementById('prod-nombre').value = "";
-    document.getElementById('prod-barras').value = "";
-    document.getElementById('prod-costo').value = "";
-    document.getElementById('prod-ganancia').value = "";
-    document.getElementById('prod-precio').value = "";
-    document.getElementById('prod-precio-bs').value = "";
-    document.getElementById('prod-stock').value = "";
-    document.getElementById('prod-depto').value = "GENERAL";
-    document.getElementById('lista-resultados').style.display = 'none
+window.cargarProducto = (id) => {
+    const p = listaProductosGlobal.find(x => x.id === id);
+    if (!p) return;
+    document.getElementById('prod-sku').value = p.sku || "";
+    document.getElementById('prod-nombre').value = p.nombre || "";
+    document.getElementById('prod-costo').value = p.costo || 0;
+    document.getElementById('prod-ganancia').value = p.ganancia || 0;
+    document.getElementById('prod-precio').value = p.precio || 0;
+    document.getElementById('prod-depto').value = p.departamento || "GENERAL";
+    window.actualizarPrecioBs(p.precio || 0);
+    document.getElementById('lista-resultados').style.display = 'none';
+};
+
+document.addEventListener('DOMContentLoaded', iniciarFicha);
