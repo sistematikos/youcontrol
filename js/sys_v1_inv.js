@@ -3,22 +3,16 @@ import { collection, onSnapshot, doc, updateDoc, getDocs } from "https://www.gst
 
 const USER_ID = "YC-2026-001"; 
 const cuerpoTabla = document.getElementById('cuerpo-tabla');
+const mapaDeptos = {}; // Diccionario para guardar ID -> Nombre
 
-// --- FILTRO CORREGIDO ---
+// --- FILTRO ---
 window.filtrarPorDepto = () => {
     const select = document.getElementById('filtro-depto');
-    const valorFiltro = select.value.trim().toLowerCase(); // Usamos el VALUE ("001")
+    const valorFiltro = select.value.trim().toLowerCase();
     
     document.querySelectorAll('#cuerpo-tabla tr').forEach(tr => {
         const deptoFila = (tr.dataset.deptoId || "").trim().toLowerCase();
-        
-        console.log("Comparando fila:", deptoFila, "con filtro:", valorFiltro);
-
-        if (valorFiltro === "todos" || deptoFila === valorFiltro) {
-            tr.style.display = '';
-        } else {
-            tr.style.display = 'none';
-        }
+        tr.style.display = (valorFiltro === "todos" || deptoFila === valorFiltro) ? '' : 'none';
     });
 };
 
@@ -37,15 +31,14 @@ window.actualizarSoloStock = async (id, val) => {
 
 // --- INICIALIZACIÓN ---
 async function init() {
-    // 1. Cargar Departamentos
+    // 1. Cargar Departamentos y llenar el mapa
     const deptoSnap = await getDocs(collection(db, "usuarios", USER_ID, "departamentos"));
     const select = document.getElementById('filtro-depto');
     
     deptoSnap.forEach(d => {
-        // Asumimos que el documento tiene un ID (001, 002) y un nombre
-        const id = d.id; 
         const nombre = d.data().nombre;
-        select.innerHTML += `<option value="${id}">${nombre}</option>`;
+        mapaDeptos[d.id] = nombre; // Guardamos en el diccionario
+        select.innerHTML += `<option value="${d.id}">${nombre.toUpperCase()}</option>`;
     });
 
     // 2. Cargar Productos
@@ -55,18 +48,20 @@ async function init() {
             const p = d.data();
             const tr = document.createElement('tr');
             
-            // Aquí es donde vinculamos el ID del depto a la fila
-            tr.dataset.deptoId = p.departamento || ''; 
+            const deptoId = p.departamento || '';
+            tr.dataset.deptoId = deptoId; 
             
-            // ... dentro de onSnapshot, en el bucle snap.forEach ...
+            // Usamos el mapa para mostrar el nombre bonito en la celda
+            const nombreDeptoMostrado = mapaDeptos[deptoId] || 'GENERAL';
+            
             tr.innerHTML = `
-               <td>${p.nombre || 'Sin nombre'}</td>
-               <td>${tr.dataset.deptoId || 'GENERAL'}</td>
-               <td>$${parseFloat(p.costo || 0).toFixed(2)}</td>
-               <td style="color: #10B981; font-weight: bold;">${p.ganancia || 0}%</td>
-               <td>$${parseFloat(p.precio || 0).toFixed(2)}</td>
-               <td><input type="number" class="input-stock" value="${p.stock || 0}" 
-                   onchange="window.actualizarSoloStock('${d.id}', this.value)"></td>
+                <td>${p.nombre || 'Sin nombre'}</td>
+                <td>${nombreDeptoMostrado}</td>
+                <td>$${parseFloat(p.costo || 0).toFixed(2)}</td>
+                <td style="color: #10B981; font-weight: bold;">${p.ganancia || 0}%</td>
+                <td>$${parseFloat(p.precio || 0).toFixed(2)}</td>
+                <td><input type="number" class="input-stock" value="${p.stock || 0}" 
+                    onchange="window.actualizarSoloStock('${d.id}', this.value)"></td>
             `;
             cuerpoTabla.appendChild(tr);
         });
