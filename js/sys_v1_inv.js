@@ -5,12 +5,28 @@ import { collection, onSnapshot, doc, updateDoc, getDocs, getDoc } from "https:/
 const USER_ID = "YC-2026-001"; 
 const cuerpoTabla = document.getElementById('cuerpo-tabla');
 
-// --- FILTRO ---
 window.filtrarPorDepto = () => {
-    const val = document.getElementById('filtro-depto').value.toLowerCase();
-    document.querySelectorAll('#cuerpo-tabla tr').forEach(tr => {
-        const depto = tr.dataset.depto.toLowerCase();
-        tr.style.display = (val === "todos" || depto === val) ? '' : 'none';
+    // Obtenemos el valor seleccionado
+    const select = document.getElementById('filtro-depto');
+    const val = select.value.trim().toLowerCase();
+    
+    // Obtenemos todas las filas
+    const filas = document.querySelectorAll('#cuerpo-tabla tr');
+    
+    console.log("Filtrando por:", val); // Para depurar en consola (F12)
+
+    filas.forEach(tr => {
+        // Obtenemos el depto guardado en el dataset de la fila
+        const deptoFila = (tr.dataset.depto || "").trim().toLowerCase();
+        
+        console.log("Comparando fila:", deptoFila, "con filtro:", val);
+
+        // Si es "todos" o coinciden, mostramos; si no, ocultamos
+        if (val === "todos" || deptoFila === val) {
+            tr.style.display = '';
+        } else {
+            tr.style.display = 'none';
+        }
     });
 };
 
