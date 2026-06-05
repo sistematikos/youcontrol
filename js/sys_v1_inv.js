@@ -4,14 +4,21 @@ import { collection, onSnapshot, doc, updateDoc, getDocs } from "https://www.gst
 const USER_ID = "YC-2026-001"; 
 const cuerpoTabla = document.getElementById('cuerpo-tabla');
 
-// --- FILTRO INTELIGENTE ---
+// --- FILTRO CORREGIDO ---
 window.filtrarPorDepto = () => {
     const select = document.getElementById('filtro-depto');
-    const valorFiltro = select.options[select.selectedIndex].text.toLowerCase();
+    const valorFiltro = select.value.trim().toLowerCase(); // Usamos el VALUE ("001")
     
     document.querySelectorAll('#cuerpo-tabla tr').forEach(tr => {
-        const deptoFila = tr.dataset.nombreDepto.toLowerCase();
-        tr.style.display = (select.value === "TODOS" || deptoFila === valorFiltro) ? '' : 'none';
+        const deptoFila = (tr.dataset.deptoId || "").trim().toLowerCase();
+        
+        console.log("Comparando fila:", deptoFila, "con filtro:", valorFiltro);
+
+        if (valorFiltro === "todos" || deptoFila === valorFiltro) {
+            tr.style.display = '';
+        } else {
+            tr.style.display = 'none';
+        }
     });
 };
 
@@ -30,12 +37,15 @@ window.actualizarSoloStock = async (id, val) => {
 
 // --- INICIALIZACIÓN ---
 async function init() {
-    // 1. Cargar Departamentos para el filtro
+    // 1. Cargar Departamentos
     const deptoSnap = await getDocs(collection(db, "usuarios", USER_ID, "departamentos"));
     const select = document.getElementById('filtro-depto');
+    
     deptoSnap.forEach(d => {
-        const nombre = d.data().nombre; // Asumimos que aquí dice "MOTOS"
-        select.innerHTML += `<option value="${nombre}">${nombre}</option>`;
+        // Asumimos que el documento tiene un ID (001, 002) y un nombre
+        const id = d.id; 
+        const nombre = d.data().nombre;
+        select.innerHTML += `<option value="${id}">${nombre}</option>`;
     });
 
     // 2. Cargar Productos
@@ -44,12 +54,13 @@ async function init() {
         snap.forEach(d => {
             const p = d.data();
             const tr = document.createElement('tr');
-            // Guardamos el nombre del departamento en el atributo de datos
-            tr.dataset.nombreDepto = p.departamento || 'GENERAL';
+            
+            // Aquí es donde vinculamos el ID del depto a la fila
+            tr.dataset.deptoId = p.departamento || ''; 
             
             tr.innerHTML = `
                 <td>${p.nombre || 'Sin nombre'}</td>
-                <td>${tr.dataset.nombreDepto}</td>
+                <td>${p.departamento || 'N/A'}</td>
                 <td>$${parseFloat(p.costo || 0).toFixed(2)}</td>
                 <td>$${parseFloat(p.precio || 0).toFixed(2)}</td>
                 <td><input type="number" class="input-stock" value="${p.stock || 0}" 
