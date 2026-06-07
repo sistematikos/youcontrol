@@ -1,139 +1,124 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * Módulo: Ficha de Producto unificada (Funcionalidad Completa)
+ * Módulo: Gestión de Clientes (Completo)
  */
 
 import { db } from './firebase-config.js';
-import { collection, getDocs, doc, setDoc, query, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, onSnapshot, doc, deleteDoc, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const USER_ID = localStorage.getItem('youcontrol_empresa_id');
-let listaProductosGlobal = [];
-let indiceRes = -1;
-let tasaBCV = 1.00;
+const ID_LICENCIA = localStorage.getItem('youcontrol_empresa_id');
+let clientesMaster = []; // Lista global accesible por todas las funciones
 
-async function iniciarFicha() {
-    if (!USER_ID) return;
-    try {
-        const userDoc = await getDoc(doc(db, "usuarios", USER_ID));
-        if (userDoc.exists()) tasaBCV = parseFloat(userDoc.data().tasa_bcv) || 1.00;
-    } catch (e) { console.error("Error tasa:", e); }
+// 1. CARGA INICIAL Y EVENTOS
+document.addEventListener('DOMContentLoaded', () => {
+    const formCliente = document.getElementById('form-cliente');
+    const tablaClientes = document.getElementById('tabla-clientes');
+    const inputBuscar = document.getElementById('buscar-cliente'); // Si tienes un buscador extra
+    const btnCancelar = document.getElementById('btn-cancelar-edicion');
+    const formTitle = document.getElementById('form-title');
+    const btnGuardar = document.getElementById('btn-guardar-cliente');
+    const inputCodigo = document.getElementById('cl-codigo');
+    const inputNombre = document.getElementById('cl-nombre');
+    const aviso = document.getElementById('aviso-no-registrado');
 
-    const snapDeptos = await getDocs(query(collection(db, "usuarios", USER_ID, "departamentos")));
-    const deptoSelect = document.getElementById('prod-depto');
-    deptoSelect.innerHTML = '<option value="GENERAL">GENERAL</option>';
-    snapDeptos.forEach(d => {
-        deptoSelect.innerHTML += `<option value="${d.id}">${d.data().nombre.toUpperCase()}</option>`;
-    });
-
-    const snapProds = await getDocs(collection(db, "usuarios", USER_ID, "productos"));
-    listaProductosGlobal = snapProds.docs.map(d => ({ id: d.id, ...d.data() }));
-}
-
-function evaluarCalculo(str) {
-    let s = str.toString().replace(/,/g, '.');
-    if (s.includes('+') && s.includes('%')) {
-        const partes = s.split('+');
-        const base = parseFloat(partes[0]);
-        const porcentaje = parseFloat(partes[1].replace('%', ''));
-        return base + (base * (porcentaje / 100));
-    }
-    try { return eval(s) || 0; } catch (e) { return parseFloat(s) || 0; }
-}
-
-window.actualizarPrecioBs = function(precioUsd) {
-    const inputBs = document.getElementById('prod-precio-bs');
-    if (inputBs) inputBs.value = (precioUsd * tasaBCV).toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-};
-
-window.calcularPrecio = function() {
-    let costo = evaluarCalculo(document.getElementById('prod-costo').value);
-    let ganancia = evaluarCalculo(document.getElementById('prod-ganancia').value);
-    let precio = costo + (costo * (ganancia / 100));
-    document.getElementById('prod-precio').value = precio.toFixed(2);
-    window.actualizarPrecioBs(precio);
-};
-
-window.procesarCalculoCosto = (input) => { input.value = evaluarCalculo(input.value).toFixed(2); window.calcularPrecio(); document.getElementById('prod-ganancia').focus(); };
-window.procesarCalculoGanancia = (input) => { input.value = evaluarCalculo(input.value).toFixed(1); window.calcularPrecio(); document.getElementById('prod-precio').focus(); };
-window.procesarCalculoPrecioManual = (input) => {
-    const p = evaluarCalculo(input.value);
-    const c = evaluarCalculo(document.getElementById('prod-costo').value);
-    if (c > 0) document.getElementById('prod-ganancia').value = (((p - c) / c) * 100).toFixed(1);
-    input.value = p.toFixed(2);
-    window.actualizarPrecioBs(p);
-};
-
-window.guardarProducto = async function() {
-    const sku = document.getElementById('prod-sku').value.trim();
-    if (!sku) return alert("El SKU es obligatorio.");
-    try {
-        await setDoc(doc(db, "usuarios", USER_ID, "productos", sku), {
-            sku: sku,
-            nombre: document.getElementById('prod-nombre').value,
-            barras: document.getElementById('prod-barras').value,
-            costo: parseFloat(document.getElementById('prod-costo').value || 0),
-            ganancia: parseFloat(document.getElementById('prod-ganancia').value || 0),
-            precio: parseFloat(document.getElementById('prod-precio').value || 0),
-            stock: parseInt(document.getElementById('prod-stock').value || 0),
-            departamento: document.getElementById('prod-depto').value
+    // Escuchar clientes en tiempo real
+    if (ID_LICENCIA) {
+        onSnapshot(collection(db, "usuarios", ID_LICENCIA, "clientes"), (snapshot) => {
+            clientesMaster = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderizarTabla(clientesMaster);
         });
-        alert("¡Producto guardado!");
-        window.limpiarFormulario();
-        const b = document.getElementById('buscador-prod');
-        b.focus(); b.select();
-    } catch (e) { alert("Error: " + e.message); }
-};
+    }
 
-window.limpiarFormulario = () => {
-    ["prod-sku", "prod-nombre", "prod-barras", "prod-costo", "prod-ganancia", "prod-precio", "prod-precio-bs", "prod-stock", "buscador-prod"].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = "";
-    });
-    document.getElementById('prod-depto').value = "GENERAL";
-    document.getElementById('lista-resultados').style.display = 'none';
-};
-
-document.getElementById('buscador-prod').addEventListener('input', (e) => {
-    const term = e.target.value.toLowerCase();
-    const lista = document.getElementById('lista-resultados');
-    indiceRes = -1;
-    if (term.length < 2) { lista.style.display = 'none'; return; }
-    const filtrados = listaProductosGlobal.filter(p => p.nombre?.toLowerCase().includes(term) || p.sku?.toLowerCase().includes(term));
-    lista.style.display = 'block';
-    lista.innerHTML = filtrados.map((p, i) => `<div class="item-res" id="res-${i}" onclick="window.cargarProducto('${p.id}')">${p.nombre} (SKU: ${p.sku})</div>`).join('');
-});
-
-document.getElementById('buscador-prod').addEventListener('keydown', (e) => {
-    const lista = document.getElementById('lista-resultados');
-    const items = lista.querySelectorAll('.item-res');
-    if (e.key === 'ArrowDown' && indiceRes < items.length - 1) { indiceRes++; items.forEach((it, i) => it.style.background = (i === indiceRes) ? '#F1F5F9' : 'white'); }
-    else if (e.key === 'ArrowUp' && indiceRes > 0) { indiceRes--; items.forEach((it, i) => it.style.background = (i === indiceRes) ? '#F1F5F9' : 'white'); }
-    else if (e.key === 'Enter') {
-        e.preventDefault();
-        const term = document.getElementById('buscador-prod').value.trim();
-        if (indiceRes >= 0 && items[indiceRes]) items[indiceRes].click();
-        else {
-            const encontrado = listaProductosGlobal.find(p => p.sku === term || p.barras === term);
-            if (encontrado) window.cargarProducto(encontrado.id);
-            else { alert("⚠️ CÓDIGO NO REGISTRADO"); window.limpiarFormulario(); document.getElementById('prod-sku').value = term; document.getElementById('buscador-prod').value = term; document.getElementById('prod-nombre').focus(); }
+    // Buscador Inteligente (Enter en Código)
+    inputCodigo.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const codigoBuscado = inputCodigo.value.trim().toUpperCase();
+            const cliente = clientesMaster.find(c => c.codigo?.toUpperCase() === codigoBuscado);
+            if (cliente) {
+                aviso.style.display = 'none';
+                window.cargarDatosCliente(cliente);
+            } else {
+                aviso.style.display = 'block';
+                inputNombre.focus();
+            }
         }
+    });
+
+    // Guardar / Actualizar
+    formCliente.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const codigo = document.getElementById('cl-codigo').value.trim().toUpperCase();
+        const nombre = document.getElementById('cl-nombre').value.trim().toUpperCase();
+        const rif = document.getElementById('cl-rif').value.trim().toUpperCase();
+        const telefono = document.getElementById('cl-telefono').value.trim();
+        const direccion = document.getElementById('cl-direccion').value.trim().toUpperCase();
+
+        if (!codigo) { alert("El código es obligatorio."); return; }
+
+        try {
+            await setDoc(doc(db, "usuarios", ID_LICENCIA, "clientes", codigo), {
+                codigo, nombre, rif, telefono, direccion,
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+            alert("✅ Operación exitosa");
+            cancelarEdicion();
+        } catch (e) { alert("Error al guardar: " + e.message); }
+    });
+
+    // Cancelar
+    function cancelarEdicion() {
+        formCliente.reset();
+        inputCodigo.readOnly = false;
+        if(aviso) aviso.style.display = 'none';
+        if(formTitle) formTitle.innerHTML = `<i class="fas fa-user-plus"></i> Ficha Cliente`;
+        if(btnCancelar) btnCancelar.style.display = 'none';
+        if(btnGuardar) btnGuardar.innerHTML = `GUARDAR CLIENTE`;
+        inputCodigo.focus();
+    }
+    if(btnCancelar) btnCancelar.addEventListener('click', cancelarEdicion);
+
+    // Renderizado de tabla
+    function renderizarTabla(lista) {
+        if (!tablaClientes) return;
+        tablaClientes.innerHTML = lista.map(c => `
+            <tr>
+                <td>${c.codigo}</td>
+                <td><b>${c.nombre}</b></td>
+                <td>${c.rif || '-'}</td>
+                <td>
+                    <button class="btn-table" onclick="window.prepararEdicion('${c.id}')"><i class="fas fa-edit"></i></button>
+                    <button class="btn-table" onclick="window.eliminarCliente('${c.id}')"><i class="fas fa-trash"></i></button>
+                </td>
+            </tr>
+        `).join('');
     }
 });
 
-window.cargarProducto = (id) => {
-    const p = listaProductosGlobal.find(x => x.id === id);
-    if (!p) return;
-    document.getElementById('prod-sku').value = p.sku || "";
-    document.getElementById('prod-nombre').value = p.nombre || "";
-    document.getElementById('prod-barras').value = p.barras || "";
-    document.getElementById('prod-costo').value = p.costo || 0;
-    document.getElementById('prod-ganancia').value = p.ganancia || 0;
-    document.getElementById('prod-precio').value = p.precio || 0;
-    document.getElementById('prod-stock').value = p.stock !== undefined ? p.stock : "";
-    document.getElementById('prod-depto').value = p.departamento || "GENERAL";
-    window.actualizarPrecioBs(parseFloat(p.precio || 0));
-    document.getElementById('lista-resultados').style.display = 'none';
+// 2. FUNCIONES GLOBALES (Exponemos al objeto window para el HTML)
+window.cargarDatosCliente = (cl) => {
+    document.getElementById('cl-codigo').value = cl.codigo;
+    document.getElementById('cliente-id').value = cl.id;
+    document.getElementById('cl-nombre').value = cl.nombre;
+    document.getElementById('cl-rif').value = cl.rif || '';
+    document.getElementById('cl-telefono').value = cl.telefono || '';
+    document.getElementById('cl-direccion').value = cl.direccion || '';
+    document.getElementById('cl-codigo').readOnly = true;
+    
+    const btnGuardar = document.getElementById('btn-guardar-cliente');
+    const btnCancelar = document.getElementById('btn-cancelar-edicion');
+    if(btnGuardar) btnGuardar.innerHTML = `<i class="fas fa-sync-alt"></i> ACTUALIZAR`;
+    if(btnCancelar) btnCancelar.style.display = 'block';
+    document.getElementById('cl-nombre').focus();
 };
 
-document.addEventListener('keydown', (e) => { if (e.key === 'F9') { e.preventDefault(); window.guardarProducto(); } });
-document.addEventListener('DOMContentLoaded', iniciarFicha);
+window.prepararEdicion = (id) => {
+    const c = clientesMaster.find(x => x.id === id);
+    if (c) window.cargarDatosCliente(c);
+};
+
+window.eliminarCliente = async (id) => {
+    if (confirm(`¿Eliminar este cliente?`)) {
+        await deleteDoc(doc(db, "usuarios", ID_LICENCIA, "clientes", id));
+    }
+};
