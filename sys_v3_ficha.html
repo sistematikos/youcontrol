@@ -7,50 +7,44 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #F1F5F9; --emerald: #10B981; }
-        body { font-family: 'Poppins', sans-serif; background: var(--bg); padding: 20px; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding: 20px; }
+        
+        /* Cabecera */
+        .header-panel { 
+            background: #ffffff; padding: 0 20px; border-radius: 12px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; 
+            display: flex; justify-content: space-between; align-items: center; 
+            max-width: 800px; margin: 0 auto 15px auto; height: 70px; 
+        }
+        .btn-back { background: #F1F5F9; color: #1E293B; padding: 8px 15px; border-radius: 8px; text-decoration: none; font-size: 0.8rem; font-weight: 700; border: 1px solid #E2E8F0; }
+        .logo-header { height: 50px; width: auto; }
+
+        /* Contenido */
         .card { background: white; padding: 25px; border-radius: 12px; max-width: 800px; margin: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.05); position: relative; }
         .grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         label { font-size: 0.8rem; font-weight: 600; color: #64748B; margin-bottom: 5px; display: block; }
         input, select { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #E2E8F0; border-radius: 8px; box-sizing: border-box; }
-        .btn-save { background: var(--emerald); color: white; padding: 15px; border: none; border-radius: 8px; width: 100%; font-weight: 800; cursor: pointer; transition: 0.3s; }
-        .btn-save:hover { background: #059669; }
+        .btn-save { background: var(--emerald); color: white; padding: 15px; border: none; border-radius: 8px; width: 100%; font-weight: 800; cursor: pointer; }
+        
         #lista-resultados { position: absolute; width: calc(100% - 50px); background: white; border: 1px solid #E2E8F0; border-radius: 0 0 8px 8px; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .item-res { padding: 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
         .item-res:hover { background: #F1F5F9; }
-
-        .header-panel { 
-    background: #ffffff; 
-    padding: 0 20px; 
-    border-radius: 12px; 
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
-    border: 1px solid #E2E8F0; 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    margin: 15px; /* Ajuste para dar espacio alrededor */
-    height: 70px; 
-}
-.btn-back { 
-    background: #F1F5F9; 
-    color: #1E293B; 
-    padding: 8px 15px; 
-    border-radius: 8px; 
-    text-decoration: none; 
-    font-size: 0.8rem; 
-    font-weight: 700; 
-    border: 1px solid #E2E8F0; 
-    transition: 0.2s;
-}
-.btn-back:hover { background: #E2E8F0; }
-.logo-header { 
-    height: 60px; /* Ajustado para que no se desborde */
-    width: auto; 
-    object-fit: contain; 
-}
-        
     </style>
 </head>
 <body>
+
+    <header class="header-panel">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <a href="sys_v1_menu.html" class="btn-back">
+                <i class="fas fa-arrow-left"></i> VOLVER
+            </a>
+            <h1 style="font-size: 1.2rem; margin: 0; font-weight: 700; color: #1E293B;">
+                PRODUCTOS TERMINADOS
+            </h1>
+        </div>
+        <img src="img/logo.png" class="logo-header" alt="Logo">
+    </header>
+
     <main class="card">
         <h2><i class="fas fa-edit"></i> Ficha Técnica</h2>
         <input type="text" id="buscador-prod" placeholder="Buscar por nombre o SKU..." autocomplete="off">
@@ -68,13 +62,10 @@
             <section>
                 <label>Costo USD</label>
                 <input type="text" id="prod-costo" onkeydown="if(event.key==='Enter') window.procesarCalculoCosto(this)">
-
                 <label>% Ganancia</label>
                 <input type="text" id="prod-ganancia" onkeydown="if(event.key==='Enter') window.procesarCalculoGanancia(this)">
-
                 <label>Precio USD</label>
                 <input type="text" id="prod-precio" onkeydown="if(event.key==='Enter') window.procesarCalculoPrecioManual(this)">
-                
                 <label>Precio Bs (Referencial)</label>
                 <input type="text" id="prod-precio-bs" disabled>
             </section>
@@ -84,15 +75,4 @@
 
     <script type="module" src="./js/sys_v3_ficha.js"></script>
 </body>
-    <header class="header-panel">
-    <div style="display: flex; align-items: center; gap: 15px;">
-        <a href="sys_v1_menu.html" class="btn-back">
-            <i class="fas fa-arrow-left"></i> VOLVER
-        </a>
-        <h1 style="font-size: 1.2rem; margin: 0; font-weight: 700; color: #1E293B;">
-            PRODUCTOS TERMINADOS
-        </h1>
-    </div>
-    <img src="img/logo.png" class="logo-header" alt="Logo">
-    </header>
 </html>
