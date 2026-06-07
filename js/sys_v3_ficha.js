@@ -88,12 +88,19 @@ window.guardarProducto = async function() {
             costo: parseFloat(document.getElementById('prod-costo').value || 0),
             ganancia: parseFloat(document.getElementById('prod-ganancia').value || 0),
             precio: parseFloat(document.getElementById('prod-precio').value || 0),
-            // Aseguramos que se guarde el stock como número, por defecto 0
             stock: parseInt(stockInput || 0),
             departamento: document.getElementById('prod-depto').value
         });
+        
         alert("¡Producto guardado correctamente!");
         window.limpiarFormulario();
+        
+        // --- AQUÍ ESTÁ EL CAMBIO ---
+        // Enviamos el cursor de vuelta al buscador para escanear el siguiente producto
+        const buscador = document.getElementById('buscador-prod');
+        buscador.focus();
+        buscador.select(); // Esto selecciona el texto anterior para que puedas escribir el nuevo encima
+        
     } catch (e) { 
         alert("Error al guardar: " + e.message); 
     }
