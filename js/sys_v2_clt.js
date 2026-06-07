@@ -5,23 +5,7 @@ const ID_LICENCIA = localStorage.getItem('youcontrol_empresa_id');
 let clientesMaster = [];
 let indiceRes = -1;
 
-// --- FUNCIONES GLOBALES (Definidas fuera para ser accesibles por los botones onclick) ---
-window.renderizarTabla = (lista) => {
-    const tabla = document.getElementById('tabla-clientes');
-    if (!tabla) return;
-    tabla.innerHTML = lista.map(c => `
-        <tr>
-            <td>${c.codigo}</td>
-            <td><b>${c.nombre}</b></td>
-            <td>${c.rif || '-'}</td>
-            <td>
-                <button class="btn-table" onclick="window.prepararEdicion('${c.id}')"><i class="fas fa-edit"></i></button>
-                <button class="btn-table" onclick="window.eliminarCliente('${c.id}')"><i class="fas fa-trash"></i></button>
-            </td>
-        </tr>
-    `).join('');
-};
-
+// --- FUNCIONES GLOBALES (Para el DOM) ---
 window.cargarDatosCliente = (c) => {
     document.getElementById('cliente-id').value = c.id;
     document.getElementById('cl-codigo').value = c.codigo;
@@ -34,6 +18,8 @@ window.cargarDatosCliente = (c) => {
     document.getElementById('btn-cancelar-edicion').style.display = 'block';
     document.getElementById('aviso-no-registrado').style.display = 'none';
     document.getElementById('cl-nombre').focus();
+    const list = document.getElementById('lista-resultados');
+    if(list) list.style.display = 'none';
 };
 
 window.prepararEdicion = (id) => {
@@ -49,16 +35,24 @@ window.eliminarCliente = async (id) => {
 document.addEventListener('DOMContentLoaded', () => {
     const formCliente = document.getElementById('form-cliente');
     const inputCodigo = document.getElementById('cl-codigo');
-    const inputBuscar = document.getElementById('buscar-cliente');
     const listaResultados = document.getElementById('lista-resultados');
 
-    // 1. Carga inicial
+    // 1. Carga de datos
     onSnapshot(collection(db, "usuarios", ID_LICENCIA, "clientes"), (snapshot) => {
         clientesMaster = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        window.renderizarTabla(clientesMaster);
+        const tabla = document.getElementById('tabla-clientes');
+        if(tabla) tabla.innerHTML = clientesMaster.map(c => `
+            <tr>
+                <td>${c.codigo}</td><td><b>${c.nombre}</b></td><td>${c.rif || '-'}</td>
+                <td>
+                    <button class="btn-table" onclick="window.prepararEdicion('${c.id}')"><i class="fas fa-edit"></i></button>
+                    <button class="btn-table" onclick="window.eliminarCliente('${c.id}')"><i class="fas fa-trash"></i></button>
+                </td>
+            </tr>
+        `).join('');
     });
 
-    // 2. Buscador inteligente (Input)
+    // 2. Buscador Dinámico
     inputCodigo.addEventListener('input', (e) => {
         const term = e.target.value.toLowerCase();
         indiceRes = -1;
@@ -69,61 +63,49 @@ document.addEventListener('DOMContentLoaded', () => {
         if (listaResultados && filtrados.length > 0) {
             listaResultados.style.display = 'block';
             listaResultados.innerHTML = filtrados.map((c, i) => `
-                <div class="item-res" id="res-${i}" onclick="window.cargarDatosCliente(clientesMaster.find(x=>x.id=='${c.id}')); listaResultados.style.display='none';" style="padding:10px; cursor:pointer;">
+                <div class="item-res" id="res-${i}" data-id="${c.id}" style="padding:10px; cursor:pointer; border-bottom:1px solid #eee;">
                     ${c.nombre} (Cod: ${c.codigo})
                 </div>
             `).join('');
+
+            // Agregar evento de click a cada resultado
+            document.querySelectorAll('.item-res').forEach(el => {
+                el.onclick = () => {
+                    const cliente = clientesMaster.find(x => x.id === el.dataset.id);
+                    if(cliente) window.cargarDatosCliente(cliente);
+                };
+            });
+        } else {
+            listaResultados.style.display = 'none';
         }
     });
 
-   // 3. NAVEGACIÓN CON TECLADO
+    // 3. Teclado
     inputCodigo.addEventListener('keydown', (e) => {
-        if (!listaResultados) return;
+        if (!listaResultados || listaResultados.style.display === 'none') return;
         const items = listaResultados.querySelectorAll('.item-res');
         
-        // Flecha Abajo
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            if (indiceRes < items.length - 1) {
-                indiceRes++;
-                actualizarSeleccion(items);
-            }
-        } 
-        // Flecha Arriba
-        else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            if (indiceRes > 0) {
-                indiceRes--;
-                actualizarSeleccion(items);
-            }
-        } 
-        // Enter
-        else if (e.key === 'Enter') {
+        if (e.key === 'ArrowDown' && indiceRes < items.length - 1) {
+            indiceRes++;
+            items.forEach((it, i) => it.style.background = (i === indiceRes) ? '#F1F5F9' : 'white');
+        } else if (e.key === 'ArrowUp' && indiceRes > 0) {
+            indiceRes--;
+            items.forEach((it, i) => it.style.background = (i === indiceRes) ? '#F1F5F9' : 'white');
+        } else if (e.key === 'Enter') {
             e.preventDefault();
             if (indiceRes >= 0 && items[indiceRes]) {
                 items[indiceRes].click();
             } else {
                 const term = inputCodigo.value.trim().toUpperCase();
                 const cliente = clientesMaster.find(c => c.codigo?.toUpperCase() === term);
-                if (cliente) {
-                    window.cargarDatosCliente(cliente);
-                    listaResultados.style.display = 'none';
-                } else {
+                if (cliente) window.cargarDatosCliente(cliente);
+                else {
                     document.getElementById('aviso-no-registrado').style.display = 'block';
                     document.getElementById('cl-nombre').focus();
                 }
             }
         }
     });
-
-    // Función auxiliar para resaltar visualmente
-    function actualizarSeleccion(items) {
-        items.forEach((it, i) => {
-            it.style.background = (i === indiceRes) ? '#F1F5F9' : 'white';
-        });
-        // Opcional: auto-scroll si la lista es muy larga
-        items[indiceRes].scrollIntoView({ block: 'nearest' });
-    }
 
     // 4. Guardar
     formCliente.addEventListener('submit', async (e) => {
@@ -138,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 direccion: document.getElementById('cl-direccion').value.trim().toUpperCase(),
                 updatedAt: serverTimestamp()
             }, { merge: true });
-            alert("✅ Guardado");
+            alert("✅ Operación exitosa");
             formCliente.reset();
             inputCodigo.readOnly = false;
         } catch (e) { alert("Error: " + e.message); }
