@@ -109,12 +109,35 @@ window.limpiarFormulario = () => {
     document.getElementById('lista-resultados').style.display = 'none';
 };
 
-// REEMPLAZA TU EVENTO 'keydown' DEL BUSCADOR POR ESTE:
+// 1. Lógica de filtrado visual (mientras escribes)
+document.getElementById('buscador-prod').addEventListener('input', (e) => {
+    const term = e.target.value.toLowerCase();
+    const lista = document.getElementById('lista-resultados');
+    indiceRes = -1;
+    
+    if (term.length < 2) { lista.style.display = 'none'; return; }
+    
+    const filtrados = listaProductosGlobal.filter(p => 
+        (p.nombre?.toLowerCase().includes(term) || p.sku?.toLowerCase().includes(term))
+    );
+    
+    if (filtrados.length > 0) {
+        lista.style.display = 'block';
+        lista.innerHTML = filtrados.map((p, i) => `
+            <div class="item-res" id="res-${i}" onclick="window.cargarProducto('${p.id}')" style="padding:10px; cursor:pointer;">
+                ${p.nombre} (SKU: ${p.sku})
+            </div>
+        `).join('');
+    } else {
+        lista.style.display = 'none';
+    }
+});
+
+// 2. Lógica de navegación y detección (al presionar teclas)
 document.getElementById('buscador-prod').addEventListener('keydown', (e) => {
     const lista = document.getElementById('lista-resultados');
     const items = lista.querySelectorAll('.item-res');
     
-    // Navegación con flechas
     if (e.key === 'ArrowDown' && indiceRes < items.length - 1) { 
         indiceRes++; 
         items.forEach((it, i) => it.style.background = (i === indiceRes) ? '#F1F5F9' : 'white'); 
@@ -123,26 +146,22 @@ document.getElementById('buscador-prod').addEventListener('keydown', (e) => {
         indiceRes--; 
         items.forEach((it, i) => it.style.background = (i === indiceRes) ? '#F1F5F9' : 'white'); 
     } 
-    // Lógica al presionar ENTER
     else if (e.key === 'Enter') {
         e.preventDefault();
         const term = document.getElementById('buscador-prod').value.trim();
         
         if (indiceRes >= 0 && items[indiceRes]) {
-            // Caso 1: El usuario seleccionó un resultado con las flechas
             items[indiceRes].click();
         } else {
-            // Caso 2: El usuario escaneó/escribió y presionó Enter
             const encontrado = listaProductosGlobal.find(p => p.sku === term || p.barras === term);
             if (encontrado) {
                 window.cargarProducto(encontrado.id);
             } else {
-                // AQUÍ LA LÓGICA: Producto nuevo
                 alert("⚠️ CÓDIGO NO REGISTRADO");
                 window.limpiarFormulario();
                 document.getElementById('prod-sku').value = term;
                 document.getElementById('buscador-prod').value = term;
-                document.getElementById('prod-nombre').focus(); // Salta a nombre para completar
+                document.getElementById('prod-nombre').focus();
             }
         }
     }
