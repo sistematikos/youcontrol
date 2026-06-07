@@ -76,24 +76,54 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 3. Teclado
+   // 3. NAVEGACIÓN CON TECLADO
     inputCodigo.addEventListener('keydown', (e) => {
         if (!listaResultados) return;
         const items = listaResultados.querySelectorAll('.item-res');
         
-        if (e.key === 'Enter') {
+        // Flecha Abajo
+        if (e.key === 'ArrowDown') {
             e.preventDefault();
-            const term = inputCodigo.value.trim().toUpperCase();
-            const cliente = clientesMaster.find(c => c.codigo?.toUpperCase() === term);
-            if (cliente) {
-                window.cargarDatosCliente(cliente);
-                listaResultados.style.display = 'none';
+            if (indiceRes < items.length - 1) {
+                indiceRes++;
+                actualizarSeleccion(items);
+            }
+        } 
+        // Flecha Arriba
+        else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (indiceRes > 0) {
+                indiceRes--;
+                actualizarSeleccion(items);
+            }
+        } 
+        // Enter
+        else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (indiceRes >= 0 && items[indiceRes]) {
+                items[indiceRes].click();
             } else {
-                document.getElementById('aviso-no-registrado').style.display = 'block';
-                document.getElementById('cl-nombre').focus();
+                const term = inputCodigo.value.trim().toUpperCase();
+                const cliente = clientesMaster.find(c => c.codigo?.toUpperCase() === term);
+                if (cliente) {
+                    window.cargarDatosCliente(cliente);
+                    listaResultados.style.display = 'none';
+                } else {
+                    document.getElementById('aviso-no-registrado').style.display = 'block';
+                    document.getElementById('cl-nombre').focus();
+                }
             }
         }
     });
+
+    // Función auxiliar para resaltar visualmente
+    function actualizarSeleccion(items) {
+        items.forEach((it, i) => {
+            it.style.background = (i === indiceRes) ? '#F1F5F9' : 'white';
+        });
+        // Opcional: auto-scroll si la lista es muy larga
+        items[indiceRes].scrollIntoView({ block: 'nearest' });
+    }
 
     // 4. Guardar
     formCliente.addEventListener('submit', async (e) => {
