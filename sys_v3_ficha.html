@@ -17,6 +17,37 @@
         #lista-resultados { position: absolute; width: calc(100% - 50px); background: white; border: 1px solid #E2E8F0; border-radius: 0 0 8px 8px; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .item-res { padding: 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
         .item-res:hover { background: #F1F5F9; }
+
+        .header-panel { 
+    background: #ffffff; 
+    padding: 0 20px; 
+    border-radius: 12px; 
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+    border: 1px solid #E2E8F0; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin: 15px; /* Ajuste para dar espacio alrededor */
+    height: 70px; 
+}
+.btn-back { 
+    background: #F1F5F9; 
+    color: #1E293B; 
+    padding: 8px 15px; 
+    border-radius: 8px; 
+    text-decoration: none; 
+    font-size: 0.8rem; 
+    font-weight: 700; 
+    border: 1px solid #E2E8F0; 
+    transition: 0.2s;
+}
+.btn-back:hover { background: #E2E8F0; }
+.logo-header { 
+    height: 60px; /* Ajustado para que no se desborde */
+    width: auto; 
+    object-fit: contain; 
+}
+        
     </style>
 </head>
 <body>
@@ -53,4 +84,15 @@
 
     <script type="module" src="./js/sys_v3_ficha.js"></script>
 </body>
+    <header class="header-panel">
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <a href="sys_v1_menu.html" class="btn-back">
+            <i class="fas fa-arrow-left"></i> VOLVER
+        </a>
+        <h1 style="font-size: 1.2rem; margin: 0; font-weight: 700; color: #1E293B;">
+            PRODUCTOS TERMINADOS
+        </h1>
+    </div>
+    <img src="img/logo.png" class="logo-header" alt="Logo">
+    </header>
 </html>
