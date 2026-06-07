@@ -24,8 +24,16 @@
 
         /* TARJETAS */
         .main-layout { display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
-        .card { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); border-left: 6px solid var(--sky); }
+        .card { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); border-left: 6px solid var(--sky); position: relative; }
         h3 { margin-top: 0; font-size: 1rem; margin-bottom: 15px; }
+
+        /* BUSCADOR INTELIGENTE (Contenedor) */
+        #lista-resultados { 
+            position: absolute; width: 310px; background: white; border: 1px solid var(--border); 
+            border-radius: 0 0 8px 8px; z-index: 1000; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+        }
+        .item-res { padding: 10px; cursor: pointer; font-size: 0.85rem; }
+        .item-res:hover { background-color: #F1F5F9; }
 
         /* FORMULARIO */
         .form-group { margin-bottom: 15px; }
@@ -60,7 +68,8 @@
                     
                     <div class="form-group">
                         <label>Código del Cliente</label>
-                        <input type="text" id="cl-codigo" placeholder="Ej: CLT-001" required>
+                        <input type="text" id="cl-codigo" placeholder="Ej: CLT-001" required autocomplete="off">
+                        <div id="lista-resultados"></div>
                         <div id="aviso-no-registrado"><i class="fas fa-exclamation-circle"></i> Código no registrado</div>
                     </div>
 
