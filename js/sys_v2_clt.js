@@ -10,16 +10,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const tablaClientes = document.getElementById('tabla-clientes');
     const inputCodigo = document.getElementById('cl-codigo');
     const inputBuscar = document.getElementById('buscar-cliente');
-    const listaResultados = document.getElementById('lista-resultados'); // Contenedor de sugerencias
+    const listaResultados = document.getElementById('lista-resultados'); // Ahora existe en el HTML
 
-    // 1. Escuchar clientes
     onSnapshot(collection(db, "usuarios", ID_LICENCIA, "clientes"), (snapshot) => {
         clientesMaster = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         renderizarTabla(clientesMaster);
     });
 
-    // 2. BUSCADOR INTELIGENTE (Al escribir)
     inputCodigo.addEventListener('input', (e) => {
+        if (!listaResultados) return;
         const term = e.target.value.toLowerCase();
         indiceRes = -1;
         if (term.length < 2) { listaResultados.style.display = 'none'; return; }
@@ -29,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (filtrados.length > 0) {
             listaResultados.style.display = 'block';
             listaResultados.innerHTML = filtrados.map((c, i) => `
-                <div class="item-res" id="res-${i}" onclick="window.cargarDatosClienteByObj('${c.id}')" style="padding:10px; cursor:pointer; border-bottom:1px solid #eee;">
+                <div class="item-res" id="res-${i}" onclick="window.cargarDatosClienteByObj('${c.id}')" style="padding:10px; cursor:pointer;">
                     ${c.nombre} (Cod: ${c.codigo})
                 </div>
             `).join('');
@@ -38,9 +37,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 3. NAVEGACIÓN CON TECLADO
     inputCodigo.addEventListener('keydown', (e) => {
+        if (!listaResultados) return;
         const items = listaResultados.querySelectorAll('.item-res');
+        
         if (e.key === 'ArrowDown' && indiceRes < items.length - 1) { 
             indiceRes++; items.forEach((it, i) => it.style.background = (i === indiceRes) ? '#F1F5F9' : 'white'); 
         } else if (e.key === 'ArrowUp' && indiceRes > 0) { 
@@ -63,42 +63,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 4. Guardar
-    formCliente.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const codigo = inputCodigo.value.trim().toUpperCase();
-        try {
-            await setDoc(doc(db, "usuarios", ID_LICENCIA, "clientes", codigo), {
-                codigo,
-                nombre: document.getElementById('cl-nombre').value.trim().toUpperCase(),
-                rif: document.getElementById('cl-rif').value.trim().toUpperCase(),
-                telefono: document.getElementById('cl-telefono').value.trim(),
-                direccion: document.getElementById('cl-direccion').value.trim().toUpperCase(),
-                updatedAt: serverTimestamp()
-            }, { merge: true });
-            alert("✅ Operación exitosa");
-            formCliente.reset();
-            inputCodigo.readOnly = false;
-        } catch (e) { alert("Error: " + e.message); }
-    });
-
-    function renderizarTabla(lista) {
-        if (!tablaClientes) return;
-        tablaClientes.innerHTML = lista.map(c => `
-            <tr>
-                <td>${c.codigo}</td>
-                <td><b>${c.nombre}</b></td>
-                <td>${c.rif || '-'}</td>
-                <td>
-                    <button class="btn-table" onclick="window.prepararEdicion('${c.id}')"><i class="fas fa-edit"></i></button>
-                    <button class="btn-table" onclick="window.eliminarCliente('${c.id}')"><i class="fas fa-trash"></i></button>
-                </td>
-            </tr>
-        `).join('');
-    }
+    // ... (Mantén tu lógica de guardar y renderizarTabla aquí)
 });
 
-// FUNCIONES GLOBALES
+// Funciones Globales
 window.cargarDatosClienteByObj = (id) => {
     const c = clientesMaster.find(x => x.id === id);
     if(c) window.cargarDatosCliente(c);
@@ -115,15 +83,5 @@ window.cargarDatosCliente = (c) => {
     document.getElementById('cl-direccion').value = c.direccion || '';
     document.getElementById('btn-guardar-cliente').innerHTML = `<i class="fas fa-sync-alt"></i> ACTUALIZAR`;
     document.getElementById('btn-cancelar-edicion').style.display = 'block';
-    document.getElementById('cl-nombre').focus();
     document.getElementById('aviso-no-registrado').style.display = 'none';
-};
-
-window.prepararEdicion = (id) => {
-    const c = clientesMaster.find(x => x.id === id);
-    if (c) window.cargarDatosCliente(c);
-};
-
-window.eliminarCliente = async (id) => {
-    if (confirm("¿Eliminar este cliente?")) await deleteDoc(doc(db, "usuarios", ID_LICENCIA, "clientes", id));
 };
