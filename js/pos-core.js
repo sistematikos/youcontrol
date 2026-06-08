@@ -98,7 +98,10 @@ window.agregarCarrito = (id) => {
 window.registrarVenta = async () => {
     if (carrito.length === 0) return alert("El carrito está vacío.");
     try {
+        // 1. Obtenemos el número que le toca a esta venta (sin cambiar el contador en BD aún)
+        // O mejor: usamos una transacción para asegurar que el nro sea único y se incremente
         const nroFactura = await obtenerSiguienteNumero(USER_ID);
+        
         const nombreParaGuardar = window.nombreClienteSeleccionado || document.getElementById('buscar-cliente-pos')?.value || "Anónimo";
 
         const ventaData = {
@@ -114,26 +117,31 @@ window.registrarVenta = async () => {
                 divisas_usd: parseFloat(document.getElementById('in-divisas-usd')?.value) || 0
             },
             fecha: serverTimestamp(),
-            nro_factura: nroFactura
+            nro_factura: nroFactura // Guardamos el número que nos devolvió la transacción
         };
 
+        // 2. Guardamos la venta
         await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
 
+        // 3. Descontamos inventario
         for (const item of carrito) {
             const productoRef = doc(db, "usuarios", USER_ID, "productos", item.id);
             await updateDoc(productoRef, { stock: increment(-item.cantidad) });
         }
 
         alert("✅ Venta registrada: " + nroFactura);
+        
+        // 4. Limpiamos estado
         carrito = [];
         window.clienteSeleccionadoID = null;
         window.nombreClienteSeleccionado = null;
         document.getElementById('modalPago').style.display = 'none';
         window.actualizarCarritoUI();
         
-        // Actualizar UI para la próxima venta (Número actual + 1)
-        const proximo = (parseInt(nroFactura) + 1).toString().padStart(6, '0');
-        document.getElementById('factura-display').innerText = `FACTURA: ${proximo}`;
+        // 5. Actualizamos la pantalla con el número que tocará para la SIGUIENTE venta
+        // Como nroFactura es string "000001", al sumar 1 y hacer padStart queda "000002"
+        const siguiente = (parseInt(nroFactura) + 1).toString().padStart(6, '0');
+        document.getElementById('factura-display').innerText = `FACTURA: ${siguiente}`;
 
     } catch (error) {
         console.error("Error al guardar:", error);
@@ -171,15 +179,21 @@ window.manejarNavegacion = (e, contenedorId, indiceVar) => {
     return indiceVar;
 };
 
+// --- INICIALIZACIÓN FINAL ---
 document.addEventListener('DOMContentLoaded', async () => {
     await cargarConfiguracionGlobal();
     
-    // Cargar número actual sin incrementar
+    // Solo leemos el valor guardado y lo mostramos.
+    // Si el último registrado fue 000005, mostrará 000005, no 000006.
     const contadorRef = doc(db, "usuarios", USER_ID, "config", "contador_facturas");
     const snap = await getDoc(contadorRef);
     const ultimo = snap.exists() ? snap.data().ultimo : 0;
+    
     const elFactura = document.getElementById('factura-display');
-    if (elFactura) elFactura.innerText = `FACTURA: ${(ultimo + 1).toString().padStart(6, '0')}`;
+    if (elFactura) {
+        // Mostramos el número guardado tal cual
+        elFactura.innerText = `FACTURA: ${ultimo.toString().padStart(6, '0')}`;
+    }
 
     inicializarClientes();
     inicializarProductos();
