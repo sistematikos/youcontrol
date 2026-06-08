@@ -2,60 +2,95 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Control P2P: Lógica de Inventario</title>
+    <title>Control P2P Profesional</title>
     <style>
         body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
         .container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         label { display: block; font-size: 0.85em; font-weight: bold; margin-top: 10px; }
         input { width: 100%; padding: 8px; margin-top: 4px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; margin-top: 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; background: #2563eb; color: white; }
-        .res { margin-top: 25px; padding: 20px; background: #f0fdf4; border: 2px solid #22c55e; border-radius: 5px; display: none; }
+        button { width: 100%; padding: 12px; margin-top: 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-calc { background: #2563eb; color: white; }
+        .btn-clear { background: #dc2626; color: white; margin-top: 10px; }
+        .resultado { margin-top: 25px; padding: 20px; background: #f0fdf4; border: 2px solid #22c55e; border-radius: 5px; display: none; }
+        .res-table { width: 100%; border-collapse: collapse; }
+        .res-table td { padding: 8px; border: 1px solid #eee; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Control P2P: Lógica de Flujo</h2>
+        <h2>Control P2P: Ganancia Real</h2>
         <div class="grid">
             <div>
                 <h3>Inicio</h3>
-                <input type="number" id="iUsdt" placeholder="USDT">
-                <input type="number" id="iVzla" placeholder="Vzla">
-                <input type="number" id="iBanesco" placeholder="Banesco">
-                <input type="number" id="iTasa" placeholder="Tasa Compra">
+                <label>USDT:</label> <input type="number" id="iUsdt" step="any">
+                <label>Vzla:</label> <input type="number" id="iVzla" step="any">
+                <label>Banesco:</label> <input type="number" id="iBanesco" step="any">
+                <label>Tasa Compra:</label> <input type="number" id="iTasa" step="any">
             </div>
             <div>
                 <h3>Cierre</h3>
-                <input type="number" id="fUsdt" placeholder="USDT">
-                <input type="number" id="fVzla" placeholder="Vzla">
-                <input type="number" id="fBanesco" placeholder="Banesco">
-                <input type="number" id="fTasa" placeholder="Tasa Venta">
+                <label>USDT:</label> <input type="number" id="fUsdt" step="any">
+                <label>Vzla:</label> <input type="number" id="fVzla" step="any">
+                <label>Banesco:</label> <input type="number" id="fBanesco" step="any">
+                <label>Tasa Venta:</label> <input type="number" id="fTasa" step="any">
             </div>
         </div>
-        <button onclick="calcular()">Calcular Ganancia Real</button>
-        <div class="res" id="res">
-            <p><strong>Ganancia Real:</strong> <span id="resGanancia">0</span> VES</p>
+        <button class="btn-calc" onclick="guardarYCalcular()">Calcular Ganancia Real</button>
+        <button class="btn-clear" onclick="limpiarDatos()">Limpiar Todo</button>
+
+        <div class="resultado" id="res">
+            <h3>Reporte de Jornada</h3>
+            <table class="res-table">
+                <tr><td>USDT Inicial:</td><td id="resIUsdt" style="text-align:right;">0</td></tr>
+                <tr><td>USDT Final:</td><td id="resFUsdt" style="text-align:right;">0</td></tr>
+                <tr><td>Total Bs. Inicial:</td><td id="resIniBs" style="text-align:right;">0</td></tr>
+                <tr><td>Total Bs. Final:</td><td id="resFinBs" style="text-align:right;">0</td></tr>
+                <tr style="background:#e0f2f1;"><td><strong>Ganancia Real (VES):</strong></td><td id="gananciaReal" style="text-align:right; font-weight:bold; color:green;">0</td></tr>
+            </table>
         </div>
     </div>
 
     <script>
-        function calcular() {
+        const campos = ['iUsdt', 'iVzla', 'iBanesco', 'iTasa', 'fUsdt', 'fVzla', 'fBanesco', 'fTasa'];
+
+        window.onload = () => {
+            campos.forEach(id => {
+                const val = localStorage.getItem(id);
+                if (val !== null) document.getElementById(id).value = val;
+            });
+            if (localStorage.getItem('iUsdt')) guardarYCalcular();
+        };
+
+        function guardarYCalcular() {
+            campos.forEach(id => localStorage.setItem(id, document.getElementById(id).value));
+            
             const get = (id) => parseFloat(document.getElementById(id).value) || 0;
-            
+
+            // Totales de bancos
+            const totalIniBs = get('iVzla') + get('iBanesco');
+            const totalFinBs = get('fVzla') + get('fBanesco');
+
+            // Valoración de inventario: Si compraste (más USDT), valoras la diferencia a Tasa Compra.
+            // Si vendiste (menos USDT), valoras la diferencia a Tasa Venta.
             const difUsdt = get('fUsdt') - get('iUsdt');
-            const difBancos = (get('fVzla') + get('fBanesco')) - (get('iVzla') + get('iBanesco'));
+            const tasaAplicada = (difUsdt >= 0) ? get('iTasa') : get('fTasa');
             
-            let ganancia;
-            if (difUsdt < 0) {
-                // Vendiste: Ganancia es la diferencia de bancos + (USDT vendidos * Tasa Venta)
-                ganancia = difBancos + (Math.abs(difUsdt) * get('fTasa'));
-            } else {
-                // Compraste: Ganancia es la diferencia de bancos - (USDT comprados * Tasa Compra)
-                ganancia = difBancos - (difUsdt * get('iTasa'));
-            }
+            // Ganancia = (Diferencia de Bancos) + (Diferencia USDT * Tasa correspondiente)
+            const ganancia = (totalFinBs - totalIniBs) + (difUsdt * tasaAplicada);
 
             document.getElementById('res').style.display = 'block';
-            document.getElementById('resGanancia').innerText = ganancia.toLocaleString();
+            document.getElementById('resIUsdt').innerText = get('iUsdt').toFixed(2) + " USDT";
+            document.getElementById('resFUsdt').innerText = get('fUsdt').toFixed(2) + " USDT";
+            document.getElementById('resIniBs').innerText = totalIniBsBs = totalIniBs.toLocaleString() + " VES";
+            document.getElementById('resFinBs').innerText = totalFinBs.toLocaleString() + " VES";
+            document.getElementById('gananciaReal').innerText = ganancia.toLocaleString() + " VES";
+        }
+
+        function limpiarDatos() {
+            localStorage.clear();
+            campos.forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+            document.getElementById('res').style.display = 'none';
         }
     </script>
 </body>
