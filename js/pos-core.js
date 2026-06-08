@@ -20,7 +20,6 @@ window.clientesMaster = [];
 window.carrito = [];
 window.tasaActual = 1.0; 
 window.totalVentaUSD = 0;
-window.proximoNumeroFacturaStr = "000001";
 window.formatoFactura = "ticket";
 window.indiceProd = -1;
 window.indiceClie = -1;
@@ -30,16 +29,13 @@ window.ejecutarF5 = ejecutarF5;
 window.ejecutarF6 = ejecutarF6;
 window.abrirModalCobro = abrirModalCobro;
 
-// --- FUNCIÓN DE CONTADOR AUTOMÁTICO (SOLUCIONA EL ÍNDICE) ---
+// --- FUNCIÓN DE CONTADOR AUTOMÁTICO ---
 async function obtenerSiguienteNumero(userId) {
     const contadorRef = doc(db, "usuarios", userId, "config", "contador_facturas");
     try {
         return await runTransaction(db, async (transaction) => {
             const sfDoc = await transaction.get(contadorRef);
-            let nuevoValor = 1;
-            if (sfDoc.exists()) {
-                nuevoValor = sfDoc.data().ultimo + 1;
-            }
+            let nuevoValor = sfDoc.exists() ? sfDoc.data().ultimo + 1 : 1;
             transaction.set(contadorRef, { ultimo: nuevoValor });
             return nuevoValor.toString().padStart(6, '0');
         });
@@ -135,9 +131,9 @@ window.registrarVenta = async () => {
         document.getElementById('modalPago').style.display = 'none';
         window.actualizarCarritoUI();
         
-        // Actualizar UI con el siguiente número
-        const prox = await obtenerSiguienteNumero(USER_ID);
-        document.getElementById('factura-display').innerText = prox;
+        // Actualizar UI para la próxima venta (Número actual + 1)
+        const proximo = (parseInt(nroFactura) + 1).toString().padStart(6, '0');
+        document.getElementById('factura-display').innerText = `FACTURA: ${proximo}`;
 
     } catch (error) {
         console.error("Error al guardar:", error);
@@ -178,12 +174,12 @@ window.manejarNavegacion = (e, contenedorId, indiceVar) => {
 document.addEventListener('DOMContentLoaded', async () => {
     await cargarConfiguracionGlobal();
     
-    // Obtener número actual para mostrar en el badge
+    // Cargar número actual sin incrementar
     const contadorRef = doc(db, "usuarios", USER_ID, "config", "contador_facturas");
     const snap = await getDoc(contadorRef);
     const ultimo = snap.exists() ? snap.data().ultimo : 0;
     const elFactura = document.getElementById('factura-display');
-    if (elFactura) elFactura.innerText = (ultimo + 1).toString().padStart(6, '0');
+    if (elFactura) elFactura.innerText = `FACTURA: ${(ultimo + 1).toString().padStart(6, '0')}`;
 
     inicializarClientes();
     inicializarProductos();
