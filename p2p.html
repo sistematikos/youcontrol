@@ -19,7 +19,7 @@
 </head>
 <body>
     <div class="container">
-        <h2>Control P2P: Ganancia Real por Operación</h2>
+        <h2>Control P2P: Ganancia Real</h2>
         <div class="grid">
             <div>
                 <h3>Inicio</h3>
@@ -44,7 +44,8 @@
             <table class="res-table">
                 <tr><td>USDT Inicial:</td><td id="resIUsdt" style="text-align:right;">0</td></tr>
                 <tr><td>USDT Final:</td><td id="resFUsdt" style="text-align:right;">0</td></tr>
-                <tr><td>Dif. Bancos (Cierre - Inicio):</td><td id="difBancos" style="text-align:right;">0</td></tr>
+                <tr><td>Total Bs. Inicial:</td><td id="resIniBs" style="text-align:right;">0</td></tr>
+                <tr><td>Total Bs. Final:</td><td id="resFinBs" style="text-align:right;">0</td></tr>
                 <tr style="background:#e0f2f1;"><td><strong>Ganancia Real (VES):</strong></td><td id="gananciaReal" style="text-align:right; font-weight:bold; color:green;">0</td></tr>
             </table>
         </div>
@@ -70,26 +71,25 @@
             const totalIniBancos = get('iVzla') + get('iBanesco');
             const totalFinBancos = get('fVzla') + get('fBanesco');
             
-            // Lógica ajustada:
-            // Si difUsdt es negativo (vendiste), la ganancia es la diferencia de bancos + el valor de los USDT que salieron a tasa venta.
-            // Si difUsdt es positivo (compraste), es la diferencia de bancos - el costo de esos nuevos USDT.
             let ganancia;
-            if (difUsdt < 0) {
+            // Lógica: La ganancia es el flujo de caja bancario ajustado por el costo/valor de los USDT movidos
+            if (difUsdt < 0) { // Vendiste USDT
                 ganancia = (totalFinBancos - totalIniBancos) - (Math.abs(difUsdt) * get('iTasa'));
-            } else {
+            } else { // Compraste USDT
                 ganancia = (totalFinBancos - totalIniBancos) - (difUsdt * get('fTasa'));
             }
 
             document.getElementById('res').style.display = 'block';
             document.getElementById('resIUsdt').innerText = get('iUsdt').toFixed(2) + " USDT";
             document.getElementById('resFUsdt').innerText = get('fUsdt').toFixed(2) + " USDT";
-            document.getElementById('difBancos').innerText = (totalFinBancos - totalIniBancos).toLocaleString() + " VES";
+            document.getElementById('resIniBs').innerText = totalIniBancos.toLocaleString() + " VES";
+            document.getElementById('resFinBs').innerText = totalFinBancos.toLocaleString() + " VES";
             document.getElementById('gananciaReal').innerText = ganancia.toLocaleString() + " VES";
         }
 
         function limpiarDatos() {
             localStorage.clear();
-            campos.forEach(id => document.getElementById(id).value = '');
+            campos.forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
             document.getElementById('res').style.display = 'none';
         }
     </script>
