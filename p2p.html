@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Control P2P Profesional</title>
+    <title>Control P2P: Auditoría de Saldos</title>
     <style>
         body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
         .container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
@@ -19,31 +19,28 @@
 </head>
 <body>
     <div class="container">
-        <h2>Control P2P: Ganancia Real</h2>
+        <h2>Auditoría de Patrimonio Real</h2>
         <div class="grid">
             <div>
                 <h3>Inicio</h3>
-                <label>USDT:</label> <input type="number" id="iUsdt" step="any">
-                <label>Vzla (VES):</label> <input type="number" id="iVzla" step="any">
-                <label>Banesco (VES):</label> <input type="number" id="iBanesco" step="any">
+                <label>USDT Disponibles:</label> <input type="number" id="iUsdt" step="any">
+                <label>Vzla + Banesco:</label> <input type="number" id="iBancos" step="any">
                 <label>Tasa Compra:</label> <input type="number" id="iTasa" step="any">
             </div>
             <div>
                 <h3>Cierre</h3>
-                <label>USDT:</label> <input type="number" id="fUsdt" step="any">
-                <label>Vzla (VES):</label> <input type="number" id="fVzla" step="any">
-                <label>Banesco (VES):</label> <input type="number" id="fBanesco" step="any">
+                <label>USDT Disponibles:</label> <input type="number" id="fUsdt" step="any">
+                <label>Vzla + Banesco:</label> <input type="number" id="fBancos" step="any">
                 <label>Tasa Venta:</label> <input type="number" id="fTasa" step="any">
             </div>
         </div>
-        <button class="btn-calc" onclick="guardarYCalcular()">Calcular Ganancia Real</button>
-        <button class="btn-clear" onclick="limpiarDatos()">Limpiar</button>
+        <button class="btn-calc" onclick="calcular()">Calcular Ganancia Real</button>
+        <button class="btn-clear" onclick="limpiar()">Limpiar</button>
 
         <div class="resultado" id="res">
-            <h3>Reporte de Jornada</h3>
+            <h3>Reporte de Auditoría</h3>
             <table class="res-table">
-                <tr><td>USDT Inicial:</td><td id="resIUsdt" style="text-align:right;">0</td></tr>
-                <tr><td>USDT Final:</td><td id="resFUsdt" style="text-align:right;">0</td></tr>
+                <tr><td>USDT Restantes:</td><td id="resFUsdt" style="text-align:right;">0</td></tr>
                 <tr><td>Total Bs. Inicial:</td><td id="resIniBs" style="text-align:right;">0</td></tr>
                 <tr><td>Total Bs. Final:</td><td id="resFinBs" style="text-align:right;">0</td></tr>
                 <tr style="background:#e0f2f1;"><td><strong>Ganancia Real (VES):</strong></td><td id="gananciaReal" style="text-align:right; font-weight:bold; color:green;">0</td></tr>
@@ -52,46 +49,30 @@
     </div>
 
     <script>
-        const campos = ['iUsdt', 'iVzla', 'iBanesco', 'iTasa', 'fUsdt', 'fVzla', 'fBanesco', 'fTasa'];
+        const campos = ['iUsdt', 'iBancos', 'iTasa', 'fUsdt', 'fBancos', 'fTasa'];
 
-        window.onload = () => {
-            campos.forEach(id => {
-                const val = localStorage.getItem(id);
-                if (val !== null) document.getElementById(id).value = val;
-            });
-            if (localStorage.getItem('iUsdt')) guardarYCalcular();
-        };
-
-        function guardarYCalcular() {
-            campos.forEach(id => localStorage.setItem(id, document.getElementById(id).value));
-            
+        function calcular() {
             const get = (id) => parseFloat(document.getElementById(id).value) || 0;
-
-            const difUsdt = get('fUsdt') - get('iUsdt');
-            const totalIniBancos = get('iVzla') + get('iBanesco');
-            const totalFinBancos = get('fVzla') + get('fBanesco');
             
-            let ganancia;
-            // Lógica: La ganancia es el flujo de caja bancario ajustado por el costo/valor de los USDT movidos
-            if (difUsdt < 0) { // Vendiste USDT
-                ganancia = (totalFinBancos - totalIniBancos) - (Math.abs(difUsdt) * get('iTasa'));
-            } else { // Compraste USDT
-                ganancia = (totalFinBancos - totalIniBancos) - (difUsdt * get('fTasa'));
-            }
+            // 1. Definir tasas según inventario final
+            // Si te quedan menos USDT de los que tenías, el valor de lo que "tienes" 
+            // se ajusta a la tasa de Venta (tienes menos inventario para vender).
+            // Si te quedan más o igual, usas la tasa de Compra (es tu costo base).
+            const tasaAplicada = (get('fUsdt') < get('iUsdt')) ? get('fTasa') : get('iTasa');
+            
+            const totalIni = (get('iUsdt') * get('iTasa')) + get('iBancos');
+            const totalFin = (get('fUsdt') * tasaAplicada) + get('fBancos');
+            
+            const ganancia = totalFin - totalIni;
 
             document.getElementById('res').style.display = 'block';
-            document.getElementById('resIUsdt').innerText = get('iUsdt').toFixed(2) + " USDT";
             document.getElementById('resFUsdt').innerText = get('fUsdt').toFixed(2) + " USDT";
-            document.getElementById('resIniBs').innerText = totalIniBancos.toLocaleString() + " VES";
-            document.getElementById('resFinBs').innerText = totalFinBancos.toLocaleString() + " VES";
+            document.getElementById('resIniBs').innerText = get('iBancos').toLocaleString() + " VES";
+            document.getElementById('resFinBs').innerText = get('fBancos').toLocaleString() + " VES";
             document.getElementById('gananciaReal').innerText = ganancia.toLocaleString() + " VES";
         }
 
-        function limpiarDatos() {
-            localStorage.clear();
-            campos.forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
-            document.getElementById('res').style.display = 'none';
-        }
+        function limpiar() { localStorage.clear(); location.reload(); }
     </script>
 </body>
 </html>
