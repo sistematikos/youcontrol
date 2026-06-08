@@ -3,49 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YOU CONTROL | Acceso</title>
+    <title>YOU CONTROL | Activación</title>
     <style>
         body { font-family: 'Poppins', sans-serif; background: #F1F5F9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
         .card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 90%; max-width: 400px; text-align: center; }
-        input { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #E2E8F0; border-radius: 8px; box-sizing: border-box; }
+        textarea { width: 100%; height: 80px; padding: 12px; margin: 15px 0; border: 1px solid #E2E8F0; border-radius: 8px; box-sizing: border-box; resize: none; }
         button { width: 100%; padding: 12px; background: #0EA5E9; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
     </style>
 </head>
 <body>
     <div class="card">
-        <img src="img/logo.png" style="width: 100px; margin-bottom: 20px;" onerror="this.style.display='none'">
-        <h2>Bienvenido</h2>
-        <p>Ingrese su código de licencia para continuar:</p>
-        <input type="text" id="input-licencia" placeholder="Código de acceso">
-        <button onclick="validarLicencia()">VALIDAR LICENCIA</button>
+        <h2>Activación</h2>
+        <p>Pega tu código de licencia largo:</p>
+        <textarea id="tokenInput" placeholder="Pega el código aquí..."></textarea>
+        <button onclick="procesarActivacion()">ACTIVAR SISTEMA</button>
     </div>
 
     <script type="module">
         import { db } from './js/firebase-config.js';
-        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        window.validarLicencia = async () => {
-            const codigo = document.getElementById('input-licencia').value.trim();
-            if (!codigo) return alert("Por favor ingresa un código.");
+        // ID único del equipo (Hardware ID)
+        const getHardwareID = () => btoa(navigator.userAgent + navigator.language);
 
+        window.procesarActivacion = async () => {
+            const rawToken = document.getElementById('tokenInput').value.trim();
+            if (!rawToken) return alert("Pega el código primero.");
+            
             try {
-                // Suponiendo que tus licencias están en la colección "licencias"
-                const docRef = await getDoc(doc(db, "licencias", codigo));
+                // 1. Decodificar el código largo (Base64 -> JSON)
+                const data = JSON.parse(atob(rawToken));
+                const hwID = getHardwareID();
                 
-                if (docRef.exists()) {
-                    const data = docRef.data();
-                    // Guardamos la info necesaria en localStorage
-                    localStorage.setItem('youcontrol_empresa_id', data.empresa_id);
-                    localStorage.setItem('licencia_youcontrol', btoa(JSON.stringify({ n: data.nombre_empresa })));
+                // 2. Buscar en Firebase usando el ID de activación que viene en el JSON
+                const docRef = doc(db, "licencias", data.activation_id);
+                const snap = await getDoc(docRef);
+
+                if (snap.exists()) {
+                    const dbData = snap.data();
+                    const equipos = Array.isArray(dbData.equipos) ? dbData.equipos : [];
                     
-                    alert("Licencia verificada. Redirigiendo...");
-                    window.location.href = "sys_v1_menu.html";
+                    // Validar límite
+                    if (!equipos.includes(hwID) && equipos.length >= dbData.limite) {
+                        return alert("Error: Límite de dispositivos alcanzado.");
+                    }
+                    if (!equipos.includes(hwID)) {
+                        await updateDoc(docRef, { equipos: [...equipos, hwID] });
+                    }
                 } else {
-                    alert("Código de licencia inválido.");
+                    // Si no existe, crear la licencia inicial en Firebase
+                    await setDoc(docRef, { 
+                        cliente: data.n, 
+                        limite: data.l, 
+                        equipos: [hwID], 
+                        fecha_registro: new Date().toISOString() 
+                    });
                 }
+
+                // 3. Guardar en local y redirigir
+                localStorage.setItem('youcontrol_empresa_id', data.activation_id);
+                localStorage.setItem('licencia_validada', 'true');
+                
+                alert("¡Activación exitosa!");
+                window.location.href = "sys_v1_menu.html";
+                
             } catch (e) {
                 console.error(e);
-                alert("Error al validar, intenta de nuevo.");
+                alert("Código de licencia inválido o mal formado.");
             }
         };
     </script>
