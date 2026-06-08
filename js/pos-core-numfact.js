@@ -1,23 +1,27 @@
-import { collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { doc, getDoc, runTransaction, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { db } from './firebase-config.js';
 
-export async function obtenerUltimoNumero(userId) {
+export async function obtenerSiguienteNumero(userId) {
+    const contadorRef = doc(db, "usuarios", userId, "config", "contador_facturas");
+    
     try {
-        const ventasRef = collection(db, "usuarios", userId, "ventas");
-        // Ordenamos por nro_factura descendente para obtener el mayor
-        const q = query(ventasRef, orderBy("nro_factura", "desc"), limit(1));
-        const snap = await getDocs(q);
+        const nuevoNro = await runTransaction(db, async (transaction) => {
+            const sfDoc = await transaction.get(contadorRef);
+            
+            if (!sfDoc.exists()) {
+                // Si es la primera vez, inicializamos en 1
+                transaction.set(contadorRef, { ultimo: 1 });
+                return 1;
+            }
+            
+            const nuevoValor = sfDoc.data().ultimo + 1;
+            transaction.update(contadorRef, { ultimo: nuevoValor });
+            return nuevoValor;
+        });
         
-        if (!snap.empty) {
-            const data = snap.docs[0].data();
-            // Convertimos a entero, sumamos 1 y devolvemos con formato 00000X
-            const ultimoNro = parseInt(data.nro_factura, 10);
-            return (ultimoNro + 1).toString().padStart(6, '0');
-        }
-        return "000001"; // Si no hay facturas, empezamos en 000001
+        return nuevoNro.toString().padStart(6, '0');
     } catch (e) {
-        console.error("Error al obtener el número de factura:", e);
-        // Si hay error de índice, la consola mostrará un link para crearlo
-        return "000001"; 
+        console.error("Error al obtener contador:", e);
+        return "000001"; // Fallback
     }
 }
