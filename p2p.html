@@ -2,43 +2,102 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Control P2P: Ganancia Real</title>
+    <title>Control P2P Profesional</title>
     <style>
-        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        input { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-        button { width: 48%; padding: 12px; margin-top: 15px; border: none; cursor: pointer; }
-        .res { margin-top: 20px; padding: 15px; background: #d4edda; color: #155724; border-radius: 5px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; padding: 20px; }
+        .container { max-width: 650px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #2c3e50; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .section-title { font-weight: bold; color: #34495e; border-bottom: 2px solid #eee; padding-bottom: 5px; margin-bottom: 10px; display: block; }
+        label { display: block; font-size: 0.85em; margin-top: 8px; color: #666; }
+        input { width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; margin-top: 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-calc { background: #27ae60; color: white; }
+        .btn-calc:hover { background: #219150; }
+        .btn-clear { background: #c0392b; color: white; margin-top: 10px; }
+        .resultado { margin-top: 25px; padding: 20px; background: #f8f9fa; border-left: 5px solid #27ae60; border-radius: 5px; display: none; }
+        .res-val { font-weight: bold; color: #2c3e50; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Control de Ganancia por Venta</h2>
-        <label>USDT Vendidos hoy:</label> <input type="number" id="usdtVendidos" placeholder="Ejemplo: 2.55">
-        <label>Tasa de Compra (Promedio):</label> <input type="number" id="tCompra">
-        <label>Tasa de Venta (Promedio):</label> <input type="number" id="tVenta">
+        <h2>Control P2P: Registro de Jornada</h2>
         
-        <button onclick="calcular()" style="background:#27ae60; color:white;">Calcular Ganancia</button>
-        <button onclick="limpiar()">Limpiar</button>
+        <div class="grid">
+            <div>
+                <span class="section-title">Inicio (Posición)</span>
+                <label>USDT:</label> <input type="number" id="iUsdt" step="any">
+                <label>Vzla (VES):</label> <input type="number" id="iVzla" step="any">
+                <label>Banesco (VES):</label> <input type="number" id="iBanesco" step="any">
+                <label>Tasa Compra Promedio:</label> <input type="number" id="iTasaCompra" step="any">
+            </div>
+            <div>
+                <span class="section-title">Cierre (Resultados)</span>
+                <label>USDT:</label> <input type="number" id="fUsdt" step="any">
+                <label>Vzla (VES):</label> <input type="number" id="fVzla" step="any">
+                <label>Banesco (VES):</label> <input type="number" id="fBanesco" step="any">
+                <label>Tasa Venta Actual:</label> <input type="number" id="fTasaVenta" step="any">
+            </div>
+        </div>
 
-        <div class="res" id="res" style="display:none;">
-            <h3>Ganancia Neta: <span id="ganancia"></span> VES</h3>
+        <button class="btn-calc" onclick="guardarYCalcular()">Calcular Rendimiento</button>
+        <button class="btn-clear" onclick="limpiarDatos()">Limpiar Datos</button>
+
+        <div class="resultado" id="res">
+            <p>Diferencia de Stock (USDT): <span id="difUsdt" class="res-val"></span></p>
+            <p>Ganancia por Spread (Operativa): <span id="gananciaSpread" class="res-val"></span> VES</p>
+            <hr>
+            <p>Cambio en Patrimonio Total:</p>
+            <h2 id="cambioPatrimonio" style="margin: 5px 0;"></h2>
+            <p id="analisisTexto" style="font-size: 0.9em; font-style: italic; color: #555;"></p>
         </div>
     </div>
 
     <script>
-        function calcular() {
-            const vendidos = parseFloat(document.getElementById('usdtVendidos').value) || 0;
-            const compra = parseFloat(document.getElementById('tCompra').value) || 0;
-            const venta = parseFloat(document.getElementById('tVenta').value) || 0;
+        const campos = ['iUsdt', 'iVzla', 'iBanesco', 'iTasaCompra', 'fUsdt', 'fVzla', 'fBanesco', 'fTasaVenta'];
+
+        window.onload = () => {
+            campos.forEach(id => {
+                const val = localStorage.getItem(id);
+                if (val) document.getElementById(id).value = val;
+            });
+        };
+
+        function guardarYCalcular() {
+            campos.forEach(id => localStorage.setItem(id, document.getElementById(id).value));
             
-            // La ganancia es la diferencia de tasas multiplicada por la cantidad vendida
-            const ganancia = vendidos * (venta - compra);
+            const get = (id) => parseFloat(document.getElementById(id).value) || 0;
+
+            const difUsdt = get('fUsdt') - get('iUsdt');
+            const totalIni = (get('iUsdt') * get('iTasaCompra')) + get('iVzla') + get('iBanesco');
+            const totalFin = (get('fUsdt') * get('fTasaVenta')) + get('fVzla') + get('fBanesco');
+            const cambioPatrimonio = totalFin - totalIni;
             
+            // Si vendimos USDT (dif negativa), calculamos ganancia del spread
+            const gananciaSpread = (difUsdt < 0) ? Math.abs(difUsdt) * (get('fTasaVenta') - get('iTasaCompra')) : 0;
+
+            // Análisis inteligente
+            let analisis = "";
+            if (cambioPatrimonio > 0) {
+                analisis = "✅ Jornada Rentable: Tu patrimonio creció. La diferencia positiva incluye el beneficio de tus ventas.";
+            } else if (cambioPatrimonio < 0) {
+                analisis = "⚠️ Alerta: Tu patrimonio bajó. Verifica si moviste fondos a una cuenta no registrada o si hubo costos operativos no contemplados.";
+            } else {
+                analisis = "⚖️ Patrimonio neutro: Has mantenido tu capital inicial.";
+            }
+
             document.getElementById('res').style.display = 'block';
-            document.getElementById('ganancia').innerText = ganancia.toFixed(2);
+            document.getElementById('difUsdt').innerText = difUsdt.toFixed(2) + " USDT";
+            document.getElementById('gananciaSpread').innerText = gananciaSpread.toFixed(2);
+            document.getElementById('cambioPatrimonio').innerText = cambioPatrimonio.toLocaleString() + " VES";
+            document.getElementById('analisisTexto').innerText = analisis;
         }
-        function limpiar() { location.reload(); }
+
+        function limpiarDatos() {
+            localStorage.clear();
+            campos.forEach(id => document.getElementById(id).value = '');
+            document.getElementById('res').style.display = 'none';
+        }
     </script>
 </body>
 </html>
