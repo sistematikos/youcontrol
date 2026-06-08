@@ -116,61 +116,52 @@ window.agregarCarrito = (id) => {
 // ==========================================
 // NUEVA FUNCIÓN: REGISTRAR VENTA
 // ==========================================
+// --- ACTUALIZA TU FUNCIÓN registrarVenta ---
 window.registrarVenta = async () => {
-    if (carrito.length === 0) {
-        alert("El carrito está vacío.");
-        return;
-    }
+    if (carrito.length === 0) return alert("El carrito está vacío.");
 
     try {
-        const nombreParaGuardar = window.nombreClienteSeleccionado || 
-                                 document.getElementById('buscar-cliente-pos')?.value || 
-                                 "Anónimo";
+        // Obtenemos el número real en el momento de la venta
+        const nroFactura = await obtenerSiguienteNumero(USER_ID);
 
         const ventaData = {
             cliente_id: window.clienteSeleccionadoID || "anonimo",
-            nombre_cliente: nombreParaGuardar,
+            nombre_cliente: window.nombreClienteSeleccionado || "Anónimo",
             items: carrito,
             total_usd: window.totalVentaUSD || 0,
-            tasa_aplicada: tasaActual,
-            pagos: {
-                punto_bs: parseFloat(document.getElementById('in-punto-bs')?.value) || 0,
-                pago_movil_bs: parseFloat(document.getElementById('in-pagomovil-bs')?.value) || 0,
-                efectivo_bs: parseFloat(document.getElementById('in-efectivo-bs')?.value) || 0,
-                divisas_usd: parseFloat(document.getElementById('in-divisas-usd')?.value) || 0
-            },
+            nro_factura: nroFactura, // <--- Aquí usamos el número calculado
             fecha: serverTimestamp(),
-            nro_factura: proximoNumeroFacturaStr
+            // ... resto de tus campos de pago
         };
 
-        // 1. Guardar la venta
         await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
-
-        // 2. DESCONTAR INVENTARIO (NUEVA LÓGICA)
-        for (const item of carrito) {
-            const productoRef = doc(db, "usuarios", USER_ID, "productos", item.id);
-            // Restamos la cantidad vendida al stock actual
-            await updateDoc(productoRef, {
-                stock: increment(-item.cantidad)
-            });
-        }
-
-        alert("✅ Venta registrada y stock actualizado correctamente.");
-
-        // Limpieza
-        carrito = [];
-        window.clienteSeleccionadoID = null;
-        window.nombreClienteSeleccionado = null;
         
-        // ... (resto de tu código de limpieza de UI)
-        document.getElementById('modalPago').style.display = 'none';
-        window.actualizarCarritoUI();
+        // ... (Tu lógica de descontar inventario y limpieza)
 
+        alert("✅ Venta registrada con Nro: " + nroFactura);
+        
+        // Recargamos el número para la siguiente venta
+        const proximoNro = await obtenerSiguienteNumero(USER_ID); 
+        document.getElementById('factura-display').innerText = `FACTURA: ${proximoNro}`;
+        
     } catch (error) {
-        console.error("Error al guardar:", error);
-        alert("Error al guardar: " + error.message);
+        alert("Error: " + error.message);
     }
 };
+
+// --- ACTUALIZA TU DOMContentLoaded ---
+document.addEventListener('DOMContentLoaded', async () => {
+    await cargarConfiguracionGlobal();
+    
+    // Obtenemos el número inicial para mostrar
+    const contadorRef = doc(db, "usuarios", USER_ID, "config", "contador_facturas");
+    const snap = await getDoc(contadorRef);
+    const ultimo = snap.exists() ? snap.data().ultimo : 0;
+    document.getElementById('factura-display').innerText = `FACTURA: ${(ultimo + 1).toString().padStart(6, '0')}`;
+
+    inicializarClientes();
+    inicializarProductos();
+});
 
 // ==========================================
 // 4. INTEGRACIÓN UI: SELECCIÓN Y NAVEGACIÓN
