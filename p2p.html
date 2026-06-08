@@ -53,32 +53,28 @@
     </div>
 
     <script>
-        // Corrección: Asegurado que todos los IDs coincidan exactamente con el HTML
+        // IDs exactos que coinciden con el HTML
         const campos = ['iUsdt', 'iVzla', 'iBanesco', 'iTasa', 'fUsdt', 'fVzla', 'fBanesco', 'fTasa'];
 
         window.onload = () => {
             campos.forEach(id => {
                 const val = localStorage.getItem(id);
-                if (val !== null) {
-                    document.getElementById(id).value = val;
-                }
+                if (val !== null) document.getElementById(id).value = val;
             });
-            // Si ya hay datos, calculamos automáticamente al entrar
-            if (localStorage.getItem('iUsdt')) {
-                guardarYCalcular();
-            }
+            if (localStorage.getItem('iUsdt')) guardarYCalcular();
         };
 
         function guardarYCalcular() {
             campos.forEach(id => {
-                localStorage.setItem(id, document.getElementById(id).value);
+                const el = document.getElementById(id);
+                if (el) localStorage.setItem(id, el.value);
             });
             
             const get = (id) => parseFloat(document.getElementById(id).value) || 0;
 
             const difUsdt = get('fUsdt') - get('iUsdt');
             const totalIniBancos = get('iVzla') + get('iBanesco');
-            const totalFinBancos = get('fVzla') + get('fBancos');
+            const totalFinBancos = get('fVzla') + get('fBanesco');
 
             const patIni = (get('iUsdt') * get('iTasa')) + totalIniBancos;
             const patFin = (get('fUsdt') * get('fTasa')) + totalFinBancos;
@@ -94,7 +90,10 @@
 
         function limpiarDatos() {
             localStorage.clear();
-            campos.forEach(id => document.getElementById(id).value = '');
+            campos.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
             document.getElementById('res').style.display = 'none';
         }
     </script>
