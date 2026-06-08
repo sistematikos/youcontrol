@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Control P2P: Persistente</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        input { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; margin-top: 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-calc { background: #2563eb; color: white; }
+        .btn-clear { background: #dc2626; color: white; margin-top: 10px; }
+        .resultado { margin-top: 25px; padding: 20px; background: #f8fafc; border-left: 5px solid #2563eb; border-radius: 4px; }
+        .val { font-weight: bold; color: #059669; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Control de Patrimonio P2P</h2>
+        <div class="grid">
+            <div>
+                <h3>Inicio</h3>
+                <label>USDT:</label> <input type="number" id="iUsdt" step="any">
+                <label>Vzla (VES):</label> <input type="number" id="iVzla" step="any">
+                <label>Banesco (VES):</label> <input type="number" id="iBanesco" step="any">
+                <label>Tasa Venta:</label> <input type="number" id="iTasa" step="any">
+            </div>
+            <div>
+                <h3>Cierre</h3>
+                <label>USDT:</label> <input type="number" id="fUsdt" step="any">
+                <label>Vzla (VES):</label> <input type="number" id="fVzla" step="any">
+                <label>Banesco (VES):</label> <input type="number" id="fBanesco" step="any">
+                <label>Tasa Venta:</label> <input type="number" id="fTasa" step="any">
+            </div>
+        </div>
+        <button class="btn-calc" onclick="guardarYCalcular()">Calcular y Guardar</button>
+        <button class="btn-clear" onclick="limpiarDatos()">Limpiar Todo</button>
+
+        <div class="resultado" id="res" style="display:none;">
+            <p>Diferencia en USDT: <span id="difUsdt" class="val"></span></p>
+            <p>Diferencia en VES (Liquidez): <span id="difVes" class="val"></span></p>
+            <hr>
+            <p><strong>Ganancia Real (Patrimonio Total):</strong></p>
+            <h2 id="gananciaReal" style="color: #059669; margin: 5px 0;"></h2>
+        </div>
+    </div>
+
+    <script>
+        const campos = ['iUsdt', 'iVzla', 'iBanesco', 'iTasa', 'fUsdt', 'fVzla', 'fBanesco', 'fTasa'];
+
+        // Cargar datos al iniciar
+        window.onload = () => {
+            campos.forEach(id => {
+                const valor = localStorage.getItem(id);
+                if (valor) document.getElementById(id).value = valor;
+            });
+            if(localStorage.getItem('iUsdt')) calcular();
+        };
+
+        function guardarYCalcular() {
+            campos.forEach(id => {
+                localStorage.setItem(id, document.getElementById(id).value);
+            });
+            calcular();
+        }
+
+        function limpiarDatos() {
+            localStorage.clear();
+            campos.forEach(id => document.getElementById(id).value = '');
+            document.getElementById('res').style.display = 'none';
+        }
+
+        function calcular() {
+            const getVal = (id) => parseFloat(document.getElementById(id).value) || 0;
+            
+            const totalIni = (getVal('iUsdt') * getVal('iTasa')) + getVal('iVzla') + getVal('iBanesco');
+            const totalFin = (getVal('fUsdt') * getVal('fTasa')) + getVal('fVzla') + getVal('fBanesco');
+            
+            const difUsdt = getVal('fUsdt') - getVal('iUsdt');
+            const difVes = (getVal('fVzla') + getVal('fBanesco')) - (getVal('iVzla') + getVal('iBanesco'));
+            const gananciaReal = totalFin - totalIni;
+
+            document.getElementById('res').style.display = 'block';
+            document.getElementById('difUsdt').innerText = difUsdt.toFixed(2) + " USDT";
+            document.getElementById('difVes').innerText = difVes.toLocaleString() + " VES";
+            document.getElementById('gananciaReal').innerText = gananciaReal.toLocaleString() + " VES";
+        }
+    </script>
+</body>
+</html>
