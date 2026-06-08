@@ -5,7 +5,7 @@
 
 import { db } from './firebase-config.js'; 
 import { collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { obtenerUltimoNumero } from './pos-core-numfact.js';
+import { doc, runTransaction, addDoc, collection, updateDoc, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { ejecutarF4, ejecutarF5, ejecutarF6, abrirModalCobro } from './pos-core-teclas.js';
 
 // --- VALIDACIÓN DE SESIÓN ---
@@ -369,6 +369,25 @@ document.addEventListener('input', (e) => {
         }
     }
 });
+
+async function obtenerSiguienteNumero(userId) {
+    const contadorRef = doc(db, "usuarios", userId, "config", "contador_facturas");
+    try {
+        const nuevoNro = await runTransaction(db, async (transaction) => {
+            const sfDoc = await transaction.get(contadorRef);
+            let nuevoValor = 1;
+            if (sfDoc.exists()) {
+                nuevoValor = sfDoc.data().ultimo + 1;
+            }
+            transaction.set(contadorRef, { ultimo: nuevoValor });
+            return nuevoValor;
+        });
+        return nuevoNro.toString().padStart(6, '0');
+    } catch (e) {
+        console.error("Error al obtener contador:", e);
+        return "000001";
+    }
+}
 
 // ==========================================
 // INICIALIZACIÓN FINAL
