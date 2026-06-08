@@ -2,77 +2,61 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Control P2P: Auditoría de Saldos</title>
+    <title>Control P2P: Lógica de Inventario</title>
     <style>
         body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
         .container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         label { display: block; font-size: 0.85em; font-weight: bold; margin-top: 10px; }
         input { width: 100%; padding: 8px; margin-top: 4px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; margin-top: 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .btn-calc { background: #2563eb; color: white; }
-        .btn-clear { background: #dc2626; color: white; margin-top: 10px; }
-        .resultado { margin-top: 25px; padding: 20px; background: #f0fdf4; border: 2px solid #22c55e; border-radius: 5px; display: none; }
-        .res-table { width: 100%; border-collapse: collapse; }
-        .res-table td { padding: 8px; border: 1px solid #eee; }
+        button { width: 100%; padding: 15px; margin-top: 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; background: #2563eb; color: white; }
+        .res { margin-top: 25px; padding: 20px; background: #f0fdf4; border: 2px solid #22c55e; border-radius: 5px; display: none; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Auditoría de Patrimonio Real</h2>
+        <h2>Control P2P: Lógica de Flujo</h2>
         <div class="grid">
             <div>
                 <h3>Inicio</h3>
-                <label>USDT Disponibles:</label> <input type="number" id="iUsdt" step="any">
-                <label>Vzla + Banesco:</label> <input type="number" id="iBancos" step="any">
-                <label>Tasa Compra:</label> <input type="number" id="iTasa" step="any">
+                <input type="number" id="iUsdt" placeholder="USDT">
+                <input type="number" id="iVzla" placeholder="Vzla">
+                <input type="number" id="iBanesco" placeholder="Banesco">
+                <input type="number" id="iTasa" placeholder="Tasa Compra">
             </div>
             <div>
                 <h3>Cierre</h3>
-                <label>USDT Disponibles:</label> <input type="number" id="fUsdt" step="any">
-                <label>Vzla + Banesco:</label> <input type="number" id="fBancos" step="any">
-                <label>Tasa Venta:</label> <input type="number" id="fTasa" step="any">
+                <input type="number" id="fUsdt" placeholder="USDT">
+                <input type="number" id="fVzla" placeholder="Vzla">
+                <input type="number" id="fBanesco" placeholder="Banesco">
+                <input type="number" id="fTasa" placeholder="Tasa Venta">
             </div>
         </div>
-        <button class="btn-calc" onclick="calcular()">Calcular Ganancia Real</button>
-        <button class="btn-clear" onclick="limpiar()">Limpiar</button>
-
-        <div class="resultado" id="res">
-            <h3>Reporte de Auditoría</h3>
-            <table class="res-table">
-                <tr><td>USDT Restantes:</td><td id="resFUsdt" style="text-align:right;">0</td></tr>
-                <tr><td>Total Bs. Inicial:</td><td id="resIniBs" style="text-align:right;">0</td></tr>
-                <tr><td>Total Bs. Final:</td><td id="resFinBs" style="text-align:right;">0</td></tr>
-                <tr style="background:#e0f2f1;"><td><strong>Ganancia Real (VES):</strong></td><td id="gananciaReal" style="text-align:right; font-weight:bold; color:green;">0</td></tr>
-            </table>
+        <button onclick="calcular()">Calcular Ganancia Real</button>
+        <div class="res" id="res">
+            <p><strong>Ganancia Real:</strong> <span id="resGanancia">0</span> VES</p>
         </div>
     </div>
 
     <script>
-        const campos = ['iUsdt', 'iBancos', 'iTasa', 'fUsdt', 'fBancos', 'fTasa'];
-
         function calcular() {
             const get = (id) => parseFloat(document.getElementById(id).value) || 0;
             
-            // 1. Definir tasas según inventario final
-            // Si te quedan menos USDT de los que tenías, el valor de lo que "tienes" 
-            // se ajusta a la tasa de Venta (tienes menos inventario para vender).
-            // Si te quedan más o igual, usas la tasa de Compra (es tu costo base).
-            const tasaAplicada = (get('fUsdt') < get('iUsdt')) ? get('fTasa') : get('iTasa');
+            const difUsdt = get('fUsdt') - get('iUsdt');
+            const difBancos = (get('fVzla') + get('fBanesco')) - (get('iVzla') + get('iBanesco'));
             
-            const totalIni = (get('iUsdt') * get('iTasa')) + get('iBancos');
-            const totalFin = (get('fUsdt') * tasaAplicada) + get('fBancos');
-            
-            const ganancia = totalFin - totalIni;
+            let ganancia;
+            if (difUsdt < 0) {
+                // Vendiste: Ganancia es la diferencia de bancos + (USDT vendidos * Tasa Venta)
+                ganancia = difBancos + (Math.abs(difUsdt) * get('fTasa'));
+            } else {
+                // Compraste: Ganancia es la diferencia de bancos - (USDT comprados * Tasa Compra)
+                ganancia = difBancos - (difUsdt * get('iTasa'));
+            }
 
             document.getElementById('res').style.display = 'block';
-            document.getElementById('resFUsdt').innerText = get('fUsdt').toFixed(2) + " USDT";
-            document.getElementById('resIniBs').innerText = get('iBancos').toLocaleString() + " VES";
-            document.getElementById('resFinBs').innerText = get('fBancos').toLocaleString() + " VES";
-            document.getElementById('gananciaReal').innerText = ganancia.toLocaleString() + " VES";
+            document.getElementById('resGanancia').innerText = ganancia.toLocaleString();
         }
-
-        function limpiar() { localStorage.clear(); location.reload(); }
     </script>
 </body>
 </html>
