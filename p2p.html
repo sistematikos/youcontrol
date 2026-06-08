@@ -4,57 +4,55 @@
     <meta charset="UTF-8">
     <title>Control P2P Profesional</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #2c3e50; }
+        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        label { display: block; font-size: 0.85em; margin-top: 8px; color: #666; }
-        input { width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        label { display: block; font-size: 0.85em; font-weight: bold; margin-top: 10px; }
+        input { width: 100%; padding: 8px; margin-top: 4px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         button { width: 100%; padding: 12px; margin-top: 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .btn-calc { background: #27ae60; color: white; }
-        .btn-clear { background: #c0392b; color: white; }
-        .resultado { margin-top: 25px; padding: 20px; background: #f8f9fa; border: 2px solid #27ae60; border-radius: 5px; display: none; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        td { padding: 8px; border: 1px solid #ddd; }
+        .btn-calc { background: #2563eb; color: white; }
+        .btn-clear { background: #dc2626; color: white; margin-top: 10px; }
+        .resultado { margin-top: 25px; padding: 20px; background: #f0fdf4; border: 2px solid #22c55e; border-radius: 5px; display: none; }
+        .res-table { width: 100%; border-collapse: collapse; }
+        .res-table td { padding: 8px; border: 1px solid #eee; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Control P2P Profesional</h2>
+        <h2>Control P2P: Gestión de Bancos</h2>
         
         <div class="grid">
             <div>
-                <strong>Inicio (Posición)</strong>
+                <h3>Inicio</h3>
                 <label>USDT:</label> <input type="number" id="iUsdt" step="any">
                 <label>Vzla (VES):</label> <input type="number" id="iVzla" step="any">
                 <label>Banesco (VES):</label> <input type="number" id="iBanesco" step="any">
-                <label>Tasa Compra Promedio:</label> <input type="number" id="iTasaCompra" step="any">
+                <label>Tasa Compra:</label> <input type="number" id="iTasa" step="any">
             </div>
             <div>
-                <strong>Cierre (Resultados)</strong>
+                <h3>Cierre</h3>
                 <label>USDT:</label> <input type="number" id="fUsdt" step="any">
                 <label>Vzla (VES):</label> <input type="number" id="fVzla" step="any">
                 <label>Banesco (VES):</label> <input type="number" id="fBanesco" step="any">
-                <label>Tasa Venta Actual:</label> <input type="number" id="fTasaVenta" step="any">
+                <label>Tasa Venta:</label> <input type="number" id="fTasa" step="any">
             </div>
         </div>
 
-        <button class="btn-calc" onclick="guardarYCalcular()">Calcular Rendimiento</button>
-        <button class="btn-clear" onclick="limpiarDatos()">Limpiar Datos</button>
+        <button class="btn-calc" onclick="guardarYCalcular()">Calcular Ganancia Real</button>
+        <button class="btn-clear" onclick="limpiarDatos()">Limpiar Todo</button>
 
         <div class="resultado" id="res">
-            <h3>Resumen de Ganancia</h3>
-            <table>
-                <tr style="background:#f4f4f4;"><td>Concepto</td><td style="text-align:right;">Valor</td></tr>
-                <tr><td>USDT Vendidos (Neto)</td><td style="text-align:right;" id="tabUsdt">0</td></tr>
-                <tr><td><strong>Ganancia Neta (VES)</strong></td><td style="text-align:right; font-weight:bold; color:green;" id="tabGanancia">0</td></tr>
+            <h3>Resultado del Análisis</h3>
+            <table class="res-table">
+                <tr><td>Total Bancos Inicio:</td><td id="tIniBancos" style="text-align:right;">0</td></tr>
+                <tr><td>Total Bancos Cierre:</td><td id="tFinBancos" style="text-align:right;">0</td></tr>
+                <tr style="background:#e0f2f1;"><td><strong>Ganancia Neta (VES):</strong></td><td id="gananciaReal" style="text-align:right; font-weight:bold; color:green;">0</td></tr>
             </table>
-            <p id="analisisTexto" style="font-size: 0.9em; font-style: italic; margin-top: 15px;"></p>
         </div>
     </div>
 
     <script>
-        const campos = ['iUsdt', 'iVzla', 'iBanesco', 'iTasaCompra', 'fUsdt', 'fVzla', 'fBanesco', 'fTasaVenta'];
+        const campos = ['iUsdt', 'iVzla', 'iBanesco', 'iTasa', 'fUsdt', 'fVzla', 'fBanesco', 'fTasa'];
 
         window.onload = () => {
             campos.forEach(id => {
@@ -63,21 +61,25 @@
             });
         };
 
-       function guardarYCalcular() {
+        function guardarYCalcular() {
             campos.forEach(id => localStorage.setItem(id, document.getElementById(id).value));
             
             const get = (id) => parseFloat(document.getElementById(id).value) || 0;
 
-            // 1. Calculamos el Patrimonio Total Inicial y Final
-            const totalIni = (get('iUsdt') * get('iTasaCompra')) + get('iVzla') + get('iBancos'); // Asegúrate de sumar Vzla + Banesco
-            const totalFin = (get('fUsdt') * get('fTasaVenta')) + get('fVzla') + get('fBancos');
-            
-            // 2. La ganancia real es la diferencia de patrimonio
-            const gananciaReal = totalFin - totalIni;
+            // Sumas automáticas de bancos
+            const totalIniBancos = get('iVzla') + get('iBanesco');
+            const totalFinBancos = get('fVzla') + get('fBanesco');
+
+            // Cálculo Patrimonio (USDT * Tasa + Bancos)
+            const patIni = (get('iUsdt') * get('iTasa')) + totalIniBancos;
+            const patFin = (get('fUsdt') * get('fTasa')) + totalFinBancos;
+
+            const ganancia = patFin - patIni;
 
             document.getElementById('res').style.display = 'block';
-            document.getElementById('tabGanancia').innerText = gananciaReal.toLocaleString() + " VES";
-            // ... resto del código
+            document.getElementById('tIniBancos').innerText = totalIniBancos.toLocaleString() + " VES";
+            document.getElementById('tFinBancos').innerText = totalFinBancos.toLocaleString() + " VES";
+            document.getElementById('gananciaReal').innerText = ganancia.toLocaleString() + " VES";
         }
 
         function limpiarDatos() {
