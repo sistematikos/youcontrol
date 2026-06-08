@@ -63,23 +63,21 @@
             });
         };
 
-        function guardarYCalcular() {
+       function guardarYCalcular() {
             campos.forEach(id => localStorage.setItem(id, document.getElementById(id).value));
             
             const get = (id) => parseFloat(document.getElementById(id).value) || 0;
 
-            const difUsdt = get('iUsdt') - get('fUsdt'); // Positivo si vendiste
-            const gananciaSpread = difUsdt * (get('fTasaVenta') - get('iTasaCompra'));
-
-            // Análisis inteligente
-            let analisis = gananciaSpread > 0 
-                ? "✅ Jornada Rentable: Has generado ganancia real mediante el diferencial de precios." 
-                : "⚠️ Atención: La venta no generó margen positivo según las tasas indicadas.";
+            // 1. Calculamos el Patrimonio Total Inicial y Final
+            const totalIni = (get('iUsdt') * get('iTasaCompra')) + get('iVzla') + get('iBancos'); // Asegúrate de sumar Vzla + Banesco
+            const totalFin = (get('fUsdt') * get('fTasaVenta')) + get('fVzla') + get('fBancos');
+            
+            // 2. La ganancia real es la diferencia de patrimonio
+            const gananciaReal = totalFin - totalIni;
 
             document.getElementById('res').style.display = 'block';
-            document.getElementById('tabUsdt').innerText = difUsdt.toFixed(2) + " USDT";
-            document.getElementById('tabGanancia').innerText = gananciaSpread.toFixed(2) + " VES";
-            document.getElementById('analisisTexto').innerText = analisis;
+            document.getElementById('tabGanancia').innerText = gananciaReal.toLocaleString() + " VES";
+            // ... resto del código
         }
 
         function limpiarDatos() {
