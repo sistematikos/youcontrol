@@ -15,7 +15,6 @@
     </style>
 
     <script>
-        // Registro del Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW error', err));
@@ -36,7 +35,6 @@
         import { db } from './js/firebase-config.js';
         import { doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Captura el evento de instalación
         window.deferredPrompt = null;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
@@ -76,10 +74,10 @@
                 localStorage.setItem('youcontrol_empresa_id', data.activation_id);
                 localStorage.setItem('licencia_validada', 'true');
                 
-                // Mostrar pantalla de instalación obligatoria
+                // Pantalla con tu logo.png
                 document.body.innerHTML = `
                     <div style="background:white; padding:40px; border-radius:20px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.2); max-width:350px; width: 90%;">
-                        <i class="fas fa-rocket" style="font-size:4rem; color:#002D72; margin-bottom:20px;"></i>
+                        <img src="img/logo.png" style="width: 120px; margin-bottom: 20px;" alt="Logo">
                         <h2 style="color:#002D72;">¡Sistema Activado!</h2>
                         <p style="color:#64748b; margin-bottom:25px;">Para acceder al sistema, debes instalar la aplicación en tu dispositivo.</p>
                         
@@ -98,7 +96,6 @@
                         }
                         window.deferredPrompt = null;
                     } else {
-                        alert("Redirigiendo al sistema...");
                         window.location.href = 'sys_v1_menu.html';
                     }
                 });
