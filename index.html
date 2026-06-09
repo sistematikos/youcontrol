@@ -26,6 +26,13 @@
         import { db } from './js/firebase-config.js';
         import { doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+        // Captura el evento de instalación de PWA
+        window.deferredPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            window.deferredPrompt = e;
+        });
+
         const getHardwareID = () => btoa(navigator.userAgent + navigator.language);
 
         window.procesarActivacion = async () => {
@@ -59,24 +66,38 @@
                 localStorage.setItem('youcontrol_empresa_id', data.activation_id);
                 localStorage.setItem('licencia_validada', 'true');
                 
-                // Mostrar pantalla de aviso de instalación
+                // Mostrar pantalla de instalación profesional
                 document.body.innerHTML = `
                     <div style="background:white; padding:40px; border-radius:20px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.2); max-width:350px; width: 90%;">
-                        <i class="fas fa-check-circle" style="font-size:4rem; color:#22c55e; margin-bottom:20px;"></i>
+                        <i class="fas fa-download" style="font-size:4rem; color:#10B981; margin-bottom:20px;"></i>
                         <h2 style="color:#002D72;">¡Sistema Activado!</h2>
-                        <p style="color:#64748b; margin-bottom:25px;">Para una mejor experiencia, instala la aplicación en tu dispositivo:</p>
+                        <p style="color:#64748b; margin-bottom:25px;">Para operar de forma segura, instala la aplicación en tu dispositivo:</p>
                         
-                        <div style="text-align:left; font-size:0.9rem; color:#334; margin-bottom:25px; line-height: 1.5;">
-                            <p>📱 <b>Celular:</b> Toca el menú (3 puntos) y elige <b>"Instalar aplicación"</b> o <b>"Añadir a inicio"</b>.</p>
-                            <p>💻 <b>PC:</b> Busca el icono de instalación en la barra de direcciones.</p>
-                        </div>
-
+                        <button id="btnInstalar" style="width:100%; padding:15px; background:#10B981; color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer; margin-bottom:15px;">
+                            INSTALAR APLICACIÓN
+                        </button>
+                        
                         <button onclick="window.location.href='sys_v1_menu.html'" 
-                                style="width:100%; padding:15px; background:#002D72; color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">
-                            ENTRAR AL SISTEMA
+                                style="width:100%; padding:15px; background:transparent; color:#64748b; border:1px solid #e2e8f0; border-radius:10px; cursor:pointer;">
+                            Entrar al sistema
                         </button>
                     </div>
                 `;
+
+                // Lógica del botón de instalación
+                document.getElementById('btnInstalar').addEventListener('click', async () => {
+                    if (window.deferredPrompt) {
+                        window.deferredPrompt.prompt();
+                        const { outcome } = await window.deferredPrompt.userChoice;
+                        if (outcome === 'accepted') {
+                            window.location.href = 'sys_v1_menu.html';
+                        }
+                        window.deferredPrompt = null;
+                    } else {
+                        alert("La aplicación ya está instalada o el navegador no soporta la instalación directa.");
+                        window.location.href = 'sys_v1_menu.html';
+                    }
+                });
                 
             } catch (e) {
                 console.error(e);
