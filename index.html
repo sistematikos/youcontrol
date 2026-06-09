@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YOU CONTROL | Activación</title>
+    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         body { font-family: 'Poppins', sans-serif; background: #F1F5F9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
@@ -12,6 +13,15 @@
         button { width: 100%; padding: 15px; background: #002D72; color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; }
         button:hover { background: #0052D4; }
     </style>
+
+    <script>
+        // Registro del Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW error', err));
+            });
+        }
+    </script>
 </head>
 <body>
 
@@ -26,7 +36,7 @@
         import { db } from './js/firebase-config.js';
         import { doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Captura el evento de instalación de PWA
+        // Captura el evento de instalación
         window.deferredPrompt = null;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
@@ -66,25 +76,19 @@
                 localStorage.setItem('youcontrol_empresa_id', data.activation_id);
                 localStorage.setItem('licencia_validada', 'true');
                 
-                // Mostrar pantalla de instalación profesional
+                // Mostrar pantalla de instalación obligatoria
                 document.body.innerHTML = `
                     <div style="background:white; padding:40px; border-radius:20px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.2); max-width:350px; width: 90%;">
-                        <i class="fas fa-download" style="font-size:4rem; color:#10B981; margin-bottom:20px;"></i>
+                        <i class="fas fa-rocket" style="font-size:4rem; color:#002D72; margin-bottom:20px;"></i>
                         <h2 style="color:#002D72;">¡Sistema Activado!</h2>
-                        <p style="color:#64748b; margin-bottom:25px;">Para operar de forma segura, instala la aplicación en tu dispositivo:</p>
+                        <p style="color:#64748b; margin-bottom:25px;">Para acceder al sistema, debes instalar la aplicación en tu dispositivo.</p>
                         
-                        <button id="btnInstalar" style="width:100%; padding:15px; background:#10B981; color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer; margin-bottom:15px;">
+                        <button id="btnInstalar" style="width:100%; padding:15px; background:#10B981; color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">
                             INSTALAR APLICACIÓN
-                        </button>
-                        
-                        <button onclick="window.location.href='sys_v1_menu.html'" 
-                                style="width:100%; padding:15px; background:transparent; color:#64748b; border:1px solid #e2e8f0; border-radius:10px; cursor:pointer;">
-                            Entrar al sistema
                         </button>
                     </div>
                 `;
 
-                // Lógica del botón de instalación
                 document.getElementById('btnInstalar').addEventListener('click', async () => {
                     if (window.deferredPrompt) {
                         window.deferredPrompt.prompt();
@@ -94,7 +98,7 @@
                         }
                         window.deferredPrompt = null;
                     } else {
-                        alert("La aplicación ya está instalada o el navegador no soporta la instalación directa.");
+                        alert("Redirigiendo al sistema...");
                         window.location.href = 'sys_v1_menu.html';
                     }
                 });
