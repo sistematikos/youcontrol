@@ -114,6 +114,28 @@ buscador.addEventListener('input', (e) => {
     }
 });
 
+// Restauración de la lógica de ENTER
+buscador.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        const criterio = buscador.value.trim();
+        const prod = productosLocales.find(p => p.sku === criterio || p.barras === criterio);
+        
+        if (prod) {
+            aviso.style.display = 'none';
+            window.seleccionar(prod.sku);
+            // Mover foco después de cargar el producto
+            inputCantidad.focus(); 
+        } else {
+            // Si no existe, preparamos para nuevo registro
+            aviso.style.display = 'block';
+            inputSku.value = criterio;
+            buscador.value = '';
+            inputNombre.focus(); // Aquí es donde baja el cursor al Nombre
+        }
+    }
+});
+
 window.seleccionar = (sku) => {
     const prod = productosLocales.find(p => p.sku === sku);
     if (prod) {
