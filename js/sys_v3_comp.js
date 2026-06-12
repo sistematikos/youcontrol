@@ -1,10 +1,10 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * Módulo Completo con Cálculos de Costos, Precios y Código de Barras
+ * Módulo Completo con Cálculos, Código de Barras y Departamentos
  */
 
 import { db } from './firebase-config.js';
-import { collection, onSnapshot, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, onSnapshot, doc, getDoc, setDoc, getDocs, query } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const USER_ID = localStorage.getItem('youcontrol_empresa_id'); 
 
@@ -24,15 +24,26 @@ const inputGanancia = document.getElementById('comp-ganancia');
 const inputPrecio = document.getElementById('comp-precio');
 const inputPrecioBs = document.getElementById('comp-precio-bs');
 const inputCantidad = document.getElementById('comp-cantidad');
+const inputDepto = document.getElementById('comp-depto'); // Nuevo campo depto
 
 // 1. INICIALIZACIÓN
 async function cargarConfiguracion() {
     if (!USER_ID) return;
     try {
+        // Cargar tasa
         const userSnap = await getDoc(doc(db, "usuarios", USER_ID));
         if (userSnap.exists()) {
             tasaActual = parseFloat(userSnap.data().tasa_bcv) || 1.00;
         }
+
+        // Cargar Departamentos
+        const snapDeptos = await getDocs(query(collection(db, "usuarios", USER_ID, "departamentos")));
+        inputDepto.innerHTML = '<option value="GENERAL">GENERAL</option>';
+        snapDeptos.forEach(d => {
+            inputDepto.innerHTML += `<option value="${d.id}">${d.data().nombre.toUpperCase()}</option>`;
+        });
+
+        // Cargar productos
         onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
             productosLocales = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         });
@@ -41,30 +52,21 @@ async function cargarConfiguracion() {
 
 window.evaluarMatematica = (valor) => {
     try {
-        // Limpiamos el valor para asegurar que solo queden números y operadores permitidos
-        let entrada = valor.replace(/[^0-9.+*%]/g, '');
-        
-        // Expresión para detectar 100+30%
+        let entrada = valor.toString().replace(/[^0-9.+*%]/g, '');
         const regex = /(\d+(\.\d+)?)\s*\+\s*(\d+(\.\d+)?)\s*%/;
         const match = entrada.match(regex);
-        
         if (match) {
             const base = parseFloat(match[1]);
             const porcentaje = parseFloat(match[3]);
             return base + (base * (porcentaje / 100));
         }
-
-        // Para casos normales como 100*0.3
         return new Function('return ' + entrada.replace(/%/g, '/100'))();
-    } catch (e) { 
-        return parseFloat(valor.replace(/[^0-9.]/g, '')) || 0; 
-    }
+    } catch (e) { return parseFloat(valor.replace(/[^0-9.]/g, '')) || 0; }
 };
 
 document.addEventListener('DOMContentLoaded', () => {
     cargarConfiguracion();
     
-    // Eventos de costo con lógica matemática
     inputCosto.addEventListener('blur', () => {
         const resultado = window.evaluarMatematica(inputCosto.value);
         inputCosto.value = resultado.toFixed(2);
@@ -100,33 +102,15 @@ buscador.addEventListener('input', (e) => {
         aviso.style.display = 'none';
         dropdown.innerHTML = filtrados.map(p => `
             <div class="search-item" style="padding:10px; cursor:pointer; border-bottom:1px solid #eee; background:white;" 
-                 onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'"
                  onclick="window.seleccionar('${p.sku}')">
                 <strong>${p.nombre}</strong><br>
-                <small>SKU: ${p.sku} | Barras: ${p.barras || 'N/A'}</small>
+                <small>SKU: ${p.sku} | Depto: ${p.departamento || 'GENERAL'}</small>
             </div>
         `).join('');
         dropdown.style.display = 'block';
     } else {
         dropdown.style.display = 'none';
         aviso.style.display = 'block'; 
-    }
-});
-
-buscador.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        const criterio = buscador.value.trim();
-        const prod = productosLocales.find(p => p.sku === criterio || p.barras === criterio);
-        if (prod) {
-            aviso.style.display = 'none';
-            window.seleccionar(prod.sku);
-        } else {
-            aviso.style.display = 'block';
-            inputSku.value = criterio;
-            buscador.value = '';
-            inputNombre.focus();
-        }
     }
 });
 
@@ -139,6 +123,7 @@ window.seleccionar = (sku) => {
         inputCosto.value = prod.costo || 0;
         inputGanancia.value = prod.ganancia || 0;
         inputPrecio.value = prod.precio || 0;
+        inputDepto.value = prod.departamento || "GENERAL"; // Carga el depto
         aviso.style.display = 'none';
         dropdown.style.display = 'none';
         window.calcularPreciosCompra();
@@ -163,16 +148,6 @@ window.calcularGananciaCompra = () => {
     inputPrecioBs.value = (p * tasaActual).toFixed(2).replace('.', ',') + " Bs.";
 };
 
-window.calcularDesdeBs = () => {
-    const vBs = parseFloat(inputPrecioBs.value.replace(',', '.')) || 0;
-    if (tasaActual > 0 && vBs > 0) {
-        const pUsd = vBs / tasaActual;
-        inputPrecio.value = pUsd.toFixed(2);
-        const c = parseFloat(inputCosto.value) || 0;
-        if (c > 0) inputGanancia.value = (((pUsd - c) / c) * 100).toFixed(1);
-    }
-};
-
 // 4. GESTIÓN DE LISTA
 window.agregarALista = () => {
     const item = {
@@ -182,7 +157,8 @@ window.agregarALista = () => {
         cant: parseInt(inputCantidad.value) || 0,
         precio: parseFloat(inputPrecio.value) || 0,
         costo: inputCosto.value, 
-        ganancia: inputGanancia.value
+        ganancia: inputGanancia.value,
+        departamento: inputDepto.value // Se guarda en el item
     };
     if (!item.sku || !item.nombre) return alert("Faltan datos");
     listaTemporal.push(item);
@@ -203,7 +179,6 @@ window.procesarIngresoMercancia = async () => {
         const prodActual = productosLocales.find(p => p.sku === item.sku);
         await setDoc(doc(db, "usuarios", USER_ID, "productos", item.sku), {
             ...item,
-            barras: item.barras,
             stock: (parseInt(prodActual?.stock) || 0) + item.cant
         }, { merge: true });
     }
@@ -220,5 +195,6 @@ function limpiarFormulario() {
     inputCosto.value = '0.00'; 
     inputPrecio.value = '0.00'; 
     inputPrecioBs.value = '';
+    inputDepto.value = 'GENERAL';
     buscador.focus();
 }
