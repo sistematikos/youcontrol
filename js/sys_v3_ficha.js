@@ -77,7 +77,12 @@ window.guardarProducto = async function() {
     const sku = document.getElementById('prod-sku').value.trim();
     if (!sku) return alert("El SKU es obligatorio.");
     
-    // Obtenemos el valor del stock del input
+    // --- CORRECCIÓN APLICADA ---
+    // Evaluamos los valores antes de guardarlos para que el resultado (ej. 130)
+    // se guarde en la base de datos en lugar de la fórmula (ej. 100+30%)
+    const costoFinal = evaluarCalculo(document.getElementById('prod-costo').value);
+    const gananciaFinal = evaluarCalculo(document.getElementById('prod-ganancia').value);
+    const precioFinal = evaluarCalculo(document.getElementById('prod-precio').value);
     const stockInput = document.getElementById('prod-stock').value;
     
     try {
@@ -85,9 +90,9 @@ window.guardarProducto = async function() {
             sku: sku,
             nombre: document.getElementById('prod-nombre').value,
             barras: document.getElementById('prod-barras').value,
-            costo: parseFloat(document.getElementById('prod-costo').value || 0),
-            ganancia: parseFloat(document.getElementById('prod-ganancia').value || 0),
-            precio: parseFloat(document.getElementById('prod-precio').value || 0),
+            costo: parseFloat(costoFinal || 0),
+            ganancia: parseFloat(gananciaFinal || 0),
+            precio: parseFloat(precioFinal || 0),
             stock: parseInt(stockInput || 0),
             departamento: document.getElementById('prod-depto').value
         });
@@ -98,8 +103,10 @@ window.guardarProducto = async function() {
         // --- AQUÍ ESTÁ EL CAMBIO ---
         // Enviamos el cursor de vuelta al buscador para escanear el siguiente producto
         const buscador = document.getElementById('buscador-prod');
-        buscador.focus();
-        buscador.select(); // Esto selecciona el texto anterior para que puedas escribir el nuevo encima
+        if (buscador) {
+            buscador.focus();
+            buscador.select();
+        }
         
     } catch (e) { 
         alert("Error al guardar: " + e.message); 
