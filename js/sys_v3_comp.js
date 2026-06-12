@@ -12,7 +12,7 @@ let productosLocales = [];
 let listaTemporal = []; 
 let tasaActual = 1.00;
 
-// Vinculación DOM
+// Vinculación DOM (Nombres exactos mantenidos)
 const buscador = document.getElementById('buscador-dinamico');
 const dropdown = document.getElementById('dropdown-resultados');
 const aviso = document.getElementById('aviso-no-registrado');
@@ -39,7 +39,7 @@ async function cargarConfiguracion() {
     } catch (e) { console.error("Error al cargar:", e); }
 }
 
-// Lógica de cálculo matemático (100+30%)
+// Función matemática para 100+30%
 window.evaluarMatematica = (valor) => {
     try {
         const regex = /(\d+(\.\d+)?)\s*\+\s*(\d+(\.\d+)?)\s*%/;
@@ -59,10 +59,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Eventos de costo con lógica matemática
     inputCosto.addEventListener('blur', () => {
         const resultado = window.evaluarMatematica(inputCosto.value);
-        if (!isNaN(resultado)) {
-            inputCosto.value = resultado.toFixed(2);
-            window.calcularPreciosCompra();
-        }
+        inputCosto.value = resultado.toFixed(2);
+        window.calcularPreciosCompra();
     });
 
     inputCosto.addEventListener('keydown', (e) => {
