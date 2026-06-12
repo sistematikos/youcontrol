@@ -39,18 +39,26 @@ async function cargarConfiguracion() {
     } catch (e) { console.error("Error al cargar:", e); }
 }
 
-// Función matemática para 100+30%
 window.evaluarMatematica = (valor) => {
     try {
+        // Limpiamos el valor para asegurar que solo queden números y operadores permitidos
+        let entrada = valor.replace(/[^0-9.+*%]/g, '');
+        
+        // Expresión para detectar 100+30%
         const regex = /(\d+(\.\d+)?)\s*\+\s*(\d+(\.\d+)?)\s*%/;
-        const match = valor.match(regex);
+        const match = entrada.match(regex);
+        
         if (match) {
             const base = parseFloat(match[1]);
             const porcentaje = parseFloat(match[3]);
             return base + (base * (porcentaje / 100));
         }
-        return new Function('return ' + valor.replace(/%/g, '/100'))();
-    } catch (e) { return parseFloat(valor) || 0; }
+
+        // Para casos normales como 100*0.3
+        return new Function('return ' + entrada.replace(/%/g, '/100'))();
+    } catch (e) { 
+        return parseFloat(valor.replace(/[^0-9.]/g, '')) || 0; 
+    }
 };
 
 document.addEventListener('DOMContentLoaded', () => {
