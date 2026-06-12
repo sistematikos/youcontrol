@@ -68,16 +68,19 @@
             </section>
         </div>
 
-        <section class="card border-amber">
-            <h3>Lista de Ingreso</h3>
-            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
-                <thead><tr style="color: #64748B; border-bottom: 1px solid #F1F5F9;"><th style="padding:5px; text-align:left;">SKU</th><th style="text-align:left;">Producto</th><th style="text-align:left;">Cant.</th><th style="text-align:left;">Precio</th><th>X</th></tr></thead>
-                <tbody id="tabla-items-compra"></tbody>
-            </table>
-            <div style="text-align: center; margin-top: 15px;">
-                <button class="btn-save" onclick="window.procesarIngresoMercancia()">GUARDAR COMPRA</button>
-            </div>
-        </section>
+       <section class="card border-emerald">
+    <h3>Costos y Precios</h3>
+    <select id="comp-depto" style="width: 100%; padding: 10px; margin: 4px 0; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; background: white;">
+        <option value="GENERAL">Cargando departamentos...</option>
+    </select>
+
+    <input type="text" id="comp-costo" inputmode="decimal" placeholder="0.00">
+    <input type="number" id="comp-ganancia" placeholder="% Ganancia">
+    <input type="number" id="comp-precio" placeholder="Precio $">
+    <input type="text" id="comp-precio-bs" placeholder="Precio Bs." oninput="window.calcularDesdeBs()">
+    
+    <button class="btn-add" onclick="window.agregarALista()">AGREGAR A LISTA</button>
+       </section>
     </main>
     <script type="module" src="./js/sys_v3_comp.js"></script>
 </body>
