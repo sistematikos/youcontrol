@@ -17,7 +17,7 @@ const buscador = document.getElementById('buscador-dinamico');
 const dropdown = document.getElementById('dropdown-resultados');
 const aviso = document.getElementById('aviso-no-registrado');
 const inputSku = document.getElementById('comp-sku');
-const inputBarras = document.getElementById('comp-barras'); // Nuevo campo
+const inputBarras = document.getElementById('comp-barras');
 const inputNombre = document.getElementById('comp-nombre');
 const inputCosto = document.getElementById('comp-costo');
 const inputGanancia = document.getElementById('comp-ganancia');
@@ -39,8 +39,41 @@ async function cargarConfiguracion() {
     } catch (e) { console.error("Error al cargar:", e); }
 }
 
+// Lógica de cálculo matemático (100+30%)
+window.evaluarMatematica = (valor) => {
+    try {
+        const regex = /(\d+(\.\d+)?)\s*\+\s*(\d+(\.\d+)?)\s*%/;
+        const match = valor.match(regex);
+        if (match) {
+            const base = parseFloat(match[1]);
+            const porcentaje = parseFloat(match[3]);
+            return base + (base * (porcentaje / 100));
+        }
+        return new Function('return ' + valor.replace(/%/g, '/100'))();
+    } catch (e) { return parseFloat(valor) || 0; }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     cargarConfiguracion();
+    
+    // Eventos de costo con lógica matemática
+    inputCosto.addEventListener('blur', () => {
+        const resultado = window.evaluarMatematica(inputCosto.value);
+        if (!isNaN(resultado)) {
+            inputCosto.value = resultado.toFixed(2);
+            window.calcularPreciosCompra();
+        }
+    });
+
+    inputCosto.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const resultado = window.evaluarMatematica(inputCosto.value);
+            inputCosto.value = resultado.toFixed(2);
+            window.calcularPreciosCompra();
+            inputGanancia.focus();
+        }
+    });
+
     inputCosto.addEventListener('input', window.calcularPreciosCompra);
     inputGanancia.addEventListener('input', window.calcularPreciosCompra);
     inputPrecio.addEventListener('input', window.calcularGananciaCompra);
@@ -49,13 +82,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // 2. BUSCADOR INTELIGENTE
 buscador.addEventListener('input', (e) => {
     const val = e.target.value.toLowerCase().trim();
-    if (!val) { 
-        dropdown.style.display = 'none'; 
-        aviso.style.display = 'none'; // Ocultar aviso si borran el texto
-        return; 
-    }
+    if (!val) { dropdown.style.display = 'none'; aviso.style.display = 'none'; return; }
     
-    // Filtro más flexible: busca incluso si el campo en Firestore es undefined
     const filtrados = productosLocales.filter(p => 
         (p.sku && String(p.sku).toLowerCase().includes(val)) || 
         (p.barras && String(p.barras).toLowerCase().includes(val)) || 
@@ -63,7 +91,7 @@ buscador.addEventListener('input', (e) => {
     );
     
     if (filtrados.length > 0) {
-        aviso.style.display = 'none'; // Si encuentra algo, ocultamos el aviso
+        aviso.style.display = 'none';
         dropdown.innerHTML = filtrados.map(p => `
             <div class="search-item" style="padding:10px; cursor:pointer; border-bottom:1px solid #eee; background:white;" 
                  onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'"
@@ -75,23 +103,19 @@ buscador.addEventListener('input', (e) => {
         dropdown.style.display = 'block';
     } else {
         dropdown.style.display = 'none';
-        // Solo mostramos el aviso si el usuario escribió algo y no hay match
         aviso.style.display = 'block'; 
     }
 });
 
-// Asegurar que Enter también limpie el aviso
 buscador.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
         e.preventDefault();
         const criterio = buscador.value.trim();
         const prod = productosLocales.find(p => p.sku === criterio || p.barras === criterio);
-        
         if (prod) {
             aviso.style.display = 'none';
             window.seleccionar(prod.sku);
         } else {
-            // Si no encuentra, mantenemos el aviso y preparamos el campo
             aviso.style.display = 'block';
             inputSku.value = criterio;
             buscador.value = '';
@@ -104,7 +128,7 @@ window.seleccionar = (sku) => {
     const prod = productosLocales.find(p => p.sku === sku);
     if (prod) {
         inputSku.value = prod.sku;
-        inputBarras.value = prod.barras || ''; // Carga Barras
+        inputBarras.value = prod.barras || '';
         inputNombre.value = prod.nombre;
         inputCosto.value = prod.costo || 0;
         inputGanancia.value = prod.ganancia || 0;
@@ -147,7 +171,7 @@ window.calcularDesdeBs = () => {
 window.agregarALista = () => {
     const item = {
         sku: inputSku.value,
-        barras: inputBarras.value, // Guarda Barras
+        barras: inputBarras.value,
         nombre: inputNombre.value,
         cant: parseInt(inputCantidad.value) || 0,
         precio: parseFloat(inputPrecio.value) || 0,
@@ -173,7 +197,7 @@ window.procesarIngresoMercancia = async () => {
         const prodActual = productosLocales.find(p => p.sku === item.sku);
         await setDoc(doc(db, "usuarios", USER_ID, "productos", item.sku), {
             ...item,
-            barras: item.barras, // Guarda Barras en Firebase
+            barras: item.barras,
             stock: (parseInt(prodActual?.stock) || 0) + item.cant
         }, { merge: true });
     }
@@ -184,7 +208,7 @@ window.procesarIngresoMercancia = async () => {
 
 function limpiarFormulario() {
     inputSku.value = ''; 
-    inputBarras.value = ''; // Limpia Barras
+    inputBarras.value = '';
     inputNombre.value = ''; 
     inputCantidad.value = '0';
     inputCosto.value = '0.00'; 
