@@ -44,29 +44,33 @@
         </header>
 
         <div class="grid-top">
-            <section class="card border-sky">
-                <h3>Datos Producto</h3>
-                <div id="aviso-no-registrado" style="color: var(--rose); font-size: 0.7rem; font-weight: 700; display: none;">
-                    <i class="fas fa-exclamation-circle"></i> Producto no registrado
-                </div>
-                <input type="text" id="buscador-dinamico" placeholder="Código o Nombre..." autocomplete="off">
-                <div id="dropdown-resultados"></div>
-                <input type="text" id="comp-sku" placeholder="SKU">
-                <input type="text" id="comp-barras" placeholder="Código de Barras"> 
-                <input type="text" id="comp-nombre" placeholder="Nombre">
-                <input type="number" id="comp-cantidad" placeholder="Cantidad">
-            </section>
-
-            <section class="card border-emerald">
-                <h3>Costos y Precios</h3>
-                <input type="text" id="comp-costo" inputmode="decimal" placeholder="0.00" ...>
-                <input type="number" id="comp-ganancia" placeholder="% Ganancia">
-                <input type="number" id="comp-precio" placeholder="Precio $">
-                <input type="text" id="comp-precio-bs" placeholder="Precio Bs." oninput="window.calcularDesdeBs()">
-                
-                <button class="btn-add" onclick="window.agregarALista()">AGREGAR A LISTA</button>
-            </section>
+    <section class="card border-sky">
+        <h3>Datos Producto</h3>
+        <div id="aviso-no-registrado" style="color: var(--rose); font-size: 0.7rem; font-weight: 700; display: none;">
+            <i class="fas fa-exclamation-circle"></i> Producto no registrado
         </div>
+        <input type="text" id="buscador-dinamico" placeholder="Código o Nombre..." autocomplete="off">
+        <div id="dropdown-resultados"></div>
+        <input type="text" id="comp-sku" placeholder="SKU">
+        <input type="text" id="comp-barras" placeholder="Código de Barras"> 
+        <input type="text" id="comp-nombre" placeholder="Nombre">
+        <input type="number" id="comp-cantidad" placeholder="Cantidad">
+    </section>
+
+    <section class="card border-emerald">
+        <h3>Costos y Precios</h3>
+        <select id="comp-depto" style="width: 100%; padding: 10px; margin: 4px 0; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; background: white;">
+            <option value="GENERAL">GENERAL</option>
+        </select>
+        
+        <input type="text" id="comp-costo" inputmode="decimal" placeholder="Costo ($)">
+        <input type="number" id="comp-ganancia" placeholder="% Ganancia">
+        <input type="number" id="comp-precio" placeholder="Precio $">
+        <input type="text" id="comp-precio-bs" placeholder="Precio Bs." oninput="window.calcularDesdeBs()">
+        
+        <button class="btn-add" onclick="window.agregarALista()">AGREGAR A LISTA</button>
+    </section>
+</div>
 
        <section class="card border-emerald">
     <h3>Costos y Precios</h3>
