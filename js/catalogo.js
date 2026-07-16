@@ -180,4 +180,13 @@ function renderizarCatalogo(lista) {
     }).join('');
 }
 
+window.abrirWhatsApp = function() {
+    if (telefonoEmpresa) {
+        // Abre el chat sin mensaje predefinido, o puedes añadir uno si prefieres
+        window.open(`https://wa.me/${telefonoEmpresa}`, '_blank');
+    } else {
+        alert("Número de contacto no disponible.");
+    }
+};
+
 document.addEventListener('DOMContentLoaded', iniciarCatalogo);
