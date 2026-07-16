@@ -181,10 +181,11 @@ function renderizarCatalogo(lista) {
 }
 
 window.abrirWhatsApp = function() {
-    if (telefonoEmpresa) {
+    if (telefonoEmpresa && telefonoEmpresa !== "") {
         window.open(`https://wa.me/${telefonoEmpresa}`, '_blank');
     } else {
-        alert("Número de contacto no disponible.");
+        // Esto ayudará a depurar si el número no está llegando desde Firebase
+        alert("El número de contacto aún se está cargando, por favor intenta en un segundo.");
     }
 };
 
