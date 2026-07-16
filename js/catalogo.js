@@ -107,6 +107,7 @@ window.actualizarFooter = function() {
     }
 };
 
+// Bloque a modificar: función enviarPedido
 window.enviarPedido = function() {
     if (Object.keys(carrito).length === 0) return;
     let mensaje = "¡Hola! Quisiera realizar el siguiente pedido:\n\n";
@@ -118,7 +119,9 @@ window.enviarPedido = function() {
         mensaje += `• ${item.nombre} x${item.cantidad} ($${item.precio.toFixed(2)}) = $${totalItem.toFixed(2)}\n`;
     }
     mensaje += `\n*TOTAL:* $${totalUSD.toFixed(2)}\n*TOTAL (Bs):* ${(totalUSD * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 })} Bs`;
-    window.open(`https://wa.me/584264570267?text=${encodeURIComponent(mensaje)}`, '_blank');
+    
+    // Aquí se usa la variable dinámica
+    window.open(`https://wa.me/${telefonoEmpresa}?text=${encodeURIComponent(mensaje)}`, '_blank');
 };
 
 window.toggleDepto = function(codDepto) {
