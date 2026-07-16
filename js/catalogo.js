@@ -2,7 +2,7 @@ import { db } from './firebase-config.js';
 import { collection, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // Variables globales
-let tasaActual = 1, carrito = {}, productosGlobales = [], USER_ID = "", mapaNombresDepto = {};
+let tasaActual = 1, carrito = {}, productosGlobales = [], USER_ID = "", mapaNombresDepto = {}, telefonoEmpresa = "";
 let deptoAbierto = null;
 
 function iniciarCatalogo() {
@@ -18,19 +18,27 @@ function iniciarCatalogo() {
     }
 
     // Configuración empresa y logo
-    onSnapshot(doc(db, "empresas_config", USER_ID), (snap) => {
-        const nombreEl = document.getElementById('nombre-empresa');
-        const logoImg = document.getElementById('logo-empresa');
-        if (snap.exists()) {
-            const data = snap.data();
-            if (data.nombre) {
-                nombreEl.innerText = data.nombre.toUpperCase();
-                nombreEl.style.opacity = "1";
-            }
-            logoImg.src = `https://raw.githubusercontent.com/sistematikos/youcontrol/main/img/${USER_ID}.png?t=${new Date().getTime()}`;
-            logoImg.style.display = 'block';
+   onSnapshot(doc(db, "empresas_config", USER_ID), (snap) => {
+    const nombreEl = document.getElementById('nombre-empresa');
+    const logoImg = document.getElementById('logo-empresa');
+    if (snap.exists()) {
+        const data = snap.data();
+        
+        // Bloque a modificar: Captura y limpieza del teléfono
+        let telLimpio = (data.telefono || "").replace(/-/g, "").replace(/\s/g, "");
+        if (telLimpio.startsWith("0")) {
+            telLimpio = "58" + telLimpio.substring(1);
         }
-    });
+        telefonoEmpresa = telLimpio;
+
+        if (data.nombre) {
+            nombreEl.innerText = data.nombre.toUpperCase();
+            nombreEl.style.opacity = "1";
+        }
+        logoImg.src = `https://raw.githubusercontent.com/sistematikos/youcontrol/main/img/${USER_ID}.png?t=${new Date().getTime()}`;
+        logoImg.style.display = 'block';
+    }
+});
 
     // Tasa BCV
     onSnapshot(doc(db, "usuarios", USER_ID), (snap) => {
