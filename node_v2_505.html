@@ -65,11 +65,24 @@
         <button onclick="enviarPedido()" style="background:var(--emerald); color:white; border:none; padding:10px 20px; border-radius:12px; font-weight:800;">Pedir (<span id="cart-count">0</span>)</button>
     </div>
     
-    <script type="module" src="js/catalogo.js"></script>
-    <!-- Botón flotante de contacto -->
-       <a id="btn-contacto" href="#" onclick="event.preventDefault(); window.abrirWhatsApp();" 
-       style="position: fixed; bottom: 90px; right: 20px; background: #25D366; color: white; padding: 15px; border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 999; font-size: 24px; text-decoration: none; display: flex; align-items: center; justify-content: center; border: 2px solid white;">
-   💬
-    </a>
+
+
+    <header class="app-header">
+    <div class="header-grid">
+        <div class="card-logo">
+            <img id="logo-empresa" src="" class="logo-img" style="display:none;" onerror="this.style.display='none'">
+        </div>
+        <div class="card-right" style="display: flex; justify-content: space-between; align-items: center;">
+            <span id="nombre-empresa" style="opacity: 0; transition: opacity 0.5s ease;">CARGANDO...</span>
+            <!-- Botón de contacto en la cabecera -->
+            <button onclick="window.abrirWhatsApp()" style="background: #25D366; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; font-size: 16px; margin-left: 10px; display: flex; align-items: center; justify-content: center;">
+                💬
+            </button>
+        </div>
+        <div class="card-right">TASA BCV: <span id="tasa-cliente" style="margin-left:5px;">0.00</span></div>
+        <input type="text" id="buscador-prod" placeholder="🔍 Buscar productos..." class="search-bar">
+    </div>
+    </header>
+    
 </body>
 </html>
