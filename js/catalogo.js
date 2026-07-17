@@ -17,24 +17,35 @@ function iniciarCatalogo() {
         return;
     }
 
-    // Configuración empresa y logo
-   onSnapshot(doc(db, "empresas_config", USER_ID), (snap) => {
+   // Configuración empresa y logo
+onSnapshot(doc(db, "empresas_config", USER_ID), (snap) => {
     const nombreEl = document.getElementById('nombre-empresa');
     const logoImg = document.getElementById('logo-empresa');
+    // NUEVA LÍNEA: Capturamos el elemento de dirección
+    const dirEl = document.getElementById('direccion-empresa');
+
     if (snap.exists()) {
         const data = snap.data();
         
-        // Bloque a modificar: Captura y limpieza del teléfono
+        // Bloque de teléfono
         let telLimpio = (data.telefono || "").replace(/-/g, "").replace(/\s/g, "");
         if (telLimpio.startsWith("0")) {
             telLimpio = "58" + telLimpio.substring(1);
         }
         telefonoEmpresa = telLimpio;
 
+        // Nombre
         if (data.nombre) {
             nombreEl.innerText = data.nombre.toUpperCase();
             nombreEl.style.opacity = "1";
         }
+
+        // NUEVA LÍNEA: Actualizamos la dirección en el HTML
+        if (dirEl && data.direccion) {
+            dirEl.innerText = "📍 " + data.direccion;
+        }
+
+        // Logo
         logoImg.src = `https://raw.githubusercontent.com/sistematikos/youcontrol/main/img/${USER_ID}.png?t=${new Date().getTime()}`;
         logoImg.style.display = 'block';
     }
