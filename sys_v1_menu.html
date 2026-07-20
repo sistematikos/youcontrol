@@ -5,81 +5,72 @@
     <title>YOU CONTROL | Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        :root { --deep-navy: #0F172A; --soft-gray: #F8FAFC; }
-        body { font-family: 'Poppins', sans-serif; background: var(--soft-gray); margin: 0; padding-bottom: 50px; }
+        :root { 
+            --light-bg: #F1F5F9; 
+            --blue-electric: #3B82F6; 
+            --menu-bg: #FFFFFF; /* Colores claros para el menú */
+            --text-color: #1E293B;
+        }
+        body { font-family: 'Poppins', sans-serif; background: var(--light-bg); margin: 0; padding-bottom: 50px; }
+        .main-wrapper { width: 92%; max-width: 1200px; margin: 20px auto; }
 
-        /* Barra superior tipo ERP */
-        .erp-navbar { background: var(--deep-navy); padding: 10px 40px; display: flex; gap: 30px; color: white; font-weight: 600; font-size: 0.8rem; }
-        .dropdown { position: relative; cursor: pointer; }
-        .dropdown-content { display: none; position: absolute; background: white; min-width: 180px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-radius: 8px; z-index: 1000; }
-        .dropdown-content a { color: var(--deep-navy); padding: 10px; text-decoration: none; display: block; }
+        /* Menú cascada claro alineado al banner */
+        .erp-navbar { background: var(--menu-bg); padding: 10px 20px; display: flex; gap: 30px; border-radius: 12px 12px 0 0; border: 1px solid #E2E8F0; }
+        .dropdown { cursor: pointer; font-size: 0.8rem; font-weight: 600; color: var(--text-color); padding: 10px; }
+        .dropdown:hover { color: var(--blue-electric); }
+        .dropdown-content { display: none; position: absolute; background: white; min-width: 180px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 8px; z-index: 1000; }
+        .dropdown-content a { color: var(--text-color); padding: 10px; text-decoration: none; display: block; font-size: 0.8rem; }
         .dropdown:hover .dropdown-content { display: block; }
 
-        /* Banner y Grid */
-        .main-wrapper { width: 92%; max-width: 1200px; margin: 20px auto; }
-        .banner { width: 100%; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .banner img { width: 100%; display: block; }
+        /* Banner más corto */
+        .banner { width: 100%; height: 120px; overflow: hidden; border-radius: 0 0 12px 12px; border: 1px solid #E2E8F0; }
+        .banner img { width: 100%; height: 100%; object-fit: cover; }
         
-        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-top: 30px; }
+        /* Grid de tarjetas originales */
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 30px; }
+        .card { background: white; padding: 20px; border-radius: 12px; text-align: center; border: 2px solid #E2E8F0; text-decoration: none; color: var(--text-color); }
         
-        /* Tarjetas de Acceso Directo (Estilo Original) */
-        .card { background: white; padding: 25px; border-radius: 12px; text-align: center; border: 2px solid #E2E8F0; text-decoration: none; color: #1E293B; transition: 0.3s; }
-        .card:hover { border-color: #3B82F6; transform: translateY(-5px); }
-        .card i { font-size: 2rem; margin-bottom: 10px; color: #3B82F6; }
+        /* Colores de tarjetas específicos */
+        .card-clientes { border-top: 5px solid #10B981; } /* Verde */
+        .card-productos { border-top: 5px solid #F59E0B; } /* Naranja */
+        .card-ingreso { border-top: 5px solid #8B5CF6; } /* Morado */
+        .card-ventas { border-top: 5px solid #06B6D4; } /* Cian */
         
-        /* Tarjeta de Licencia (Fija abajo izquierda) */
-        .license-card { position: fixed; bottom: 30px; left: 30px; background: white; padding: 20px; border-radius: 12px; border-left: 6px solid #3B82F6; box-shadow: 0 10px 20px rgba(0,0,0,0.1); width: 250px; }
+        .license-card { position: fixed; bottom: 30px; left: 30px; background: white; padding: 20px; border-radius: 12px; border-left: 6px solid var(--blue-electric); box-shadow: 0 10px 20px rgba(0,0,0,0.1); width: 250px; }
     </style>
 </head>
 <body>
 
-    <!-- Menú tipo ERP arriba -->
+<div class="main-wrapper">
     <nav class="erp-navbar">
-        <div class="dropdown">ARCHIVO <i class="fas fa-caret-down"></i>
+        <div class="dropdown">ARCHIVO ▼
             <div class="dropdown-content"><a href="sys_config.html">Configuración</a></div>
         </div>
-        <div class="dropdown">INVENTARIO <i class="fas fa-caret-down"></i>
-            <div class="dropdown-content"><a href="sys_v1_inv.html">Existencias</a><a href="sys_v1_dep.html">Deptos</a></div>
+        <div class="dropdown">REPORTES ▼
+            <div class="dropdown-content"><a href="sys_v4_reportes.html">Estadísticas</a></div>
         </div>
-        <div class="dropdown">OPERACIONES <i class="fas fa-caret-down"></i>
-            <div class="dropdown-content"><a href="sys_v1_vt.html">Ventas</a><a href="sys_v5_anular.html">Anular</a></div>
+        <div class="dropdown">OPERACIONES ▼
+            <div class="dropdown-content"><a href="sys_v5_anular.html">Anulaciones</a><a href="sys_v1_dep.html">Departamentos</a></div>
         </div>
     </nav>
 
-    <div class="main-wrapper">
-        <div class="banner"><img src="img/youcontrol.png" alt="Banner"></div>
+    <div class="banner"><img src="img/youcontrol.png" alt="Banner"></div>
 
-        <!-- Tarjetas de acceso directo -->
-        <div class="grid-container">
-            <a href="sys_v1_inv.html" class="card"><i class="fas fa-boxes"></i><p>INVENTARIO</p></a>
-            <a href="sys_v3_comp.html" class="card"><i class="fas fa-cart-plus"></i><p>ENTRADA</p></a>
-            <a href="sys_v1_vt.html" class="card"><i class="fas fa-cash-register"></i><p>VENTAS (POS)</p></a>
-            <a href="sys_v4_reportes.html" class="card"><i class="fas fa-chart-line"></i><p>REPORTES</p></a>
-        </div>
+    <div class="grid-container">
+        <a href="#" class="card card-clientes"><i class="fas fa-users"></i><p>CLIENTES</p></a>
+        <a href="sys_v3_ficha.html" class="card card-productos"><i class="fas fa-box"></i><p>PRODUCTOS TERMINADOS</p></a>
+        <a href="sys_v3_comp.html" class="card card-ingreso"><i class="fas fa-cart-plus"></i><p>INGRESO</p></a>
+        <a href="sys_v1_vt.html" class="card card-ventas"><i class="fas fa-cash-register"></i><p>VENTAS (POS)</p></a>
     </div>
+</div>
 
-    <!-- Licencia (Esquina inferior) -->
-    <div class="license-card" id="lblEmpresa">
-        <h4 style="margin:0;"><i class="fas fa-shield-alt"></i> Licencia Activa</h4>
-        <p style="margin:5px 0 0; font-size: 0.9rem;" id="emp-data">Cargando...</p>
-    </div>
+<div class="license-card" id="lblEmpresa">
+    <h4 style="margin:0;"><i class="fas fa-shield-alt"></i> Licencia Activa</h4>
+    <p style="margin:5px 0 0; font-size: 0.8rem;" id="emp-data">Cargando...</p>
+</div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-        const db = getFirestore(initializeApp({ /* Config Firebase */ }));
-        
-        async function cargar() {
-            const id = localStorage.getItem('youcontrol_empresa_id');
-            if(id) {
-                const snap = await getDoc(doc(db, "empresas_config", id));
-                if(snap.exists()) {
-                    const d = snap.data();
-                    document.getElementById('emp-data').innerHTML = `<strong>${d.nombre}</strong><br>RIF: ${d.rif}`;
-                }
-            }
-        }
-        cargar();
-    </script>
+<script type="module">
+    // ... (Mantén tu lógica de carga de Firebase aquí)
+</script>
 </body>
 </html>
