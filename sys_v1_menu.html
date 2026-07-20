@@ -3,95 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YOU CONTROL | ERP System</title>
+    <title>YOU CONTROL | Modern ERP</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         :root {
-            --navy: #002A54;
-            --bg-gray: #E0E7FF;
-            --white: #FFFFFF;
+            --primary: #0284C7; /* Azul más brillante y moderno */
+            --dark-blue: #0f172a; /* Azul muy oscuro para la barra */
+            --bg-body: #F1F5F9;
         }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-gray); margin: 0; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-body); margin: 0; }
         
-        /* Barra superior tipo ERP */
-        .erp-navbar { background: var(--navy); color: var(--white); padding: 10px 20px; display: flex; gap: 25px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .dropdown { position: relative; display: inline-block; cursor: pointer; font-size: 0.9rem; font-weight: 500; }
-        .dropdown-content { display: none; position: absolute; background-color: var(--white); min-width: 180px; box-shadow: 0px 8px 16px rgba(0,0,0,0.2); z-index: 1000; border: 1px solid #ccc; }
-        .dropdown-content a { color: #333; padding: 12px 15px; text-decoration: none; display: block; border-bottom: 1px solid #eee; font-size: 0.85rem; }
-        .dropdown-content a:hover { background-color: var(--navy); color: var(--white); }
+        /* Banner superior */
+        .banner-container { width: 100%; height: 180px; overflow: hidden; position: relative; }
+        .banner-img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.7); }
+        
+        /* Barra de menú moderna */
+        .erp-navbar { background: var(--dark-blue); color: white; padding: 0 20px; display: flex; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .dropdown { position: relative; padding: 15px 20px; cursor: pointer; transition: 0.3s; font-size: 0.85rem; letter-spacing: 0.5px; }
+        .dropdown:hover { background: var(--primary); }
+        .dropdown-content { display: none; position: absolute; background: white; min-width: 200px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); z-index: 1000; border-radius: 0 0 8px 8px; border: 1px solid #E2E8F0; }
+        .dropdown-content a { color: #475569; padding: 12px 16px; text-decoration: none; display: block; border-bottom: 1px solid #F1F5F9; }
+        .dropdown-content a:hover { background: #F8FAFC; color: var(--primary); }
         .dropdown:hover .dropdown-content { display: block; }
         
-        /* Banner y área principal */
-        .banner-container { width: 92%; max-width: 1200px; margin: 30px auto; background: var(--white); padding: 20px; border-radius: 8px; border: 1px solid #ccc; text-align: center; }
-        .banner-info { color: var(--navy); font-size: 1.2rem; font-weight: bold; }
+        /* Info de empresa */
+        .empresa-info { text-align: center; padding: 20px; color: var(--dark-blue); font-weight: 600; }
     </style>
 </head>
 <body oncontextmenu="return false">
 
-    <!-- Menú tipo ERP -->
+    <!-- Banner -->
+    <div class="banner-container">
+        <img src="img/youcontrol.png" alt="Banner" class="banner-img">
+    </div>
+
+    <!-- Menú tipo ERP Moderno -->
     <nav class="erp-navbar">
-        <div class="dropdown">Archivo ▼
+        <div class="dropdown">ARCHIVO <i class="fas fa-chevron-down"></i>
             <div class="dropdown-content">
-                <a href="sys_config.html">Configuración</a>
-                <a href="index_menu.html">Inicio</a>
+                <a href="sys_config.html"><i class="fas fa-cog"></i> Configuración</a>
+                <a href="index_menu.html"><i class="fas fa-home"></i> Inicio</a>
             </div>
         </div>
-        <div class="dropdown">Inventario ▼
+        <div class="dropdown">INVENTARIO <i class="fas fa-chevron-down"></i>
             <div class="dropdown-content">
                 <a href="sys_v1_inv.html">Existencias</a>
                 <a href="sys_v1_dep.html">Departamentos</a>
                 <a href="sys_v3_ficha.html">Ficha Productos</a>
             </div>
         </div>
-        <div class="dropdown">Operaciones ▼
+        <div class="dropdown">OPERACIONES <i class="fas fa-chevron-down"></i>
             <div class="dropdown-content">
                 <a href="sys_v3_comp.html">Compras</a>
                 <a href="sys_v1_vt.html">Ventas (POS)</a>
                 <a href="sys_v5_anular.html">Anulaciones</a>
             </div>
         </div>
-        <div class="dropdown">Reportes ▼
+        <div class="dropdown">REPORTES <i class="fas fa-chart-line"></i>
             <div class="dropdown-content">
                 <a href="sys_v4_reportes.html">Estadísticas</a>
             </div>
         </div>
     </nav>
 
-    <!-- Banner Empresa -->
-    <div class="banner-container">
-        <div class="banner-info" id="lblEmpresa">Cargando datos de empresa...</div>
-    </div>
+    <div class="empresa-info" id="lblEmpresa">Cargando datos...</div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "TU_API_KEY",
-            authDomain: "youcontrol-1d60a.firebaseapp.com",
-            projectId: "youcontrol-1d60a",
-            storageBucket: "youcontrol-1d60a.appspot.com",
-            messagingSenderId: "812100760013",
-            appId: "1:812100760013:web:7574906aa285555faf5484"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        async function cargarDatosEmpresa() {
-            const empresaID = localStorage.getItem('youcontrol_empresa_id');
-            const lblEmpresa = document.getElementById('lblEmpresa');
-            if (empresaID) {
-                try {
-                    const docSnap = await getDoc(doc(db, "empresas_config", empresaID));
-                    if (docSnap.exists()) {
-                        const d = docSnap.data();
-                        lblEmpresa.innerHTML = `SISTEMA ADMINISTRATIVO: ${d.nombre || 'N/A'} | RIF: ${d.rif || 'N/A'}`;
-                    }
-                } catch (e) { lblEmpresa.innerText = "Error de conexión"; }
-            }
-        }
-        cargarDatosEmpresa();
+        // ... (Tu script original de carga de datos aquí)
     </script>
 </body>
 </html>
