@@ -5,38 +5,33 @@
     <title>YOU CONTROL | Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        :root { 
-            --light-bg: #F1F5F9; 
-            --blue-electric: #3B82F6; 
-            --menu-bg: #FFFFFF; /* Colores claros para el menú */
-            --text-color: #1E293B;
-        }
+        :root { --light-bg: #F1F5F9; --blue-electric: #3B82F6; --menu-bg: #FFFFFF; --text-color: #1E293B; }
         body { font-family: 'Poppins', sans-serif; background: var(--light-bg); margin: 0; padding-bottom: 50px; }
         .main-wrapper { width: 92%; max-width: 1200px; margin: 20px auto; }
 
-        /* Menú cascada claro alineado al banner */
+        /* Menú claro */
         .erp-navbar { background: var(--menu-bg); padding: 10px 20px; display: flex; gap: 30px; border-radius: 12px 12px 0 0; border: 1px solid #E2E8F0; }
-        .dropdown { cursor: pointer; font-size: 0.8rem; font-weight: 600; color: var(--text-color); padding: 10px; }
+        .dropdown { cursor: pointer; font-size: 0.8rem; font-weight: 600; color: var(--text-color); padding: 10px; position: relative; }
         .dropdown:hover { color: var(--blue-electric); }
-        .dropdown-content { display: none; position: absolute; background: white; min-width: 180px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 8px; z-index: 1000; }
+        .dropdown-content { display: none; position: absolute; background: white; min-width: 200px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 8px; z-index: 1000; left: 0; }
         .dropdown-content a { color: var(--text-color); padding: 10px; text-decoration: none; display: block; font-size: 0.8rem; }
         .dropdown:hover .dropdown-content { display: block; }
 
-        /* Banner más corto */
+        /* Banner corto */
         .banner { width: 100%; height: 120px; overflow: hidden; border-radius: 0 0 12px 12px; border: 1px solid #E2E8F0; }
         .banner img { width: 100%; height: 100%; object-fit: cover; }
         
-        /* Grid de tarjetas originales */
+        /* Grid de tarjetas */
         .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 30px; }
         .card { background: white; padding: 20px; border-radius: 12px; text-align: center; border: 2px solid #E2E8F0; text-decoration: none; color: var(--text-color); }
         
-        /* Colores de tarjetas específicos */
-        .card-clientes { border-top: 5px solid #10B981; } /* Verde */
-        .card-productos { border-top: 5px solid #F59E0B; } /* Naranja */
-        .card-ingreso { border-top: 5px solid #8B5CF6; } /* Morado */
-        .card-ventas { border-top: 5px solid #06B6D4; } /* Cian */
+        /* Colores */
+        .card-clientes { border-top: 5px solid #10B981; }
+        .card-productos { border-top: 5px solid #F59E0B; }
+        .card-ingreso { border-top: 5px solid #8B5CF6; }
+        .card-ventas { border-top: 5px solid #06B6D4; }
         
-        .license-card { position: fixed; bottom: 30px; left: 30px; background: white; padding: 20px; border-radius: 12px; border-left: 6px solid var(--blue-electric); box-shadow: 0 10px 20px rgba(0,0,0,0.1); width: 250px; }
+        .license-card { position: fixed; bottom: 30px; left: 30px; background: white; padding: 20px; border-radius: 12px; border-left: 6px solid var(--blue-electric); box-shadow: 0 10px 20px rgba(0,0,0,0.1); width: 250px; z-index: 1000; }
     </style>
 </head>
 <body>
@@ -46,11 +41,21 @@
         <div class="dropdown">ARCHIVO ▼
             <div class="dropdown-content"><a href="sys_config.html">Configuración</a></div>
         </div>
-        <div class="dropdown">REPORTES ▼
-            <div class="dropdown-content"><a href="sys_v4_reportes.html">Estadísticas</a></div>
+        <div class="dropdown">INVENTARIO ▼
+            <div class="dropdown-content">
+                <a href="sys_v3_ficha.html">Productos Terminados</a>
+                <a href="sys_v1_inv.html">Existencias</a>
+                <a href="sys_v3_comp.html">Ingresos de Mercancía</a>
+            </div>
         </div>
         <div class="dropdown">OPERACIONES ▼
-            <div class="dropdown-content"><a href="sys_v5_anular.html">Anulaciones</a><a href="sys_v1_dep.html">Departamentos</a></div>
+            <div class="dropdown-content">
+                <a href="sys_v1_vt.html">Ventas</a>
+                <a href="sys_v5_anular.html">Anulaciones</a>
+            </div>
+        </div>
+        <div class="dropdown">REPORTES ▼
+            <div class="dropdown-content"><a href="sys_v4_reportes.html">Estadísticas</a></div>
         </div>
     </nav>
 
@@ -58,8 +63,8 @@
 
     <div class="grid-container">
         <a href="#" class="card card-clientes"><i class="fas fa-users"></i><p>CLIENTES</p></a>
-        <a href="sys_v3_ficha.html" class="card card-productos"><i class="fas fa-box"></i><p>PRODUCTOS TERMINADOS</p></a>
-        <a href="sys_v3_comp.html" class="card card-ingreso"><i class="fas fa-cart-plus"></i><p>INGRESO</p></a>
+        <a href="sys_v3_ficha.html" class="card card-productos"><i class="fas fa-box"></i><p>PRODUCTOS</p></a>
+        <a href="sys_v3_comp.html" class="card card-ingreso"><i class="fas fa-cart-plus"></i><p>INGRESOS</p></a>
         <a href="sys_v1_vt.html" class="card card-ventas"><i class="fas fa-cash-register"></i><p>VENTAS (POS)</p></a>
     </div>
 </div>
@@ -70,7 +75,40 @@
 </div>
 
 <script type="module">
-    // ... (Mantén tu lógica de carga de Firebase aquí)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "TU_API_KEY",
+        authDomain: "youcontrol-1d60a.firebaseapp.com",
+        projectId: "youcontrol-1d60a",
+        storageBucket: "youcontrol-1d60a.appspot.com",
+        messagingSenderId: "812100760013",
+        appId: "1:812100760013:web:7574906aa285555faf5484"
+    };
+
+    const db = getFirestore(initializeApp(firebaseConfig));
+
+    async function cargarDatos() {
+        const id = localStorage.getItem('youcontrol_empresa_id');
+        const container = document.getElementById('emp-data');
+        if (id) {
+            try {
+                const snap = await getDoc(doc(db, "empresas_config", id));
+                if (snap.exists()) {
+                    const d = snap.data();
+                    container.innerHTML = `<strong>${d.nombre || 'Empresa'}</strong><br>RIF: ${d.rif || 'N/A'}`;
+                }
+            } catch (err) {
+                container.innerHTML = "Error al cargar datos.";
+            }
+        } else {
+            container.innerHTML = "No logueado.";
+        }
+    }
+    
+    // Aseguramos que cargue al iniciar
+    window.addEventListener('load', cargarDatos);
 </script>
 </body>
 </html>
