@@ -10,59 +10,68 @@
             --deep-navy: #0F172A;
             --soft-gray: #F8FAFC;
         }
-        body { font-family: 'Poppins', sans-serif; background: var(--soft-gray); margin: 0; }
+        body { font-family: 'Poppins', sans-serif; background: var(--soft-gray); margin: 0; padding-bottom: 50px; }
 
-        /* Barra de Navegación */
-        .erp-navbar { background: var(--deep-navy); padding: 10px 20px; display: flex; gap: 30px; }
-        .dropdown { position: relative; color: white; cursor: pointer; font-size: 0.85rem; font-weight: 600; padding: 10px; }
+        /* Contenedor principal para alinear todo */
+        .main-wrapper { width: 92%; max-width: 1200px; margin: 20px auto; }
+
+        /* Menú redondeado y alineado */
+        .erp-navbar { 
+            background: var(--deep-navy); padding: 5px 20px; display: flex; gap: 30px; 
+            border-radius: 12px 12px 0 0; margin-bottom: 0;
+        }
+        .dropdown { position: relative; color: white; cursor: pointer; font-size: 0.85rem; font-weight: 600; padding: 15px; }
         .dropdown:hover { color: var(--electric-blue); }
-        .dropdown-content { display: none; position: absolute; background: white; min-width: 200px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); border-radius: 8px; margin-top: 10px; }
+        .dropdown-content { display: none; position: absolute; background: white; min-width: 200px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); border-radius: 0 0 8px 8px; z-index: 1000; }
         .dropdown-content a { color: var(--deep-navy); padding: 12px; text-decoration: none; display: block; }
         .dropdown-content a:hover { background: #EFF6FF; color: var(--electric-blue); }
         .dropdown:hover .dropdown-content { display: block; }
 
         /* Banner */
-        .banner-container { width: 92%; max-width: 1200px; margin: 20px auto; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .banner-container { overflow: hidden; border-radius: 0 0 12px 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
         .banner-container img { width: 100%; display: block; }
 
-        /* Tarjeta de Licencia (Inferior Izquierda) */
+        /* Tarjeta de Licencia Ampliada */
         .license-card { 
-            position: fixed; bottom: 20px; left: 20px; background: white; 
-            padding: 15px; border-radius: 10px; border-left: 5px solid var(--electric-blue);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-size: 0.8rem; z-index: 500;
+            position: fixed; bottom: 30px; left: 30px; background: white; 
+            padding: 25px; border-radius: 15px; border-left: 8px solid var(--electric-blue);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15); width: 280px; z-index: 500;
         }
+        .license-card h3 { margin: 0 0 10px 0; color: var(--deep-navy); font-size: 1.1rem; }
     </style>
 </head>
 <body>
 
-    <nav class="erp-navbar">
-        <div class="dropdown">ARCHIVO <i class="fas fa-caret-down"></i>
-            <div class="dropdown-content">
-                <a href="sys_config.html">Configuración</a>
-                <a href="index_menu.html">Inicio</a>
+    <div class="main-wrapper">
+        <nav class="erp-navbar">
+            <div class="dropdown">ARCHIVO <i class="fas fa-caret-down"></i>
+                <div class="dropdown-content">
+                    <a href="sys_config.html">Configuración</a>
+                    <a href="index_menu.html">Inicio</a>
+                </div>
             </div>
-        </div>
-        <div class="dropdown">INVENTARIO <i class="fas fa-caret-down"></i>
-            <div class="dropdown-content">
-                <a href="sys_v1_inv.html">Existencias</a>
-                <a href="sys_v1_dep.html">Departamentos</a>
+            <div class="dropdown">INVENTARIO <i class="fas fa-caret-down"></i>
+                <div class="dropdown-content">
+                    <a href="sys_v1_inv.html">Existencias</a>
+                    <a href="sys_v1_dep.html">Departamentos</a>
+                </div>
             </div>
-        </div>
-        <div class="dropdown">OPERACIONES <i class="fas fa-caret-down"></i>
-            <div class="dropdown-content">
-                <a href="sys_v1_vt.html">Ventas</a>
-                <a href="sys_v5_anular.html">Anulaciones</a>
+            <div class="dropdown">OPERACIONES <i class="fas fa-caret-down"></i>
+                <div class="dropdown-content">
+                    <a href="sys_v1_vt.html">Ventas</a>
+                    <a href="sys_v5_anular.html">Anulaciones</a>
+                </div>
             </div>
-        </div>
-    </nav>
+        </nav>
 
-    <div class="banner-container">
-        <img src="img/youcontrol.png" alt="Banner">
+        <div class="banner-container">
+            <img src="img/youcontrol.png" alt="Banner">
+        </div>
     </div>
 
-    <!-- Tarjeta de datos -->
     <div class="license-card" id="lblEmpresa">
-        <i class="fas fa-sync fa-spin"></i> Cargando licencia...
+        <h3><i class="fas fa-shield-alt" style="color:var(--electric-blue);"></i> Licencia Activa</h3>
+        <p style="font-size: 0.9rem; margin: 0;">Cargando datos...</p>
     </div>
 
     <script type="module">
@@ -85,7 +94,9 @@
                 const snap = await getDoc(doc(db, "empresas_config", id));
                 if(snap.exists()) {
                     const d = snap.data();
-                    card.innerHTML = `<strong>${d.nombre}</strong><br>RIF: ${d.rif}<br><span style="color:var(--electric-blue)">Licencia Activa</span>`;
+                    card.innerHTML = `<h3><i class="fas fa-shield-alt" style="color:var(--electric-blue);"></i> Licencia Activa</h3>
+                                      <p style="margin:5px 0; font-weight:bold;">${d.nombre}</p>
+                                      <p style="margin:0; font-size:0.8rem; color:#64748B;">RIF: ${d.rif}</p>`;
                 }
             }
         }
