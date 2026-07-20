@@ -69,7 +69,48 @@
     <div class="empresa-info" id="lblEmpresa">Cargando datos...</div>
 
     <script type="module">
-        // ... (Tu script original de carga de datos aquí)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "TU_API_KEY",
+            authDomain: "youcontrol-1d60a.firebaseapp.com",
+            projectId: "youcontrol-1d60a",
+            storageBucket: "youcontrol-1d60a.appspot.com",
+            messagingSenderId: "812100760013",
+            appId: "1:812100760013:web:7574906aa285555faf5484"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        async function cargarDatosEmpresa() {
+            const empresaID = localStorage.getItem('youcontrol_empresa_id');
+            const lblEmpresa = document.getElementById('lblEmpresa');
+            
+            console.log("ID Empresa detectado:", empresaID); // Para depurar en consola (F12)
+
+            if (!empresaID) {
+                lblEmpresa.innerText = "No hay empresa seleccionada.";
+                return;
+            }
+
+            try {
+                const docSnap = await getDoc(doc(db, "empresas_config", empresaID));
+                if (docSnap.exists()) {
+                    const d = docSnap.data();
+                    lblEmpresa.innerHTML = `SISTEMA ADMINISTRATIVO: ${d.nombre || 'N/A'} | RIF: ${d.rif || 'N/A'}`;
+                } else {
+                    lblEmpresa.innerText = "Empresa no encontrada en la base de datos.";
+                }
+            } catch (e) { 
+                console.error(e);
+                lblEmpresa.innerText = "Error al conectar con la base de datos."; 
+            }
+        }
+
+        // Ejecutar inmediatamente cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', cargarDatosEmpresa);
     </script>
 </body>
 </html>
