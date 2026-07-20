@@ -3,77 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YOU CONTROL | Panel Administrativo</title>
-    
-    <link rel="manifest" href="manifest.json">
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .catch(err => console.log('SW no registrado', err));
-            });
-        }
-    </script>
-
+    <title>YOU CONTROL | ERP System</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
-            --text-dark: #1E293B;
-            --text-muted: #64748B;
-            --accent-blue: #0284C7;
+            --navy: #002A54;
+            --bg-gray: #E0E7FF;
+            --white: #FFFFFF;
         }
-        body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-gray); margin: 0; }
         
-        .banner-menu-container { width: 92%; max-width: 1200px; margin: 25px auto 0px auto; border-radius: 16px; overflow: hidden; background: #002A54; position: relative; }
-        .banner-menu-img { width: 100%; max-height: 280px; object-fit: cover; display: block; }
-        .banner-empresa-overlay {
-            position: absolute; top: 20px; left: 20px; color: white;
-            font-size: 0.9rem; font-weight: 600; z-index: 10;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.5); pointer-events: none;
-        }
+        /* Barra superior tipo ERP */
+        .erp-navbar { background: var(--navy); color: var(--white); padding: 10px 20px; display: flex; gap: 25px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .dropdown { position: relative; display: inline-block; cursor: pointer; font-size: 0.9rem; font-weight: 500; }
+        .dropdown-content { display: none; position: absolute; background-color: var(--white); min-width: 180px; box-shadow: 0px 8px 16px rgba(0,0,0,0.2); z-index: 1000; border: 1px solid #ccc; }
+        .dropdown-content a { color: #333; padding: 12px 15px; text-decoration: none; display: block; border-bottom: 1px solid #eee; font-size: 0.85rem; }
+        .dropdown-content a:hover { background-color: var(--navy); color: var(--white); }
+        .dropdown:hover .dropdown-content { display: block; }
         
-        .menu-container { max-width: 1200px; width: 92%; margin: 30px auto 20px auto; padding: 5px 0; flex-grow: 1; display: flex; align-items: center; }
-        .menu-grid-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; width: 100%; }
-        
-        .menu-card { background: #fff; border-radius: 12px; padding: 20px 10px; text-align: center; text-decoration: none; color: var(--text-dark); box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; border: 2px solid #E2E8F0; transition: 0.2s; }
-        .menu-card:hover { transform: translateY(-3px); border-color: var(--accent-blue); }
-        .menu-card i { font-size: 1.8rem; margin-bottom: 10px; }
-        .menu-card span { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; }
-        .menu-card p { font-size: 0.75rem; color: var(--text-muted); margin: 0; }
-        
-        .card-inv { border-color: #10B981; } .card-inv i { color: #10B981; }
-        .card-term { border-color: #F59E0B; } .card-term i { color: #F59E0B; }
-        .card-depto { border-color: #A855F7; } .card-depto i { color: #A855F7; }
-        .card-comp { border-color: #6366F1; } .card-comp i { color: #6366F1; }
-        .card-ventas { border-color: #0EA5E9; } .card-ventas i { color: #0EA5E9; }
-        .card-anulacion { border-color: #EF4444; } .card-anulacion i { color: #EF4444; }
-        .card-reportes { border-color: #F59E0B; } .card-reportes i { color: #F59E0B; }
-        .card-config { border-color: #6B7280; } .card-config i { color: #6B7280; }
+        /* Banner y área principal */
+        .banner-container { width: 92%; max-width: 1200px; margin: 30px auto; background: var(--white); padding: 20px; border-radius: 8px; border: 1px solid #ccc; text-align: center; }
+        .banner-info { color: var(--navy); font-size: 1.2rem; font-weight: bold; }
     </style>
 </head>
 <body oncontextmenu="return false">
 
-    <div class="banner-menu-container">
-        <div class="banner-empresa-overlay" id="lblEmpresa">Cargando datos...</div>
-        <img src="img/youcontrol.png" alt="You Control" class="banner-menu-img">
-    </div>
-
-    <main class="menu-container">
-        <div class="menu-grid-layout">
-            <a href="sys_v1_inv.html" class="menu-card card-inv"><i class="fas fa-boxes-stacked"></i><span>Inventario</span><p>Visualiza existencias y precios.</p></a>
-            <a href="sys_v3_ficha.html" class="menu-card card-term"><i class="fas fa-check-double"></i><span>Productos Terminados</span><p>Ficha de productos.</p></a>
-            <a href="sys_v1_dep.html" class="menu-card card-depto"><i class="fas fa-sitemap"></i><span>Departamentos</span><p>Clasifica tus productos.</p></a>
-            <a href="sys_v3_comp.html" class="menu-card card-comp"><i class="fas fa-cart-plus"></i><span>Entrada</span><p>Registra nuevas compras.</p></a>
-            <a href="sys_v1_vt.html" class="menu-card card-ventas"><i class="fas fa-cash-register"></i><span>Ventas (POS)</span><p>Facturación rápida.</p></a>
-            <a href="sys_v2_clt.html" class="menu-card card-ventas"><i class="fas fa-users"></i><span>Clientes</span><p>Base de datos.</p></a>
-            <a href="sys_v4_reportes.html" class="menu-card card-reportes"><i class="fas fa-chart-line"></i><span>Reportes</span><p>Estadísticas del negocio.</p></a>
-            <a href="#" id="btn-catalogo" class="menu-card card-ventas"><i class="fas fa-store"></i><span>Catálogo Digital</span><p>Vitrina virtual.</p></a>
-            <a href="sys_v5_anular.html" class="menu-card card-anulacion"><i class="fas fa-undo"></i><span>Anulaciones</span><p>Reversión de ventas.</p></a>
-            <a href="sys_config.html" class="menu-card card-config"><i class="fas fa-cog"></i><span>Configuración</span><p>Parámetros.</p></a>
+    <!-- Menú tipo ERP -->
+    <nav class="erp-navbar">
+        <div class="dropdown">Archivo ▼
+            <div class="dropdown-content">
+                <a href="sys_config.html">Configuración</a>
+                <a href="index_menu.html">Inicio</a>
+            </div>
         </div>
-    </main>
+        <div class="dropdown">Inventario ▼
+            <div class="dropdown-content">
+                <a href="sys_v1_inv.html">Existencias</a>
+                <a href="sys_v1_dep.html">Departamentos</a>
+                <a href="sys_v3_ficha.html">Ficha Productos</a>
+            </div>
+        </div>
+        <div class="dropdown">Operaciones ▼
+            <div class="dropdown-content">
+                <a href="sys_v3_comp.html">Compras</a>
+                <a href="sys_v1_vt.html">Ventas (POS)</a>
+                <a href="sys_v5_anular.html">Anulaciones</a>
+            </div>
+        </div>
+        <div class="dropdown">Reportes ▼
+            <div class="dropdown-content">
+                <a href="sys_v4_reportes.html">Estadísticas</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Banner Empresa -->
+    <div class="banner-container">
+        <div class="banner-info" id="lblEmpresa">Cargando datos de empresa...</div>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
@@ -99,23 +86,12 @@
                     const docSnap = await getDoc(doc(db, "empresas_config", empresaID));
                     if (docSnap.exists()) {
                         const d = docSnap.data();
-                        lblEmpresa.innerHTML = `
-                            <div style="font-size: 1.1rem;">${d.nombre || 'N/A'}</div>
-                            <div>RIF: ${d.rif || 'N/A'}</div>
-                            <div>${d.direccion || 'N/A'}</div>
-                        `;
+                        lblEmpresa.innerHTML = `SISTEMA ADMINISTRATIVO: ${d.nombre || 'N/A'} | RIF: ${d.rif || 'N/A'}`;
                     }
-                } catch (e) { lblEmpresa.innerText = "Error al cargar"; }
+                } catch (e) { lblEmpresa.innerText = "Error de conexión"; }
             }
         }
         cargarDatosEmpresa();
-
-        document.getElementById('btn-catalogo').addEventListener('click', (e) => {
-            e.preventDefault();
-            const id = localStorage.getItem('youcontrol_empresa_id');
-            if (id) window.open(`node_v2_505.html?empresa=${id}`, '_blank');
-            else alert("Error de sesión.");
-        });
     </script>
 </body>
 </html>
