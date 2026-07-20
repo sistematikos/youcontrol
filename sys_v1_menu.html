@@ -13,8 +13,9 @@
         .erp-navbar { background: var(--menu-bg); padding: 10px 20px; display: flex; gap: 30px; border-radius: 12px 12px 0 0; border: 1px solid #E2E8F0; }
         .dropdown { cursor: pointer; font-size: 0.8rem; font-weight: 600; color: var(--text-color); padding: 10px; position: relative; }
         .dropdown:hover { color: var(--blue-electric); }
-        .dropdown-content { display: none; position: absolute; background: white; min-width: 200px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 8px; z-index: 1000; left: 0; }
+        .dropdown-content { display: none; position: absolute; background: white; min-width: 210px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 8px; z-index: 1000; left: 0; }
         .dropdown-content a { color: var(--text-color); padding: 10px; text-decoration: none; display: block; font-size: 0.8rem; }
+        .dropdown-content a:hover { background: #F8FAFC; color: var(--blue-electric); }
         .dropdown:hover .dropdown-content { display: block; }
 
         /* Banner corto */
@@ -23,7 +24,8 @@
         
         /* Grid de tarjetas */
         .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 30px; }
-        .card { background: white; padding: 20px; border-radius: 12px; text-align: center; border: 2px solid #E2E8F0; text-decoration: none; color: var(--text-color); }
+        .card { background: white; padding: 20px; border-radius: 12px; text-align: center; border: 2px solid #E2E8F0; text-decoration: none; color: var(--text-color); transition: 0.2s; }
+        .card:hover { transform: translateY(-3px); border-color: var(--blue-electric); }
         
         /* Colores */
         .card-clientes { border-top: 5px solid #10B981; }
@@ -38,13 +40,12 @@
 
 <div class="main-wrapper">
     <nav class="erp-navbar">
-        <div class="dropdown">ARCHIVO ▼
-            <div class="dropdown-content"><a href="sys_config.html">Configuración</a></div>
+        <div class="dropdown">CONFIGURACIÓN ▼
+            <div class="dropdown-content"><a href="sys_config.html">Parámetros del Sistema</a></div>
         </div>
         <div class="dropdown">INVENTARIO ▼
             <div class="dropdown-content">
                 <a href="sys_v3_ficha.html">Productos Terminados</a>
-                <a href="sys_v1_inv.html">Existencias</a>
                 <a href="sys_v3_comp.html">Ingresos de Mercancía</a>
             </div>
         </div>
@@ -55,7 +56,12 @@
             </div>
         </div>
         <div class="dropdown">REPORTES ▼
-            <div class="dropdown-content"><a href="sys_v4_reportes.html">Estadísticas</a></div>
+            <div class="dropdown-content">
+                <a href="sys_v1_inv.html">Existencia de Productos</a>
+                <a href="sys_v4_reportes.html">Reporte de Ventas</a>
+                <a href="#">Productos más Vendidos</a>
+                <a href="#">Cuadre de Caja</a>
+            </div>
         </div>
     </nav>
 
@@ -98,17 +104,19 @@
                 if (snap.exists()) {
                     const d = snap.data();
                     container.innerHTML = `<strong>${d.nombre || 'Empresa'}</strong><br>RIF: ${d.rif || 'N/A'}`;
+                } else {
+                    container.innerHTML = "Empresa no registrada.";
                 }
             } catch (err) {
-                container.innerHTML = "Error al cargar datos.";
+                console.error(err);
+                container.innerHTML = "Error al conectar.";
             }
         } else {
-            container.innerHTML = "No logueado.";
+            container.innerHTML = "No hay empresa activa.";
         }
     }
     
-    // Aseguramos que cargue al iniciar
-    window.addEventListener('load', cargarDatos);
+    window.addEventListener('DOMContentLoaded', cargarDatos);
 </script>
 </body>
 </html>
