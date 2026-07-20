@@ -2,115 +2,94 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YOU CONTROL | Modern ERP</title>
+    <title>YOU CONTROL | Enterprise</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         :root {
-            --primary: #0284C7; /* Azul más brillante y moderno */
-            --dark-blue: #0f172a; /* Azul muy oscuro para la barra */
-            --bg-body: #F1F5F9;
+            --electric-blue: #3B82F6;
+            --deep-navy: #0F172A;
+            --soft-gray: #F8FAFC;
         }
-        body { font-family: 'Poppins', sans-serif; background: var(--bg-body); margin: 0; }
-        
-        /* Banner superior */
-        .banner-container { width: 100%; height: 180px; overflow: hidden; position: relative; }
-        .banner-img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.7); }
-        
-        /* Barra de menú moderna */
-        .erp-navbar { background: var(--dark-blue); color: white; padding: 0 20px; display: flex; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        .dropdown { position: relative; padding: 15px 20px; cursor: pointer; transition: 0.3s; font-size: 0.85rem; letter-spacing: 0.5px; }
-        .dropdown:hover { background: var(--primary); }
-        .dropdown-content { display: none; position: absolute; background: white; min-width: 200px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); z-index: 1000; border-radius: 0 0 8px 8px; border: 1px solid #E2E8F0; }
-        .dropdown-content a { color: #475569; padding: 12px 16px; text-decoration: none; display: block; border-bottom: 1px solid #F1F5F9; }
-        .dropdown-content a:hover { background: #F8FAFC; color: var(--primary); }
+        body { font-family: 'Poppins', sans-serif; background: var(--soft-gray); margin: 0; }
+
+        /* Barra de Navegación */
+        .erp-navbar { background: var(--deep-navy); padding: 10px 20px; display: flex; gap: 30px; }
+        .dropdown { position: relative; color: white; cursor: pointer; font-size: 0.85rem; font-weight: 600; padding: 10px; }
+        .dropdown:hover { color: var(--electric-blue); }
+        .dropdown-content { display: none; position: absolute; background: white; min-width: 200px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); border-radius: 8px; margin-top: 10px; }
+        .dropdown-content a { color: var(--deep-navy); padding: 12px; text-decoration: none; display: block; }
+        .dropdown-content a:hover { background: #EFF6FF; color: var(--electric-blue); }
         .dropdown:hover .dropdown-content { display: block; }
-        
-        /* Info de empresa */
-        .empresa-info { text-align: center; padding: 20px; color: var(--dark-blue); font-weight: 600; }
+
+        /* Banner */
+        .banner-container { width: 92%; max-width: 1200px; margin: 20px auto; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .banner-container img { width: 100%; display: block; }
+
+        /* Tarjeta de Licencia (Inferior Izquierda) */
+        .license-card { 
+            position: fixed; bottom: 20px; left: 20px; background: white; 
+            padding: 15px; border-radius: 10px; border-left: 5px solid var(--electric-blue);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-size: 0.8rem; z-index: 500;
+        }
     </style>
 </head>
-<body oncontextmenu="return false">
+<body>
 
-    <!-- Banner -->
-    <div class="banner-container">
-        <img src="img/youcontrol.png" alt="Banner" class="banner-img">
-    </div>
-
-    <!-- Menú tipo ERP Moderno -->
     <nav class="erp-navbar">
-        <div class="dropdown">ARCHIVO <i class="fas fa-chevron-down"></i>
+        <div class="dropdown">ARCHIVO <i class="fas fa-caret-down"></i>
             <div class="dropdown-content">
-                <a href="sys_config.html"><i class="fas fa-cog"></i> Configuración</a>
-                <a href="index_menu.html"><i class="fas fa-home"></i> Inicio</a>
+                <a href="sys_config.html">Configuración</a>
+                <a href="index_menu.html">Inicio</a>
             </div>
         </div>
-        <div class="dropdown">INVENTARIO <i class="fas fa-chevron-down"></i>
+        <div class="dropdown">INVENTARIO <i class="fas fa-caret-down"></i>
             <div class="dropdown-content">
                 <a href="sys_v1_inv.html">Existencias</a>
                 <a href="sys_v1_dep.html">Departamentos</a>
-                <a href="sys_v3_ficha.html">Ficha Productos</a>
             </div>
         </div>
-        <div class="dropdown">OPERACIONES <i class="fas fa-chevron-down"></i>
+        <div class="dropdown">OPERACIONES <i class="fas fa-caret-down"></i>
             <div class="dropdown-content">
-                <a href="sys_v3_comp.html">Compras</a>
-                <a href="sys_v1_vt.html">Ventas (POS)</a>
+                <a href="sys_v1_vt.html">Ventas</a>
                 <a href="sys_v5_anular.html">Anulaciones</a>
-            </div>
-        </div>
-        <div class="dropdown">REPORTES <i class="fas fa-chart-line"></i>
-            <div class="dropdown-content">
-                <a href="sys_v4_reportes.html">Estadísticas</a>
             </div>
         </div>
     </nav>
 
-    <div class="empresa-info" id="lblEmpresa">Cargando datos...</div>
+    <div class="banner-container">
+        <img src="img/youcontrol.png" alt="Banner">
+    </div>
+
+    <!-- Tarjeta de datos -->
+    <div class="license-card" id="lblEmpresa">
+        <i class="fas fa-sync fa-spin"></i> Cargando licencia...
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-        const firebaseConfig = {
+        const db = getFirestore(initializeApp({
             apiKey: "TU_API_KEY",
             authDomain: "youcontrol-1d60a.firebaseapp.com",
             projectId: "youcontrol-1d60a",
             storageBucket: "youcontrol-1d60a.appspot.com",
             messagingSenderId: "812100760013",
             appId: "1:812100760013:web:7574906aa285555faf5484"
-        };
+        }));
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        async function cargarDatosEmpresa() {
-            const empresaID = localStorage.getItem('youcontrol_empresa_id');
-            const lblEmpresa = document.getElementById('lblEmpresa');
-            
-            console.log("ID Empresa detectado:", empresaID); // Para depurar en consola (F12)
-
-            if (!empresaID) {
-                lblEmpresa.innerText = "No hay empresa seleccionada.";
-                return;
-            }
-
-            try {
-                const docSnap = await getDoc(doc(db, "empresas_config", empresaID));
-                if (docSnap.exists()) {
-                    const d = docSnap.data();
-                    lblEmpresa.innerHTML = `SISTEMA ADMINISTRATIVO: ${d.nombre || 'N/A'} | RIF: ${d.rif || 'N/A'}`;
-                } else {
-                    lblEmpresa.innerText = "Empresa no encontrada en la base de datos.";
+        async function cargarDatos() {
+            const id = localStorage.getItem('youcontrol_empresa_id');
+            const card = document.getElementById('lblEmpresa');
+            if(id) {
+                const snap = await getDoc(doc(db, "empresas_config", id));
+                if(snap.exists()) {
+                    const d = snap.data();
+                    card.innerHTML = `<strong>${d.nombre}</strong><br>RIF: ${d.rif}<br><span style="color:var(--electric-blue)">Licencia Activa</span>`;
                 }
-            } catch (e) { 
-                console.error(e);
-                lblEmpresa.innerText = "Error al conectar con la base de datos."; 
             }
         }
-
-        // Ejecutar inmediatamente cuando el DOM esté listo
-        document.addEventListener('DOMContentLoaded', cargarDatosEmpresa);
+        cargarDatos();
     </script>
 </body>
 </html>
