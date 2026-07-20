@@ -13,6 +13,7 @@
             --text-muted: #64748B;
             --emerald: #10B981;
             --sky: #0EA5E9;
+            --danger: #EF4444;
         }
 
         body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 20px 0; min-height: 100vh; color: var(--text-dark); }
@@ -25,10 +26,13 @@
         .page-title { font-size: 1.4rem; font-weight: 700; margin: 0; }
         .logo-header { height: 100%; width: auto; object-fit: contain; }
 
-        /* CONTROLES */
-        .date-controls { display: flex; gap: 10px; background: #ffffff; padding: 10px 15px; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 2px 4px rgba(0,0,0,0.04); align-items: center; width: fit-content; margin-bottom: 15px; }
+        /* CONTROLES Y ACCIONES */
+        .controls-wrapper { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        .date-controls { display: flex; gap: 10px; background: #ffffff; padding: 10px 15px; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 2px 4px rgba(0,0,0,0.04); align-items: center; width: fit-content; }
         .date-controls input { border: 1px solid #E2E8F0; padding: 6px; border-radius: 8px; font-size: 0.85rem; outline: none; }
-        .btn-gen { background: #0284C7; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+        .btn-gen { background: #0284C7; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; }
+        .btn-anular { background: var(--danger); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; transition: opacity 0.2s; }
+        .btn-anular:hover { opacity: 0.9; }
 
         /* KPI */
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 15px; }
@@ -36,14 +40,14 @@
         .kpi-info .p-label { font-size: 0.65rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
         .kpi-info .p-val { font-size: 1.2rem; font-weight: 800; margin-top: 4px; }
 
-        /* TABLA CON TOTAL A LA DERECHA */
+        /* TABLA */
         .table-panel { background: #ffffff; border-radius: 16px; padding: 18px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); border: 1px solid #E2E8F0; }
         table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
         th { color: var(--text-muted); padding: 10px; text-align: left; text-transform: uppercase; font-size: 0.68rem; border-bottom: 1px solid #F1F5F9; }
         td { padding: 10px; border-bottom: 1px solid #F1F5F9; }
         
-        /* Clase para alinear a la derecha */
         .text-right { text-align: right; }
+        .text-center { text-align: center; }
     </style>
 </head>
 <body>
@@ -57,12 +61,19 @@
             <img src="img/logo.png" alt="Logo" class="logo-header">
         </header>
 
-        <div class="date-controls">
-            <input type="date" id="filtro-desde">
-            <input type="date" id="filtro-hasta">
-            <button class="btn-gen" onclick="window.cargarReporteVentas()">
-                <i class="fas fa-search"></i> BUSCAR
-            </button>
+        <div class="controls-wrapper">
+            <div class="date-controls">
+                <input type="date" id="filtro-desde">
+                <input type="date" id="filtro-hasta">
+                <button class="btn-gen" onclick="window.cargarReporteVentas()">
+                    <i class="fas fa-search"></i> BUSCAR
+                </button>
+            </div>
+            <div>
+                <button class="btn-anular" onclick="window.anularFacturaSeleccionada ? window.anularFacturaSeleccionada() : alert('Función de anulación pendiente de enlazar en JS')">
+                    <i class="fas fa-ban"></i> ANULAR SELECCIONADA
+                </button>
+            </div>
         </div>
 
         <div class="kpi-grid">
@@ -83,10 +94,16 @@
         <div class="table-panel">
             <table>
                 <thead>
-                    <tr><th>Hora / Fecha</th><th>Factura</th><th>Cliente</th><th class="text-right">Total ($)</th></tr>
+                    <tr>
+                        <th class="text-center" style="width: 40px;"><i class="fas fa-check-square"></i></th>
+                        <th>Hora / Fecha</th>
+                        <th>Factura</th>
+                        <th>Cliente</th>
+                        <th class="text-right">Total ($)</th>
+                    </tr>
                 </thead>
                 <tbody id="tabla-reporte-ventas">
-                    <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">Selecciona fechas para generar reporte.</td></tr>
+                    <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">Selecciona fechas para generar reporte.</td></tr>
                 </tbody>
             </table>
         </div>
