@@ -60,13 +60,19 @@
         .welcome-box p { color: var(--text-muted); font-size: 0.9rem; }
     </style>
 
-    <script>
-    // Fuerza a la página a recargar fresca si el navegador intenta mostrarla desde la caché (bfcache)
-    window.addEventListener('pageshow', function(event) {
-        if (event.persisted) {
-            window.location.reload();
+   <script>
+    // Limpia la caché del menú al entrar y fuerza lectura fresca
+    (function() {
+        const ultimaCarga = sessionStorage.getItem('menu_recargado');
+        const ahora = Date.now();
+        // Si han pasado más de 2 segundos desde la última recarga registrada, forzamos un refresh limpio
+        if (!ultimaCarga || (ahora - ultimaCarga > 2000)) {
+            sessionStorage.setItem('menu_recargado', ahora);
+            if (window.location.search.indexOf('nocache') === -1) {
+                window.location.replace(window.location.pathname + '?nocache=' + ahora);
+            }
         }
-    });
+    })();
     </script>
     
 </head>
