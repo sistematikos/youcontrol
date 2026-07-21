@@ -55,6 +55,13 @@
         .fila-factura:hover, .fila-factura.seleccionada {
             background-color: #eff6ff;
         }
+        .fila-anulada {
+            background-color: #fef2f2 !important;
+            color: #991b1b;
+        }
+        .fila-anulada:hover {
+            background-color: #fee2e2 !important;
+        }
         .lista-productos {
             margin: 0;
             padding-left: 15px;
@@ -134,7 +141,7 @@
     <!-- Script de Firebase y Lógica -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, runTransaction } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, runTransaction, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "TU_API_KEY",
@@ -184,10 +191,6 @@
                     const id = docSnap.id;
 
                     cantidadFacturas++;
-                    
-                    // CORREGIDO: Apuntando al campo exacto `total_usd` visto en Firestore
-                    const montoVenta = Number(v.total_usd || v.total || v.total_general || v.monto || 0);
-                    totalUSD += montoVenta;
 
                     // Formateo de fecha
                     let fechaStr = "N/A";
@@ -197,43 +200,58 @@
                         fechaStr = v.fecha;
                     }
 
-                    // Formatear productos
-                    let productosHTML = `<ul class="lista-productos">`;
-                    const listaProds = v.productos || v.items || v.cart || [];
-                    if (Array.isArray(listaProds) && listaProds.length > 0) {
-                        listaProds.forEach(p => {
-                            const nombreP = p.nombre || p.descripcion || p.titulo || 'Producto';
-                            const cantP = p.cantidad || p.qty || 1;
-                            const precioP = Number(p.precio || p.price || 0);
-                            productosHTML += `<li>${nombreP} (${cantP} x $${precioP.toFixed(2)})</li>`;
-                        });
-                    } else {
-                        productosHTML += `<li>Venta registrada / Sin detalle interno</li>`;
-                    }
-                    productosHTML += `</ul>`;
-
+                    const nroFacturaStr = v.nro_factura || v.nroFactura || id.slice(0,6);
                     const tr = document.createElement('tr');
                     tr.className = "fila-factura";
-                    tr.innerHTML = `
-                        <td class="text-center"><input type="radio" name="select_factura" class="radio-factura" data-id="${id}"></td>
-                        <td>${fechaStr}</td>
-                        <td><strong>${v.nro_factura || v.nroFactura || id.slice(0,6)}</strong></td>
-                        <td>${v.nombre_cliente || v.cliente || 'CLIENTE CONTADO'}</td>
-                        <td>${productosHTML}</td>
-                        <td class="text-right"><strong>$${montoVenta.toFixed(2)}</strong></td>
-                    `;
 
-                    tr.addEventListener('click', () => {
-                        document.querySelectorAll('.fila-factura').forEach(f => f.classList.remove('seleccionada'));
-                        document.querySelectorAll('.radio-factura').forEach(r => r.checked = false);
+                    // Verificamos si la factura está anulada
+                    if (v.anulada === true) {
+                        tr.classList.add('fila-anulada');
+                        tr.innerHTML = `
+                            <td class="text-center"><input type="radio" name="select_factura" class="radio-factura" data-id="${id}" disabled></td>
+                            <td>${fechaStr}</td>
+                            <td><strong>${nroFacturaStr}</strong></td>
+                            <td colspan="3" class="text-center font-bold text-red-600">*** FACTURA ANULADA ***</td>
+                        `;
+                    } else {
+                        const montoVenta = Number(v.total_usd || v.total || v.total_general || v.monto || 0);
+                        totalUSD += montoVenta;
 
-                        tr.classList.add('seleccionada');
-                        const radio = tr.querySelector('.radio-factura');
-                        radio.checked = true;
-                        
-                        facturaSeleccionadaId = id;
-                        facturaSeleccionadaData = v;
-                    });
+                        let productosHTML = `<ul class="lista-productos">`;
+                        const listaProds = v.productos || v.items || v.cart || [];
+                        if (Array.isArray(listaProds) && listaProds.length > 0) {
+                            listaProds.forEach(p => {
+                                const nombreP = p.nombre || p.descripcion || p.titulo || 'Producto';
+                                const cantP = p.cantidad || p.qty || 1;
+                                const precioP = Number(p.precio || p.price || 0);
+                                productosHTML += `<li>${nombreP} (${cantP} x $${precioP.toFixed(2)})</li>`;
+                            });
+                        } else {
+                            productosHTML += `<li>Venta registrada / Sin detalle interno</li>`;
+                        }
+                        productosHTML += `</ul>`;
+
+                        tr.innerHTML = `
+                            <td class="text-center"><input type="radio" name="select_factura" class="radio-factura" data-id="${id}"></td>
+                            <td>${fechaStr}</td>
+                            <td><strong>${nroFacturaStr}</strong></td>
+                            <td>${v.nombre_cliente || v.cliente || 'CLIENTE CONTADO'}</td>
+                            <td>${productosHTML}</td>
+                            <td class="text-right"><strong>$${montoVenta.toFixed(2)}</strong></td>
+                        `;
+
+                        tr.addEventListener('click', () => {
+                            document.querySelectorAll('.fila-factura').forEach(f => f.classList.remove('seleccionada'));
+                            document.querySelectorAll('.radio-factura').forEach(r => r.checked = false);
+
+                            tr.classList.add('seleccionada');
+                            const radio = tr.querySelector('.radio-factura');
+                            radio.checked = true;
+                            
+                            facturaSeleccionadaId = id;
+                            facturaSeleccionadaData = v;
+                        });
+                    }
 
                     tbody.appendChild(tr);
                 });
@@ -253,7 +271,7 @@
                 return;
             }
 
-            if (!confirm(`¿Estás seguro de anular la factura ${facturaSeleccionadaData.nro_factura || facturaSeleccionadaId}? Esta acción devolverá los productos al inventario.`)) {
+            if (!confirm(`¿Estás seguro de anular la factura ${facturaSeleccionadaData.nro_factura || facturaSeleccionadaId}? Esta acción devolverá los productos al inventario y marcará la factura como anulada.`)) {
                 return;
             }
 
@@ -283,11 +301,17 @@
                         }
                     }
 
+                    // En lugar de borrar la factura de Firestore, ahora actualizamos su estado a anulada
                     const ventaRef = doc(db, "usuarios", empresaId, "ventas", facturaSeleccionadaId);
-                    transaction.delete(ventaRef);
+                    transaction.update(ventaRef, {
+                        anulada: true,
+                        total_usd: 0,
+                        total: 0,
+                        productos: []
+                    });
                 });
 
-                alert("Factura anulada con éxito y productos retornados al inventario.");
+                alert("Factura anulada con éxito, productos retornados al inventario y registro conservado.");
                 facturaSeleccionadaId = null;
                 facturaSeleccionadaData = null;
                 cargarReporteVentas();
