@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reporte de Ventas - YouControl</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary: #2563eb;
@@ -25,6 +26,36 @@
             padding: 24px;
             border-radius: 12px;
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        .header-panel { 
+            background: #ffffff; 
+            padding: 0 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+            border: 1px solid #E2E8F0; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 20px; 
+            height: 70px; 
+        }
+        .btn-back { 
+            background: #F1F5F9; 
+            color: #1E293B; 
+            padding: 8px 15px; 
+            border-radius: 8px; 
+            text-decoration: none; 
+            font-size: 0.8rem; 
+            font-weight: 700; 
+            border: 1px solid #E2E8F0; 
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .logo-header { 
+            height: 90%; 
+            width: auto; 
+            object-fit: contain; 
         }
         .kpi-card {
             background: #f8fafc;
@@ -83,7 +114,18 @@
 <body>
 
     <div class="container">
-        <h1 class="text-2xl font-bold mb-6">Reporte y Control de Ventas</h1>
+        <!-- Cabecera estándar con botón de volver y logo -->
+        <header class="header-panel">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <a href="sys_v1_menu.html" class="btn-back">
+                    <i class="fas fa-arrow-left"></i> VOLVER
+                </a>
+                <h1 style="font-size: 1.2rem; margin: 0; font-weight: 700; color: #1E293B;">
+                    Reporte y Control de Ventas
+                </h1>
+            </div>
+            <img src="img/logo.png" class="logo-header" alt="Logo">
+        </header>
 
         <!-- Filtros y KPIs -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 items-end">
@@ -141,7 +183,7 @@
     <!-- Script de Firebase y Lógica -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, runTransaction, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, runTransaction } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "TU_API_KEY",
@@ -301,7 +343,6 @@
                         }
                     }
 
-                    // En lugar de borrar la factura de Firestore, ahora actualizamos su estado a anulada
                     const ventaRef = doc(db, "usuarios", empresaId, "ventas", facturaSeleccionadaId);
                     transaction.update(ventaRef, {
                         anulada: true,
