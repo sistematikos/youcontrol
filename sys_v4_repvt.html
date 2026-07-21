@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reporte de Ventas - YouControl</title>
-    <!-- Tailwind CSS o estilos base si aplican -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
@@ -184,13 +183,32 @@
                     const v = docSnap.data();
                     const id = docSnap.id;
                     
-                    cantidadFacturas++;
-                    totalUSD += Number(v.total || v.total_general || 0);
+                    // Imprime en la consola del navegador (F12) la estructura exacta de cada factura para inspección
+                    console.log("Datos de factura ID:", id, v);
 
+                    cantidadFacturas++;
+                    
+                    // Captura flexible de montos totales segun variantes comunes en bases de datos
+                    const montoVenta = Number(v.total || v.total_general || v.monto || v.totalGeneral || v.subtotal || 0);
+                    totalUSD += montoVenta;
+
+                    // Formateo de fecha legible si viene como Timestamp de Firebase
+                    let fechaStr = "N/A";
+                    if (v.fecha && typeof v.fecha.toDate === 'function') {
+                        fechaStr = v.fecha.toDate().toLocaleString();
+                    } else if (v.fecha) {
+                        fechaStr = v.fecha;
+                    }
+
+                    // Formatear productos de forma flexible
                     let productosHTML = `<ul class="lista-productos">`;
-                    if (v.productos && Array.isArray(v.productos)) {
-                        v.productos.forEach(p => {
-                            productosHTML += `<li>${p.nombre || p.descripcion || 'Producto'} (${p.cantidad || 1} x $${Number(p.precio || 0).toFixed(2)})</li>`;
+                    const listaProds = v.productos || v.items || v.cart || [];
+                    if (Array.isArray(listaProds) && listaProds.length > 0) {
+                        listaProds.forEach(p => {
+                            const nombreP = p.nombre || p.descripcion || p.titulo || 'Producto';
+                            const cantP = p.cantidad || p.qty || 1;
+                            const precioP = Number(p.precio || p.price || 0);
+                            productosHTML += `<li>${nombreP} (${cantP} x $${precioP.toFixed(2)})</li>`;
                         });
                     } else {
                         productosHTML += `<li>Venta registrada / Sin detalle interno</li>`;
@@ -201,11 +219,11 @@
                     tr.className = "fila-factura";
                     tr.innerHTML = `
                         <td class="text-center"><input type="radio" name="select_factura" class="radio-factura" data-id="${id}"></td>
-                        <td>${v.fecha || 'N/A'} ${v.hora || ''}</td>
+                        <td>${fechaStr}</td>
                         <td><strong>${v.nro_factura || v.nroFactura || id.slice(0,6)}</strong></td>
-                        <td>${v.nombre_cliente || v.cliente || 'CLIENTE CONTADO'}</td>
+                        <td>${v.nombre_cliente || v.cliente || v.clientName || 'CLIENTE CONTADO'}</td>
                         <td>${productosHTML}</td>
-                        <td class="text-right"><strong>$${Number(v.total || v.total_general || 0).toFixed(2)}</strong></td>
+                        <td class="text-right"><strong>$${montoVenta.toFixed(2)}</strong></td>
                     `;
 
                     tr.addEventListener('click', () => {
@@ -246,8 +264,9 @@
 
             try {
                 await runTransaction(db, async (transaction) => {
-                    if (facturaSeleccionadaData.productos && Array.isArray(facturaSeleccionadaData.productos)) {
-                        for (let prod of facturaSeleccionadaData.productos) {
+                    const listaProds = facturaSeleccionadaData.productos || facturaSeleccionadaData.items || [];
+                    if (Array.isArray(listaProds)) {
+                        for (let prod of listaProds) {
                             const prodId = prod.id || prod.codigo || prod.sku;
                             if (prodId) {
                                 const prodRef = doc(db, "usuarios", empresaId, "inventario", prodId);
@@ -255,7 +274,7 @@
                                 
                                 if (prodDoc.exists()) {
                                     const stockActual = Number(prodDoc.data().stock || prodDoc.data().existencia || 0);
-                                    const cantidadDevolver = Number(prod.cantidad || 1);
+                                    const cantidadDevolver = Number(prod.cantidad || prod.qty || 1);
                                     const nuevoStock = stockActual + cantidadDevolver;
                                     
                                     transaction.update(prodRef, { 
