@@ -182,17 +182,14 @@
                 querySnapshot.forEach((docSnap) => {
                     const v = docSnap.data();
                     const id = docSnap.id;
-                    
-                    // Imprime en la consola del navegador (F12) la estructura exacta de cada factura para inspección
-                    console.log("Datos de factura ID:", id, v);
 
                     cantidadFacturas++;
                     
-                    // Captura flexible de montos totales segun variantes comunes en bases de datos
-                    const montoVenta = Number(v.total || v.total_general || v.monto || v.totalGeneral || v.subtotal || 0);
+                    // CORREGIDO: Apuntando al campo exacto `total_usd` visto en Firestore
+                    const montoVenta = Number(v.total_usd || v.total || v.total_general || v.monto || 0);
                     totalUSD += montoVenta;
 
-                    // Formateo de fecha legible si viene como Timestamp de Firebase
+                    // Formateo de fecha
                     let fechaStr = "N/A";
                     if (v.fecha && typeof v.fecha.toDate === 'function') {
                         fechaStr = v.fecha.toDate().toLocaleString();
@@ -200,7 +197,7 @@
                         fechaStr = v.fecha;
                     }
 
-                    // Formatear productos de forma flexible
+                    // Formatear productos
                     let productosHTML = `<ul class="lista-productos">`;
                     const listaProds = v.productos || v.items || v.cart || [];
                     if (Array.isArray(listaProds) && listaProds.length > 0) {
@@ -221,7 +218,7 @@
                         <td class="text-center"><input type="radio" name="select_factura" class="radio-factura" data-id="${id}"></td>
                         <td>${fechaStr}</td>
                         <td><strong>${v.nro_factura || v.nroFactura || id.slice(0,6)}</strong></td>
-                        <td>${v.nombre_cliente || v.cliente || v.clientName || 'CLIENTE CONTADO'}</td>
+                        <td>${v.nombre_cliente || v.cliente || 'CLIENTE CONTADO'}</td>
                         <td>${productosHTML}</td>
                         <td class="text-right"><strong>$${montoVenta.toFixed(2)}</strong></td>
                     `;
