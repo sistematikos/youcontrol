@@ -1,17 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <a href="#" class="btn-back" onclick="irAlMenu(event)">
-    <i class="fas fa-arrow-left"></i> VOLVER
-    </a>
-    <script>
-    function irAlMenu(e) {
-        e.preventDefault();
-        // Redirige al menú agregando una marca de tiempo exacta que destruye cualquier caché previa
-        window.location.href = 'sys_v1_menu.html?refresh=' + new Date().getTime();
-    }
-    </script>
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YOU CONTROL - Punto de Ventas</title>
@@ -75,6 +64,10 @@
             font-weight: 600;
             font-size: 13px;
             transition: background 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
         }
 
         .btn-menu-top:hover {
@@ -369,12 +362,24 @@
             font-weight: 600;
         }
     </style>
+
+    <!-- Script para la función de retorno limpio -->
+    <script>
+        function irAlMenu(e) {
+            e.preventDefault();
+            // Redirige al menú agregando una marca de tiempo exacta que destruye cualquier caché previa
+            window.location.href = 'sys_v1_menu.html?refresh=' + new Date().getTime();
+        }
+    </script>
 </head>
 <body>
 
     <header class="navbar">
         <div class="navbar-brand">
-            <button class="btn-menu-top" onclick="location.href='sys_v1_menu.html'"><i class="fas fa-arrow-left"></i> Menú</button>
+            <!-- Botón actualizador con la función para evitar caché -->
+            <a href="#" class="btn-menu-top" onclick="irAlMenu(event)">
+                <i class="fas fa-arrow-left"></i> Menú
+            </a>
             <span>YOU CONTROL - PUNTO DE VENTAS</span>
         </div>
         <div class="shortcuts-container">
