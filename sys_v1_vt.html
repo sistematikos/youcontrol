@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <script>
+    function irAlMenu(e) {
+        e.preventDefault();
+        // Redirige al menú agregando una marca de tiempo exacta que destruye cualquier caché previa
+        window.location.href = 'sys_v1_menu.html?refresh=' + new Date().getTime();
+    }
+    </script>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YOU CONTROL - Punto de Ventas</title>
