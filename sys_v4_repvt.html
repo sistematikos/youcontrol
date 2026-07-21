@@ -1,127 +1,6 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YOU CONTROL | Administrador de Documentos</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
-            --text-dark: #1E293B;
-            --text-muted: #64748B;
-            --emerald: #10B981;
-            --sky: #0EA5E9;
-            --danger: #EF4444;
-            --primary: #0284C7;
-        }
-
-        body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 20px 0; min-height: 100vh; color: var(--text-dark); }
-        .layout-width { width: 92%; max-width: 1200px; margin: 0 auto; box-sizing: border-box; }
-
-        /* HEADER */
-        .header-panel { background: #ffffff; padding: 15px 30px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; height: 100px; }
-        .header-left { display: flex; align-items: center; gap: 20px; }
-        .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 8px 16px; border-radius: 12px; text-decoration: none; font-size: 0.8rem; font-weight: 700; border: 1px solid #E2E8F0; display: flex; align-items: center; gap: 8px; }
-        .page-title { font-size: 1.4rem; font-weight: 700; margin: 0; }
-        .logo-header { height: 100%; width: auto; object-fit: contain; }
-
-        /* CONTROLES Y ACCIONES */
-        .controls-wrapper { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
-        .date-controls { display: flex; gap: 10px; background: #ffffff; padding: 10px 15px; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 2px 4px rgba(0,0,0,0.04); align-items: center; }
-        .date-controls input { border: 1px solid #E2E8F0; padding: 6px; border-radius: 8px; font-size: 0.85rem; outline: none; }
-        .btn-gen { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; }
-        .btn-anular { background: var(--danger); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; transition: opacity 0.2s; }
-        .btn-anular:hover { opacity: 0.9; }
-
-        /* KPI */
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 15px; }
-        .kpi-card { background: #ffffff; border-radius: 12px; padding: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border-left: 5px solid var(--primary); display: flex; justify-content: space-between; align-items: center; }
-        .kpi-info .p-label { font-size: 0.65rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
-        .kpi-info .p-val { font-size: 1.2rem; font-weight: 800; margin-top: 4px; }
-
-        /* TABLA ORDENADA */
-        .table-panel { background: #ffffff; border-radius: 16px; padding: 18px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); border: 1px solid #E2E8F0; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: left; }
-        th { color: var(--text-muted); padding: 12px 10px; text-transform: uppercase; font-size: 0.68rem; border-bottom: 2px solid #F1F5F9; background: #FAFAFA; }
-        td { padding: 12px 10px; border-bottom: 1px solid #F1F5F9; vertical-align: middle; }
-        
-        tr.fila-factura { cursor: pointer; transition: background 0.15s ease; }
-        tr.fila-factura:hover { background-color: #F8FAFC; }
-        tr.fila-factura.seleccionada { background-color: #E0F2FE !important; }
-
-        .text-right { text-align: right; }
-        .text-center { text-align: center; }
-        
-        .lista-productos { margin: 0; padding-left: 15px; color: var(--text-dark); font-size: 0.78rem; }
-        .lista-productos li { margin-bottom: 3px; }
-    </style>
-</head>
-<body>
-
-    <main class="layout-width">
-        <header class="header-panel">
-            <div class="header-left">
-                <a href="sys_v1_menu.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
-                <h1 class="page-title">Administrador de Documentos</h1>
-            </div>
-            <img src="img/youcontrol.png" alt="Logo" class="logo-header" style="max-height: 50px;">
-        </header>
-
-        <div class="controls-wrapper">
-            <div class="date-controls">
-                <input type="date" id="filtro-desde">
-                <input type="date" id="filtro-hasta">
-                <button class="btn-gen" id="btn-buscar">
-                    <i class="fas fa-search"></i> BUSCAR
-                </button>
-            </div>
-            <div>
-                <button class="btn-anular" id="btn-anular-seleccionada">
-                    <i class="fas fa-ban"></i> ANULAR SELECCIONADA
-                </button>
-            </div>
-        </div>
-
-        <div class="kpi-grid">
-            <div class="kpi-card" style="border-left-color: var(--emerald);">
-                <div class="kpi-info">
-                    <span class="p-label">Venta Total USD</span>
-                    <div class="p-val" id="kpi-total-usd">$ 0.00</div>
-                </div>
-            </div>
-            <div class="kpi-card" style="border-left-color: var(--sky);">
-                <div class="kpi-info">
-                    <span class="p-label">Facturas Emitidas</span>
-                    <div class="p-val" id="kpi-total-facturas">0</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="table-panel">
-            <table>
-                <thead>
-                    <tr>
-                        <th class="text-center" style="width: 40px;">Sel</th>
-                        <th>Fecha / Hora</th>
-                        <th>Factura</th>
-                        <th>Cliente</th>
-                        <th>Detalle de Productos</th>
-                        <th class="text-right">Total ($)</th>
-                    </tr>
-                </thead>
-                <tbody id="tabla-reporte-ventas">
-                    <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 25px;">Selecciona un rango de fechas y presiona Buscar.</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </main>
-
-    <!-- Script de Firebase para buscar, seleccionar y anular devolviendo al inventario -->
-    <script type="module">
+<script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, collection, query, where, getDocs, doc, runTransaction } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, runTransaction } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "TU_API_KEY",
@@ -151,24 +30,19 @@
                 return;
             }
 
-            if (!desde || !hasta) {
-                alert("Por favor selecciona un rango de fechas completo.");
-                return;
-            }
-
             tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px;">Buscando documentos...</td></tr>`;
 
             try {
-                const ventasRef = collection(db, "empresas_config", empresaId, "ventas");
-                const q = query(ventasRef, where("fecha", ">=", desde), where("fecha", "<=", hasta));
-                const querySnapshot = await getDocs(q);
+                // CORREGIDO: Apuntando a la ruta real de tu Firestore: usuarios/{empresaId}/ventas
+                const ventasRef = collection(db, "usuarios", empresaId, "ventas");
+                const querySnapshot = await getDocs(ventasRef);
 
                 let totalUSD = 0;
                 let cantidadFacturas = 0;
                 tbody.innerHTML = "";
 
                 if (querySnapshot.empty) {
-                    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No se encontraron ventas en este rango de fechas.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No se encontraron registros de ventas.</td></tr>`;
                     document.getElementById('kpi-total-usd').innerText = "$ 0.00";
                     document.getElementById('kpi-total-facturas').innerText = "0";
                     return;
@@ -177,16 +51,23 @@
                 querySnapshot.forEach((docSnap) => {
                     const v = docSnap.data();
                     const id = docSnap.id;
-                    cantidadFacturas++;
-                    totalUSD += Number(v.total || 0);
+                    
+                    // Opcional: filtrado local por fecha si el campo de fecha existe en el documento
+                    if (v.fecha && (v.fecha < desde || v.fecha > hasta)) {
+                        return; // Salta los que estén fuera del rango
+                    }
 
+                    cantidadFacturas++;
+                    totalUSD += Number(v.total || v.total_general || 0);
+
+                    // Formatear productos vendidos desde la estructura que muestra tu captura
                     let productosHTML = `<ul class="lista-productos">`;
                     if (v.productos && Array.isArray(v.productos)) {
                         v.productos.forEach(p => {
-                            productosHTML += `<li>${p.nombre || p.descripcion || 'Producto'} (${p.cantidad} x $${Number(p.precio || 0).toFixed(2)})</li>`;
+                            productosHTML += `<li>${p.nombre || p.descripcion || 'Producto'} (${p.cantidad || 1} x $${Number(p.precio || 0).toFixed(2)})</li>`;
                         });
                     } else {
-                        productosHTML += `<li>Venta general / Sin detalle</li>`;
+                        productosHTML += `<li>Venta registrada / Sin detalle interno</li>`;
                     }
                     productosHTML += `</ul>`;
 
@@ -194,14 +75,13 @@
                     tr.className = "fila-factura";
                     tr.innerHTML = `
                         <td class="text-center"><input type="radio" name="select_factura" class="radio-factura" data-id="${id}"></td>
-                        <td>${v.fecha || ''} ${v.hora || ''}</td>
-                        <td><strong>${v.nroFactura || v.factura || id.slice(0,6)}</strong></td>
-                        <td>${v.cliente || 'CLIENTE CONTADO'}</td>
+                        <td>${v.fecha || 'N/A'} ${v.hora || ''}</td>
+                        <td><strong>${v.nro_factura || v.nroFactura || id.slice(0,6)}</strong></td>
+                        <td>${v.nombre_cliente || v.cliente || 'CLIENTE CONTADO'}</td>
                         <td>${productosHTML}</td>
-                        <td class="text-right"><strong>$${Number(v.total || 0).toFixed(2)}</strong></td>
+                        <td class="text-right"><strong>$${Number(v.total || v.total_general || 0).toFixed(2)}</strong></td>
                     `;
 
-                    // Evento para seleccionar la fila completa con un clic
                     tr.addEventListener('click', () => {
                         document.querySelectorAll('.fila-factura').forEach(f => f.classList.remove('seleccionada'));
                         document.querySelectorAll('.radio-factura').forEach(r => r.checked = false);
@@ -217,23 +97,27 @@
                     tbody.appendChild(tr);
                 });
 
+                if (cantidadFacturas === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No hay ventas dentro de este rango de fechas.</td></tr>`;
+                }
+
                 document.getElementById('kpi-total-usd').innerText = `$ ${totalUSD.toFixed(2)}`;
                 document.getElementById('kpi-total-facturas').innerText = cantidadFacturas;
 
             } catch (error) {
                 console.error("Error cargando ventas: ", error);
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--danger); padding: 20px;">Error al cargar los datos.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--danger); padding: 20px;">Error al conectar con la base de datos.</td></tr>`;
             }
         }
 
-        // Transacción para anular factura y retornar stock al inventario
+        // Transacción para anular y devolver stock a la ruta correcta: usuarios/{empresaId}/inventario
         document.getElementById('btn-anular-seleccionada').addEventListener('click', async () => {
             if (!facturaSeleccionadaId || !facturaSeleccionadaData) {
                 alert("Por favor selecciona una factura de la tabla para anular.");
                 return;
             }
 
-            if (!confirm(`¿Estás seguro de anular la factura ${facturaSeleccionadaData.nroFactura || facturaSeleccionadaId}? Esta acción devolverá los productos al inventario.`)) {
+            if (!confirm(`¿Estás seguro de anular la factura ${facturaSeleccionadaData.nro_factura || facturaSeleccionadaId}? Esta acción devolverá los productos al inventario.`)) {
                 return;
             }
 
@@ -241,17 +125,16 @@
 
             try {
                 await runTransaction(db, async (transaction) => {
-                    // 1. Devolver cantidades al inventario
                     if (facturaSeleccionadaData.productos && Array.isArray(facturaSeleccionadaData.productos)) {
                         for (let prod of facturaSeleccionadaData.productos) {
-                            const prodId = prod.id || prod.codigo;
+                            const prodId = prod.id || prod.codigo || prod.sku;
                             if (prodId) {
-                                const prodRef = doc(db, "empresas_config", empresaId, "inventario", prodId);
+                                const prodRef = doc(db, "usuarios", empresaId, "inventario", prodId);
                                 const prodDoc = await transaction.get(prodRef);
                                 
                                 if (prodDoc.exists()) {
                                     const stockActual = Number(prodDoc.data().stock || prodDoc.data().existencia || 0);
-                                    const cantidadDevolver = Number(prod.cantidad || 0);
+                                    const cantidadDevolver = Number(prod.cantidad || 1);
                                     const nuevoStock = stockActual + cantidadDevolver;
                                     
                                     transaction.update(prodRef, { 
@@ -263,8 +146,7 @@
                         }
                     }
 
-                    // 2. Eliminar la venta de la colección
-                    const ventaRef = doc(db, "empresas_config", empresaId, "ventas", facturaSeleccionadaId);
+                    const ventaRef = doc(db, "usuarios", empresaId, "ventas", facturaSeleccionadaId);
                     transaction.delete(ventaRef);
                 });
 
@@ -279,12 +161,9 @@
             }
         });
 
-        // Cargar por defecto la fecha actual al entrar
         window.addEventListener('DOMContentLoaded', () => {
             const hoy = new Date().toISOString().split('T')[0];
             document.getElementById('filtro-desde').value = hoy;
             document.getElementById('filtro-hasta').value = hoy;
         });
     </script>
-</body>
-</html>
