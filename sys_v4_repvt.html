@@ -114,10 +114,10 @@
 <body>
 
     <div class="container">
-        <!-- Cabecera estándar con botón de volver y logo -->
+        <!-- Cabecera estándar -->
         <header class="header-panel">
             <div style="display: flex; align-items: center; gap: 15px;">
-                <a href="sys_v1_menu.html" class="btn-back">
+                <a href="sys_v1_menu.html" class="btn-back" onclick="event.preventDefault(); window.location.href='sys_v1_menu.html?v=' + Date.now();">
                     <i class="fas fa-arrow-left"></i> VOLVER
                 </a>
                 <h1 style="font-size: 1.2rem; margin: 0; font-weight: 700; color: #1E293B;">
