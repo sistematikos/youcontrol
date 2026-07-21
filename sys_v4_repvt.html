@@ -1,4 +1,139 @@
-<script type="module">
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Ventas - YouControl</title>
+    <!-- Tailwind CSS o estilos base si aplican -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --danger: #dc2626;
+            --text-muted: #6b7280;
+        }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        .kpi-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+            font-size: 14px;
+        }
+        th {
+            background-color: #f9fafb;
+            font-weight: 600;
+        }
+        .fila-factura {
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .fila-factura:hover, .fila-factura.seleccionada {
+            background-color: #eff6ff;
+        }
+        .lista-productos {
+            margin: 0;
+            padding-left: 15px;
+            font-size: 13px;
+            color: #4b5563;
+        }
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-danger { background-color: var(--danger); color: white; }
+        .btn:hover { opacity: 0.9; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1 class="text-2xl font-bold mb-6">Reporte y Control de Ventas</h1>
+
+        <!-- Filtros y KPIs -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 items-end">
+            <div>
+                <label class="block text-sm font-medium mb-1">Desde:</label>
+                <input type="date" id="filtro-desde" class="w-full border rounded p-2">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Hasta:</label>
+                <input type="date" id="filtro-hasta" class="w-full border rounded p-2">
+            </div>
+            <div>
+                <button id="btn-buscar" class="btn btn-primary w-full">Buscar Ventas</button>
+            </div>
+            <div>
+                <button id="btn-anular-seleccionada" class="btn btn-danger w-full">Anular Seleccionada</button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div class="kpi-card">
+                <p class="text-sm text-gray-500">Total Vendido</p>
+                <p id="kpi-total-usd" class="text-2xl font-bold text-blue-600">$ 0.00</p>
+            </div>
+            <div class="kpi-card">
+                <p class="text-sm text-gray-500">Cantidad de Facturas</p>
+                <p id="kpi-total-facturas" class="text-2xl font-bold text-gray-700">0</p>
+            </div>
+        </div>
+
+        <!-- Tabla de Resultados -->
+        <div class="overflow-x-auto">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="w-10 text-center">Sel</th>
+                        <th>Fecha / Hora</th>
+                        <th>Nro Factura</th>
+                        <th>Cliente</th>
+                        <th>Productos</th>
+                        <th class="text-right">Total</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-reporte-ventas">
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                            Seleccione un rango y presione buscar.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Script de Firebase y Lógica -->
+    <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getFirestore, collection, getDocs, doc, runTransaction } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
@@ -20,8 +155,6 @@
         document.getElementById('btn-buscar').addEventListener('click', cargarReporteVentas);
 
         async function cargarReporteVentas() {
-            const desde = document.getElementById('filtro-desde').value;
-            const hasta = document.getElementById('filtro-hasta').value;
             const tbody = document.getElementById('tabla-reporte-ventas');
             const empresaId = localStorage.getItem('youcontrol_empresa_id');
 
@@ -33,7 +166,6 @@
             tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px;">Buscando documentos...</td></tr>`;
 
             try {
-                // CORREGIDO: Apuntando a la ruta real de tu Firestore: usuarios/{empresaId}/ventas
                 const ventasRef = collection(db, "usuarios", empresaId, "ventas");
                 const querySnapshot = await getDocs(ventasRef);
 
@@ -52,15 +184,9 @@
                     const v = docSnap.data();
                     const id = docSnap.id;
                     
-                    // Opcional: filtrado local por fecha si el campo de fecha existe en el documento
-                    if (v.fecha && (v.fecha < desde || v.fecha > hasta)) {
-                        return; // Salta los que estén fuera del rango
-                    }
-
                     cantidadFacturas++;
                     totalUSD += Number(v.total || v.total_general || 0);
 
-                    // Formatear productos vendidos desde la estructura que muestra tu captura
                     let productosHTML = `<ul class="lista-productos">`;
                     if (v.productos && Array.isArray(v.productos)) {
                         v.productos.forEach(p => {
@@ -97,10 +223,6 @@
                     tbody.appendChild(tr);
                 });
 
-                if (cantidadFacturas === 0) {
-                    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No hay ventas dentro de este rango de fechas.</td></tr>`;
-                }
-
                 document.getElementById('kpi-total-usd').innerText = `$ ${totalUSD.toFixed(2)}`;
                 document.getElementById('kpi-total-facturas').innerText = cantidadFacturas;
 
@@ -110,7 +232,6 @@
             }
         }
 
-        // Transacción para anular y devolver stock a la ruta correcta: usuarios/{empresaId}/inventario
         document.getElementById('btn-anular-seleccionada').addEventListener('click', async () => {
             if (!facturaSeleccionadaId || !facturaSeleccionadaData) {
                 alert("Por favor selecciona una factura de la tabla para anular.");
@@ -165,5 +286,8 @@
             const hoy = new Date().toISOString().split('T')[0];
             document.getElementById('filtro-desde').value = hoy;
             document.getElementById('filtro-hasta').value = hoy;
+            cargarReporteVentas();
         });
     </script>
+</body>
+</html>
