@@ -2,123 +2,121 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>YOU CONTROL | Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOU CONTROL | Panel Administrativo</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .catch(err => console.log('SW no registrado', err));
+            });
+        }
+    </script>
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --light-bg: #F1F5F9; --blue-electric: #3B82F6; --menu-bg: #FFFFFF; --text-color: #1E293B; }
-        body { font-family: 'Poppins', sans-serif; background: var(--light-bg); margin: 0; padding-bottom: 50px; }
-        .main-wrapper { width: 92%; max-width: 1200px; margin: 20px auto; }
-
-        /* Menú claro */
-        .erp-navbar { background: var(--menu-bg); padding: 10px 20px; display: flex; gap: 30px; border-radius: 12px 12px 0 0; border: 1px solid #E2E8F0; }
-        .dropdown { cursor: pointer; font-size: 0.8rem; font-weight: 600; color: var(--text-color); padding: 10px; position: relative; }
-        .dropdown:hover { color: var(--blue-electric); }
-        .dropdown-content { display: none; position: absolute; background: white; min-width: 230px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 8px; z-index: 1000; left: 0; }
-        .dropdown-content a { color: var(--text-color); padding: 10px; text-decoration: none; display: block; font-size: 0.8rem; }
-        .dropdown-content a:hover { background: #F8FAFC; color: var(--blue-electric); }
-        .dropdown:hover .dropdown-content { display: block; }
-
-        /* Banner corto */
-        .banner { width: 100%; height: 120px; overflow: hidden; border-radius: 0 0 12px 12px; border: 1px solid #E2E8F0; }
-        .banner img { width: 100%; height: 100%; object-fit: cover; }
+        :root {
+            --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
+            --accent-blue: #0284C7;
+        }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; }
         
-        /* Grid de tarjetas */
-        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 30px; }
-        .card { background: white; padding: 20px; border-radius: 12px; text-align: center; border: 2px solid #E2E8F0; text-decoration: none; color: var(--text-color); transition: 0.2s; }
-        .card:hover { transform: translateY(-3px); border-color: var(--blue-electric); }
+        .banner-menu-container { width: 92%; max-width: 1200px; margin: 25px auto 0px auto; border-radius: 16px; overflow: hidden; background: #002A54; position: relative; }
+        .banner-menu-img { width: 100%; max-height: 280px; object-fit: cover; display: block; }
+        .banner-empresa-overlay {
+            position: absolute; top: 20px; left: 20px; color: white;
+            font-size: 0.9rem; font-weight: 600; z-index: 10;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5); pointer-events: none;
+        }
         
-        /* Colores */
-        .card-clientes { border-top: 5px solid #10B981; }
-        .card-productos { border-top: 5px solid #F59E0B; }
-        .card-ingreso { border-top: 5px solid #8B5CF6; }
-        .card-ventas { border-top: 5px solid #06B6D4; }
+        .menu-container { max-width: 1200px; width: 92%; margin: 30px auto 20px auto; padding: 5px 0; flex-grow: 1; display: flex; align-items: center; }
+        .menu-grid-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; width: 100%; }
         
-        .license-card { position: fixed; bottom: 30px; left: 30px; background: white; padding: 20px; border-radius: 12px; border-left: 6px solid var(--blue-electric); box-shadow: 0 10px 20px rgba(0,0,0,0.1); width: 250px; z-index: 1000; }
+        .menu-card { background: #fff; border-radius: 12px; padding: 20px 10px; text-align: center; text-decoration: none; color: var(--text-dark); box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; border: 2px solid #E2E8F0; transition: 0.2s; }
+        .menu-card:hover { transform: translateY(-3px); border-color: var(--accent-blue); }
+        .menu-card i { font-size: 1.8rem; margin-bottom: 10px; }
+        .menu-card span { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; }
+        .menu-card p { font-size: 0.75rem; color: var(--text-muted); margin: 0; }
+        
+        .card-inv { border-color: #10B981; } .card-inv i { color: #10B981; }
+        .card-term { border-color: #F59E0B; } .card-term i { color: #F59E0B; }
+        .card-depto { border-color: #A855F7; } .card-depto i { color: #A855F7; }
+        .card-comp { border-color: #6366F1; } .card-comp i { color: #6366F1; }
+        .card-ventas { border-color: #0EA5E9; } .card-ventas i { color: #0EA5E9; }
+        .card-anulacion { border-color: #EF4444; } .card-anulacion i { color: #EF4444; }
+        .card-reportes { border-color: #F59E0B; } .card-reportes i { color: #F59E0B; }
+        .card-config { border-color: #6B7280; } .card-config i { color: #6B7280; }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false">
 
-<div class="main-wrapper">
-    <nav class="erp-navbar">
-        <div class="dropdown">CONFIGURACIÓN ▼
-            <div class="dropdown-content"><a href="sys_config.html">Parámetros del Sistema</a></div>
-        </div>
-        <div class="dropdown">INVENTARIO ▼
-            <div class="dropdown-content">
-                <a href="sys_v3_ficha.html">Productos Terminados</a>
-                <a href="sys_v3_comp.html">Ingresos de Mercancía</a>
-            </div>
-        </div>
-        <div class="dropdown">OPERACIONES ▼
-            <div class="dropdown-content">
-                <a href="sys_v1_vt.html">Ventas</a>
-                <a href="sys_v5_anular.html">Anulaciones</a>
-                <a href="sys_v4_repvt.html">Administrador Documentos</a>
-            </div>
-        </div>
-        <div class="dropdown">REPORTES ▼
-            <div class="dropdown-content">
-                <a href="sys_v1_inv.html">Existencia de Productos</a>
-                <a href="sys_v4_exist.html">Reporte General Productos</a>
-                <a href="sys_v4_reportes.html">Reporte de Ventas</a>
-                <a href="#">Productos más Vendidos</a>
-                <a href="#">Cuadre de Caja</a>
-            </div>
-        </div>
-    </nav>
-
-    <div class="banner"><img src="img/youcontrol.png" alt="Banner"></div>
-
-    <div class="grid-container">
-        <a href="#" class="card card-clientes"><i class="fas fa-users"></i><p>CLIENTES</p></a>
-        <a href="sys_v3_ficha.html" class="card card-productos"><i class="fas fa-box"></i><p>PRODUCTOS</p></a>
-        <a href="sys_v3_comp.html" class="card card-ingreso"><i class="fas fa-cart-plus"></i><p>INGRESOS</p></a>
-        <a href="sys_v1_vt.html" class="card card-ventas"><i class="fas fa-cash-register"></i><p>VENTAS (POS)</p></a>
+    <div class="banner-menu-container">
+        <div class="banner-empresa-overlay" id="lblEmpresa">Cargando datos...</div>
+        <img src="img/youcontrol.png" alt="You Control" class="banner-menu-img">
     </div>
-</div>
 
-<div class="license-card" id="lblEmpresa">
-    <h4 style="margin:0;"><i class="fas fa-shield-alt"></i> Licencia Activa</h4>
-    <p style="margin:5px 0 0; font-size: 0.8rem;" id="emp-data">Cargando...</p>
-</div>
+    <main class="menu-container">
+        <div class="menu-grid-layout">
+            <a href="sys_v1_inv.html" class="menu-card card-inv"><i class="fas fa-boxes-stacked"></i><span>Inventario</span><p>Visualiza existencias y precios.</p></a>
+            <a href="sys_v3_ficha.html" class="menu-card card-term"><i class="fas fa-check-double"></i><span>Productos Terminados</span><p>Ficha de productos.</p></a>
+            <a href="sys_v1_dep.html" class="menu-card card-depto"><i class="fas fa-sitemap"></i><span>Departamentos</span><p>Clasifica tus productos.</p></a>
+            <a href="sys_v3_comp.html" class="menu-card card-comp"><i class="fas fa-cart-plus"></i><span>Entrada</span><p>Registra nuevas compras.</p></a>
+            <a href="sys_v1_vt.html" class="menu-card card-ventas"><i class="fas fa-cash-register"></i><span>Ventas (POS)</span><p>Facturación rápida.</p></a>
+            <a href="sys_v2_clt.html" class="menu-card card-ventas"><i class="fas fa-users"></i><span>Clientes</span><p>Base de datos.</p></a>
+            <a href="sys_v4_reportes.html" class="menu-card card-reportes"><i class="fas fa-chart-line"></i><span>Reportes</span><p>Estadísticas del negocio.</p></a>
+            <a href="#" id="btn-catalogo" class="menu-card card-ventas"><i class="fas fa-store"></i><span>Catálogo Digital</span><p>Vitrina virtual.</p></a>
+            <!-- Corregido para abrir el Administrador de Documentos / Anulaciones correcto -->
+            <a href="sys_v4_repvt.html" class="menu-card card-anulacion"><i class="fas fa-undo"></i><span>Anulaciones</span><p>Reversión de ventas.</p></a>
+            <a href="sys_config.html" class="menu-card card-config"><i class="fas fa-cog"></i><span>Configuración</span><p>Parámetros.</p></a>
+        </div>
+    </main>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-        apiKey: "TU_API_KEY",
-        authDomain: "youcontrol-1d60a.firebaseapp.com",
-        projectId: "youcontrol-1d60a",
-        storageBucket: "youcontrol-1d60a.appspot.com",
-        messagingSenderId: "812100760013",
-        appId: "1:812100760013:web:7574906aa285555faf5484"
-    };
+        const firebaseConfig = {
+            apiKey: "TU_API_KEY",
+            authDomain: "youcontrol-1d60a.firebaseapp.com",
+            projectId: "youcontrol-1d60a",
+            storageBucket: "youcontrol-1d60a.appspot.com",
+            messagingSenderId: "812100760013",
+            appId: "1:812100760013:web:7574906aa285555faf5484"
+        };
 
-    const db = getFirestore(initializeApp(firebaseConfig));
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-    async function cargarDatos() {
-        const id = localStorage.getItem('youcontrol_empresa_id');
-        const container = document.getElementById('emp-data');
-        if (id) {
-            try {
-                const snap = await getDoc(doc(db, "empresas_config", id));
-                if (snap.exists()) {
-                    const d = snap.data();
-                    container.innerHTML = `<strong>${d.nombre || 'Empresa'}</strong><br>RIF: ${d.rif || 'N/A'}`;
-                } else {
-                    container.innerHTML = "Empresa no registrada.";
-                }
-            } catch (err) {
-                console.error(err);
-                container.innerHTML = "Error al conectar.";
+        async function cargarDatosEmpresa() {
+            const empresaID = localStorage.getItem('youcontrol_empresa_id');
+            const lblEmpresa = document.getElementById('lblEmpresa');
+            if (empresaID) {
+                try {
+                    const docSnap = await getDoc(doc(db, "empresas_config", empresaID));
+                    if (docSnap.exists()) {
+                        const d = docSnap.data();
+                        lblEmpresa.innerHTML = `
+                            <div style="font-size: 1.1rem;">${d.nombre || 'N/A'}</div>
+                            <div>RIF: ${d.rif || 'N/A'}</div>
+                            <div>${d.direccion || 'N/A'}</div>
+                        `;
+                    }
+                } catch (e) { lblEmpresa.innerText = "Error al cargar"; }
             }
-        } else {
-            container.innerHTML = "No hay empresa activa.";
         }
-    }
-    
-    window.addEventListener('DOMContentLoaded', cargarDatos);
-</script>
+        cargarDatosEmpresa();
+
+        document.getElementById('btn-catalogo').addEventListener('click', (e) => {
+            e.preventDefault();
+            const id = localStorage.getItem('youcontrol_empresa_id');
+            if (id) window.open(`node_v2_505.html?empresa=${id}`, '_blank');
+            else alert("Error de sesión.");
+        });
+    </script>
 </body>
 </html>
