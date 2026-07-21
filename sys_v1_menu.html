@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YOU CONTROL | Panel Administrativo</title>
+    <title>YOU CONTROL | Sistema de Gestión</title>
     
     <link rel="manifest" href="manifest.json">
     <script>
@@ -23,59 +23,95 @@
             --text-dark: #1E293B;
             --text-muted: #64748B;
             --accent-blue: #0284C7;
+            --primary-dark: #002A54;
         }
+
         body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; }
+
+        /* BARRA DE NAVEGACIÓN SUPERIOR CON MENÚS DESPLEGABLES */
+        .navbar-sistema { background: var(--primary-dark); width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
+        .nav-container { width: 92%; max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; height: 60px; }
+        .nav-logo { color: white; font-weight: 700; font-size: 1.1rem; text-decoration: none; display: flex; align-items: center; gap: 8px; }
         
+        .nav-menu { display: flex; list-style: none; margin: 0; padding: 0; gap: 5px; align-items: center; }
+        .nav-item { position: relative; }
+        .nav-link { color: #E2E8F0; text-decoration: none; padding: 8px 14px; font-size: 0.85rem; font-weight: 500; display: flex; align-items: center; gap: 6px; border-radius: 8px; transition: 0.2s; }
+        .nav-link:hover, .nav-item:hover .nav-link { background: rgba(255,255,255,0.1); color: #ffffff; }
+
+        /* DROPDOWN */
+        .dropdown-menu { position: absolute; top: 100%; left: 0; background: #ffffff; min-width: 200px; border-radius: 10px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); list-style: none; padding: 8px 0; margin: 5px 0 0 0; display: none; border: 1px solid #E2E8F0; }
+        .nav-item:hover .dropdown-menu { display: block; }
+        .dropdown-item a { color: var(--text-dark); padding: 10px 16px; text-decoration: none; display: flex; align-items: center; gap: 10px; font-size: 0.8rem; font-weight: 500; transition: background 0.15s; }
+        .dropdown-item a:hover { background: #F1F5F9; color: var(--accent-blue); }
+
+        /* BANNER */
         .banner-menu-container { width: 92%; max-width: 1200px; margin: 25px auto 0px auto; border-radius: 16px; overflow: hidden; background: #002A54; position: relative; }
-        .banner-menu-img { width: 100%; max-height: 280px; object-fit: cover; display: block; }
+        .banner-menu-img { width: 100%; max-height: 250px; object-fit: cover; display: block; }
         .banner-empresa-overlay {
             position: absolute; top: 20px; left: 20px; color: white;
             font-size: 0.9rem; font-weight: 600; z-index: 10;
             text-shadow: 1px 1px 3px rgba(0,0,0,0.5); pointer-events: none;
         }
-        
-        .menu-container { max-width: 1200px; width: 92%; margin: 30px auto 20px auto; padding: 5px 0; flex-grow: 1; display: flex; align-items: center; }
-        .menu-grid-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; width: 100%; }
-        
-        .menu-card { background: #fff; border-radius: 12px; padding: 20px 10px; text-align: center; text-decoration: none; color: var(--text-dark); box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; border: 2px solid #E2E8F0; transition: 0.2s; }
-        .menu-card:hover { transform: translateY(-3px); border-color: var(--accent-blue); }
-        .menu-card i { font-size: 1.8rem; margin-bottom: 10px; }
-        .menu-card span { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; }
-        .menu-card p { font-size: 0.75rem; color: var(--text-muted); margin: 0; }
-        
-        .card-inv { border-color: #10B981; } .card-inv i { color: #10B981; }
-        .card-term { border-color: #F59E0B; } .card-term i { color: #F59E0B; }
-        .card-depto { border-color: #A855F7; } .card-depto i { color: #A855F7; }
-        .card-comp { border-color: #6366F1; } .card-comp i { color: #6366F1; }
-        .card-ventas { border-color: #0EA5E9; } .card-ventas i { color: #0EA5E9; }
-        .card-anulacion { border-color: #EF4444; } .card-anulacion i { color: #EF4444; }
-        .card-reportes { border-color: #F59E0B; } .card-reportes i { color: #F59E0B; }
-        .card-config { border-color: #6B7280; } .card-config i { color: #6B7280; }
+
+        /* CONTENIDO PRINCIPAL */
+        .main-content { max-width: 1200px; width: 92%; margin: 30px auto; flex-grow: 1; text-align: center; }
+        .welcome-box { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; }
+        .welcome-box h2 { margin-top: 0; color: var(--text-dark); }
+        .welcome-box p { color: var(--text-muted); font-size: 0.9rem; }
     </style>
 </head>
 <body oncontextmenu="return false">
 
+    <!-- BARRA SUPERIOR CON MENÚS DESPLEGABLES -->
+    <nav class="navbar-sistema">
+        <div class="nav-container">
+            <a href="#" class="nav-logo"><i class="fas fa-chart-pie"></i> YOU CONTROL</a>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#" class="nav-link"><i class="fas fa-boxes-stacked"></i> Inventario <i class="fas fa-chevron-down" style="font-size: 0.6rem;"></i></a>
+                    <ul class="dropdown-menu">
+                        <li class="dropdown-item"><a href="sys_v1_inv.html"><i class="fas fa-box"></i> Ver Inventario</a></li>
+                        <li class="dropdown-item"><a href="sys_v3_ficha.html"><i class="fas fa-check-double"></i> Productos Terminados</a></li>
+                        <li class="dropdown-item"><a href="sys_v1_dep.html"><i class="fas fa-sitemap"></i> Departamentos</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link"><i class="fas fa-shopping-cart"></i> Operaciones <i class="fas fa-chevron-down" style="font-size: 0.6rem;"></i></a>
+                    <ul class="dropdown-menu">
+                        <li class="dropdown-item"><a href="sys_v3_comp.html"><i class="fas fa-cart-plus"></i> Entrada / Compras</a></li>
+                        <li class="dropdown-item"><a href="sys_v1_vt.html"><i class="fas fa-cash-register"></i> Ventas (POS)</a></li>
+                        <li class="dropdown-item"><a href="sys_v2_clt.html"><i class="fas fa-users"></i> Clientes</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link"><i class="fas fa-chart-line"></i> Reportes y Control <i class="fas fa-chevron-down" style="font-size: 0.6rem;"></i></a>
+                    <ul class="dropdown-menu">
+                        <li class="dropdown-item"><a href="sys_v4_reportes.html"><i class="fas fa-chart-bar"></i> Estadísticas Generales</a></li>
+                        <li class="dropdown-item"><a href="sys_v4_repvt.html"><i class="fas fa-undo"></i> Administrador / Anulaciones</a></li>
+                        <li class="dropdown-item"><a href="#" id="btn-catalogo"><i class="fas fa-store"></i> Catálogo Digital</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="sys_config.html" class="nav-link"><i class="fas fa-cog"></i> Configuración</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- BANNER DE LA EMPRESA -->
     <div class="banner-menu-container">
         <div class="banner-empresa-overlay" id="lblEmpresa">Cargando datos...</div>
         <img src="img/youcontrol.png" alt="You Control" class="banner-menu-img">
     </div>
 
-    <main class="menu-container">
-        <div class="menu-grid-layout">
-            <a href="sys_v1_inv.html" class="menu-card card-inv"><i class="fas fa-boxes-stacked"></i><span>Inventario</span><p>Visualiza existencias y precios.</p></a>
-            <a href="sys_v3_ficha.html" class="menu-card card-term"><i class="fas fa-check-double"></i><span>Productos Terminados</span><p>Ficha de productos.</p></a>
-            <a href="sys_v1_dep.html" class="menu-card card-depto"><i class="fas fa-sitemap"></i><span>Departamentos</span><p>Clasifica tus productos.</p></a>
-            <a href="sys_v3_comp.html" class="menu-card card-comp"><i class="fas fa-cart-plus"></i><span>Entrada</span><p>Registra nuevas compras.</p></a>
-            <a href="sys_v1_vt.html" class="menu-card card-ventas"><i class="fas fa-cash-register"></i><span>Ventas (POS)</span><p>Facturación rápida.</p></a>
-            <a href="sys_v2_clt.html" class="menu-card card-ventas"><i class="fas fa-users"></i><span>Clientes</span><p>Base de datos.</p></a>
-            <a href="sys_v4_reportes.html" class="menu-card card-reportes"><i class="fas fa-chart-line"></i><span>Reportes</span><p>Estadísticas del negocio.</p></a>
-            <a href="#" id="btn-catalogo" class="menu-card card-ventas"><i class="fas fa-store"></i><span>Catálogo Digital</span><p>Vitrina virtual.</p></a>
-            <!-- Corregido para abrir el Administrador de Documentos / Anulaciones correcto -->
-            <a href="sys_v4_repvt.html" class="menu-card card-anulacion"><i class="fas fa-undo"></i><span>Anulaciones</span><p>Reversión de ventas.</p></a>
-            <a href="sys_config.html" class="menu-card card-config"><i class="fas fa-cog"></i><span>Configuración</span><p>Parámetros.</p></a>
+    <main class="main-content">
+        <div class="welcome-box">
+            <h2>Bienvenido al Sistema</h2>
+            <p>Utiliza la barra de navegación superior para acceder a los módulos de Inventario, Operaciones, Ventas y Anulaciones.</p>
         </div>
     </main>
 
+    <!-- LÓGICA DE FIREBASE PARA CARGAR DATOS DE LA EMPRESA -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
