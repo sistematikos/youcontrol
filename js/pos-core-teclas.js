@@ -6,7 +6,7 @@ export function ejecutarF4() {
     const nuevaCant = prompt(`Cantidad para ${item.nombre}:`, item.cantidad);
     
     if (nuevaCant !== null && !isNaN(nuevaCant) && nuevaCant > 0) {
-        item.cantidad = parseInt(nuevaCant);
+        item.cantidad = parseFloat(nuevaCant);
         window.actualizarCarritoUI();
     }
 }
