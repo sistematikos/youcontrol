@@ -16,7 +16,8 @@
             display: flex; justify-content: space-between; align-items: center; 
             max-width: 800px; margin: 0 auto 15px auto; height: 70px; 
         }
-        .btn-back { background: #F1F5F9; color: #1E293B; padding: 8px 15px; border-radius: 8px; text-decoration: none; font-size: 0.8rem; font-weight: 700; border: 1px solid #E2E8F0; }
+        .btn-back { background: #F1F5F9; color: #1E293B; padding: 8px 15px; border-radius: 8px; text-decoration: none; font-size: 0.8rem; font-weight: 700; border: 1px solid #E2E8F0; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; transition: background 0.2s; }
+        .btn-back:hover { background: #E2E8F0; }
         .logo-header { height: 50px; width: auto; }
 
         /* Contenido */
@@ -30,12 +31,20 @@
         .item-res { padding: 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
         .item-res:hover { background: #F1F5F9; }
     </style>
+
+    <!-- Script para limpiar caché al retornar -->
+    <script>
+        function irAlMenu(e) {
+            e.preventDefault();
+            window.location.href = 'sys_v1_menu.html?refresh=' + new Date().getTime();
+        }
+    </script>
 </head>
 <body>
 
     <header class="header-panel">
         <div style="display: flex; align-items: center; gap: 15px;">
-            <a href="sys_v1_menu.html" class="btn-back">
+            <a href="#" class="btn-back" onclick="irAlMenu(event)">
                 <i class="fas fa-arrow-left"></i> VOLVER
             </a>
             <h1 style="font-size: 1.2rem; margin: 0; font-weight: 700; color: #1E293B;">
