@@ -8,10 +8,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const tablaExistencia = document.getElementById('tabla-existencia');
     const inputBusqueda = document.getElementById('input-busqueda');
     
-    // IDs de las tarjetas (KPIs)
-    const txtTotCosto = document.getElementById('tot-costo');
-    const txtTotPvp = document.getElementById('tot-pvp');
-    const txtTotGanancia = document.getElementById('tot-ganancia');
+    // IDs de las tarjetas (KPIs) actualizados a métricas de inventario/stock
+    const txtTotItems = document.getElementById('tot-costo');       // ID original de la 1era tarjeta
+    const txtTotStock = document.getElementById('tot-pvp');         // ID original de la 2da tarjeta
+    const txtTotSinStock = document.getElementById('tot-ganancia'); // ID original de la 3ra tarjeta
     const txtTotAlertas = document.getElementById('tot-alertas');
 
     let arrayProductosGlobal = [];
@@ -33,9 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     codigo: p.sku || p.barras || "S/C",
                     nombre: p.nombre || "Producto sin descripción",
                     stock: parseInt(p.stock || 0),
-                    stock_min: 3,
-                    costo: parseFloat(p.costo || 0),
-                    pvp: parseFloat(p.precio || 0)
+                    stock_min: 3
                 });
             });
 
@@ -52,37 +50,34 @@ document.addEventListener('DOMContentLoaded', () => {
             p.nombre.toLowerCase().includes(filtro) || p.codigo.toLowerCase().includes(filtro)
         );
 
-        let filtroCosto = 0;
-        let filtroPvp = 0;
-        let filtroAlertas = 0;
+        let totalStockAcumulado = 0;
+        let totalSinStock = 0;
+        let totalAlertas = 0;
 
         if (productosFiltrados.length === 0) {
-            tablaExistencia.innerHTML = `<tr><td colspan="7" class="text-center" style="padding:20px;">No se encontraron productos.</td></tr>`;
+            tablaExistencia.innerHTML = `<tr><td colspan="4" class="text-center" style="padding:20px;">No se encontraron productos.</td></tr>`;
         } else {
             productosFiltrados.forEach(p => {
-                const totalInversionItem = p.stock * p.costo;
-                filtroCosto += totalInversionItem;
-                filtroPvp += (p.stock * p.pvp);
-                if (p.stock <= p.stock_min) filtroAlertas++;
+                totalStockAcumulado += p.stock;
+                if (p.stock <= 0) totalSinStock++;
+                if (p.stock > 0 && p.stock <= p.stock_min) totalAlertas++;
 
                 const fila = document.createElement('tr');
                 fila.innerHTML = `
                     <td style="font-family: monospace; font-weight:700;">${p.codigo}</td>
                     <td style="font-weight:600;">${p.nombre}</td>
                     <td class="text-center" style="font-weight:700;">${p.stock}</td>
-                    <td>$ ${p.costo.toFixed(2)}</td>
-                    <td>$ ${p.pvp.toFixed(2)}</td>
-                    <td style="font-weight:700;">$ ${totalInversionItem.toFixed(2)}</td>
-                    <td>${p.stock <= 0 ? '<span class="badge-stock stock-empty">Agotado</span>' : p.stock <= p.stock_min ? '<span class="badge-stock stock-low">Stock Bajo</span>' : '<span class="badge-stock stock-ok">Disponible</span>'}</td>
+                    <td class="text-center">${p.stock <= 0 ? '<span class="badge-stock stock-empty">Agotado</span>' : p.stock <= p.stock_min ? '<span class="badge-stock stock-low">Stock Bajo</span>' : '<span class="badge-stock stock-ok">Disponible</span>'}</td>
                 `;
                 tablaExistencia.appendChild(fila);
             });
         }
 
-        txtTotCosto.innerText = `$ ${filtroCosto.toFixed(2)}`;
-        txtTotPvp.innerText = `$ ${filtroPvp.toFixed(2)}`;
-        txtTotGanancia.innerText = `$ ${(filtroPvp - filtroCosto).toFixed(2)}`;
-        txtTotAlertas.innerText = filtroAlertas;
+        // Actualización de los valores en las tarjetas superiores
+        txtTotItems.innerText = productosFiltrados.length;
+        txtTotStock.innerText = totalStockAcumulado;
+        txtTotSinStock.innerText = totalSinStock;
+        txtTotAlertas.innerText = totalAlertas;
     }
 
     inputBusqueda.addEventListener('input', procesarYFiltrarInventario);
