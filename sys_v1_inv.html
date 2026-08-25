@@ -19,7 +19,9 @@
             background: #F1F5F9; color: #1E293B; padding: 8px 15px; 
             border-radius: 8px; text-decoration: none; font-size: 0.8rem; 
             font-weight: 700; border: 1px solid #E2E8F0; 
+            display: inline-flex; align-items: center; gap: 5px; cursor: pointer;
         }
+        .btn-back:hover { background: #E2E8F0; }
         .logo-header { height: 90%; width: auto; object-fit: contain; }
 
         /* Contenido */
@@ -31,12 +33,20 @@
         td { padding: 12px; border-bottom: 1px solid #F1F5F9; }
         .input-stock { width: 80px; padding: 6px; text-align: center; border: 1px solid #0EA5E9; border-radius: 4px; }
     </style>
+
+    <!-- Script para evitar caché al regresar al menú principal -->
+    <script>
+        function volverAlMenu(e) {
+            e.preventDefault();
+            window.location.href = 'sys_v1_menu.html?refresh=' + new Date().getTime();
+        }
+    </script>
 </head>
 <body>
 
     <header class="header-panel">
         <div style="display: flex; align-items: center; gap: 15px;">
-            <a href="sys_v1_menu.html" class="btn-back">
+            <a href="#" class="btn-back" onclick="volverAlMenu(event)">
                 <i class="fas fa-arrow-left"></i> VOLVER
             </a>
             <h1 style="font-size: 1.2rem; margin: 0; font-weight: 700; color: #1E293B;">
