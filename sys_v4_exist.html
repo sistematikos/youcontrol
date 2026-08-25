@@ -68,11 +68,24 @@
             <input type="text" id="input-busqueda" placeholder="Buscar por código o descripción...">
         </div>
 
+        <!-- Tarjetas conectadas correctamente con los IDs del JS -->
         <div class="kpi-grid">
-            <div class="kpi-card" style="border-left-color: var(--sky);"><div class="inv-info"><span class="p-label">Total Ítems</span><div class="p-val" id="tot-items">0</div></div><i class="fas fa-boxes-stacked" style="color:var(--sky)"></i></div>
-            <div class="kpi-card" style="border-left-color: var(--emerald);"><div class="inv-info"><span class="p-label">Stock Acumulado</span><div class="p-val" id="tot-stock">0</div></div><i class="fas fa-cubes" style="color:var(--emerald)"></i></div>
-            <div class="kpi-card" style="border-left-color: var(--indigo);"><div class="inv-info"><span class="p-label">Sin Stock</span><div class="p-val" id="tot-sin-stock">0</div></div><i class="fas fa-ban" style="color:var(--indigo)"></i></div>
-            <div class="kpi-card" style="border-left-color: var(--rose);"><div class="inv-info"><span class="p-label">Alertas de Stock</span><div class="p-val" id="tot-alertas">0</div></div><i class="fas fa-triangle-exclamation" style="color:var(--rose)"></i></div>
+            <div class="kpi-card" style="border-left-color: var(--sky);">
+                <div class="inv-info"><span class="p-label">Total Ítems</span><div class="p-val" id="tot-costo">0</div></div>
+                <i class="fas fa-boxes-stacked" style="color:var(--sky)"></i>
+            </div>
+            <div class="kpi-card" style="border-left-color: var(--emerald);">
+                <div class="inv-info"><span class="p-label">Stock Acumulado</span><div class="p-val" id="tot-pvp">0</div></div>
+                <i class="fas fa-cubes" style="color:var(--emerald)"></i>
+            </div>
+            <div class="kpi-card" style="border-left-color: var(--indigo);">
+                <div class="inv-info"><span class="p-label">Sin Stock</span><div class="p-val" id="tot-ganancia">0</div></div>
+                <i class="fas fa-ban" style="color:var(--indigo)"></i>
+            </div>
+            <div class="kpi-card" style="border-left-color: var(--rose);">
+                <div class="inv-info"><span class="p-label">Alertas de Stock</span><div class="p-val" id="tot-alertas">0</div></div>
+                <i class="fas fa-triangle-exclamation" style="color:var(--rose)"></i>
+            </div>
         </div>
 
         <div class="table-panel">
