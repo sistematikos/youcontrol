@@ -8,9 +8,25 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #F1F5F9; --sky: #0EA5E9; --emerald: #10B981; --border: #E2E8F0; }
-        body { font-family: 'Poppins', sans-serif; background: var(--bg); padding: 20px; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); padding: 20px; color: #1E293B; margin: 0; }
         .layout { max-width: 600px; margin: auto; }
-        .header { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; border: 1px solid var(--border); }
+        
+        /* Estilos idénticos de la Cabecera */
+        .header { 
+            background: #ffffff; padding: 0 20px; border-radius: 12px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border); 
+            display: flex; justify-content: space-between; align-items: center; 
+            margin-bottom: 20px; height: 70px; 
+        }
+        .btn-back { 
+            background: #F1F5F9; color: #1E293B; padding: 8px 15px; 
+            border-radius: 8px; text-decoration: none; font-size: 0.8rem; 
+            font-weight: 700; border: 1px solid var(--border); 
+            display: inline-flex; align-items: center; gap: 5px; cursor: pointer;
+        }
+        .btn-back:hover { background: #E2E8F0; }
+        .logo-header { height: 90%; width: auto; object-fit: contain; }
+
         .card { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; }
         input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; }
         input:read-only { background-color: #F8FAFC; cursor: not-allowed; }
@@ -18,12 +34,25 @@
         .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #F1F5F9; }
         .badge { background: #E0F2FE; color: var(--sky); padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 0.8rem; }
     </style>
+
+    <!-- Script para limpiar caché al regresar al menú principal -->
+    <script>
+        function volverAlMenu(e) {
+            e.preventDefault();
+            window.location.href = 'sys_v1_menu.html?refresh=' + new Date().getTime();
+        }
+    </script>
 </head>
 <body>
     <main class="layout">
         <header class="header">
-            <a href="sys_v1_menu.html"><i class="fas fa-arrow-left"></i></a>
-            <h2 style="margin:0;">Configurar Departamentos</h2>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <a href="#" class="btn-back" onclick="volverAlMenu(event)">
+                    <i class="fas fa-arrow-left"></i> VOLVER
+                </a>
+                <h2 style="margin: 0; font-size: 1.2rem; font-weight: 700; color: #1E293B;">Configurar Departamentos</h2>
+            </div>
+            <img src="img/logo.png" class="logo-header" alt="Logo">
         </header>
 
         <section class="card">
