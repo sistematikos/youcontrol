@@ -16,17 +16,19 @@
             --amber: #F59E0B;
             --sky: #0EA5E9;
             --rose: #F43F5E;
+            --border: #E2E8F0;
         }
 
         body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 20px 0; min-height: 100vh; color: var(--text-dark); }
         .layout-width { width: 92%; max-width: 1200px; margin: 0 auto; box-sizing: border-box; }
 
         /* HEADER PANEL */
-        .header-panel { background: #ffffff; padding: 15px 30px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; height: 80px; }
+        .header-panel { background: #ffffff; padding: 0 30px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; height: 80px; box-sizing: border-box; }
         .header-left { display: flex; align-items: center; gap: 20px; }
-        .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 8px 16px; border-radius: 12px; text-decoration: none; font-size: 0.8rem; font-weight: 700; border: 1px solid #E2E8F0; display: flex; align-items: center; gap: 8px; }
+        .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 8px 16px; border-radius: 12px; text-decoration: none; font-size: 0.8rem; font-weight: 700; border: 1px solid var(--border); display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+        .btn-back:hover { background: #E2E8F0; }
         .page-title { font-size: 1.4rem; font-weight: 700; margin: 0; }
-        .logo-header { height: 100%; width: auto; object-fit: contain; }
+        .logo-header { height: 90%; width: auto; object-fit: contain; }
 
         /* REJILLA DE REPORTES */
         .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 20px; }
@@ -37,19 +39,27 @@
         .menu-card p { font-size: 0.7rem; color: var(--text-muted); margin: 0; }
 
         /* PANEL GERENCIAL */
-        .gerencial-panel { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); border: 1px solid #E2E8F0; }
+        .gerencial-panel { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); border: 1px solid var(--border); }
         .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 15px; }
         .metric-box { background: #F8FAFC; padding: 15px; border-radius: 10px; border: 1px solid #F1F5F9; }
         .m-label { font-size: 0.65rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
         .m-value { font-size: 1.2rem; font-weight: 800; display: block; margin-top: 5px; }
     </style>
+
+    <!-- Script para limpiar caché al regresar al menú principal -->
+    <script>
+        function volverAlMenu(e) {
+            e.preventDefault();
+            window.location.href = 'sys_v1_menu.html?refresh=' + new Date().getTime();
+        }
+    </script>
 </head>
 <body>
 
     <main class="layout-width">
         <header class="header-panel">
             <div class="header-left">
-                <a href="sys_v1_menu.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
+                <a href="#" class="btn-back" onclick="volverAlMenu(event)"><i class="fas fa-arrow-left"></i> VOLVER</a>
                 <h1 class="page-title">Reportes Gerenciales</h1>
             </div>
             <img src="img/logo.png" alt="Logo" class="logo-header">
