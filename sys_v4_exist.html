@@ -15,6 +15,7 @@
             --sky: #0EA5E9;
             --amber: #F59E0B;
             --rose: #F43F5E;
+            --indigo: #6366F1;
         }
 
         body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 20px 0; min-height: 100vh; color: var(--text-dark); }
@@ -68,19 +69,24 @@
         </div>
 
         <div class="kpi-grid">
-            <div class="kpi-card" style="border-left-color: var(--sky);"><div class="inv-info"><span class="p-label">Costo Total</span><div class="p-val" id="tot-costo">$ 0.00</div></div><i class="fas fa-calculator" style="color:var(--sky)"></i></div>
-            <div class="kpi-card" style="border-left-color: var(--emerald);"><div class="inv-info"><span class="p-label">PVP Total</span><div class="p-val" id="tot-pvp">$ 0.00</div></div><i class="fas fa-hand-holding-dollar" style="color:var(--emerald)"></i></div>
-            <div class="kpi-card" style="border-left-color: var(--amber);"><div class="inv-info"><span class="p-label">Margen Est.</span><div class="p-val" id="tot-ganancia">$ 0.00</div></div><i class="fas fa-chart-line" style="color:var(--amber)"></i></div>
-            <div class="kpi-card" style="border-left-color: var(--rose);"><div class="inv-info"><span class="p-label">Alertas</span><div class="p-val" id="tot-alertas">0</div></div><i class="fas fa-triangle-exclamation" style="color:var(--rose)"></i></div>
+            <div class="kpi-card" style="border-left-color: var(--sky);"><div class="inv-info"><span class="p-label">Total Ítems</span><div class="p-val" id="tot-items">0</div></div><i class="fas fa-boxes-stacked" style="color:var(--sky)"></i></div>
+            <div class="kpi-card" style="border-left-color: var(--emerald);"><div class="inv-info"><span class="p-label">Stock Acumulado</span><div class="p-val" id="tot-stock">0</div></div><i class="fas fa-cubes" style="color:var(--emerald)"></i></div>
+            <div class="kpi-card" style="border-left-color: var(--indigo);"><div class="inv-info"><span class="p-label">Sin Stock</span><div class="p-val" id="tot-sin-stock">0</div></div><i class="fas fa-ban" style="color:var(--indigo)"></i></div>
+            <div class="kpi-card" style="border-left-color: var(--rose);"><div class="inv-info"><span class="p-label">Alertas de Stock</span><div class="p-val" id="tot-alertas">0</div></div><i class="fas fa-triangle-exclamation" style="color:var(--rose)"></i></div>
         </div>
 
         <div class="table-panel">
             <table>
                 <thead>
-                    <tr><th>Código</th><th>Descripción</th><th class="text-center">Stock</th><th>Costo</th><th>PVP</th><th class="text-right">Inversión</th><th>Estado</th></tr>
+                    <tr>
+                        <th>Código</th>
+                        <th>Descripción</th>
+                        <th class="text-center">Stock Disponible</th>
+                        <th class="text-center">Estado</th>
+                    </tr>
                 </thead>
                 <tbody id="tabla-existencia">
-                    <tr><td colspan="7" class="text-center" style="padding: 20px;">Sincronizando inventario...</td></tr>
+                    <tr><td colspan="4" class="text-center" style="padding: 20px;">Sincronizando inventario...</td></tr>
                 </tbody>
             </table>
         </div>
