@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOU CONTROL | Reporte de Existencia</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
+            --emerald: #10B981;
+            --sky: #0EA5E9;
+            --amber: #F59E0B;
+            --rose: #F43F5E;
+        }
+
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 20px 0; min-height: 100vh; color: var(--text-dark); }
+        .layout-width { width: 92%; max-width: 1200px; margin: 0 auto; box-sizing: border-box; }
+
+        /* HEADER PANEL */
+        .header-panel { background: #ffffff; padding: 15px 30px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; height: 80px; }
+        .header-left { display: flex; align-items: center; gap: 20px; }
+        .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 8px 16px; border-radius: 12px; text-decoration: none; font-size: 0.8rem; font-weight: 700; border: 1px solid #E2E8F0; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
+        .btn-back:hover { background: #E2E8F0; }
+        .page-title { font-size: 1.2rem; font-weight: 700; margin: 0; }
+        .logo-header { height: 100%; width: auto; object-fit: contain; }
+
+        /* BUSCADOR */
+        .search-panel { background: #ffffff; padding: 12px 20px; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 2px 4px rgba(0,0,0,0.04); display: flex; align-items: center; gap: 12px; margin-bottom: 20px; width: 100%; max-width: 400px; }
+        .search-panel input { border: none; outline: none; font-size: 0.9rem; width: 100%; font-family: 'Poppins', sans-serif; }
+
+        /* TARJETAS (KPIs) */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .kpi-card { background: #ffffff; border-radius: 14px; padding: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); border-left: 6px solid #0284C7; display: flex; justify-content: space-between; align-items: center; }
+        .p-label { font-size: 0.65rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; display: block; }
+        .p-val { font-size: 1.2rem; font-weight: 800; color: var(--text-dark); margin-top: 2px; }
+
+        /* TABLA */
+        .table-panel { background: #ffffff; border-radius: 16px; padding: 18px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); border: 1px solid #E2E8F0; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        th { color: var(--text-muted); padding: 12px; text-align: left; text-transform: uppercase; font-size: 0.68rem; border-bottom: 1px solid #F1F5F9; }
+        td { padding: 12px; border-bottom: 1px solid #F1F5F9; }
+        .badge-stock { padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 0.7rem; }
+        .stock-ok { background: #ECFDF5; color: #065F46; }
+        .stock-low { background: #FFF7ED; color: #9A3412; }
+        .stock-empty { background: #FFF1F2; color: #9F1239; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+    </style>
+</head>
+<body>
+
+    <main class="layout-width">
+        <header class="header-panel">
+            <div class="header-left">
+                <a href="sys_v4_reportes.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
+                <h1 class="page-title">Reporte de Existencia</h1>
+            </div>
+            <img src="img/logo.png" alt="Logo" class="logo-header">
+        </header>
+
+        <div class="search-panel">
+            <i class="fas fa-magnifying-glass" style="color: var(--text-muted);"></i>
+            <input type="text" id="input-busqueda" placeholder="Buscar por código o descripción...">
+        </div>
+
+        <div class="kpi-grid">
+            <div class="kpi-card" style="border-left-color: var(--sky);"><div class="inv-info"><span class="p-label">Costo Total</span><div class="p-val" id="tot-costo">$ 0.00</div></div><i class="fas fa-calculator" style="color:var(--sky)"></i></div>
+            <div class="kpi-card" style="border-left-color: var(--emerald);"><div class="inv-info"><span class="p-label">PVP Total</span><div class="p-val" id="tot-pvp">$ 0.00</div></div><i class="fas fa-hand-holding-dollar" style="color:var(--emerald)"></i></div>
+            <div class="kpi-card" style="border-left-color: var(--amber);"><div class="inv-info"><span class="p-label">Margen Est.</span><div class="p-val" id="tot-ganancia">$ 0.00</div></div><i class="fas fa-chart-line" style="color:var(--amber)"></i></div>
+            <div class="kpi-card" style="border-left-color: var(--rose);"><div class="inv-info"><span class="p-label">Alertas</span><div class="p-val" id="tot-alertas">0</div></div><i class="fas fa-triangle-exclamation" style="color:var(--rose)"></i></div>
+        </div>
+
+        <div class="table-panel">
+            <table>
+                <thead>
+                    <tr><th>Código</th><th>Descripción</th><th class="text-center">Stock</th><th>Costo</th><th>PVP</th><th class="text-right">Inversión</th><th>Estado</th></tr>
+                </thead>
+                <tbody id="tabla-existencia">
+                    <tr><td colspan="7" class="text-center" style="padding: 20px;">Sincronizando inventario...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script type="module" src="./js/sys_v4_exist.js"></script>
+</body>
+</html>
