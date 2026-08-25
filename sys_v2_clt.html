@@ -18,7 +18,7 @@
 
         /* CABECERA */
         .header-panel { background: #ffffff; padding: 0 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; height: 70px; }
-        .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 6px 12px; border-radius: 8px; text-decoration: none; font-size: 0.75rem; font-weight: 700; border: 1px solid var(--border); transition: 0.3s; }
+        .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 6px 12px; border-radius: 8px; text-decoration: none; font-size: 0.75rem; font-weight: 700; border: 1px solid var(--border); transition: 0.3s; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
         .btn-back:hover { background: #E2E8F0; }
         .logo-header { height: 90%; width: auto; object-fit: contain; }
 
@@ -49,12 +49,20 @@
         td { padding: 12px; border-bottom: 1px solid #F1F5F9; }
         .btn-table { border: none; background: #F1F5F9; padding: 5px 8px; border-radius: 4px; cursor: pointer; color: var(--text-dark); }
     </style>
+
+    <!-- Script para limpiar caché al regresar al menú -->
+    <script>
+        function volverAlMenu(e) {
+            e.preventDefault();
+            window.location.href = 'sys_v1_menu.html?refresh=' + new Date().getTime();
+        }
+    </script>
 </head>
 <body>
     <main class="layout-width">
         <header class="header-panel">
             <div style="display: flex; align-items: center; gap: 15px;">
-                <a href="sys_v1_menu.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
+                <a href="#" class="btn-back" onclick="volverAlMenu(event)"><i class="fas fa-arrow-left"></i> VOLVER</a>
                 <h1 style="font-size: 1.2rem; margin: 0;">Gestión de Clientes</h1>
             </div>
             <img src="img/logo.png" class="logo-header">
