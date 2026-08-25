@@ -38,8 +38,26 @@
         .nav-link { color: #E2E8F0; text-decoration: none; padding: 8px 14px; font-size: 0.85rem; font-weight: 500; display: flex; align-items: center; gap: 6px; border-radius: 8px; transition: 0.2s; }
         .nav-link:hover, .nav-item:hover .nav-link { background: rgba(255,255,255,0.1); color: #ffffff; }
 
-        /* DROPDOWN */
-        .dropdown-menu { position: absolute; top: 100%; left: 0; background: #ffffff; min-width: 200px; border-radius: 10px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); list-style: none; padding: 8px 0; margin: 5px 0 0 0; display: none; border: 1px solid #E2E8F0; }
+        /* DROPDOWN CORREGIDO PARA EVITAR QUE SE CIERRE */
+        .dropdown-menu { 
+            position: absolute; 
+            top: 100%; 
+            left: 0; 
+            background: #ffffff; 
+            min-width: 200px; 
+            border-radius: 10px; 
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); 
+            list-style: none; 
+            padding: 8px 0; 
+            margin: 0; /* Eliminado el margen superior para cerrar el espacio hueco */
+            display: none; 
+            border: 1px solid #E2E8F0; 
+        }
+        /* Añadido un pseudo-elemento invisible o padding superior dentro del menú para mantener la conexión del cursor */
+        .nav-item {
+            padding-bottom: 10px; /* Extiende el área de interacción hacia abajo */
+            margin-bottom: -10px;
+        }
         .nav-item:hover .dropdown-menu { display: block; }
         .dropdown-item a { color: var(--text-dark); padding: 10px 16px; text-decoration: none; display: flex; align-items: center; gap: 10px; font-size: 0.8rem; font-weight: 500; transition: background 0.15s; }
         .dropdown-item a:hover { background: #F1F5F9; color: var(--accent-blue); }
