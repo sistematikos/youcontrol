@@ -301,7 +301,7 @@ document.addEventListener('keydown', (event) => {
 }, true);
 
 document.addEventListener('input', (e) => {
-    const camposPago = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd'];
+    const camposPago = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd', 'in-credito-usd']; // <-- Añadido aquí
     if (camposPago.includes(e.target.id)) {
         const btn = document.getElementById('btn-confirmar-venta');
         if (btn) btn.disabled = false;
