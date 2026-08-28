@@ -20,11 +20,10 @@ export async function procesarCreditoSiExiste(userId, nroFactura, clienteData, t
         cliente_id: clienteData.id,
         nombre_cliente: clienteData.nombre,
         nro_factura: nroFactura,
-        // Usamos nombres estándar compatibles con lectores de tablas de CxC
-        monto_total: montoCreditoUSD,     // Monto total de la deuda
-        monto: montoCreditoUSD,           // Alternativa por si tu cxc.js lee 'monto'
+        // Nombres estándar que tu tabla de CxC lee correctamente:
+        monto: montoCreditoUSD,
         abonado: 0,
-        pendiente: montoCreditoUSD,       // Saldo pendiente actual
+        pendiente: montoCreditoUSD,
         estado: "pendiente",
         detalle: `Venta a crédito - Factura #${nroFactura}`,
         fecha: serverTimestamp()
