@@ -1,140 +1,141 @@
-// ==========================================
-// MÓDULO DE CUENTAS POR COBRAR - YOU CONTROL
-// ==========================================
+/**
+ * YOU CONTROL - SISTEMATIKOS
+ * Módulo de Cuentas por Cobrar (sys_v5_cxc.js)
+ */
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, updateDoc, arrayUnion, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"; // Nota: Ajusta tus rutas de importación de Firebase si difieren en tu proyecto principal
+import { db } from './firebase-config.js';
+import { collection, onSnapshot, query, orderBy, doc, updateDoc, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Nota: Asegúrate de mantener tu configuración de Firebase inicializada tal como la tienes en tu entorno.
-// Las funciones globales se exponen para que funcionen con los eventos "onclick" del HTML.
+// --- VALIDACIÓN DE SESIÓN ---
+const USER_ID = localStorage.getItem('youcontrol_empresa_id');
+if (!USER_ID) {
+    window.location.href = "index.html";
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    cargarCuentasPorCobrar();
+    initBuscador();
+});
 
 let listaCuentasGlobal = [];
 let cuentaActualSeleccionada = null;
 
-document.addEventListener("DOMContentLoaded", () => {
-    inicializarModuloCxC();
-    
-    const inputBusqueda = document.getElementById('input-busqueda');
-    if (inputBusqueda) {
-        inputBusqueda.addEventListener('input', (e) => {
-            filtrarCuentas(e.target.value);
-        });
-    }
-});
-
-async function inicializarModuloCxC() {
-    await cargarCuentasPorCobrar();
-}
-
-async function cargarCuentasPorCobrar() {
+function cargarCuentasPorCobrar() {
     const tbody = document.getElementById('tabla-cxc');
     if (!tbody) return;
 
-    try {
-        // Aquí mantienes tu lógica de consulta a Firestore (por ejemplo, colección 'cuentas_por_cobrar' o 'ventas')
-        // Este es el manejador estándar que ya venías usando:
-        /*
-        const querySnapshot = await getDocs(collection(db, "cuentas_por_cobrar"));
+    const cxcRef = collection(db, "usuarios", USER_ID, "cuentas_por_cobrar");
+    const q = query(cxcRef, orderBy("fecha", "desc"));
+
+    onSnapshot(q, (snapshot) => {
         listaCuentasGlobal = [];
-        querySnapshot.forEach((docSnap) => {
+        snapshot.forEach(docSnap => {
             listaCuentasGlobal.push({ id: docSnap.id, ...docSnap.data() });
         });
-        */
-       
-        // Si ya tienes tu conexión a firebase declarada en este archivo o importada, renderiza:
+
         renderizarTabla(listaCuentasGlobal);
         calcularKPIs(listaCuentasGlobal);
-
-    } catch (error) {
+    }, (error) => {
         console.error("Error al cargar cuentas por cobrar:", error);
-        tbody.innerHTML = `<tr><td colspan="8" class="text-center" style="color: var(--rose);">Error al sincronizar datos.</td></tr>`;
-    }
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center" style="padding: 20px; color: var(--rose);">Error al sincronizar los datos.</td></tr>`;
+    });
 }
 
-function renderizarTabla(cuentas) {
+function renderizarTabla(datos) {
     const tbody = document.getElementById('tabla-cxc');
     if (!tbody) return;
 
-    if (cuentas.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="text-center" style="padding: 20px; color: var(--text-muted);">No se encontraron cuentas por cobrar registradas.</td></tr>`;
+    if (datos.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center" style="padding: 20px; color: var(--text-muted);">No hay cuentas por cobrar registradas.</td></tr>`;
         return;
     }
 
-    tbody.innerHTML = cuentas.map(c => {
-        const montoVal = c.monto !== undefined ? c.monto : (c.monto_credito_usd || c.monto_total || 0);
-        const abonadoVal = c.abonado !== undefined ? c.abonado : (c.monto_abonado_usd || 0);
-        const pendienteVal = c.pendiente !== undefined ? c.pendiente : (c.saldo_pendiente_usd || (montoVal - abonadoVal));
-        
-        let estadoClass = 'status-pendiente';
-        let estadoText = 'PENDIENTE';
-        if (pendienteVal <= 0) {
-            estadoClass = 'status-pagado';
-            estadoText = 'PAGADO';
-        } else if (abonadoVal > 0) {
-            estadoClass = 'status-parcial';
-            estadoText = 'PARCIAL';
+    tbody.innerHTML = datos.map(item => {
+        let fechaStr = "N/D";
+        if (item.fecha && item.fecha.toDate) {
+            fechaStr = item.fecha.toDate().toLocaleString('es-VE', { 
+                day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' 
+            });
         }
 
-        const fechaStr = c.fecha ? (c.fecha.seconds ? new Date(c.fecha.seconds * 1000).toLocaleDateString() : c.fecha) : '---';
-        const clienteStr = c.nombre_cliente || c.cliente || 'Cliente General';
-        const conceptoStr = c.concepto || c.detalle || 'Venta a Crédito';
+        const montoVal = item.monto !== undefined ? item.monto : (item.monto_credito_usd || item.monto_total || item.monto_total_usd || 0);
+        const abonadoVal = item.abonado !== undefined ? item.abonado : (item.monto_abonado_usd || 0);
+        const pendienteVal = item.pendiente !== undefined ? item.pendiente : (item.saldo_pendiente_usd || montoVal);
+
+        let estadoClase = "status-pendiente";
+        let estadoTexto = "Pendiente";
+
+        if (pendienteVal <= 0.01) {
+            estadoClase = "status-pagado";
+            estadoTexto = "Pagado";
+        } else if (abonadoVal > 0) {
+            estadoClase = "status-parcial";
+            estadoTexto = "Parcial";
+        }
 
         return `
             <tr>
                 <td>${fechaStr}</td>
-                <td><strong>${clienteStr}</strong></td>
-                <td>${conceptoStr}</td>
-                <td class="text-right">$ ${montoVal.toFixed(2)}</td>
+                <td><strong>${item.nombre_cliente || 'Sin Nombre'}</strong></td>
+                <td>${item.detalle || 'Venta a crédito'}</td>
+                <td class="text-right"><strong>$ ${montoVal.toFixed(2)}</strong></td>
                 <td class="text-right" style="color: var(--emerald);">$ ${abonadoVal.toFixed(2)}</td>
-                <td class="text-right" style="color: var(--rose); font-weight: 700;">$ ${pendienteVal.toFixed(2)}</td>
-                <td class="text-center"><span class="badge-status ${estadoClass}">${estadoText}</span></td>
+                <td class="text-right" style="color: var(--rose);"><strong>$ ${pendienteVal.toFixed(2)}</strong></td>
+                <td class="text-center"><span class="badge-status ${estadoClase}">${estadoTexto}</span></td>
                 <td class="text-center">
-                    <button class="btn-accion" onclick="window.abrirAbono('${c.id}')"><i class="fas fa-hand-holding-dollar"></i> Abonar</button>
+                    <button class="btn-accion" onclick="window.abrirAbono('${item.id}')">
+                        <i class="fas fa-cash-register"></i> Abonar
+                    </button>
                 </td>
             </tr>
         `;
     }).join('');
 }
 
-function calcularKPIs(cuentas) {
+function calcularKPIs(datos) {
     let totalDeuda = 0;
     let totalAbonado = 0;
-    let pendientesCount = 0;
+    let creditosPendientes = 0;
     const clientesSet = new Set();
 
-    cuentas.forEach(c => {
-        const montoVal = c.monto !== undefined ? c.monto : (c.monto_credito_usd || c.monto_total || 0);
-        const abonadoVal = c.abonado !== undefined ? c.abonado : (c.monto_abonado_usd || 0);
-        const pendienteVal = c.pendiente !== undefined ? c.pendiente : (c.saldo_pendiente_usd || (montoVal - abonadoVal));
+    datos.forEach(item => {
+        const montoVal = item.monto !== undefined ? item.monto : (item.monto_credito_usd || item.monto_total || item.monto_total_usd || 0);
+        const abonado = item.abonado !== undefined ? item.abonado : (item.monto_abonado_usd || 0);
+        const pendiente = item.pendiente !== undefined ? item.pendiente : (item.saldo_pendiente_usd || montoVal);
 
-        if (pendienteVal > 0) {
-            totalDeuda += pendienteVal;
-            pendientesCount++;
-            if (c.nombre_cliente) clientesSet.add(c.nombre_cliente);
+        totalAbonado += abonado;
+        if (pendiente > 0.01) {
+            totalDeuda += pendiente;
+            creditosPendientes++;
+            if (item.cliente_id) clientesSet.add(item.cliente_id);
         }
-        totalAbonado += abonadoVal;
     });
 
-    document.getElementById('tot-deuda').innerText = `$ ${totalDeuda.toFixed(2)}`;
-    document.getElementById('tot-abonado').innerText = `$ ${totalAbonado.toFixed(2)}`;
-    document.getElementById('tot-pendientes').innerText = pendientesCount;
-    document.getElementById('tot-clientes').innerText = clientesSet.size;
+    const elDeuda = document.getElementById('tot-deuda');
+    const elAbonado = document.getElementById('tot-abonado');
+    const elPendientes = document.getElementById('tot-pendientes');
+    const elClientes = document.getElementById('tot-clientes');
+
+    if (elDeuda) elDeuda.innerText = `$ ${totalDeuda.toFixed(2)}`;
+    if (elAbonado) elAbonado.innerText = `$ ${totalAbonado.toFixed(2)}`;
+    if (elPendientes) elPendientes.innerText = creditosPendientes;
+    if (elClientes) elClientes.innerText = clientesSet.size;
 }
 
-function filtrarCuentas(texto) {
-    const filtro = texto.toLowerCase();
-    const filtradas = listaCuentasGlobal.filter(c => {
-        const cliente = (c.nombre_cliente || c.cliente || '').toLowerCase();
-        const concepto = (c.concepto || c.detalle || '').toLowerCase();
-        return cliente.includes(filtro) || concepto.includes(filtro);
+function initBuscador() {
+    const inputBusqueda = document.getElementById('input-busqueda');
+    inputBusqueda?.addEventListener('input', (e) => {
+        const criterio = e.target.value.toLowerCase().trim();
+        const filtrados = listaCuentasGlobal.filter(item => 
+            (item.nombre_cliente || '').toLowerCase().includes(criterio) || 
+            (item.detalle || '').toLowerCase().includes(criterio) ||
+            (item.nro_factura || '').toLowerCase().includes(criterio)
+        );
+        renderizarTabla(filtrados);
     });
-    renderizarTabla(filtradas);
 }
 
-// ==========================================
-// FUNCIONES EXPUESTAS PARA EL MODAL DE ABONOS
-// ==========================================
-
+// --- FUNCIONES DEL MODAL DE ABONOS ---
 window.abrirAbono = (id) => {
     cuentaActualSeleccionada = listaCuentasGlobal.find(c => c.id === id);
     if (!cuentaActualSeleccionada) return;
@@ -146,26 +147,26 @@ window.abrirAbono = (id) => {
     cuentaActualSeleccionada.calculadoPendiente = pendienteVal;
     cuentaActualSeleccionada.calculadoAbonado = abonadoVal;
 
-    document.getElementById('lbl-modal-cliente').innerText = cuentaActualSeleccionada.nombre_cliente || cuentaActualSeleccionada.cliente || 'Cliente';
+    document.getElementById('lbl-modal-cliente').innerText = cuentaActualSeleccionada.nombre_cliente || 'Cliente';
     document.getElementById('lbl-modal-pendiente').innerText = `$ ${pendienteVal.toFixed(2)}`;
     document.getElementById('input-monto-abono').value = '';
 
-    // --- RENDERIZAR LOS PRODUCTOS DE LA FACTURA ---
+    // --- RENDERIZAR LOS PRODUCTOS ASOCIADOS EN EL MODAL ---
     const contenedorProductos = document.getElementById('lista-productos-abono');
     if (contenedorProductos) {
         const items = cuentaActualSeleccionada.items || [];
         if (items.length > 0) {
             contenedorProductos.innerHTML = items.map(item => `
-                <div style="display: flex; justify-content: space-between; font-size: 12px; padding: 4px 0; border-bottom: 1px dashed #E2E8F0;">
-                    <span style="color: var(--text-dark);"><strong>${item.cantidad || 1}x</strong> ${item.nombre || item.descripcion || 'Producto'}</span>
-                    <span style="color: var(--text-muted);">$${(((item.cantidad || 1) * (item.precio || item.precio_unitario || 0))).toFixed(2)}</span>
+                <div style="display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; border-bottom: 1px dashed #e2e8f0;">
+                    <span><strong>${item.cantidad || 1}x</strong> ${item.nombre || 'Producto'}</span>
+                    <span>$${((item.cantidad || 1) * (item.precio || 0)).toFixed(2)}</span>
                 </div>
             `).join('');
         } else {
-            contenedorProductos.innerHTML = `<span style="font-size: 12px; color: var(--text-muted); display: block; text-align: center; padding: 5px;">No hay productos detallados en esta cuenta.</span>`;
+            contenedorProductos.innerHTML = `<span style="font-size: 12px; color: #94a3b8;">No hay detalles de productos registrados para esta factura.</span>`;
         }
     }
-    // ----------------------------------------------
+    // -----------------------------------------------------
 
     document.getElementById('modal-abono').style.display = 'flex';
 };
@@ -179,25 +180,46 @@ window.procesarAbonoFirebase = async () => {
     if (!cuentaActualSeleccionada) return;
 
     const inputMonto = document.getElementById('input-monto-abono');
-    const montoAbono = parseFloat(inputMonto.value);
+    const metodoPago = document.getElementById('select-metodo-pago').value;
+    const montoAbono = parseFloat(inputMonto?.value) || 0;
 
-    if (isNaN(montoAbono) || montoAbono <= 0) {
-        alert("Por favor ingrese un monto de abono válido.");
+    if (montoAbono <= 0) {
+        alert("Ingrese un monto válido para el abono.");
         return;
     }
 
     if (montoAbono > cuentaActualSeleccionada.calculadoPendiente) {
-        alert("El monto del abono no puede ser mayor a la deuda pendiente.");
+        alert("El monto del abono no puede ser mayor que la deuda pendiente.");
         return;
     }
 
     try {
-        // Lógica de actualización en tu base de datos Firebase aquí...
-        alert("Abono procesado con éxito.");
+        const nuevoAbonado = cuentaActualSeleccionada.calculadoAbonado + montoAbono;
+        const nuevoPendiente = cuentaActualSeleccionada.calculadoPendiente - montoAbono;
+        const nuevoEstado = nuevoPendiente <= 0.01 ? "pagado" : "parcial";
+
+        const docRef = doc(db, "usuarios", USER_ID, "cuentas_por_cobrar", cuentaActualSeleccionada.id);
+        
+        await updateDoc(docRef, {
+            abonado: nuevoAbonado,
+            monto_abonado_usd: nuevoAbonado,
+            pendiente: nuevoPendiente,
+            saldo_pendiente_usd: nuevoPendiente,
+            estado: nuevoEstado
+        });
+
+        await addDoc(collection(db, "usuarios", USER_ID, "historial_abonos"), {
+            cuenta_id: cuentaActualSeleccionada.id,
+            cliente: cuentaActualSeleccionada.nombre_cliente,
+            monto: montoAbono,
+            metodo: metodoPago,
+            fecha: serverTimestamp()
+        });
+
+        alert("¡Abono registrado con éxito!");
         window.cerrarModalAbono();
-        await cargarCuentasPorCobrar();
     } catch (error) {
-        console.error("Error al procesar abono:", error);
-        alert("Hubo un error al registrar el abono.");
+        console.error("Error al procesar el abono:", error);
+        alert("Hubo un error al registrar el abono en Firebase.");
     }
 };
