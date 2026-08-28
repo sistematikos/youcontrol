@@ -6,6 +6,7 @@
 import { db } from './firebase-config.js'; 
 import { collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc, updateDoc, increment, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { ejecutarF4, ejecutarF5, ejecutarF6, abrirModalCobro } from './pos-core-teclas.js';
+import { procesarCreditoSiExiste } from './pos-credito.js';
 
 // --- VALIDACIÓN DE SESIÓN ---
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
@@ -98,14 +99,13 @@ window.agregarCarrito = (id) => {
 window.registrarVenta = async () => {
     if (carrito.length === 0) return alert("El carrito está vacío.");
     try {
-        // 1. Obtenemos el número que le toca a esta venta (sin cambiar el contador en BD aún)
-        // O mejor: usamos una transacción para asegurar que el nro sea único y se incremente
         const nroFactura = await obtenerSiguienteNumero(USER_ID);
         
         const nombreParaGuardar = window.nombreClienteSeleccionado || document.getElementById('buscar-cliente-pos')?.value || "Anónimo";
+        const clienteIDFinal = window.clienteSeleccionadoID || "anonimo";
 
         const ventaData = {
-            cliente_id: window.clienteSeleccionadoID || "anonimo",
+            cliente_id: clienteIDFinal,
             nombre_cliente: nombreParaGuardar,
             items: carrito,
             total_usd: window.totalVentaUSD || 0,
@@ -114,14 +114,18 @@ window.registrarVenta = async () => {
                 punto_bs: parseFloat(document.getElementById('in-punto-bs')?.value) || 0,
                 pago_movil_bs: parseFloat(document.getElementById('in-pagomovil-bs')?.value) || 0,
                 efectivo_bs: parseFloat(document.getElementById('in-efectivo-bs')?.value) || 0,
-                divisas_usd: parseFloat(document.getElementById('in-divisas-usd')?.value) || 0
+                divisas_usd: parseFloat(document.getElementById('in-divisas-usd')?.value) || 0,
+                credito_usd: parseFloat(document.getElementById('in-credito-usd')?.value) || 0 // <-- Añadido al registro de la venta
             },
             fecha: serverTimestamp(),
-            nro_factura: nroFactura // Guardamos el número que nos devolvió la transacción
+            nro_factura: nroFactura
         };
 
-        // 2. Guardamos la venta
+        // 1. Guardamos la venta
         await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
+
+        // 2. NUEVO: Procesar y registrar el crédito en Cuentas por Cobrar si aplica
+        await procesarCreditoSiExiste(USER_ID, nroFactura, { id: clienteIDFinal, nombre: nombreParaGuardar }, window.totalVentaUSD || 0);
 
         // 3. Descontamos inventario
         for (const item of carrito) {
@@ -129,17 +133,17 @@ window.registrarVenta = async () => {
             await updateDoc(productoRef, { stock: increment(-item.cantidad) });
         }
 
-        alert("✅ Venta registrada: " + nroFactura);
+        alert("✅ Venta registrada con éxito: " + nroFactura);
         
-        // 4. Limpiamos estado
+        // 4. Limpiamos estado (incluyendo el input de crédito)
         carrito = [];
         window.clienteSeleccionadoID = null;
         window.nombreClienteSeleccionado = null;
+        if(document.getElementById('in-credito-usd')) document.getElementById('in-credito-usd').value = "0";
         document.getElementById('modalPago').style.display = 'none';
         window.actualizarCarritoUI();
         
-        // 5. Actualizamos la pantalla con el número que tocará para la SIGUIENTE venta
-        // Como nroFactura es string "000001", al sumar 1 y hacer padStart queda "000002"
+        // 5. Actualizamos la pantalla con el número siguiente
         const siguiente = (parseInt(nroFactura) + 1).toString().padStart(6, '0');
         document.getElementById('factura-display').innerText = `FACTURA: ${siguiente}`;
 
