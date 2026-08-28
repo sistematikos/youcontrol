@@ -98,8 +98,6 @@ window.agregarCarrito = (id) => {
 window.registrarVenta = async () => {
     if (carrito.length === 0) return alert("El carrito está vacío.");
     try {
-        // 1. Obtenemos el número que le toca a esta venta (sin cambiar el contador en BD aún)
-        // O mejor: usamos una transacción para asegurar que el nro sea único y se incremente
         const nroFactura = await obtenerSiguienteNumero(USER_ID);
         
         const nombreParaGuardar = window.nombreClienteSeleccionado || document.getElementById('buscar-cliente-pos')?.value || "Anónimo";
@@ -114,16 +112,15 @@ window.registrarVenta = async () => {
                 punto_bs: parseFloat(document.getElementById('in-punto-bs')?.value) || 0,
                 pago_movil_bs: parseFloat(document.getElementById('in-pagomovil-bs')?.value) || 0,
                 efectivo_bs: parseFloat(document.getElementById('in-efectivo-bs')?.value) || 0,
-                divisas_usd: parseFloat(document.getElementById('in-divisas-usd')?.value) || 0
+                divisas_usd: parseFloat(document.getElementById('in-divisas-usd')?.value) || 0,
+                tarjeta_credito_bs: parseFloat(document.getElementById('in-tdc-bs')?.value) || 0
             },
             fecha: serverTimestamp(),
-            nro_factura: nroFactura // Guardamos el número que nos devolvió la transacción
+            nro_factura: nroFactura
         };
 
-        // 2. Guardamos la venta
         await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
 
-        // 3. Descontamos inventario
         for (const item of carrito) {
             const productoRef = doc(db, "usuarios", USER_ID, "productos", item.id);
             await updateDoc(productoRef, { stock: increment(-item.cantidad) });
@@ -131,15 +128,12 @@ window.registrarVenta = async () => {
 
         alert("✅ Venta registrada: " + nroFactura);
         
-        // 4. Limpiamos estado
         carrito = [];
         window.clienteSeleccionadoID = null;
         window.nombreClienteSeleccionado = null;
         document.getElementById('modalPago').style.display = 'none';
         window.actualizarCarritoUI();
         
-        // 5. Actualizamos la pantalla con el número que tocará para la SIGUIENTE venta
-        // Como nroFactura es string "000001", al sumar 1 y hacer padStart queda "000002"
         const siguiente = (parseInt(nroFactura) + 1).toString().padStart(6, '0');
         document.getElementById('factura-display').innerText = `FACTURA: ${siguiente}`;
 
@@ -151,8 +145,9 @@ window.registrarVenta = async () => {
 
 window.seleccionarCliente = (id, nombre) => {
     const inputCliente = document.getElementById('buscar-cliente-pos');
-    inputCliente.value = nombre;
-    document.getElementById('resultados-cliente-pos').style.display = 'none';
+    if (inputCliente) inputCliente.value = nombre;
+    const divRes = document.getElementById('resultados-cliente-pos');
+    if (divRes) divRes.style.display = 'none';
     window.clienteSeleccionadoID = id; 
     window.nombreClienteSeleccionado = nombre;
     document.getElementById('buscar-producto-pos')?.focus();
@@ -160,9 +155,11 @@ window.seleccionarCliente = (id, nombre) => {
 
 window.seleccionarProducto = (id) => {
     window.agregarCarrito(id);
-    document.getElementById('buscar-producto-pos').value = '';
-    document.getElementById('resultados-producto-pos').style.display = 'none';
-    document.getElementById('buscar-producto-pos').focus();
+    const inputProd = document.getElementById('buscar-producto-pos');
+    if (inputProd) inputProd.value = '';
+    const divRes = document.getElementById('resultados-producto-pos');
+    if (divRes) divRes.style.display = 'none';
+    inputProd?.focus();
 };
 
 window.manejarNavegacion = (e, contenedorId, indiceVar) => {
@@ -183,15 +180,12 @@ window.manejarNavegacion = (e, contenedorId, indiceVar) => {
 document.addEventListener('DOMContentLoaded', async () => {
     await cargarConfiguracionGlobal();
     
-    // Solo leemos el valor guardado y lo mostramos.
-    // Si el último registrado fue 000005, mostrará 000005, no 000006.
     const contadorRef = doc(db, "usuarios", USER_ID, "config", "contador_facturas");
     const snap = await getDoc(contadorRef);
     const ultimo = snap.exists() ? snap.data().ultimo : 0;
     
     const elFactura = document.getElementById('factura-display');
     if (elFactura) {
-        // Mostramos el número guardado tal cual
         elFactura.innerText = `FACTURA: ${ultimo.toString().padStart(6, '0')}`;
     }
 
@@ -204,27 +198,52 @@ document.addEventListener('DOMContentLoaded', async () => {
 function initBuscadores() {
     const inputCliente = document.getElementById('buscar-cliente-pos');
     const inputProd = document.getElementById('buscar-producto-pos');
+
     inputCliente?.addEventListener('input', (e) => {
-        const resultados = window.buscarCliente(e.target.value);
+        const texto = e.target.value.trim();
         const divRes = document.getElementById('resultados-cliente-pos');
-        if (resultados.length > 0 && e.target.value.trim() !== "") {
+        if (!divRes) return;
+
+        if (texto === "") {
+            divRes.style.display = 'none';
+            return;
+        }
+
+        const resultados = window.buscarCliente(texto);
+        if (resultados.length > 0) {
             divRes.style.display = 'block';
-            divRes.innerHTML = resultados.map(c => `<div class="resultado-item" style="padding: 10px; cursor: pointer;" onclick="window.seleccionarCliente('${c.id}', '${c.nombre.replace(/'/g, "\\'")}')"><strong>${c.id}</strong> - ${c.nombre}</div>`).join('');
-        } else { divRes.style.display = 'none'; }
+            divRes.innerHTML = resultados.map(c => `<div class="resultado-item" style="padding: 10px; cursor: pointer;" onclick="window.seleccionarCliente('${c.id}', '${(c.nombre || '').replace(/'/g, "\\'")}')"><strong>${c.id}</strong> - ${c.nombre}</div>`).join('');
+        } else {
+            divRes.style.display = 'block';
+            divRes.innerHTML = `<div style="padding: 10px; color: #64748b;">Sin resultados</div>`;
+        }
     });
+
     inputProd?.addEventListener('input', (e) => {
-        const resultados = window.buscarProducto(e.target.value);
+        const texto = e.target.value.trim();
         const divRes = document.getElementById('resultados-producto-pos');
-        if (resultados.length > 0 && e.target.value.trim() !== "") {
+        if (!divRes) return;
+
+        if (texto === "") {
+            divRes.style.display = 'none';
+            return;
+        }
+
+        const resultados = window.buscarProducto(texto);
+        if (resultados.length > 0) {
             divRes.style.display = 'block';
-            divRes.innerHTML = resultados.map(p => `<div class="resultado-item" style="padding: 10px; cursor: pointer;" onclick="window.seleccionarProducto('${p.id}')"><strong>${p.nombre}</strong> - $${p.precio}</div>`).join('');
-        } else { divRes.style.display = 'none'; }
+            divRes.innerHTML = resultados.map(p => `<div class="resultado-item" style="padding: 10px; cursor: pointer;" onclick="window.seleccionarProducto('${p.id}')"><strong>${p.nombre}</strong> - $${p.precio || 0}</div>`).join('');
+        } else {
+            divRes.style.display = 'block';
+            divRes.innerHTML = `<div style="padding: 10px; color: #64748b;">Sin resultados</div>`;
+        }
     });
 }
 
 function initLogicaPagos() {
-    const camposBs = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs'];
+    const camposBs = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-tdc-bs'];
     const inputDivisas = document.getElementById('in-divisas-usd');
+
     camposBs.forEach(id => {
         document.getElementById(id)?.addEventListener('click', () => {
             const el = document.getElementById(id);
@@ -235,6 +254,7 @@ function initLogicaPagos() {
             el.value = (pendiente > 0 ? pendiente : 0).toFixed(2);
         });
     });
+
     inputDivisas?.addEventListener('click', () => {
         const totalBs = (window.totalVentaUSD || 0) * tasaActual;
         const sumBs = camposBs.reduce((acc, cId) => acc + (parseFloat(document.getElementById(cId)?.value) || 0), 0);
@@ -269,7 +289,7 @@ document.addEventListener('keydown', (event) => {
 }, true);
 
 document.addEventListener('input', (e) => {
-    const camposPago = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd'];
+    const camposPago = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd', 'in-tdc-bs'];
     if (camposPago.includes(e.target.id)) {
         const btn = document.getElementById('btn-confirmar-venta');
         if (btn) btn.disabled = false;
