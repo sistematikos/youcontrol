@@ -50,7 +50,6 @@ function renderizarTabla(datos) {
     }
 
     tbody.innerHTML = datos.map(item => {
-        // Formatear la fecha de Firebase de forma segura
         let fechaStr = "N/D";
         if (item.fecha && item.fecha.toDate) {
             fechaStr = item.fecha.toDate().toLocaleString('es-VE', { 
@@ -58,16 +57,18 @@ function renderizarTabla(datos) {
             });
         }
 
-        // Definir clases y etiquetas de estado
+        // Leemos buscando cualquiera de los nombres posibles en la base de datos
+        const montoVal = item.monto !== undefined ? item.monto : (item.monto_credito_usd || item.monto_total || item.monto_total_usd || 0);
+        const abonadoVal = item.abonado !== undefined ? item.abonado : (item.monto_abonado_usd || 0);
+        const pendienteVal = item.pendiente !== undefined ? item.pendiente : (item.saldo_pendiente_usd || montoVal);
+
         let estadoClase = "status-pendiente";
         let estadoTexto = "Pendiente";
-        const pendienteVal = item.pendiente || 0;
-        const montoVal = item.monto || 0;
 
         if (pendienteVal <= 0) {
             estadoClase = "status-pagado";
             estadoTexto = "Pagado";
-        } else if (item.abonado > 0) {
+        } else if (abonadoVal > 0) {
             estadoClase = "status-parcial";
             estadoTexto = "Parcial";
         }
@@ -78,7 +79,7 @@ function renderizarTabla(datos) {
                 <td><strong>${item.nombre_cliente || 'Sin Nombre'}</strong></td>
                 <td>${item.detalle || 'Venta a crédito'}</td>
                 <td class="text-right"><strong>$ ${montoVal.toFixed(2)}</strong></td>
-                <td class="text-right" style="color: var(--emerald);">$ ${(item.abonado || 0).toFixed(2)}</td>
+                <td class="text-right" style="color: var(--emerald);">$ ${abonadoVal.toFixed(2)}</td>
                 <td class="text-right" style="color: var(--rose);"><strong>$ ${pendienteVal.toFixed(2)}</strong></td>
                 <td class="text-center"><span class="badge-status ${estadoClase}">${estadoTexto}</span></td>
                 <td class="text-center">
@@ -98,8 +99,9 @@ function calcularKPIs(datos) {
     const clientesSet = new Set();
 
     datos.forEach(item => {
-        const pendiente = item.pendiente || 0;
-        const abonado = item.abonado || 0;
+        const montoVal = item.monto !== undefined ? item.monto : (item.monto_credito_usd || item.monto_total || item.monto_total_usd || 0);
+        const abonado = item.abonado !== undefined ? item.abonado : (item.monto_abonado_usd || 0);
+        const pendiente = item.pendiente !== undefined ? item.pendiente : (item.saldo_pendiente_usd || montoVal);
 
         totalAbonado += abonado;
         if (pendiente > 0) {
@@ -120,18 +122,6 @@ function calcularKPIs(datos) {
     if (elClientes) elClientes.innerText = clientesSet.size;
 }
 
-function initBuscador() {
-    const inputBusqueda = document.getElementById('input-busqueda');
-    inputBusqueda?.addEventListener('input', (e) => {
-        const criterio = e.target.value.toLowerCase().trim();
-        const filtrados = listaCuentasGlobal.filter(item => 
-            (item.nombre_cliente || '').toLowerCase().includes(criterio) || 
-            (item.detalle || '').toLowerCase().includes(criterio) ||
-            (item.nro_factura || '').toLowerCase().includes(criterio)
-        );
-        renderizarTabla(filtrados);
-    });
-}
 
 // Función global provisional para el botón de abonar
 window.abrirAbono = (id) => {
