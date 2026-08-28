@@ -40,8 +40,7 @@
     <main class="layout-width">
         <header class="header-panel">
             <div class="header-left">
-                <!-- Cambia 'index_menu.html' por el nombre de tu archivo del menú principal de barras -->
-                <a href="index_menu.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
+                <a href="sys_v1_menu.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
                 <h1 class="page-title">Configuración de Tasa BCV</h1>
             </div>
             <img src="img/logo.png" alt="Logo" class="logo-header">
@@ -87,7 +86,7 @@
             try {
                 await setDoc(tasaRef, { tasa_bcv: parseFloat(valor) }, { merge: true });
                 alert("Tasa guardada exitosamente.");
-                window.location.href = "index_menu.html"; // Redirige al menú de barras al guardar
+                window.location.href = "sys_v1_menu.html";
             } catch (e) {
                 alert("Error: " + e.message);
                 btn.disabled = false;
