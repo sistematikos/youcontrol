@@ -120,15 +120,23 @@
 
     <!-- MODAL DE ABONOS / PAGOS -->
 <div id="modal-abono" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
-    <div style="background: #ffffff; width: 90%; max-width: 500px; border-radius: 16px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+    <div style="background: #ffffff; width: 90%; max-width: 500px; border-radius: 16px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); max-height: 90vh; overflow-y: auto;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-dark);"><i class="fas fa-cash-register" style="color: var(--indigo);"></i> Registrar Abono o Pago</h3>
             <button onclick="window.cerrarModalAbono()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);"><i class="fas fa-xmark"></i></button>
         </div>
 
-        <div style="background: #F8FAFC; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #E2E8F0;">
+        <div style="background: #F8FAFC; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #E2E8F0;">
             <div style="font-size: 0.8rem; color: var(--text-muted);">Cliente: <strong id="lbl-modal-cliente" style="color: var(--text-dark);">---</strong></div>
             <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">Deuda Pendiente: <strong id="lbl-modal-pendiente" style="color: var(--rose);">$ 0.00</strong></div>
+        </div>
+
+        <!-- NUEVO: Contenedor para los productos de la factura -->
+        <div style="margin-bottom: 15px;">
+            <label style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 6px;">Productos de la Factura</label>
+            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 10px; max-height: 120px; overflow-y: auto;" id="lista-productos-abono">
+                <!-- Se llena dinámicamente desde sys_v5_cxc.js -->
+            </div>
         </div>
 
         <div style="margin-bottom: 15px;">
