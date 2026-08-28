@@ -4,7 +4,7 @@
  */
 
 import { db } from './firebase-config.js';
-import { collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, onSnapshot, query, orderBy, doc, updateDoc, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // --- VALIDACIÓN DE SESIÓN ---
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 let listaCuentasGlobal = [];
+let cuentaActualSeleccionada = null;
 
 function cargarCuentasPorCobrar() {
     const tbody = document.getElementById('tabla-cxc');
@@ -57,7 +58,6 @@ function renderizarTabla(datos) {
             });
         }
 
-        // Leemos buscando cualquiera de los nombres posibles en la base de datos
         const montoVal = item.monto !== undefined ? item.monto : (item.monto_credito_usd || item.monto_total || item.monto_total_usd || 0);
         const abonadoVal = item.abonado !== undefined ? item.abonado : (item.monto_abonado_usd || 0);
         const pendienteVal = item.pendiente !== undefined ? item.pendiente : (item.saldo_pendiente_usd || montoVal);
@@ -65,7 +65,7 @@ function renderizarTabla(datos) {
         let estadoClase = "status-pendiente";
         let estadoTexto = "Pendiente";
 
-        if (pendienteVal <= 0) {
+        if (pendienteVal <= 0.01) {
             estadoClase = "status-pagado";
             estadoTexto = "Pagado";
         } else if (abonadoVal > 0) {
@@ -104,7 +104,7 @@ function calcularKPIs(datos) {
         const pendiente = item.pendiente !== undefined ? item.pendiente : (item.saldo_pendiente_usd || montoVal);
 
         totalAbonado += abonado;
-        if (pendiente > 0) {
+        if (pendiente > 0.01) {
             totalDeuda += pendiente;
             creditosPendientes++;
             if (item.cliente_id) clientesSet.add(item.cliente_id);
@@ -122,8 +122,88 @@ function calcularKPIs(datos) {
     if (elClientes) elClientes.innerText = clientesSet.size;
 }
 
+function initBuscador() {
+    const inputBusqueda = document.getElementById('input-busqueda');
+    inputBusqueda?.addEventListener('input', (e) => {
+        const criterio = e.target.value.toLowerCase().trim();
+        const filtrados = listaCuentasGlobal.filter(item => 
+            (item.nombre_cliente || '').toLowerCase().includes(criterio) || 
+            (item.detalle || '').toLowerCase().includes(criterio) ||
+            (item.nro_factura || '').toLowerCase().includes(criterio)
+        );
+        renderizarTabla(filtrados);
+    });
+}
 
-// Función global provisional para el botón de abonar
+// --- FUNCIONES DEL MODAL DE ABONOS ---
 window.abrirAbono = (id) => {
-    alert("Próximamente modal para abonar a la cuenta ID: " + id);
+    cuentaActualSeleccionada = listaCuentasGlobal.find(c => c.id === id);
+    if (!cuentaActualSeleccionada) return;
+
+    const montoVal = cuentaActualSeleccionada.monto !== undefined ? cuentaActualSeleccionada.monto : (cuentaActualSeleccionada.monto_credito_usd || cuentaActualSeleccionada.monto_total || 0);
+    const abonadoVal = cuentaActualSeleccionada.abonado !== undefined ? cuentaActualSeleccionada.abonado : (cuentaActualSeleccionada.monto_abonado_usd || 0);
+    const pendienteVal = cuentaActualSeleccionada.pendiente !== undefined ? cuentaActualSeleccionada.pendiente : (cuentaActualSeleccionada.saldo_pendiente_usd || (montoVal - abonadoVal));
+
+    cuentaActualSeleccionada.calculadoPendiente = pendienteVal;
+    cuentaActualSeleccionada.calculadoAbonado = abonadoVal;
+
+    document.getElementById('lbl-modal-cliente').innerText = cuentaActualSeleccionada.nombre_cliente || 'Cliente';
+    document.getElementById('lbl-modal-pendiente').innerText = `$ ${pendienteVal.toFixed(2)}`;
+    document.getElementById('input-monto-abono').value = '';
+    document.getElementById('modal-abono').style.display = 'flex';
+};
+
+window.cerrarModalAbono = () => {
+    document.getElementById('modal-abono').style.display = 'none';
+    cuentaActualSeleccionada = null;
+};
+
+window.procesarAbonoFirebase = async () => {
+    if (!cuentaActualSeleccionada) return;
+
+    const inputMonto = document.getElementById('input-monto-abono');
+    const metodoPago = document.getElementById('select-metodo-pago').value;
+    const montoAbono = parseFloat(inputMonto?.value) || 0;
+
+    if (montoAbono <= 0) {
+        alert("Ingrese un monto válido para el abono.");
+        return;
+    }
+
+    if (montoAbono > cuentaActualSeleccionada.calculadoPendiente) {
+        alert("El monto del abono no puede ser mayor que la deuda pendiente.");
+        return;
+    }
+
+    try {
+        const nuevoAbonado = cuentaActualSeleccionada.calculadoAbonado + montoAbono;
+        const nuevoPendiente = cuentaActualSeleccionada.calculadoPendiente - montoAbono;
+        const nuevoEstado = nuevoPendiente <= 0.01 ? "pagado" : "parcial";
+
+        const docRef = doc(db, "usuarios", USER_ID, "cuentas_por_cobrar", cuentaActualSeleccionada.id);
+        
+        // Actualizamos la cuenta por cobrar
+        await updateDoc(docRef, {
+            abonado: nuevoAbonado,
+            monto_abonado_usd: nuevoAbonado,
+            pendiente: nuevoPendiente,
+            saldo_pendiente_usd: nuevoPendiente,
+            estado: nuevoEstado
+        });
+
+        // Opcional: Registrar también en el historial de ingresos/pagos si tu sistema lo lleva
+        await addDoc(collection(db, "usuarios", USER_ID, "historial_abonos"), {
+            cuenta_id: cuentaActualSeleccionada.id,
+            cliente: cuentaActualSeleccionada.nombre_cliente,
+            monto: montoAbono,
+            metodo: metodoPago,
+            fecha: serverTimestamp()
+        });
+
+        alert("¡Abono registrado con éxito!");
+        window.cerrarModalAbono();
+    } catch (error) {
+        console.error("Error al procesar el abono:", error);
+        alert("Hubo un error al registrar el abono en Firebase.");
+    }
 };
