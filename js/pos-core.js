@@ -6,7 +6,6 @@
 import { db } from './firebase-config.js'; 
 import { collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc, updateDoc, increment, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { ejecutarF4, ejecutarF5, ejecutarF6, abrirModalCobro } from './pos-core-teclas.js';
-import { procesarCreditoSiExiste } from './pos-credito.js';
 
 // --- VALIDACIÓN DE SESIÓN ---
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
@@ -99,13 +98,14 @@ window.agregarCarrito = (id) => {
 window.registrarVenta = async () => {
     if (carrito.length === 0) return alert("El carrito está vacío.");
     try {
+        // 1. Obtenemos el número que le toca a esta venta (sin cambiar el contador en BD aún)
+        // O mejor: usamos una transacción para asegurar que el nro sea único y se incremente
         const nroFactura = await obtenerSiguienteNumero(USER_ID);
         
         const nombreParaGuardar = window.nombreClienteSeleccionado || document.getElementById('buscar-cliente-pos')?.value || "Anónimo";
-        const clienteIDFinal = window.clienteSeleccionadoID || "anonimo";
 
         const ventaData = {
-            cliente_id: clienteIDFinal,
+            cliente_id: window.clienteSeleccionadoID || "anonimo",
             nombre_cliente: nombreParaGuardar,
             items: carrito,
             total_usd: window.totalVentaUSD || 0,
@@ -114,18 +114,14 @@ window.registrarVenta = async () => {
                 punto_bs: parseFloat(document.getElementById('in-punto-bs')?.value) || 0,
                 pago_movil_bs: parseFloat(document.getElementById('in-pagomovil-bs')?.value) || 0,
                 efectivo_bs: parseFloat(document.getElementById('in-efectivo-bs')?.value) || 0,
-                divisas_usd: parseFloat(document.getElementById('in-divisas-usd')?.value) || 0,
-                credito_usd: parseFloat(document.getElementById('in-credito-usd')?.value) || 0 // <-- Añadido al registro de la venta
+                divisas_usd: parseFloat(document.getElementById('in-divisas-usd')?.value) || 0
             },
             fecha: serverTimestamp(),
-            nro_factura: nroFactura
+            nro_factura: nroFactura // Guardamos el número que nos devolvió la transacción
         };
 
-        // 1. Guardamos la venta
+        // 2. Guardamos la venta
         await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
-
-        // 2. NUEVO: Procesar y registrar el crédito en Cuentas por Cobrar si aplica
-        await procesarCreditoSiExiste(USER_ID, nroFactura, { id: clienteIDFinal, nombre: nombreParaGuardar }, window.totalVentaUSD || 0);
 
         // 3. Descontamos inventario
         for (const item of carrito) {
@@ -133,17 +129,17 @@ window.registrarVenta = async () => {
             await updateDoc(productoRef, { stock: increment(-item.cantidad) });
         }
 
-        alert("✅ Venta registrada con éxito: " + nroFactura);
+        alert("✅ Venta registrada: " + nroFactura);
         
-        // 4. Limpiamos estado (incluyendo el input de crédito)
+        // 4. Limpiamos estado
         carrito = [];
         window.clienteSeleccionadoID = null;
         window.nombreClienteSeleccionado = null;
-        if(document.getElementById('in-credito-usd')) document.getElementById('in-credito-usd').value = "0";
         document.getElementById('modalPago').style.display = 'none';
         window.actualizarCarritoUI();
         
-        // 5. Actualizamos la pantalla con el número siguiente
+        // 5. Actualizamos la pantalla con el número que tocará para la SIGUIENTE venta
+        // Como nroFactura es string "000001", al sumar 1 y hacer padStart queda "000002"
         const siguiente = (parseInt(nroFactura) + 1).toString().padStart(6, '0');
         document.getElementById('factura-display').innerText = `FACTURA: ${siguiente}`;
 
@@ -208,93 +204,42 @@ document.addEventListener('DOMContentLoaded', async () => {
 function initBuscadores() {
     const inputCliente = document.getElementById('buscar-cliente-pos');
     const inputProd = document.getElementById('buscar-producto-pos');
-
     inputCliente?.addEventListener('input', (e) => {
-        const texto = e.target.value.trim();
+        const resultados = window.buscarCliente(e.target.value);
         const divRes = document.getElementById('resultados-cliente-pos');
-        if (!divRes) return;
-
-        if (texto === "") {
-            divRes.style.display = 'none';
-            return;
-        }
-
-        const resultados = window.buscarCliente(texto);
-        if (resultados.length > 0) {
+        if (resultados.length > 0 && e.target.value.trim() !== "") {
             divRes.style.display = 'block';
-            divRes.innerHTML = resultados.map(c => `<div class="resultado-item" style="padding: 10px; cursor: pointer;" onclick="window.seleccionarCliente('${c.id}', '${(c.nombre || '').replace(/'/g, "\\'")}')"><strong>${c.id}</strong> - ${c.nombre}</div>`).join('');
-        } else {
-            divRes.style.display = 'block';
-            divRes.innerHTML = `<div style="padding: 10px; color: #64748b;">No se encontraron clientes</div>`;
-        }
+            divRes.innerHTML = resultados.map(c => `<div class="resultado-item" style="padding: 10px; cursor: pointer;" onclick="window.seleccionarCliente('${c.id}', '${c.nombre.replace(/'/g, "\\'")}')"><strong>${c.id}</strong> - ${c.nombre}</div>`).join('');
+        } else { divRes.style.display = 'none'; }
     });
-
     inputProd?.addEventListener('input', (e) => {
-        const texto = e.target.value.trim();
+        const resultados = window.buscarProducto(e.target.value);
         const divRes = document.getElementById('resultados-producto-pos');
-        if (!divRes) return;
-
-        if (texto === "") {
-            divRes.style.display = 'none';
-            return;
-        }
-
-        const resultados = window.buscarProducto(texto);
-        if (resultados.length > 0) {
+        if (resultados.length > 0 && e.target.value.trim() !== "") {
             divRes.style.display = 'block';
-            divRes.innerHTML = resultados.map(p => `<div class="resultado-item" style="padding: 10px; cursor: pointer;" onclick="window.seleccionarProducto('${p.id}')"><strong>${p.nombre}</strong> - $${p.precio || 0}</div>`).join('');
-        } else {
-            divRes.style.display = 'block';
-            divRes.innerHTML = `<div style="padding: 10px; color: #64748b;">No se encontraron productos</div>`;
-        }
+            divRes.innerHTML = resultados.map(p => `<div class="resultado-item" style="padding: 10px; cursor: pointer;" onclick="window.seleccionarProducto('${p.id}')"><strong>${p.nombre}</strong> - $${p.precio}</div>`).join('');
+        } else { divRes.style.display = 'none'; }
     });
 }
+
 function initLogicaPagos() {
     const camposBs = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs'];
     const inputDivisas = document.getElementById('in-divisas-usd');
-    const inputCredito = document.getElementById('in-credito-usd'); // <-- Nuevo input de crédito
-
-    // 1. Clic en los métodos en Bolívares (Punto, Pago Móvil, Efectivo Bs)
     camposBs.forEach(id => {
         document.getElementById(id)?.addEventListener('click', () => {
             const el = document.getElementById(id);
             const totalBs = (window.totalVentaUSD || 0) * tasaActual;
-            
-            // Sumamos lo que ya esté escrito en Divisas (convertido a Bs) y en Crédito (convertido a Bs)
             const valorDivisasBs = (parseFloat(inputDivisas?.value) || 0) * tasaActual;
-            const valorCreditoBs = (parseFloat(inputCredito?.value) || 0) * tasaActual;
-            
-            // Sumamos los otros campos en Bs excluyendo el actual
             const sumOtrosBs = camposBs.filter(c => c !== id).reduce((acc, cId) => acc + (parseFloat(document.getElementById(cId)?.value) || 0), 0);
-            
-            const pendiente = totalBs - sumOtrosBs - valorDivisasBs - valorCreditoBs;
+            const pendiente = totalBs - sumOtrosBs - valorDivisasBs;
             el.value = (pendiente > 0 ? pendiente : 0).toFixed(2);
         });
     });
-
-    // 2. Clic en el método de Divisas USD
     inputDivisas?.addEventListener('click', () => {
         const totalBs = (window.totalVentaUSD || 0) * tasaActual;
-        const valorCreditoBs = (parseFloat(inputCredito?.value) || 0) * tasaActual;
         const sumBs = camposBs.reduce((acc, cId) => acc + (parseFloat(document.getElementById(cId)?.value) || 0), 0);
-        
-        const pendienteBs = totalBs - sumBs - valorCreditoBs;
+        const pendienteBs = totalBs - sumBs;
         inputDivisas.value = (pendienteBs / tasaActual > 0 ? (pendienteBs / tasaActual) : 0).toFixed(2);
-    });
-
-    // 3. NUEVO: Clic en el método de Crédito USD (Calcula el saldo pendiente en dólares directamente)
-    inputCredito?.addEventListener('click', () => {
-        const totalUSD = window.totalVentaUSD || 0;
-        const totalBs = totalUSD * tasaActual;
-
-        // Sumamos todo lo que ya se está pagando por otros medios (convertido a USD)
-        const sumBs = camposBs.reduce((acc, cId) => acc + (parseFloat(document.getElementById(cId)?.value) || 0), 0);
-        const sumDivisasUSD = parseFloat(inputDivisas?.value) || 0;
-        
-        const pagadoOtryUSD = sumDivisasUSD + (sumBs / tasaActual);
-        const pendienteUSD = totalUSD - pagadoOtryUSD;
-
-        inputCredito.value = (pendienteUSD > 0 ? pendienteUSD : 0).toFixed(2);
     });
 }
 
@@ -324,7 +269,7 @@ document.addEventListener('keydown', (event) => {
 }, true);
 
 document.addEventListener('input', (e) => {
-    const camposPago = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd', 'in-credito-usd']; // <-- Añadido aquí
+    const camposPago = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd'];
     if (camposPago.includes(e.target.id)) {
         const btn = document.getElementById('btn-confirmar-venta');
         if (btn) btn.disabled = false;
