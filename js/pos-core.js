@@ -113,13 +113,28 @@ window.registrarVenta = async () => {
                 pago_movil_bs: parseFloat(document.getElementById('in-pagomovil-bs')?.value) || 0,
                 efectivo_bs: parseFloat(document.getElementById('in-efectivo-bs')?.value) || 0,
                 divisas_usd: parseFloat(document.getElementById('in-divisas-usd')?.value) || 0,
-                tarjeta_credito_bs: parseFloat(document.getElementById('in-tdc-bs')?.value) || 0
+                credito_bs: parseFloat(document.getElementById('in-credito-bs')?.value) || 0
             },
             fecha: serverTimestamp(),
             nro_factura: nroFactura
         };
 
         await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
+
+        // Si hay monto a crédito, opcionalmente puedes registrarlo o gestionarlo en cuentas por cobrar
+        const montoCreditoBs = parseFloat(document.getElementById('in-credito-bs')?.value) || 0;
+        if (montoCreditoBs > 0 && ventaData.cliente_id !== "anonimo") {
+            // Ejemplo de registro directo en cuentas por cobrar si lo requieres asociado al cliente
+            await addDoc(collection(db, "usuarios", USER_ID, "cuentas_por_cobrar"), {
+                cliente_id: ventaData.cliente_id,
+                nombre_cliente: nombreParaGuardar,
+                nro_factura: nroFactura,
+                monto_bs: montoCreditoBs,
+                monto_usd: montoCreditoBs / tasaActual,
+                estado: "pendiente",
+                fecha: serverTimestamp()
+            });
+        }
 
         for (const item of carrito) {
             const productoRef = doc(db, "usuarios", USER_ID, "productos", item.id);
@@ -241,7 +256,7 @@ function initBuscadores() {
 }
 
 function initLogicaPagos() {
-    const camposBs = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-tdc-bs'];
+    const camposBs = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-credito-bs'];
     const inputDivisas = document.getElementById('in-divisas-usd');
 
     camposBs.forEach(id => {
@@ -289,7 +304,7 @@ document.addEventListener('keydown', (event) => {
 }, true);
 
 document.addEventListener('input', (e) => {
-    const camposPago = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd', 'in-tdc-bs'];
+    const camposPago = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd', 'in-credito-bs'];
     if (camposPago.includes(e.target.id)) {
         const btn = document.getElementById('btn-confirmar-venta');
         if (btn) btn.disabled = false;
