@@ -4,7 +4,7 @@
  */
 
 import { db } from './firebase-config.js';
-import { collection, onSnapshot, query, orderBy, doc, updateDoc, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, onSnapshot, query, orderBy, doc, updateDoc, serverTimestamp, addDoc, getDocs, where, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // --- VALIDACIÓN DE SESIÓN ---
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
@@ -136,7 +136,7 @@ function initBuscador() {
 }
 
 // --- FUNCIONES DEL MODAL DE ABONOS ---
-window.abrirAbono = (id) => {
+window.abrirAbono = async (id) => {
     cuentaActualSeleccionada = listaCuentasGlobal.find(c => c.id === id);
     if (!cuentaActualSeleccionada) return;
 
@@ -151,24 +151,62 @@ window.abrirAbono = (id) => {
     document.getElementById('lbl-modal-pendiente').innerText = `$ ${pendienteVal.toFixed(2)}`;
     document.getElementById('input-monto-abono').value = '';
 
-    // --- RENDERIZAR LOS PRODUCTOS ASOCIADOS EN EL MODAL ---
     const contenedorProductos = document.getElementById('lista-productos-abono');
     if (contenedorProductos) {
-        const items = cuentaActualSeleccionada.items || [];
-        if (items.length > 0) {
-            contenedorProductos.innerHTML = items.map(item => `
-                <div style="display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; border-bottom: 1px dashed #e2e8f0;">
-                    <span><strong>${item.cantidad || 1}x</strong> ${item.nombre || 'Producto'}</span>
-                    <span>$${((item.cantidad || 1) * (item.precio || 0)).toFixed(2)}</span>
-                </div>
-            `).join('');
-        } else {
-            contenedorProductos.innerHTML = `<span style="font-size: 12px; color: #94a3b8;">No hay detalles de productos registrados para esta factura.</span>`;
-        }
+        contenedorProductos.innerHTML = `<span style="font-size: 12px; color: #94a3b8;">Buscando productos de la factura...</span>`;
     }
-    // -----------------------------------------------------
 
     document.getElementById('modal-abono').style.display = 'flex';
+
+    try {
+        let itemsFactura = [];
+
+        // 1. Si la cuenta ya trae ítems cargados localmente
+        if (cuentaActualSeleccionada.items && cuentaActualSeleccionada.items.length > 0) {
+            itemsFactura = cuentaActualSeleccionada.items;
+        } 
+        // 2. Si tiene número de factura, los buscamos directamente en la colección 'ventas'
+        else if (cuentaActualSeleccionada.nro_factura) {
+            const ventasRef = collection(db, "usuarios", USER_ID, "ventas");
+            const q = query(ventasRef, where("nro_factura", "==", cuentaActualSeleccionada.nro_factura));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                itemsFactura = querySnapshot.docs[0].data().items || [];
+            } else {
+                // Búsqueda alternativa por ID de documento de venta
+                const ventaDocRef = doc(db, "usuarios", USER_ID, "ventas", cuentaActualSeleccionada.nro_factura);
+                const ventaDocSnap = await getDoc(ventaDocRef);
+                if (ventaDocSnap.exists()) {
+                    itemsFactura = ventaDocSnap.data().items || [];
+                }
+            }
+        }
+
+        // Renderizar los productos encontrados en el contenedor del modal
+        if (contenedorProductos) {
+            if (itemsFactura.length > 0) {
+                contenedorProductos.innerHTML = itemsFactura.map(item => {
+                    const cantidad = item.cantidad || 1;
+                    const nombre = item.nombre || item.descripcion || 'Producto';
+                    const precio = item.precio || item.precio_unitario || 0;
+                    return `
+                        <div style="display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; border-bottom: 1px dashed #e2e8f0;">
+                            <span><strong>${cantidad}x</strong> ${nombre}</span>
+                            <span>$${(cantidad * precio).toFixed(2)}</span>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                contenedorProductos.innerHTML = `<span style="font-size: 12px; color: #94a3b8;">No hay detalles de productos registrados para esta factura.</span>`;
+            }
+        }
+    } catch (error) {
+        console.error("Error al buscar los productos de la venta:", error);
+        if (contenedorProductos) {
+            contenedorProductos.innerHTML = `<span style="font-size: 12px; color: var(--rose);">Error al cargar los productos de la factura.</span>`;
+        }
+    }
 };
 
 window.cerrarModalAbono = () => {
