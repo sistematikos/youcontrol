@@ -2,32 +2,67 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Configuración de Tasa | You Control</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOU CONTROL | Configuración de Tasa</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-        h2 { color: #002d72; margin-top: 0; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-        .btn-act { width: 100%; padding: 12px; background: #0052d4; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .back-link { margin-top: 20px; color: #0052d4; text-decoration: none; font-size: 0.9rem; }
+        :root {
+            --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
+            --indigo: #6366F1;
+        }
+
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 20px 0; min-height: 100vh; color: var(--text-dark); }
+        .layout-width { width: 92%; max-width: 600px; margin: 0 auto; box-sizing: border-box; }
+
+        /* HEADER PANEL */
+        .header-panel { background: #ffffff; padding: 15px 30px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; height: 80px; }
+        .header-left { display: flex; align-items: center; gap: 20px; }
+        .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 8px 16px; border-radius: 12px; text-decoration: none; font-size: 0.8rem; font-weight: 700; border: 1px solid #E2E8F0; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
+        .btn-back:hover { background: #E2E8F0; }
+        .page-title { font-size: 1.1rem; font-weight: 700; margin: 0; }
+        .logo-header { height: 100%; width: auto; object-fit: contain; }
+
+        /* CONTENIDO DE LA TARJETA */
+        .card-form { background: #ffffff; border-radius: 16px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); border: 1px solid #E2E8F0; }
+        label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 8px; }
+        input { width: 100%; padding: 12px; border: 1px solid #CBD5E1; border-radius: 10px; font-family: 'Poppins', sans-serif; font-size: 1rem; box-sizing: border-box; outline: none; margin-bottom: 20px; }
+        input:focus { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+        
+        .btn-act { width: 100%; padding: 14px; background: var(--indigo); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 0.9rem; box-shadow: 0 4px 6px rgba(99, 102, 241, 0.2); transition: 0.2s; }
+        .btn-act:hover { background: #4f46e5; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h2>$ Tasa BCV</h2>
-        <label>Valor actual de la tasa:</label>
-        <input type="number" id="inputTasa" step="0.01" placeholder="0.00">
-        <button class="btn-act" onclick="guardarTasa()">GUARDAR NUEVA TASA</button>
-    </div>
+    <main class="layout-width">
+        <header class="header-panel">
+            <div class="header-left">
+                <!-- Cambia 'index_menu.html' por el nombre de tu archivo del menú principal de barras -->
+                <a href="index_menu.html" class="btn-back"><i class="fas fa-arrow-left"></i> VOLVER</a>
+                <h1 class="page-title">Configuración de Tasa BCV</h1>
+            </div>
+            <img src="img/logo.png" alt="Logo" class="logo-header">
+        </header>
 
-    <a href="sys_config.html" class="back-link">← Volver a Configuración</a>
+        <div class="card-form">
+            <label>Valor actual de la tasa ($):</label>
+            <input type="number" id="inputTasa" step="0.01" placeholder="0.00">
+            <button class="btn-act" onclick="guardarTasa()">GUARDAR NUEVA TASA</button>
+        </div>
+    </main>
 
     <script type="module">
         import { db } from './js/firebase-config.js'; 
         import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const USER_ID = localStorage.getItem('youcontrol_empresa_id'); 
+        if (!USER_ID) {
+            window.location.href = "index.html";
+        }
+        
         const tasaRef = doc(db, "usuarios", USER_ID); 
 
         async function cargarTasa() {
@@ -44,7 +79,7 @@
         window.guardarTasa = async () => {
             const btn = document.querySelector('.btn-act');
             const valor = document.getElementById('inputTasa').value;
-            if (!valor) return alert("Ingresa un valor");
+            if (!valor) return alert("Ingresa un valor válido.");
 
             btn.disabled = true;
             btn.innerText = "GUARDANDO...";
@@ -52,7 +87,7 @@
             try {
                 await setDoc(tasaRef, { tasa_bcv: parseFloat(valor) }, { merge: true });
                 alert("Tasa guardada exitosamente.");
-                window.location.href = "sys_config.html";
+                window.location.href = "index_menu.html"; // Redirige al menú de barras al guardar
             } catch (e) {
                 alert("Error: " + e.message);
                 btn.disabled = false;
@@ -60,7 +95,6 @@
             }
         };
 
-        // --- ESTA ES LA LÍNEA QUE FALTABA ---
         cargarTasa();
     </script>
 </body>
