@@ -367,7 +367,6 @@
     <script>
         function irAlMenu(e) {
             e.preventDefault();
-            // Redirige al menú agregando una marca de tiempo exacta que destruye cualquier caché previa
             window.location.href = 'sys_v1_menu.html?refresh=' + new Date().getTime();
         }
     </script>
@@ -376,7 +375,6 @@
 
     <header class="navbar">
         <div class="navbar-brand">
-            <!-- Botón actualizador con la función para evitar caché -->
             <a href="#" class="btn-menu-top" onclick="irAlMenu(event)">
                 <i class="fas fa-arrow-left"></i> Menú
             </a>
@@ -453,6 +451,8 @@
                     <div class="form-group"><label>Pago Móvil (Bs.)</label><input type="number" id="in-pagomovil-bs" value="0" step="any"></div>
                     <div class="form-group"><label>Efectivo (Bs.)</label><input type="number" id="in-efectivo-bs" value="0" step="any"></div>
                     <div class="form-group"><label>Divisas ($)</label><input type="number" id="in-divisas-usd" value="0" step="any"></div>
+                    <!-- NUEVA OPCIÓN DE PAGO A CRÉDITO -->
+                    <div class="form-group" style="grid-column: span 2;"><label style="color: #d97706;">Crédito ($)</label><input type="number" id="in-credito-usd" value="0" step="any" style="border-color: #f59e0b;"></div>
                 </div>
                     <button id="btn-confirmar-venta" class="btn-pay-action" style="margin-top: 25px; border-radius: 8px;" onclick="window.registrarVenta()">CONFIRMAR VENTA</button>            
                 </div>
@@ -460,7 +460,6 @@
     </div>
 
     <script>
-    // Exponemos esto al objeto window para que pos-core.js pueda acceder
     window.indiceProd = -1;
     window.indiceClie = -1;
 
@@ -474,7 +473,7 @@
         } else if (e.key === 'ArrowUp') {
             if (indiceVar > 0) indiceVar--;
         } else if (e.key === 'Enter') {
-            e.preventDefault();
+        	e.preventDefault();
             if (items[indiceVar]) items[indiceVar].click();
             return -1;
         } else {
@@ -485,7 +484,6 @@
         return indiceVar;
     };
 
-    // Ajuste de los eventos
     document.getElementById('buscar-producto-pos').addEventListener('keydown', (e) => {
         window.indiceProd = window.manejarNavegacion(e, 'resultados-producto-pos', window.indiceProd);
     });
@@ -496,7 +494,6 @@
 </script>
     
     <script type="module" src="js/firebase-config.js"></script>
-    
     <script type="module" src="js/pos-core.js"></script>
     
 </body>
