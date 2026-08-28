@@ -101,12 +101,13 @@ window.registrarVenta = async () => {
         const nroFactura = await obtenerSiguienteNumero(USER_ID);
         const nombreParaGuardar = window.nombreClienteSeleccionado || document.getElementById('buscar-cliente-pos')?.value || "Anónimo";
         const montoCreditoUSD = parseFloat(document.getElementById('in-credito-usd')?.value) || 0;
+        const totalVenta = window.totalVentaUSD || 0;
 
         const ventaData = {
             cliente_id: window.clienteSeleccionadoID || "anonimo",
             nombre_cliente: nombreParaGuardar,
             items: carrito,
-            total_usd: window.totalVentaUSD || 0,
+            total_usd: totalVenta,
             tasa_aplicada: tasaActual,
             pagos: {
                 punto_bs: parseFloat(document.getElementById('in-punto-bs')?.value) || 0,
@@ -121,14 +122,16 @@ window.registrarVenta = async () => {
 
         await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
 
-        // Si hay monto a crédito, lo registramos también en Cuentas por Cobrar
+        // Registro exacto en cuentas por cobrar con la estructura original que esperas visualizar
         if (montoCreditoUSD > 0 && ventaData.cliente_id !== "anonimo") {
             await addDoc(collection(db, "usuarios", USER_ID, "cuentas_por_cobrar"), {
                 cliente_id: ventaData.cliente_id,
                 nombre_cliente: nombreParaGuardar,
                 nro_factura: nroFactura,
-                monto_usd: montoCreditoUSD,
-                monto_bs: montoCreditoUSD * tasaActual,
+                monto_total_usd: totalVenta,
+                monto_credito_usd: montoCreditoUSD,
+                abonado: 0,
+                pendiente: montoCreditoUSD,
                 estado: "pendiente",
                 fecha: serverTimestamp()
             });
