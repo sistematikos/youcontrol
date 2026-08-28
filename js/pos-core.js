@@ -208,24 +208,47 @@ document.addEventListener('DOMContentLoaded', async () => {
 function initBuscadores() {
     const inputCliente = document.getElementById('buscar-cliente-pos');
     const inputProd = document.getElementById('buscar-producto-pos');
+
     inputCliente?.addEventListener('input', (e) => {
-        const resultados = window.buscarCliente(e.target.value);
+        const texto = e.target.value.trim();
         const divRes = document.getElementById('resultados-cliente-pos');
-        if (resultados.length > 0 && e.target.value.trim() !== "") {
+        if (!divRes) return;
+
+        if (texto === "") {
+            divRes.style.display = 'none';
+            return;
+        }
+
+        const resultados = window.buscarCliente(texto);
+        if (resultados.length > 0) {
             divRes.style.display = 'block';
-            divRes.innerHTML = resultados.map(c => `<div class="resultado-item" style="padding: 10px; cursor: pointer;" onclick="window.seleccionarCliente('${c.id}', '${c.nombre.replace(/'/g, "\\'")}')"><strong>${c.id}</strong> - ${c.nombre}</div>`).join('');
-        } else { divRes.style.display = 'none'; }
+            divRes.innerHTML = resultados.map(c => `<div class="resultado-item" style="padding: 10px; cursor: pointer;" onclick="window.seleccionarCliente('${c.id}', '${(c.nombre || '').replace(/'/g, "\\'")}')"><strong>${c.id}</strong> - ${c.nombre}</div>`).join('');
+        } else {
+            divRes.style.display = 'block';
+            divRes.innerHTML = `<div style="padding: 10px; color: #64748b;">No se encontraron clientes</div>`;
+        }
     });
+
     inputProd?.addEventListener('input', (e) => {
-        const resultados = window.buscarProducto(e.target.value);
+        const texto = e.target.value.trim();
         const divRes = document.getElementById('resultados-producto-pos');
-        if (resultados.length > 0 && e.target.value.trim() !== "") {
+        if (!divRes) return;
+
+        if (texto === "") {
+            divRes.style.display = 'none';
+            return;
+        }
+
+        const resultados = window.buscarProducto(texto);
+        if (resultados.length > 0) {
             divRes.style.display = 'block';
-            divRes.innerHTML = resultados.map(p => `<div class="resultado-item" style="padding: 10px; cursor: pointer;" onclick="window.seleccionarProducto('${p.id}')"><strong>${p.nombre}</strong> - $${p.precio}</div>`).join('');
-        } else { divRes.style.display = 'none'; }
+            divRes.innerHTML = resultados.map(p => `<div class="resultado-item" style="padding: 10px; cursor: pointer;" onclick="window.seleccionarProducto('${p.id}')"><strong>${p.nombre}</strong> - $${p.precio || 0}</div>`).join('');
+        } else {
+            divRes.style.display = 'block';
+            divRes.innerHTML = `<div style="padding: 10px; color: #64748b;">No se encontraron productos</div>`;
+        }
     });
 }
-
 function initLogicaPagos() {
     const camposBs = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs'];
     const inputDivisas = document.getElementById('in-divisas-usd');
