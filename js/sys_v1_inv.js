@@ -1,10 +1,17 @@
 import { db } from './firebase-config.js';
-import { collection, onSnapshot, doc, updateDoc, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, onSnapshot, doc, updateDoc, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-const USER_ID = "YC-2026-001"; 
+// Obtener dinámicamente el ID de la empresa activa desde el navegador
+const USER_ID = localStorage.getItem('youcontrol_empresa_id');
+
+if (!USER_ID) {
+    alert("Sesión no encontrada o expirada. Inicie sesión nuevamente.");
+    window.location.href = 'index.html';
+}
+
 const cuerpoTabla = document.getElementById('cuerpo-tabla');
 const mapaDeptos = {};
-let tasaBCV = 1.00; // Variable para almacenar la tasa
+let tasaBCV = 1.00;
 
 // --- FILTRO ---
 window.filtrarPorDepto = () => {
@@ -25,52 +32,68 @@ document.getElementById('buscador-inv').addEventListener('input', (e) => {
     });
 });
 
-// --- GUARDAR ---
+// --- GUARDAR STOCK ---
 window.actualizarSoloStock = async (id, val) => {
-    await updateDoc(doc(db, "usuarios", USER_ID, "productos", id), { stock: parseInt(val) || 0 });
+    try {
+        await updateDoc(doc(db, "usuarios", USER_ID, "productos", id), { stock: parseInt(val) || 0 });
+    } catch (error) {
+        console.error("Error al actualizar stock:", error);
+        alert("No se pudo actualizar el stock.");
+    }
 };
 
 // --- INICIALIZACIÓN ---
 async function init() {
-    // 1. Obtener tasa y Departamentos
-    const userDoc = await getDoc(doc(db, "usuarios", USER_ID));
-    if (userDoc.exists()) {
-        tasaBCV = parseFloat(userDoc.data().tasa_bcv) || 1.00;
-    }
+    try {
+        // 1. Obtener tasa y Departamentos del documento de la empresa
+        const userDoc = await getDoc(doc(db, "usuarios", USER_ID));
+        if (userDoc.exists()) {
+            tasaBCV = parseFloat(userDoc.data().tasa_bcv) || 1.00;
+        }
 
-    const deptoSnap = await getDocs(collection(db, "usuarios", USER_ID, "departamentos"));
-    const select = document.getElementById('filtro-depto');
-    
-    deptoSnap.forEach(d => {
-        const nombre = d.data().nombre;
-        mapaDeptos[d.id] = nombre;
-        select.innerHTML += `<option value="${d.id}">${nombre.toUpperCase()}</option>`;
-    });
-
-    // 2. Cargar Productos
-    onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snap) => {
-        cuerpoTabla.innerHTML = "";
-        snap.forEach(d => {
-            const p = d.data();
-            const precioUSD = parseFloat(p.precio || 0);
-            const precioBs = (precioUSD * tasaBCV).toFixed(2); // Cálculo del precio en Bs
-            
-            const tr = document.createElement('tr');
-            tr.dataset.deptoId = p.departamento || ''; 
-            
-            const nombreDeptoMostrado = mapaDeptos[tr.dataset.deptoId] || 'GENERAL';
-            
-            tr.innerHTML = `
-                <td>${p.nombre || 'Sin nombre'}</td>
-                <td>${nombreDeptoMostrado}</td>
-                <td>$${parseFloat(p.costo || 0).toFixed(2)}</td>
-                <td style="color: #6366f1; font-weight: bold;">${p.ganancia || 0}%</td>
-                <td>$${precioUSD.toFixed(2)} / <b>${precioBs} Bs</b></td>
-                <td><input type="number" class="input-stock" value="${p.stock || 0}" 
-                    onchange="window.actualizarSoloStock('${d.id}', this.value)"></td>
-            `;
-            cuerpoTabla.appendChild(tr);
+        const deptoSnap = await getDocs(collection(db, "usuarios", USER_ID, "departamentos"));
+        const select = document.getElementById('filtro-depto');
+        
+        deptoSnap.forEach(d => {
+            const nombre = d.data().nombre;
+            mapaDeptos[d.id] = nombre;
+            select.innerHTML += `<option value="${d.id}">${nombre.toUpperCase()}</option>`;
         });
-    });
+
+        // 2. Cargar Productos en tiempo real con onSnapshot
+        onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snap) => {
+            cuerpoTabla.innerHTML = "";
+            
+            if (snap.empty) {
+                cuerpoTabla.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#64748B;">No hay productos registrados.</td></tr>`;
+                return;
+            }
+
+            snap.forEach(d => {
+                const p = d.data();
+                const precioUSD = parseFloat(p.precio || 0);
+                const precioBs = (precioUSD * tasaBCV).toFixed(2);
+                
+                const tr = document.createElement('tr');
+                tr.dataset.deptoId = p.departamento || ''; 
+                
+                const nombreDeptoMostrado = mapaDeptos[tr.dataset.deptoId] || 'GENERAL';
+                
+                tr.innerHTML = `
+                    <td>${p.nombre || p.descripcion || 'Sin nombre'}</td>
+                    <td>${nombreDeptoMostrado}</td>
+                    <td>$${parseFloat(p.costo || 0).toFixed(2)}</td>
+                    <td style="color: #6366f1; font-weight: bold;">${p.ganancia || p.porcentaje || 0}%</td>
+                    <td>$${precioUSD.toFixed(2)} / <b>${precioBs} Bs</b></td>
+                    <td><input type="number" class="input-stock" value="${p.stock || 0}" 
+                        onchange="window.actualizarSoloStock('${d.id}', this.value)"></td>
+                `;
+                cuerpoTabla.appendChild(tr);
+            });
+        });
+    } catch (error) {
+        console.error("Error al inicializar inventario:", error);
+    }
 }
+
 document.addEventListener('DOMContentLoaded', init);
