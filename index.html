@@ -10,11 +10,24 @@
         body { font-family: 'Poppins', sans-serif; background: #F1F5F9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
         .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 90%; max-width: 400px; text-align: center; }
         textarea { width: 100%; height: 100px; padding: 12px; margin: 15px 0; border: 2px solid #E2E8F0; border-radius: 12px; box-sizing: border-box; resize: none; font-family: monospace; }
-        button { width: 100%; padding: 15px; background: #002D72; color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; }
+        button { width: 100%; padding: 15px; background: #002D72; color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; margin-top: 10px; }
         button:hover { background: #0052D4; }
+        .btn-secundario { background: #64748B; }
+        .btn-secundario:hover { background: #475569; }
     </style>
 
     <script>
+        // --- 1. VALIDACIÓN AUTOMÁTICA AL CARGAR ---
+        // Si ya está validado y existe el ID, evitamos mostrar la pantalla de licencia y pasamos al menú
+        document.addEventListener('DOMContentLoaded', () => {
+            const licenciaValidada = localStorage.getItem('licencia_validada');
+            const empresaID = localStorage.getItem('youcontrol_empresa_id');
+
+            if (licenciaValidada === 'true' && empresaID) {
+                window.location.replace('sys_v1_menu.html');
+            }
+        });
+
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW error', err));
@@ -25,7 +38,8 @@
 <body>
 
     <div class="card" id="cardActivacion">
-        <h2 style="color:#002D72;">Activación</h2>
+        <img src="img/logo.png" style="width: 80px; margin-bottom: 15px;" alt="Logo">
+        <h2 style="color:#002D72; margin-top: 0;">Activación</h2>
         <p style="color:#64748b;">Pega tu código de licencia:</p>
         <textarea id="tokenInput" placeholder="Pega el código aquí..."></textarea>
         <button onclick="procesarActivacion()">ACTIVAR SISTEMA</button>
@@ -71,18 +85,22 @@
                     });
                 }
 
+                // Guardar credenciales de sesión persistentes
                 localStorage.setItem('youcontrol_empresa_id', data.activation_id);
                 localStorage.setItem('licencia_validada', 'true');
                 
-                // Pantalla con tu logo.png
+                // Pantalla de éxito con opción de instalar o entrar directo
                 document.body.innerHTML = `
                     <div style="background:white; padding:40px; border-radius:20px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.2); max-width:350px; width: 90%;">
                         <img src="img/logo.png" style="width: 120px; margin-bottom: 20px;" alt="Logo">
                         <h2 style="color:#002D72;">¡Sistema Activado!</h2>
-                        <p style="color:#64748b; margin-bottom:25px;">Para acceder al sistema, debes instalar la aplicación en tu dispositivo.</p>
+                        <p style="color:#64748b; margin-bottom:25px;">Puedes instalar la aplicación o ingresar directamente al menú.</p>
                         
-                        <button id="btnInstalar" style="width:100%; padding:15px; background:#10B981; color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">
+                        <button id="btnInstalar" style="width:100%; padding:15px; background:#10B981; color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer; margin-bottom: 10px;">
                             INSTALAR APLICACIÓN
+                        </button>
+                        <button onclick="window.location.href='sys_v1_menu.html'" style="width:100%; padding:12px; background:#64748B; color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">
+                            ENTRAR AL MENÚ
                         </button>
                     </div>
                 `;
@@ -91,13 +109,9 @@
                     if (window.deferredPrompt) {
                         window.deferredPrompt.prompt();
                         const { outcome } = await window.deferredPrompt.userChoice;
-                        if (outcome === 'accepted') {
-                            window.location.href = 'sys_v1_menu.html';
-                        }
                         window.deferredPrompt = null;
-                    } else {
-                        window.location.href = 'sys_v1_menu.html';
                     }
+                    window.location.href = 'sys_v1_menu.html';
                 });
                 
             } catch (e) {
