@@ -3,109 +3,265 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador | Sistematikos</title>
+    <title>Panel Maestro Unificado | Sistematikos</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #002D72; --accent: #0052D4; --bg: #F1F5F9; }
-        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding: 20px; }
-        .container { max-width: 600px; margin: 40px auto; background: white; padding: 40px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); border-top: 8px solid var(--primary); }
-        h1 { color: var(--primary); font-weight: 800; margin-bottom: 5px; text-align: center; }
-        p.subtitle { text-align: center; color: #64748B; margin-bottom: 30px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; font-weight: 600; color: #334155; margin-bottom: 8px; font-size: 0.9rem; }
-        input, select { width: 100%; padding: 12px 15px; border: 2px solid #E2E8F0; border-radius: 12px; font-family: inherit; font-size: 1rem; box-sizing: border-box; outline: none; transition: 0.3s; }
-        .btn-generate { width: 100%; background: var(--primary); color: white; border: none; padding: 18px; border-radius: 15px; font-weight: 800; cursor: pointer; transition: 0.3s; }
-        .btn-generate:hover { background: var(--accent); transform: translateY(-2px); }
-        .result-box { margin-top: 30px; padding: 20px; background: #F8FAFC; border: 2px dashed #CBD5E1; border-radius: 15px; display: none; position: relative; }
-        textarea { width: 100%; height: 120px; border: none; background: transparent; font-family: monospace; font-size: 0.85rem; resize: none; color: #475569; }
-        .btn-copy { position: absolute; right: 10px; top: 10px; background: var(--accent); color: white; border: none; padding: 5px 12px; border-radius: 8px; font-size: 0.7rem; cursor: pointer; }
+        :root { --primary: #002D72; --accent: #0052D4; --bg: #F1F5F9; --success: #10B981; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { max-width: 650px; width: 100%; background: white; padding: 35px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); border-top: 8px solid var(--primary); }
+        h1 { color: var(--primary); font-weight: 800; margin-bottom: 5px; text-align: center; font-size: 1.6rem; }
+        p.subtitle { text-align: center; color: #64748B; margin-bottom: 25px; font-size: 0.9rem; }
+        
+        .section-box { background: #F8FAFC; border: 1px solid #E2E8F0; padding: 20px; border-radius: 14px; margin-bottom: 20px; }
+        .section-title { font-size: 0.85rem; font-weight: 700; color: var(--primary); text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-weight: 600; color: #334155; margin-bottom: 5px; font-size: 0.8rem; }
+        input, select { width: 100%; padding: 10px 12px; border: 2px solid #E2E8F0; border-radius: 10px; font-family: inherit; font-size: 0.9rem; box-sizing: border-box; outline: none; transition: 0.3s; }
+        input:focus, select:focus { border-color: var(--accent); }
+        
+        .btn-action { width: 100%; background: var(--primary); color: white; border: none; padding: 14px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; }
+        .btn-action:hover { background: var(--accent); transform: translateY(-1px); }
+        .btn-success { background: var(--success); }
+        .btn-success:hover { background: #059669; }
+        
+        .search-container { display: flex; gap: 8px; margin-bottom: 15px; }
+        
+        .result-box { margin-top: 20px; padding: 15px; background: #FFF; border: 2px dashed #CBD5E1; border-radius: 12px; display: none; position: relative; }
+        textarea { width: 100%; height: 90px; border: none; background: #F8FAFC; padding: 8px; font-family: monospace; font-size: 0.75rem; resize: none; color: #475569; border-radius: 6px; box-sizing: border-box; }
+        .btn-copy { position: absolute; right: 18px; top: 25px; background: var(--accent); color: white; border: none; padding: 5px 12px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; }
+        
+        .preview-logo { width: 60px; height: 60px; object-fit: contain; border: 1px solid #E2E8F0; border-radius: 8px; background: #fff; display: block; margin: 0 auto 10px auto; }
+        #status { text-align: center; font-weight: 600; font-size: 0.85rem; margin-top: 10px; color: var(--success); }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1><i class="fas fa-key"></i> Factory</h1>
-        <p class="subtitle">Generador de Licencias para You Control</p>
+        <h1><i class="fas fa-shield-alt"></i> Panel Maestro</h1>
+        <p class="subtitle">Gestión de Empresas, Datos Fiscales y Licencias (Sistematikos)</p>
 
-        <div class="form-group">
-            <label>Nombre de la Empresa / Cliente</label>
-            <input type="text" id="nombre" placeholder="Ej: Voley Club Lara">
+        <!-- BUSCADOR -->
+        <div class="search-container">
+            <input type="text" id="busquedaInput" placeholder="Buscar por ID exacto o Nombre de Empresa..." style="margin:0;">
+            <button class="btn-action" id="btnBuscar" style="width: 140px; margin:0;"><i class="fas fa-search"></i> Buscar</button>
         </div>
 
-        <div class="form-group">
-            <label>RIF / Identificación Fiscal</label>
-            <input type="text" id="rif" placeholder="Ej: J-12345678-0">
+        <div style="text-align: center; margin-bottom: 15px;">
+            <button class="btn-action btn-success" id="btnNuevo" style="display:inline-block; width: auto; padding: 10px 20px;"><i class="fas fa-plus-circle"></i> Generar Nueva Empresa / Licencia</button>
         </div>
 
-        <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-            <div>
-                <label>Límite de Equipos</label>
-                <select id="limite">
-                    <option value="1">1 Equipo</option>
-                    <option value="2">2 Equipos</option>
-                    <option value="3" selected>3 Equipos</option>
-                    <option value="5">5 Equipos</option>
-                    <option value="10">10 Equipos</option>
-                </select>
+        <!-- FORMULARIO DE DATOS -->
+        <div class="section-box">
+            <div class="section-title"><i class="fas fa-building"></i> Datos de la Empresa y Licencia</div>
+            
+            <div style="text-align: center;">
+                <img id="previewLogo" class="preview-logo" onerror="this.style.display='none'">
             </div>
-            <div>
-                <label>Vencimiento</label>
-                <input type="date" id="vence">
+
+            <div class="form-group">
+                <label>ID de Empresa (Único para Firebase y Logo)</label>
+                <input type="text" id="empresaID" readonly style="background:#E2E8F0; font-weight: 600; color: #002A54;">
             </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Nombre de la Empresa</label>
+                    <input type="text" id="nombreEmpresa" placeholder="Ej: Voley Club Lara">
+                </div>
+                <div class="form-group">
+                    <label>RIF / Identificación Fiscal</label>
+                    <input type="text" id="rif" placeholder="Ej: J-12345678-0">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Dirección</label>
+                    <input type="text" id="dir" placeholder="Ubicación fiscal">
+                </div>
+                <div class="form-group">
+                    <label>Teléfono</label>
+                    <input type="text" id="tel" placeholder="Número de contacto">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Correo Electrónico</label>
+                    <input type="email" id="email" placeholder="correo@empresa.com">
+                </div>
+                <div class="form-group">
+                    <label>Estado de Licencia</label>
+                    <select id="estadoLicencia">
+                        <option value="activo">Activo</option>
+                        <option value="suspendido">Suspendido</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Límite de Equipos (Licencia)</label>
+                    <select id="limite">
+                        <option value="1">1 Equipo</option>
+                        <option value="2">2 Equipos</option>
+                        <option value="3" selected>3 Equipos</option>
+                        <option value="5">5 Equipos</option>
+                        <option value="10">10 Equipos</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Fecha de Vencimiento</label>
+                    <input type="date" id="vence">
+                </div>
+            </div>
+
+            <button class="btn-action" id="btnGuardar"><i class="fas fa-save"></i> Guardar en Firebase y Generar Licencia</button>
+            <div id="status"></div>
         </div>
 
-        <div class="form-group">
-            <label>ID de Activación (Único)</label>
-            <input type="text" id="act_id" placeholder="Ej: VCL-2026-001" style="text-transform: uppercase;">
-        </div>
-
-        <button class="btn-generate" onclick="crearToken()">GENERAR LICENCIA</button>
-
-        <div id="result" class="result-box">
-            <button class="btn-copy" onclick="copiar()">COPIAR</button>
-            <b>Código de Licencia:</b>
+        <!-- RESULTADO DEL TOKEN DE LICENCIA -->
+        <div id="resultBox" class="result-box">
+            <button class="btn-copy" onclick="copiarToken()">COPIAR</button>
+            <div class="section-title" style="margin-bottom: 5px;"><i class="fas fa-key"></i> Código de Licencia Generado (Base64)</div>
             <textarea id="tokenResult" readonly></textarea>
-            <p style="font-size: 0.7rem; color: #94A3B8; margin-top: 10px;">Envíe este código al cliente para activar su sistema.</p>
+            <p style="font-size: 0.7rem; color: #94A3B8; margin: 5px 0 0 0;">Este código contiene la encriptación de la licencia para el cliente.</p>
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, getDocs, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "TU_API_KEY_COMPLETA_AQUI", 
+            authDomain: "youcontrol-1d60a.firebaseapp.com",
+            projectId: "youcontrol-1d60a",
+            storageBucket: "youcontrol-1d60a.appspot.com",
+            messagingSenderId: "812100760013",
+            appId: "1:812100760013:web:7574906aa285555faf5484"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const coleccionPrincipal = "usuarios";
+
+        // Establecer fecha de vencimiento por defecto a 1 año a partir de hoy
         const fechaHoy = new Date();
         fechaHoy.setFullYear(fechaHoy.getFullYear() + 1);
         document.getElementById('vence').value = fechaHoy.toISOString().split('T')[0];
 
-        function crearToken() {
-            const n = document.getElementById('nombre').value;
-            const r = document.getElementById('rif').value;
-            const l = document.getElementById('limite').value;
-            const v = document.getElementById('vence').value;
-            // Forzamos mayúsculas para evitar errores en el ID
-            const aid = document.getElementById('act_id').value.toUpperCase().trim();
+        function llenarFormulario(id, data) {
+            document.getElementById('empresaID').value = id;
+            document.getElementById('nombreEmpresa').value = data.nombre_empresa || data.nombre || "";
+            document.getElementById('rif').value = data.rif || "";
+            document.getElementById('dir').value = data.direccion || "";
+            document.getElementById('tel').value = data.telefono || "";
+            document.getElementById('email').value = data.email || "";
+            document.getElementById('estadoLicencia').value = data.estado || "activo";
+            
+            if(data.limite_equipos) document.getElementById('limite').value = data.limite_equipos;
+            if(data.vencimiento) document.getElementById('vence').value = data.vencimiento;
 
-            if(!n || !aid) {
-                alert("Mínimo necesitas el nombre e ID de activación.");
-                return;
-            }
+            const logoUrl = `https://raw.githubusercontent.com/sistematikos/youcontrol/main/img/${id}.png`;
+            const imgElement = document.getElementById('previewLogo');
+            imgElement.style.display = 'block';
+            imgElement.src = logoUrl;
 
-            const data = {
-                n: n,
-                rif: r,
-                l: parseInt(l),
-                v: v,
-                activation_id: aid
-            };
-
-            const token = btoa(JSON.stringify(data));
-            document.getElementById('tokenResult').value = token;
-            document.getElementById('result').style.display = 'block';
+            // Generar automáticamente el token al cargar los datos
+            generarTokenBase64(id, data);
+            document.getElementById('status').innerText = "✅ Empresa cargada y licencia lista.";
         }
 
-        function copiar() {
+        function generarTokenBase64(id, data) {
+            const tokenData = {
+                n: data.nombre_empresa || data.nombre,
+                rif: data.rif,
+                l: parseInt(document.getElementById('limite').value),
+                v: document.getElementById('vence').value,
+                activation_id: id
+            };
+            const token = btoa(JSON.stringify(tokenData));
+            document.getElementById('tokenResult').value = token;
+            document.getElementById('resultBox').style.display = 'block';
+        }
+
+        // Botón Nuevo Registro
+        document.getElementById('btnNuevo').addEventListener('click', () => {
+            const nuevoDocRef = doc(collection(db, coleccionPrincipal));
+            document.getElementById('empresaID').value = nuevoDocRef.id;
+            document.getElementById('nombreEmpresa').value = "";
+            document.getElementById('rif').value = "";
+            document.getElementById('dir').value = "";
+            document.getElementById('tel').value = "";
+            document.getElementById('email').value = "";
+            document.getElementById('estadoLicencia').value = "activo";
+            document.getElementById('previewLogo').style.display = 'none';
+            document.getElementById('resultBox').style.display = 'none';
+            document.getElementById('status').innerText = "✨ Nuevo ID generado. Llene los datos y guarde.";
+        });
+
+        // Botón Buscar
+        document.getElementById('btnBuscar').addEventListener('click', async () => {
+            const busqueda = document.getElementById('busquedaInput').value.trim();
+            if (!busqueda) return alert("Escribe un ID o nombre para buscar.");
+            
+            try {
+                const docSnap = await getDoc(doc(db, coleccionPrincipal, busqueda));
+                if (docSnap.exists()) {
+                    llenarFormulario(busqueda, docSnap.data());
+                } else {
+                    const q = query(collection(db, coleccionPrincipal), where("nombre_empresa", "==", busqueda));
+                    const querySnapshot = await getDocs(q);
+                    if (!querySnapshot.empty) {
+                        querySnapshot.forEach((d) => llenarFormulario(d.id, d.data()));
+                    } else {
+                        alert("No se encontró ninguna empresa con ese criterio.");
+                    }
+                }
+            } catch (e) {
+                alert("Error en la búsqueda: " + e.message);
+            }
+        });
+
+        // Botón Guardar en Firebase + Generar Token
+        document.getElementById('btnGuardar').addEventListener('click', async () => {
+            const id = document.getElementById('empresaID').value;
+            if (!id) return alert("Genere una nueva empresa o busque una existente primero.");
+
+            const nombre = document.getElementById('nombreEmpresa').value.trim();
+            if (!nombre) return alert("El nombre de la empresa es obligatorio.");
+
+            const datosParaGuardar = {
+                id_empresa: id,
+                nombre_empresa: nombre,
+                rif: document.getElementById('rif').value.trim(),
+                direccion: document.getElementById('dir').value.trim(),
+                telefono: document.getElementById('tel').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                estado: document.getElementById('estadoLicencia').value,
+                limite_equipos: parseInt(document.getElementById('limite').value),
+                vencimiento: document.getElementById('vence').value,
+                fecha_actualizacion: serverTimestamp()
+            };
+
+            try {
+                await setDoc(doc(db, coleccionPrincipal, id), datosParaGuardar, { merge: true });
+                generarTokenBase64(id, datosParaGuardar);
+                document.getElementById('status').innerText = "🚀 ¡Guardado en Firebase y licencia generada con éxito!";
+            } catch (e) { 
+                alert("Error al guardar: " + e.message); 
+            }
+        });
+
+        window.copiarToken = function() {
             const copyText = document.getElementById("tokenResult");
             copyText.select();
             document.execCommand("copy");
-            alert("Licencia copiada al portapapeles");
+            alert("¡Código de licencia copiado al portapapeles!");
         }
     </script>
 </body>
