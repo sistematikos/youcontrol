@@ -1,5 +1,5 @@
 import { db } from './firebase-config.js';
-import { collection, onSnapshot, doc, updateDoc, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+import { collection, onSnapshot, doc, updateDoc, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // Obtener dinámicamente el ID de la empresa activa desde el navegador
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
@@ -54,8 +54,12 @@ async function init() {
         const deptoSnap = await getDocs(collection(db, "usuarios", USER_ID, "departamentos"));
         const select = document.getElementById('filtro-depto');
         
+        // Limpiamos y dejamos la opción base con value="todos" en minúsculas para que coincida con el filtro
+        select.innerHTML = `<option value="todos">TODOS LOS DEPARTAMENTOS</option>`;
+
         deptoSnap.forEach(d => {
-            const nombre = d.data().nombre;
+            const dataDepto = d.data();
+            const nombre = dataDepto.nombre || dataDepto.descripcion || 'Sin nombre';
             mapaDeptos[d.id] = nombre;
             select.innerHTML += `<option value="${d.id}">${nombre.toUpperCase()}</option>`;
         });
