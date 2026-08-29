@@ -2,49 +2,75 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Panel Maestro | Gestión Fiscal</title>
+    <title>Panel Maestro | Gestión de Empresas y Licencias</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { font-family: 'Poppins', sans-serif; background: #F1F5F9; padding: 20px; display: flex; justify-content: center; }
-        .admin-card { background: #fff; width: 100%; max-width: 500px; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 5px solid #002A54; }
-        h2 { color: #002A54; text-align: center; }
-        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #E2E8F0; border-radius: 8px; box-sizing: border-box; }
-        .btn-group { display: flex; gap: 10px; }
-        button { flex: 1; padding: 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 10px; }
-        #btnGuardar { background: #002A54; color: white; }
+        .admin-card { background: #fff; width: 100%; max-width: 550px; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 5px solid #002A54; }
+        h2 { color: #002A54; text-align: center; margin-bottom: 20px; }
+        label { font-size: 0.75rem; color: #64748B; font-weight: 600; display: block; margin-top: 10px; }
+        input, select { width: 100%; padding: 12px; margin: 4px 0 10px 0; border: 1px solid #E2E8F0; border-radius: 8px; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+        button { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        #btnNuevo { background: #10B981; color: white; }
         #btnBuscar { background: #64748B; color: white; }
-        #status { margin-top: 15px; text-align: center; font-weight: 500; color: #10B981; }
-        .preview-logo { width: 100px; height: 100px; object-fit: contain; margin: 10px auto; display: block; border: 1px solid #E2E8F0; border-radius: 8px; }
+        #btnGuardar { background: #002A54; color: white; width: 100%; margin-top: 10px; }
+        #status { margin-top: 15px; text-align: center; font-weight: 500; color: #10B981; font-size: 0.9rem; }
+        .preview-logo { width: 80px; height: 80px; object-fit: contain; margin: 5px auto; display: block; border: 1px solid #E2E8F0; border-radius: 8px; background: #fafafa; }
     </style>
 </head>
 <body>
 
 <div class="admin-card">
-    <h2>Gestión Fiscal</h2>
-    <input type="text" id="busqueda" placeholder="Buscar por ID o Nombre de Empresa">
-    <div class="btn-group">
-        <button id="btnBuscar">Buscar</button>
-        <button id="btnGuardar">Guardar Cambios</button>
-    </div>
+    <h2><i class="fas fa-shield-alt"></i> Panel Maestro YouControl</h2>
     
-    <div style="text-align: center; margin-top: 15px;">
-        <label style="font-size: 0.7rem; color: #64748B;">LOGO ASOCIADO (Automático según ID):</label>
+    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+        <input type="text" id="busqueda" placeholder="Buscar por ID o Nombre de Empresa" style="margin:0;">
+        <button id="btnBuscar" style="flex: 0.5;"><i class="fas fa-search"></i> Buscar</button>
+    </div>
+
+    <button id="btnNuevo"><i class="fas fa-plus-circle"></i> Generar Nueva Empresa / Licencia</button>
+
+    <hr style="border: 0; border-top: 1px solid #E2E8F0; margin: 20px 0;">
+
+    <div style="text-align: center;">
+        <label>LOGO ASOCIADO (Automático según ID):</label>
         <img id="previewLogo" class="preview-logo" onerror="this.style.display='none'">
     </div>
 
-    <input type="text" id="empresaID" placeholder="ID de Empresa" readonly style="background:#F8FAFC;">
-    <input type="text" id="nombreEmpresa" placeholder="Nombre de la Empresa">
-    <input type="text" id="rif" placeholder="RIF">
-    <input type="text" id="dir" placeholder="Dirección">
-    <input type="text" id="tel" placeholder="Teléfono">
-    <input type="email" id="email" placeholder="Correo Electrónico">
+    <label>ID DE EMPRESA (Único):</label>
+    <input type="text" id="empresaID" placeholder="Se genera automáticamente..." readonly style="background:#F8FAFC; font-weight: 600; color: #002A54;">
+
+    <label>NOMBRE DE LA EMPRESA:</label>
+    <input type="text" id="nombreEmpresa" placeholder="Ej. Comercializadora XYZ">
+
+    <label>RIF:</label>
+    <input type="text" id="rif" placeholder="Ej. J-12345678-9">
+
+    <label>DIRECCIÓN:</label>
+    <input type="text" id="dir" placeholder="Ubicación fiscal">
+
+    <label>TELÉFONO:</label>
+    <input type="text" id="tel" placeholder="Número de contacto">
+
+    <label>CORREO ELECTRÓNICO:</label>
+    <input type="email" id="email" placeholder="correo@empresa.com">
+
+    <label>ESTADO DE LA LICENCIA:</label>
+    <select id="estadoLicencia">
+        <option value="activo">Activo</option>
+        <option value="suspendido">Suspendido / Vencido</option>
+    </select>
+
+    <button id="btnGuardar"><i class="fas fa-save"></i> Guardar o Registrar Empresa</button>
     
     <div id="status"></div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, getDocs, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "TU_API_KEY_COMPLETA_AQUI", 
@@ -58,52 +84,86 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    const coleccionPrincipal = "usuarios"; // Unificado a la colección raíz que usa tu sistema
+
     function llenarFormulario(id, data) {
         document.getElementById('empresaID').value = id;
-        document.getElementById('nombreEmpresa').value = data.nombre || "";
+        document.getElementById('nombreEmpresa').value = data.nombre_empresa || data.nombre || "";
         document.getElementById('rif').value = data.rif || "";
         document.getElementById('dir').value = data.direccion || "";
         document.getElementById('tel').value = data.telefono || "";
         document.getElementById('email').value = data.email || "";
+        document.getElementById('estadoLicencia').value = data.estado || "activo";
         
-        // Construcción automática de URL de logo basada en el ID
         const logoUrl = `https://raw.githubusercontent.com/sistematikos/youcontrol/main/img/${id}.png`;
-        document.getElementById('previewLogo').src = logoUrl;
-        document.getElementById('status').innerText = "Datos y logo cargados.";
+        const imgElement = document.getElementById('previewLogo');
+        imgElement.style.display = 'block';
+        imgElement.src = logoUrl;
+        
+        document.getElementById('status').innerText = "✅ Empresa cargada correctamente.";
     }
 
+    // Botón para limpiar y preparar una nueva empresa con ID automático
+    document.getElementById('btnNuevo').addEventListener('click', () => {
+        const nuevoDocRef = doc(collection(db, coleccionPrincipal));
+        document.getElementById('empresaID').value = nuevoDocRef.id;
+        document.getElementById('nombreEmpresa').value = "";
+        document.getElementById('rif').value = "";
+        document.getElementById('dir').value = "";
+        document.getElementById('tel').value = "";
+        document.getElementById('email').value = "";
+        document.getElementById('estadoLicencia').value = "activo";
+        document.getElementById('previewLogo').style.display = 'none';
+        document.getElementById('status').innerText = "✨ Nuevo ID generado. Llene los datos y guarde.";
+    });
+
+    // Búsqueda por ID exacto o por Nombre
     document.getElementById('btnBuscar').addEventListener('click', async () => {
         const busqueda = document.getElementById('busqueda').value.trim();
-        if (!busqueda) return alert("Escribe un ID o nombre");
+        if (!busqueda) return alert("Escribe un ID o nombre para buscar.");
         
-        const docSnap = await getDoc(doc(db, "empresas_config", busqueda));
-        if (docSnap.exists()) {
-            llenarFormulario(busqueda, docSnap.data());
-        } else {
-            const q = query(collection(db, "empresas_config"), where("nombre", "==", busqueda));
-            const querySnapshot = await getDocs(q);
-            if (!querySnapshot.empty) {
-                querySnapshot.forEach((d) => llenarFormulario(d.id, d.data()));
+        try {
+            const docSnap = await getDoc(doc(db, coleccionPrincipal, busqueda));
+            if (docSnap.exists()) {
+                llenarFormulario(busqueda, docSnap.data());
             } else {
-                alert("No encontrado.");
+                const q = query(collection(db, coleccionPrincipal), where("nombre_empresa", "==", busqueda));
+                const querySnapshot = await getDocs(q);
+                if (!querySnapshot.empty) {
+                    querySnapshot.forEach((d) => llenarFormulario(d.id, d.data()));
+                } else {
+                    alert("No se encontró ninguna empresa con ese criterio.");
+                }
             }
+        } catch (e) {
+            alert("Error en la búsqueda: " + e.message);
         }
     });
 
+    // Guardar o actualizar la empresa / licencia
     document.getElementById('btnGuardar').addEventListener('click', async () => {
         const id = document.getElementById('empresaID').value;
-        if (!id) return alert("Busca una empresa primero");
+        if (!id) return alert("Genera una nueva empresa o busca una existente primero.");
+
+        const nombre = document.getElementById('nombreEmpresa').value.trim();
+        if (!nombre) return alert("El nombre de la empresa es obligatorio.");
 
         try {
-            await setDoc(doc(db, "empresas_config", id), {
-                nombre: document.getElementById('nombreEmpresa').value,
-                rif: document.getElementById('rif').value,
-                direccion: document.getElementById('dir').value,
-                telefono: document.getElementById('tel').value,
-                email: document.getElementById('email').value
+            await setDoc(doc(db, coleccionPrincipal, id), {
+                id_empresa: id,
+                nombre_empresa: nombre,
+                rif: document.getElementById('rif').value.trim(),
+                direccion: document.getElementById('dir').value.trim(),
+                telefono: document.getElementById('tel').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                estado: document.getElementById('estadoLicencia').value,
+                fecha_actualizacion: serverTimestamp()
             }, { merge: true });
-            document.getElementById('status').innerText = "✅ Cambios guardados.";
-        } catch (e) { alert("Error: " + e.message); }
+
+            document.getElementById('status').innerText = "🚀 ¡Empresa y licencia guardadas con éxito!";
+        } catch (e) { 
+            alert("Error al guardar: " + e.message); 
+        }
     });
 </script>
 
