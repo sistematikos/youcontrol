@@ -148,14 +148,14 @@ function renderizarCatalogo(lista) {
     const productosFiltrados = lista.filter(p => parseInt(p.stock || 0) > 0);
     
     const agrupados = productosFiltrados.reduce((acc, p) => {
-        const cod = (p.departamento || 'GENERAL').toUpperCase();
+        const cod = p.departamento || 'GENERAL';
         if (!acc[cod]) acc[cod] = [];
         acc[cod].push(p);
         return acc;
     }, {});
 
     contenedor.innerHTML = Object.keys(agrupados).sort().map((cod) => {
-        const nombreMostrado = mapaNombresDepto[cod] || cod;
+        const nombreMostrado = (mapaNombresDepto[cod] || cod).toUpperCase();
         const esAbierto = deptoAbierto === cod;
         
         // HTML de los productos (solo si está abierto)
@@ -195,7 +195,6 @@ window.abrirWhatsApp = function() {
     if (telefonoEmpresa && telefonoEmpresa !== "") {
         window.open(`https://wa.me/${telefonoEmpresa}`, '_blank');
     } else {
-        // Esto ayudará a depurar si el número no está llegando desde Firebase
         alert("El número de contacto aún se está cargando, por favor intenta en un segundo.");
     }
 };
