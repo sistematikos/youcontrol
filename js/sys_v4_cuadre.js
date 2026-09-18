@@ -1,6 +1,6 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * sys_v4_cuadre.js - Versión corregida y optimizada para el manejo de fechas locales
+ * sys_v4_cuadre.js - Versión corregida para zona horaria y extracción de hora de factura
  */
 
 import { db } from './firebase-config.js';
@@ -51,9 +51,28 @@ function procesarYMostrarCuadre(fechaSeleccionada) {
         t.pmovil += parseFloat(p.pago_movil_bs || 0);
         t.global += parseFloat(data.total_usd || 0);
 
-        // Pintar fila simplificada
+        // Obtener la hora de forma segura (si data.hora no existe, la saca de la fecha)
+        let horaFormateada = data.hora;
+        if (!horaFormateada || horaFormateada === '--:--') {
+            let dTemp;
+            if (data.fecha && typeof data.fecha.toDate === 'function') {
+                dTemp = data.fecha.toDate();
+            } else if (data.fecha) {
+                dTemp = new Date(data.fecha);
+            }
+            
+            if (dTemp && !isNaN(dTemp.getTime())) {
+                const hh = String(dTemp.getHours()).padStart(2, '0');
+                const min = String(dTemp.getMinutes()).padStart(2, '0');
+                horaFormateada = `${hh}:${min}`;
+            } else {
+                horaFormateada = '--:--';
+            }
+        }
+
+        // Pintar fila en la tabla con la hora corregida
         tablaCuerpo.innerHTML += `<tr>
-            <td><strong>${data.nro_factura || '---'}</strong><br><small>${data.hora || '--:--'}</small></td>
+            <td><strong>${data.nro_factura || '---'}</strong><br><small>${horaFormateada}</small></td>
             <td>${nombreCliente}</td>
             <td>$ ${parseFloat(data.total_usd || 0).toFixed(2)}</td>
             <td style="text-align:right;">Bs. ${(parseFloat(p.efectivo_bs||0) + parseFloat(p.punto_bs||0) + parseFloat(p.pago_movil_bs||0)).toFixed(2)}</td>
