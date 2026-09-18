@@ -106,7 +106,7 @@
             font-weight: 800;
         }
 
-        /* CONTENIDO PRINCIPAL - MODIFICADO A DISEÑO HORIZONTAL SUPERIOR/INFERIOR */
+        /* CONTENIDO PRINCIPAL */
         .main-layout {
             flex: 1;
             display: flex;
@@ -116,7 +116,7 @@
             gap: 15px;
         }
 
-        /* PANEL SUPERIOR: BÚSQUEDA Y CLIENTES EN HORIZONTAL */
+        /* PANEL SUPERIOR: BÚSQUEDA Y CLIENTES */
         .left-panel {
             display: flex;
             flex-direction: row;
@@ -213,10 +213,10 @@
         }
 
         .grid-productos-view {
-            display: none; /* Oculto o mantenido según requerimiento original para no romper dependencias */
+            display: none;
         }
 
-        /* PANEL INFERIOR: CARRITO HORIZONTAL A PANTALLA COMPLETA */
+        /* PANEL INFERIOR: CARRITO */
         .right-panel {
             flex: 1;
             background: white;
@@ -257,14 +257,37 @@
             margin-left: 3px;
         }
 
-        /* LISTA DEL CARRITO */
+        /* LISTA DEL CARRITO - DISEÑO DE UNA SOLA LÍNEA COMPACTA */
         .cart-items-container {
             flex: 1;
             overflow-y: auto;
-            padding: 10px 20px;
+            padding: 8px 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
         }
 
-        /* TOTALES DE VENTA Y BOTÓN DE PAGO ADAPTADOS A HORIZONTAL */
+        /* ESTILO PARA CADA ITEM EN UNA SOLA LÍNEA (Compatible con pos-core.js) */
+        .cart-items-container .carrito-item, 
+        .cart-items-container > div {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            background: #fdfdfd;
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            gap: 15px;
+        }
+
+        /* Ajustes internos para que los textos fluyan en línea horizontal */
+        .cart-items-container .carrito-item *, 
+        .cart-items-container > div * {
+            margin: 0 !important;
+        }
+
+        /* TOTALES DE VENTA Y BOTÓN DE PAGO */
         .cart-bottom-horizontal {
             display: flex;
             background: #f8fafc;
@@ -423,7 +446,6 @@
                     <div class="input-group-title">Búsqueda de Repuesto</div>
                     <div class="buscador-wrapper">
                         <input type="text" id="buscar-producto-pos" placeholder="Escriba artículo o código (F2)..." autocomplete="off">
-                        <!-- Contenedor flotante original requerido por pos-core.js -->
                         <div class="resultados-flotantes" id="resultados-producto-pos"></div>
                     </div>
                 </div>
@@ -431,7 +453,7 @@
             <div class="grid-productos-view" id="grid-productos"></div>
         </section>
 
-        <!-- SECCIÓN INFERIOR: CARRITO A PANTALLA COMPLETA HORIZONTAL -->
+        <!-- SECCIÓN INFERIOR: CARRITO HORIZONTAL -->
         <section class="right-panel">
             <div class="panel-section-header">
                 <div class="input-group-title" style="margin: 0;"><i class="fas fa-shopping-cart"></i> Artículos en Carro</div>
