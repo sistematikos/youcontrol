@@ -106,21 +106,22 @@
             font-weight: 800;
         }
 
-        /* CONTENIDO PRINCIPAL */
+        /* CONTENIDO PRINCIPAL - MODIFICADO A DISEÑO HORIZONTAL SUPERIOR/INFERIOR */
         .main-layout {
             flex: 1;
             display: flex;
+            flex-direction: column;
             overflow: hidden;
             padding: 15px;
             gap: 15px;
         }
 
-        /* COLUMNA IZQUIERDA */
+        /* PANEL SUPERIOR: BÚSQUEDA Y CLIENTES EN HORIZONTAL */
         .left-panel {
-            flex: 1.2;
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             gap: 15px;
+            width: 100%;
         }
 
         .search-box-container {
@@ -130,8 +131,14 @@
             border: 1px solid var(--border-color);
             box-shadow: 0 1px 3px rgba(0,0,0,0.02);
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             gap: 15px;
+            width: 100%;
+            align-items: center;
+        }
+
+        .search-box-container > div {
+            flex: 1;
         }
 
         .input-group-title {
@@ -206,16 +213,12 @@
         }
 
         .grid-productos-view {
-            flex: 1;
-            background: white;
-            border-radius: 10px;
-            border: 1px solid var(--border-color);
-            overflow-y: auto;
+            display: none; /* Oculto o mantenido según requerimiento original para no romper dependencias */
         }
 
-        /* COLUMNA DERECHA */
+        /* PANEL INFERIOR: CARRITO HORIZONTAL A PANTALLA COMPLETA */
         .right-panel {
-            flex: 1.8;
+            flex: 1;
             background: white;
             border-radius: 10px;
             border: 1px solid var(--border-color);
@@ -223,6 +226,7 @@
             flex-direction: column;
             box-shadow: 0 1px 3px rgba(0,0,0,0.02);
             overflow: hidden;
+            width: 100%;
         }
 
         .panel-section-header {
@@ -260,34 +264,46 @@
             padding: 10px 20px;
         }
 
-        /* TOTALES DE VENTA */
-        .totals-section {
+        /* TOTALES DE VENTA Y BOTÓN DE PAGO ADAPTADOS A HORIZONTAL */
+        .cart-bottom-horizontal {
+            display: flex;
             background: #f8fafc;
-            padding: 22px 20px;
-            text-align: center;
             border-top: 1px solid var(--border-color);
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .totals-section {
+            padding: 15px 25px;
+            text-align: left;
+            background: transparent;
+            border-top: none;
+            display: flex;
+            gap: 20px;
+            align-items: center;
         }
 
         .totals-section h2 {
-            font-size: 36px;
+            font-size: 28px;
             color: var(--primary-color);
             font-weight: 800;
         }
 
         .totals-section p {
-            font-size: 16px;
+            font-size: 15px;
             color: var(--text-muted);
             font-weight: 600;
-            margin-top: 4px;
+            margin-top: 0;
         }
 
         .btn-pay-action {
-            width: 100%;
+            height: 100%;
+            min-height: 60px;
             background: var(--primary-color);
             color: white;
             border: none;
-            padding: 16px;
-            font-size: 15px;
+            padding: 0 35px;
+            font-size: 16px;
             font-weight: 700;
             cursor: pointer;
             transition: background 0.2s;
@@ -388,6 +404,7 @@
     </header>
 
     <main class="main-layout">
+        <!-- SECCIÓN SUPERIOR: BÚSQUEDA Y CLIENTES -->
         <section class="left-panel">
             <div class="search-box-container">
                 <div>
@@ -414,21 +431,25 @@
             <div class="grid-productos-view" id="grid-productos"></div>
         </section>
 
+        <!-- SECCIÓN INFERIOR: CARRITO A PANTALLA COMPLETA HORIZONTAL -->
         <section class="right-panel">
             <div class="panel-section-header">
                 <div class="input-group-title" style="margin: 0;"><i class="fas fa-shopping-cart"></i> Artículos en Carro</div>
                 <button class="factura-live-badge" id="pos-nro-factura-badge">
-                   <span id="factura-display">000000</span>
+                    <span id="factura-display">000000</span>
                 </button>
             </div> 
             <div class="cart-items-container" id="lista-carrito"></div>
             
-            <div class="totals-section">
-                <h2 id="total-usd">$ 0.00</h2>
-                <p id="total-bs">0,00 Bs.</p>
+            <div class="cart-bottom-horizontal">
+                <div class="totals-section">
+                    <div>
+                        <h2 id="total-usd">$ 0.00</h2>
+                        <p id="total-bs">0,00 Bs.</p>
+                    </div>
+                </div>
+                <button class="btn-pay-action" onclick="window.abrirModalCobro()">PAGAR [F9]</button>
             </div>
-            
-            <button class="btn-pay-action" onclick="window.abrirModalCobro()">PAGAR [F9]</button>
         </section>
     </main>
 
@@ -451,7 +472,7 @@
                     <div class="form-group"><label>Divisas ($)</label><input type="number" id="in-divisas-usd" value="0" step="any"></div>
                     <div class="form-group" style="grid-column: span 2;"><label style="color: #d97706;">Crédito ($)</label><input type="number" id="in-credito-usd" value="0" step="any" style="border-color: #f59e0b;"></div>
                 </div>
-                <button id="btn-confirmar-venta" class="btn-pay-action" style="margin-top: 25px; border-radius: 8px;" onclick="window.registrarVenta()">CONFIRMAR VENTA</button>            
+                <button id="btn-confirmar-venta" class="btn-pay-action" style="margin-top: 25px; border-radius: 8px; width: 100%; min-height: unset; padding: 16px;" onclick="window.registrarVenta()">CONFIRMAR VENTA</button>            
             </div>
         </div>
     </div>
