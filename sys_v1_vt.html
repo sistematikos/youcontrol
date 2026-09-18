@@ -267,7 +267,6 @@
             gap: 6px;
         }
 
-        /* ESTILO PARA CADA ITEM EN UNA SOLA LÍNEA (Compatible con pos-core.js) */
         .cart-items-container .carrito-item, 
         .cart-items-container > div {
             display: flex !important;
@@ -281,13 +280,12 @@
             gap: 15px;
         }
 
-        /* Ajustes internos para que los textos fluyan en línea horizontal */
         .cart-items-container .carrito-item *, 
         .cart-items-container > div * {
             margin: 0 !important;
         }
 
-        /* TOTALES DE VENTA Y BOTÓN DE PAGO */
+        /* TOTALES DE VENTA Y BOTÓN DE PAGO (BOTÓN IZQUIERDA, TOTALES DERECHA) */
         .cart-bottom-horizontal {
             display: flex;
             background: #f8fafc;
@@ -298,12 +296,14 @@
 
         .totals-section {
             padding: 15px 25px;
-            text-align: left;
+            text-align: right; /* Alineado a la derecha para mejor estética */
             background: transparent;
             border-top: none;
             display: flex;
             gap: 20px;
             align-items: center;
+            justify-content: flex-end;
+            flex: 1;
         }
 
         .totals-section h2 {
@@ -453,7 +453,7 @@
             <div class="grid-productos-view" id="grid-productos"></div>
         </section>
 
-        <!-- SECCIÓN INFERIOR: CARRITO HORIZONTAL -->
+        <!-- SECCIÓN INFERIOR: CARRITO HORIZONTAL (BOTÓN IZQUIERDA, TOTALES DERECHA) -->
         <section class="right-panel">
             <div class="panel-section-header">
                 <div class="input-group-title" style="margin: 0;"><i class="fas fa-shopping-cart"></i> Artículos en Carro</div>
@@ -464,13 +464,16 @@
             <div class="cart-items-container" id="lista-carrito"></div>
             
             <div class="cart-bottom-horizontal">
+                <!-- Botón de Pagar movido a la Izquierda -->
+                <button class="btn-pay-action" onclick="window.abrirModalCobro()">PAGAR [F9]</button>
+                
+                <!-- Totales movidos a la Derecha -->
                 <div class="totals-section">
                     <div>
                         <h2 id="total-usd">$ 0.00</h2>
                         <p id="total-bs">0,00 Bs.</p>
                     </div>
                 </div>
-                <button class="btn-pay-action" onclick="window.abrirModalCobro()">PAGAR [F9]</button>
             </div>
         </section>
     </main>
