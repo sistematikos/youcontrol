@@ -122,7 +122,6 @@ window.registrarVenta = async () => {
 
         await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
 
-        // Registro exacto en cuentas por cobrar con la estructura original que esperas visualizar
         if (montoCreditoUSD > 0 && ventaData.cliente_id !== "anonimo") {
             await addDoc(collection(db, "usuarios", USER_ID, "cuentas_por_cobrar"), {
                 cliente_id: ventaData.cliente_id,
@@ -147,11 +146,13 @@ window.registrarVenta = async () => {
         carrito = [];
         window.clienteSeleccionadoID = null;
         window.nombreClienteSeleccionado = null;
-        document.getElementById('modalPago').style.display = 'none';
+        const modalPago = document.getElementById('modalPago');
+        if (modalPago) modalPago.style.display = 'none';
         window.actualizarCarritoUI();
         
         const siguiente = (parseInt(nroFactura) + 1).toString().padStart(6, '0');
-        document.getElementById('factura-display').innerText = `FACTURA: ${siguiente}`;
+        const facturaDisplay = document.getElementById('factura-display');
+        if (facturaDisplay) facturaDisplay.innerText = `FACTURA: ${siguiente}`;
 
     } catch (error) {
         console.error("Error al guardar:", error);
@@ -166,16 +167,19 @@ window.seleccionarCliente = (id, nombre) => {
     if (divRes) divRes.style.display = 'none';
     window.clienteSeleccionadoID = id; 
     window.nombreClienteSeleccionado = nombre;
-    document.getElementById('buscar-producto-pos')?.focus();
+    const inputProd = document.getElementById('buscar-producto-pos');
+    if (inputProd) inputProd.focus();
 };
 
 window.seleccionarProducto = (id) => {
     window.agregarCarrito(id);
     const inputProd = document.getElementById('buscar-producto-pos');
-    if (inputProd) inputProd.value = '';
+    if (inputProd) {
+        inputProd.value = '';
+        inputProd.focus();
+    }
     const divRes = document.getElementById('resultados-producto-pos');
     if (divRes) divRes.style.display = 'none';
-    inputProd?.focus();
 };
 
 window.manejarNavegacion = (e, contenedorId, indiceVar) => {
@@ -188,7 +192,7 @@ window.manejarNavegacion = (e, contenedorId, indiceVar) => {
     else if (e.key === 'Enter') { e.preventDefault(); if (items[indiceVar]) items[indiceVar].click(); return -1; }
     else return indiceVar;
     items.forEach((it, i) => it.classList.toggle('seleccionado', i === indiceVar));
-    items[indiceVar].scrollIntoView({ block: 'nearest' });
+    if (items[indiceVar]) items[indiceVar].scrollIntoView({ block: 'nearest' });
     return indiceVar;
 };
 
@@ -220,6 +224,7 @@ function initBuscadores() {
         const divRes = document.getElementById('resultados-cliente-pos');
         if (!divRes) return;
 
+        window.indiceClie = -1;
         if (texto === "") {
             divRes.style.display = 'none';
             return;
@@ -235,11 +240,16 @@ function initBuscadores() {
         }
     });
 
+    inputCliente?.addEventListener('keydown', (e) => {
+        window.indiceClie = window.manejarNavegacion(e, 'resultados-cliente-pos', window.indiceClie);
+    });
+
     inputProd?.addEventListener('input', (e) => {
         const texto = e.target.value.trim();
         const divRes = document.getElementById('resultados-producto-pos');
         if (!divRes) return;
 
+        window.indiceProd = -1;
         if (texto === "") {
             divRes.style.display = 'none';
             return;
@@ -254,6 +264,10 @@ function initBuscadores() {
             divRes.innerHTML = `<div style="padding: 10px; color: #64748b;">Sin resultados</div>`;
         }
     });
+
+    inputProd?.addEventListener('keydown', (e) => {
+        window.indiceProd = window.manejarNavegacion(e, 'resultados-producto-pos', window.indiceProd);
+    });
 }
 
 function initLogicaPagos() {
@@ -261,7 +275,6 @@ function initLogicaPagos() {
     const inputDivisas = document.getElementById('in-divisas-usd');
     const inputCredito = document.getElementById('in-credito-usd');
 
-    // 1. Clic en los métodos en Bolívares (Punto, Pago Móvil, Efectivo Bs)
     camposBs.forEach(id => {
         document.getElementById(id)?.addEventListener('click', () => {
             const el = document.getElementById(id);
@@ -277,7 +290,6 @@ function initLogicaPagos() {
         });
     });
 
-    // 2. Clic en el método de Divisas USD
     inputDivisas?.addEventListener('click', () => {
         const totalBs = (window.totalVentaUSD || 0) * tasaActual;
         const valorCreditoBs = (parseFloat(inputCredito?.value) || 0) * tasaActual;
@@ -287,7 +299,6 @@ function initLogicaPagos() {
         inputDivisas.value = (pendienteBs / tasaActual > 0 ? (pendienteBs / tasaActual) : 0).toFixed(2);
     });
 
-    // 3. Clic en el método de Crédito USD
     inputCredito?.addEventListener('click', () => {
         const totalUSD = window.totalVentaUSD || 0;
         const sumBs = camposBs.reduce((acc, cId) => acc + (parseFloat(document.getElementById(cId)?.value) || 0), 0);
@@ -300,10 +311,33 @@ function initLogicaPagos() {
     });
 }
 
+// --- ACTUALIZAR CARRITO UI EN UNA SOLA LÍNEA CON PRECIO EN BS ---
 window.actualizarCarritoUI = () => {
     const contenedor = document.getElementById('lista-carrito');
     if (!contenedor) return;
-    contenedor.innerHTML = carrito.map(item => `<div style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between;"><div><strong>${item.nombre}</strong><br><small>${item.cantidad} x $${item.precio || 0}</small></div><div>$${(item.cantidad * (item.precio || 0)).toFixed(2)}</div></div>`).join('');
+
+    contenedor.innerHTML = carrito.map(item => {
+        const precioUnitUSD = item.precio || 0;
+        const subtotalUSD = item.cantidad * precioUnitUSD;
+        const subtotalBs = subtotalUSD * tasaActual;
+
+        return `
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #fdfdfd; border: 1px solid #e2e8f0; padding: 8px 12px; border-radius: 6px; font-size: 13px; gap: 15px; margin-bottom: 6px;">
+                <div style="display: flex; align-items: center; gap: 10px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1;">
+                    <span style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 11px;">${item.cantidad}x</span>
+                    <strong style="color: #1e293b; overflow: hidden; text-overflow: ellipsis;" title="${item.nombre}">${item.nombre}</strong>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px; white-space: nowrap;">
+                    <span style="color: #64748b; font-size: 12px;">($${precioUnitUSD.toFixed(2)} c/u)</span>
+                    <div style="text-align: right; display: flex; flex-direction: column; line-height: 1.2;">
+                        <strong style="color: #006aff; font-size: 13px;">$ ${subtotalUSD.toFixed(2)}</strong>
+                        <small style="color: #64748b; font-size: 11px; font-weight: 600;">${subtotalBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})} Bs.</small>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
     const totalUSD = carrito.reduce((sum, item) => sum + (item.cantidad * (item.precio || 0)), 0);
     window.totalVentaUSD = totalUSD;
     if(document.getElementById('total-usd')) document.getElementById('total-usd').innerText = `$ ${totalUSD.toFixed(2)}`;
