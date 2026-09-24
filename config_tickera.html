@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOU CONTROL - Configuración de Ticket</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #006aff;
+            --primary-hover: #0056d4;
+            --bg-main: #f8fafc;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-dark);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* NAVBAR SUPERIOR */
+        .navbar {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-menu-top {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: background 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-menu-top:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* CONTENIDO PRINCIPAL */
+        .main-layout {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .config-card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 600px;
+            overflow: hidden;
+        }
+
+        .config-header {
+            background: #1e293b;
+            color: white;
+            padding: 18px 25px;
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .config-body {
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group select, 
+        .form-group input, 
+        .form-group textarea {
+            padding: 12px;
+            border: 1.5px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+            background: #fff;
+            color: var(--text-dark);
+        }
+
+        .form-group select:focus, 
+        .form-group input:focus, 
+        .form-group textarea:focus {
+            border-color: var(--primary-color);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #f8fafc;
+            padding: 14px;
+            border-radius: 8px;
+            border: 1.5px solid var(--border-color);
+            cursor: pointer;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary-color);
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dark);
+            text-transform: none;
+            cursor: pointer;
+            margin: 0;
+        }
+
+        .btn-save {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .btn-save:hover {
+            background: var(--primary-hover);
+        }
+    </style>
+
+    <script>
+        function irAlMenu(e) {
+            e.preventDefault();
+            window.location.href = 'sys_v1_menu.html?refresh=' + new Date().getTime();
+        }
+    </script>
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="navbar-brand">
+            <a href="#" class="btn-menu-top" onclick="irAlMenu(event)">
+                <i class="fas fa-arrow-left"></i> Menú
+            </a>
+            <span>YOU CONTROL - CONFIGURACIÓN DE TICKERA</span>
+        </div>
+    </header>
+
+    <main class="main-layout">
+        <div class="config-card">
+            <div class="config-header">
+                <i class="fas fa-print"></i> Parámetros de Impresión Térmica
+            </div>
+            <div class="config-body">
+                
+                <!-- Activar Impresión Automática -->
+                <div class="checkbox-group" onclick="document.getElementById('chk-imprimir-auto').click()">
+                    <input type="checkbox" id="chk-imprimir-auto" onclick="event.stopPropagation()">
+                    <div>
+                        <label for="chk-imprimir-auto">Imprimir ticket automáticamente al cobrar</label>
+                        <p style="font-size: 12px; color: var(--text-muted); font-weight: normal; margin-top: 2px;">Se abrirá el diálogo de impresión del navegador de forma directa al registrar la venta.</p>
+                    </div>
+                </div>
+
+                <!-- Ancho de Papel -->
+                <div class="form-group">
+                    <label><i class="fas fa-ruler-horizontal"></i> Ancho del Papel de la Impresora</label>
+                    <select id="sel-ancho-papel">
+                        <option value="80">80 mm (Estándar / Ancho)</option>
+                        <option value="58">58 mm o 54 mm (Compacta / Pequeña)</option>
+                    </select>
+                </div>
+
+                <!-- Pie de Página del Ticket -->
+                <div class="form-group">
+                    <label><i class="fas fa-comment-alt"></i> Mensaje de Pie de Página (Despedida)</label>
+                    <textarea id="txt-pie-pagina" rows="3" placeholder="Ej: ¡Gracias por su compra! / No se aceptan devoluciones sin factura."></textarea>
+                </div>
+
+                <!-- Botón Guardar -->
+                <button class="btn-save" id="btn-guardar-config">
+                    <i class="fas fa-save"></i> Guardar Configuración
+                </button>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Lógica de Firebase para Cargar y Guardar -->
+    <script type="module">
+        import { db } from './js/firebase-config.js';
+        import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const USER_ID = localStorage.getItem('youcontrol_empresa_id');
+
+        async function cargarConfiguracion() {
+            if (!USER_ID) return;
+            try {
+                const docRef = doc(db, "usuarios", USER_ID);
+                const snap = await getDoc(docRef);
+                if (snap.exists()) {
+                    const data = snap.data();
+                    if (data.config_ticket) {
+                        document.getElementById('chk-imprimir-auto').checked = !!data.config_ticket.imprimir_automatico;
+                        document.getElementById('sel-ancho-papel').value = data.config_ticket.ancho_mm || "80";
+                        document.getElementById('txt-pie-pagina').value = data.config_ticket.pie_pagina || "";
+                    }
+                }
+            } catch (err) {
+                console.error("Error al cargar la configuración de ticket:", err);
+            }
+        }
+
+        document.getElementById('btn-guardar-config').addEventListener('click', async () => {
+            if (!USER_ID) {
+                alert("Error: No se encontró el ID de la empresa en la sesión.");
+                return;
+            }
+
+            const imprimirAuto = document.getElementById('chk-imprimir-auto').checked;
+            const anchoPapel = document.getElementById('sel-ancho-papel').value;
+            const piePagina = document.getElementById('txt-pie-pagina').value.trim();
+
+            const btn = document.getElementById('btn-guardar-config');
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Guardando...`;
+            btn.disabled = true;
+
+            try {
+                const docRef = doc(db, "usuarios", USER_ID);
+                await updateDoc(docRef, {
+                    config_ticket: {
+                        imprimir_automatico: imprimirAuto,
+                        ancho_mm: anchoPapel,
+                        pie_pagina: piePagina
+                    }
+                });
+                alert("¡Configuración de tickera guardada exitosamente!");
+            } catch (err) {
+                console.error("Error al guardar:", err);
+                alert("Hubo un error al guardar la configuración.");
+            } finally {
+                btn.innerHTML = `<i class="fas fa-save"></i> Guardar Configuración`;
+                btn.disabled = false;
+            }
+        });
+
+        // Ejecutar carga al iniciar
+        cargarConfiguracion();
+    </script>
+</body>
+</html>
