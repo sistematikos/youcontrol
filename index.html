@@ -12,19 +12,17 @@
         textarea { width: 100%; height: 100px; padding: 12px; margin: 15px 0; border: 2px solid #E2E8F0; border-radius: 12px; box-sizing: border-box; resize: none; font-family: monospace; }
         button { width: 100%; padding: 15px; background: #002D72; color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; margin-top: 10px; }
         button:hover { background: #0052D4; }
-        .btn-secundario { background: #64748B; }
-        .btn-secundario:hover { background: #475569; }
     </style>
 
     <script>
-        // Capta el evento globalmente antes de que se monte el módulo
+        // Capta el evento de instalación nativo globalmente al cargar la página
         window.deferredPrompt = null;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             window.deferredPrompt = e;
         });
 
-        // 1. VALIDACIÓN AUTOMÁTICA AL CARGAR
+        // 1. VALIDACIÓN AUTOMÁTICA DE SESIÓN PREVIA
         document.addEventListener('DOMContentLoaded', () => {
             const licenciaValidada = localStorage.getItem('licencia_validada');
             const empresaID = localStorage.getItem('youcontrol_empresa_id');
@@ -34,6 +32,7 @@
             }
         });
 
+        // REGISTRO DEL SERVICE WORKER
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW error', err));
@@ -85,19 +84,19 @@
                     });
                 }
 
-                // Guardar credenciales de sesión
+                // Guardar credenciales de sesión en el almacenamiento local
                 localStorage.setItem('youcontrol_empresa_id', data.activation_id);
                 localStorage.setItem('licencia_validada', 'true');
 
-                // --- INTENTO DE INSTALACIÓN AUTOMÁTICA ---
+                // --- DISPARAR INSTALACIÓN AUTOMÁTICA DE LA PWA ---
                 if (window.deferredPrompt) {
                     window.deferredPrompt.prompt();
-                    const { outcome } = await window.deferredPrompt.userChoice;
+                    await window.deferredPrompt.userChoice;
                     window.deferredPrompt = null;
                 }
-                
-                // Redirección inmediata tras la acción de instalación
-                window.location.href = 'sys_v1_menu.html';
+
+                // Ir al menú principal tras la activación/instalación
+                window.location.replace('sys_v1_menu.html');
                 
             } catch (e) {
                 console.error(e);
