@@ -17,8 +17,14 @@
     </style>
 
     <script>
-        // --- 1. VALIDACIÓN AUTOMÁTICA AL CARGAR ---
-        // Si ya está validado y existe el ID, evitamos mostrar la pantalla de licencia y pasamos al menú
+        // Capta el evento globalmente antes de que se monte el módulo
+        window.deferredPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            window.deferredPrompt = e;
+        });
+
+        // 1. VALIDACIÓN AUTOMÁTICA AL CARGAR
         document.addEventListener('DOMContentLoaded', () => {
             const licenciaValidada = localStorage.getItem('licencia_validada');
             const empresaID = localStorage.getItem('youcontrol_empresa_id');
@@ -48,12 +54,6 @@
     <script type="module">
         import { db } from './js/firebase-config.js';
         import { doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-        window.deferredPrompt = null;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            window.deferredPrompt = e;
-        });
 
         const getHardwareID = () => btoa(navigator.userAgent + navigator.language);
 
@@ -85,34 +85,19 @@
                     });
                 }
 
-                // Guardar credenciales de sesión persistentes
+                // Guardar credenciales de sesión
                 localStorage.setItem('youcontrol_empresa_id', data.activation_id);
                 localStorage.setItem('licencia_validada', 'true');
-                
-                // Pantalla de éxito con opción de instalar o entrar directo
-                document.body.innerHTML = `
-                    <div style="background:white; padding:40px; border-radius:20px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.2); max-width:350px; width: 90%;">
-                        <img src="img/logo.png" style="width: 120px; margin-bottom: 20px;" alt="Logo">
-                        <h2 style="color:#002D72;">¡Sistema Activado!</h2>
-                        <p style="color:#64748b; margin-bottom:25px;">Puedes instalar la aplicación o ingresar directamente al menú.</p>
-                        
-                        <button id="btnInstalar" style="width:100%; padding:15px; background:#10B981; color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer; margin-bottom: 10px;">
-                            INSTALAR APLICACIÓN
-                        </button>
-                        <button onclick="window.location.href='sys_v1_menu.html'" style="width:100%; padding:12px; background:#64748B; color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">
-                            ENTRAR AL MENÚ
-                        </button>
-                    </div>
-                `;
 
-                document.getElementById('btnInstalar').addEventListener('click', async () => {
-                    if (window.deferredPrompt) {
-                        window.deferredPrompt.prompt();
-                        const { outcome } = await window.deferredPrompt.userChoice;
-                        window.deferredPrompt = null;
-                    }
-                    window.location.href = 'sys_v1_menu.html';
-                });
+                // --- INTENTO DE INSTALACIÓN AUTOMÁTICA ---
+                if (window.deferredPrompt) {
+                    window.deferredPrompt.prompt();
+                    const { outcome } = await window.deferredPrompt.userChoice;
+                    window.deferredPrompt = null;
+                }
+                
+                // Redirección inmediata tras la acción de instalación
+                window.location.href = 'sys_v1_menu.html';
                 
             } catch (e) {
                 console.error(e);
