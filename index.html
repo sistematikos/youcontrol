@@ -57,52 +57,94 @@
         const getHardwareID = () => btoa(navigator.userAgent + navigator.language);
 
         window.procesarActivacion = async () => {
-            const rawToken = document.getElementById('tokenInput').value.trim();
-            if (!rawToken) return alert("Pega el código primero.");
-            
-            try {
-                const data = JSON.parse(atob(rawToken));
-                const hwID = getHardwareID();
-                const docRef = doc(db, "licencias", data.activation_id);
-                const snap = await getDoc(docRef);
+    const rawToken = document.getElementById('tokenInput').value.trim();
+    if (!rawToken) return alert("Pega el código primero.");
+    
+    try {
+        const data = JSON.parse(atob(rawToken));
+        const hwID = getHardwareID();
+        const activationId = data.activation_id;
 
-                if (snap.exists()) {
-                    const dbData = snap.data();
-                    const equipos = Array.isArray(dbData.equipos) ? dbData.equipos : [];
-                    if (!equipos.includes(hwID) && equipos.length >= dbData.limite) {
-                        return alert("Error: Límite de dispositivos alcanzado.");
-                    }
-                    if (!equipos.includes(hwID)) {
-                        await updateDoc(docRef, { equipos: [...equipos, hwID] });
-                    }
-                } else {
-                    await setDoc(docRef, { 
-                        cliente: data.n, 
-                        limite: data.l, 
-                        equipos: [hwID], 
-                        fecha_registro: new Date().toISOString() 
-                    });
-                }
+        // Referencias a los documentos en ambas colecciones
+        const licenciaRef = doc(db, "licencias", activationId);
+        const empresaRef = doc(db, "empresas_config", activationId);
 
-                // Guardar credenciales de sesión en el almacenamiento local
-                localStorage.setItem('youcontrol_empresa_id', data.activation_id);
-                localStorage.setItem('licencia_validada', 'true');
+        // Obtener ambos documentos simultáneamente
+        const [snapLicencia, snapEmpresa] = await Promise.all([
+            getDoc(licenciaRef),
+            getDoc(empresaRef)
+        ]);
 
-                // --- DISPARAR INSTALACIÓN AUTOMÁTICA DE LA PWA ---
-                if (window.deferredPrompt) {
-                    window.deferredPrompt.prompt();
-                    await window.deferredPrompt.userChoice;
-                    window.deferredPrompt = null;
-                }
+        // --- 1. PROCESAR COLECCIÓN: LICENCIAS ---
+        let equiposLicencia = [];
+        let limiteLicencia = data.l || 1;
 
-                // Ir al menú principal tras la activación/instalación
-                window.location.replace('sys_v1_menu.html');
-                
-            } catch (e) {
-                console.error(e);
-                alert("Código de licencia inválido o mal formado.");
+        if (snapLicencia.exists()) {
+            const dbData = snapLicencia.data();
+            equiposLicencia = Array.isArray(dbData.equipos) ? dbData.equipos : [];
+            limiteLicencia = dbData.limite || limiteLicencia;
+
+            if (!equiposLicencia.includes(hwID) && equiposLicencia.length >= limiteLicencia) {
+                return alert("Error: Límite de dispositivos alcanzado en la licencia.");
             }
-        };
+
+            if (!equiposLicencia.includes(hwID)) {
+                equiposLicencia.push(hwID);
+                await updateDoc(licenciaRef, { equipos: equiposLicencia });
+            }
+        } else {
+            equiposLicencia = [hwID];
+            await setDoc(licenciaRef, { 
+                cliente: data.n || "", 
+                limite: limiteLicencia, 
+                equipos: equiposLicencia, 
+                fecha_registro: new Date().toISOString() 
+            });
+        }
+
+        // --- 2. PROCESAR COLECCIÓN: EMPRESAS_CONFIG ---
+        if (snapEmpresa.exists()) {
+            const dbEmpresa = snapEmpresa.data();
+            const equiposEmpresa = Array.isArray(dbEmpresa.equipos) ? dbEmpresa.equipos : [];
+            if (!equiposEmpresa.includes(hwID)) {
+                await updateDoc(empresaRef, { 
+                    equipos: [...equiposEmpresa, hwID],
+                    licencia_token: rawToken
+                });
+            }
+        } else {
+            await setDoc(empresaRef, { 
+                nombre: data.n || "",
+                rif: data.rif || "",
+                email: data.email || "",
+                telefono: data.tel || "",
+                direccion: data.dir || "",
+                logoUrl: data.logoUrl || "img/logo.png",
+                limite_equipos: limiteLicencia, 
+                equipos: [hwID], 
+                licencia_token: rawToken,
+                timestamp: new Date().toISOString() 
+            });
+        }
+
+        // --- 3. GUARDAR CREDENCIALES LOCALES Y DISPARAR PWA ---
+        localStorage.setItem('youcontrol_empresa_id', activationId);
+        localStorage.setItem('licencia_validada', 'true');
+
+        if (window.deferredPrompt) {
+            window.deferredPrompt.prompt();
+            await window.deferredPrompt.userChoice;
+            window.deferredPrompt = null;
+        }
+
+        // Redirigir al menú principal
+        window.location.replace('sys_v1_menu.html');
+        
+    } catch (e) {
+        console.error("Error al procesar activación:", e);
+        alert("Código de licencia inválido o error en la base de datos.");
+    }
+};
     </script>
 </body>
 </html>
