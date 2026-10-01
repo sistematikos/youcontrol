@@ -1,165 +1,147 @@
-/**
- * Módulo de Operaciones de Inventario - YOU CONTROL
- * Filtrado estricto por Usuario Autenticado
- */
-
-import { auth, db } from './firebase_config.js'; // Ajusta la ruta a tu config de Firebase
+import { auth, db } from './firebase_config.js'; // Ajusta a tu archivo de configuración
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// Estado global aislado
-let productosBD = [];
-let productoSeleccionado = null;
-let usuarioActual = null;
+let listaProductos = [];
 
-// Elementos DOM
-const buscadorInput = document.getElementById('buscador-prod-inv');
+const inputBuscador = document.getElementById('buscador-prod-inv');
 const listaResultados = document.getElementById('lista-resultados-inv');
 
-const campoSku = document.getElementById('inv-sku');
-const campoNombre = document.getElementById('inv-nombre');
-const campoStockActual = document.getElementById('inv-stock-actual');
-const campoCantidad = document.getElementById('inv-cantidad');
-const campoTipoOp = document.getElementById('inv-tipo-op');
-const campoConcepto = document.getElementById('inv-concepto');
+// 1. Escuchar la sesión de Firebase
+onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+        console.warn("No hay usuario autenticado.");
+        window.location.href = 'index.html';
+        return;
+    }
 
-// Escuchar cambios de estado de sesión
-document.addEventListener('DOMContentLoaded', () => {
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            usuarioActual = user;
-            // Limpiar catálogo previo inmediatamente antes de cargar el del nuevo usuario
-            productosBD = [];
-            cargarCatalogoProductos(user.uid);
-        } else {
-            // Si no hay sesión activa, redirigir al login y limpiar todo
-            usuarioActual = null;
-            productosBD = [];
-            window.location.href = 'index.html';
-        }
-    });
-
-    configurarBuscador();
-    configurarAtajosTeclado();
+    console.log("Usuario autenticado UID:", user.uid);
+    await cargarProductos(user.uid);
 });
 
-/**
- * Carga EXCLUSIVAMENTE los productos del usuario que inició sesión
- * @param {string} userId - UID del usuario autenticado
- */
-async function cargarCatalogoProductos(userId) {
+// 2. Cargar los productos guardados en Firebase
+async function cargarProductos(uid) {
     try {
-        productosBD = []; // Garantiza que no se conserven productos de otros usuarios
-
-        // Consulta filtrada por userId
-        const q = query(collection(db, "productos"), where("userId", "==", userId));
+        listaProductos = [];
+        
+        // Consultar productos del usuario
+        // Si no usas campo 'userId', puedes usar: collection(db, "productos")
+        const q = query(collection(db, "productos"), where("userId", "==", uid));
         const querySnapshot = await getDocs(q);
 
         querySnapshot.forEach((doc) => {
-            productosBD.push({
+            const data = doc.data();
+            listaProductos.push({
                 id: doc.id,
-                ...doc.data()
+                // Mapeo flexible por si varían los nombres de campos guardados
+                sku: data.sku || data.codigo || data.id || '',
+                nombre: data.nombre || data.descripcion || data.producto || 'Sin Nombre',
+                barras: data.barras || data.codigoBarras || '',
+                stock: data.stock !== undefined ? data.stock : (data.existencia || 0)
             });
         });
 
-        console.log(`Catálogo cargado correctamente: ${productosBD.length} productos para el usuario ${userId}`);
+        console.log("Productos cargados exitosamente:", listaProductos);
     } catch (error) {
-        console.error("Error al cargar los productos del usuario:", error);
+        console.error("Error leyendo Firebase:", error);
+        
+        // Respaldo: Si falla la consulta filtrada, intenta traer la colección directa
+        try {
+            const snap = await getDocs(collection(db, "productos"));
+            listaProductos = [];
+            snap.forEach(doc => {
+                const data = doc.data();
+                listaProductos.push({
+                    id: doc.id,
+                    sku: data.sku || data.codigo || doc.id,
+                    nombre: data.nombre || data.descripcion || 'Sin Nombre',
+                    barras: data.barras || '',
+                    stock: data.stock ?? 0
+                });
+            });
+            console.log("Cargado por respaldo general:", listaProductos);
+        } catch (e) {
+            console.error("Fallo total al cargar productos:", e);
+        }
     }
 }
 
-/**
- * Configura los eventos del buscador
- */
-function configurarBuscador() {
-    if (!buscadorInput || !listaResultados) return;
+// 3. Filtrar en tiempo real al escribir
+if (inputBuscador) {
+    inputBuscador.addEventListener('input', (e) => {
+        const texto = e.target.value.trim().toLowerCase();
 
-    buscadorInput.addEventListener('input', (e) => {
-        const queryTexto = e.target.value.trim().toLowerCase();
-
-        if (queryTexto.length === 0) {
-            ocultarResultados();
+        if (texto === '') {
+            ocultarLista();
             return;
         }
 
-        // Filtra solo sobre el arreglo previamente validado para este usuario
-        const filtrados = productosBD.filter(p => {
-            const sku = (p.sku || p.id || '').toLowerCase();
-            const nombre = (p.nombre || p.descripcion || '').toLowerCase();
-            const barras = (p.barras || p.codigoBarras || '').toLowerCase();
+        const resultados = listaProductos.filter(p => 
+            p.nombre.toLowerCase().includes(texto) ||
+            p.sku.toLowerCase().includes(texto) ||
+            p.barras.toLowerCase().includes(texto)
+        );
 
-            return sku.includes(queryTexto) || nombre.includes(queryTexto) || barras.includes(queryTexto);
-        });
-
-        renderizarResultados(filtrados);
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!buscadorInput.contains(e.target) && !listaResultados.contains(e.target)) {
-            ocultarResultados();
-        }
+        mostrarLista(resultados);
     });
 }
 
-/**
- * Renderiza la lista flotante
- */
-function renderizarResultados(resultados) {
+// 4. Renderizar el menú flotante
+function mostrarLista(items) {
+    if (!listaResultados) return;
     listaResultados.innerHTML = '';
 
-    if (resultados.length === 0) {
-        listaResultados.innerHTML = `
-            <div class="item-res-inv" style="cursor: default; color: #94A3B8;">
-                <small>No se encontraron coincidencias en tu catálogo</small>
-            </div>
-        `;
+    if (items.length === 0) {
+        listaResultados.innerHTML = `<div class="item-res-inv" style="color:#94A3B8;"><small>No hay coincidencias</small></div>`;
         listaResultados.style.display = 'block';
         return;
     }
 
-    resultados.slice(0, 10).forEach(p => {
-        const item = document.createElement('div');
-        item.className = 'item-res-inv';
-        item.innerHTML = `
-            <strong>${p.nombre || p.descripcion}</strong><br>
-            <small>SKU: ${p.sku || p.id} | Stock Actual: ${p.stock ?? 0}</small>
+    items.slice(0, 10).forEach(prod => {
+        const div = document.createElement('div');
+        div.className = 'item-res-inv';
+        div.innerHTML = `
+            <strong>${prod.nombre}</strong><br>
+            <small>SKU: ${prod.sku} | Stock: ${prod.stock}</small>
         `;
 
-        item.addEventListener('pointerdown', (e) => {
+        // Usar pointerdown evita que se pierda el clic al hacer foco fuera
+        div.addEventListener('pointerdown', (e) => {
             e.preventDefault();
-            seleccionarProducto(p);
+            seleccionar(prod);
         });
 
-        listaResultados.appendChild(item);
+        listaResultados.appendChild(div);
     });
 
     listaResultados.style.display = 'block';
 }
 
-function seleccionarProducto(producto) {
-    productoSeleccionado = producto;
+// 5. Asignar el producto elegido a los campos
+function seleccionar(prod) {
+    inputBuscador.value = prod.nombre;
+    
+    const campoSku = document.getElementById('inv-sku');
+    const campoNombre = document.getElementById('inv-nombre');
+    const campoStock = document.getElementById('inv-stock-actual');
 
-    buscadorInput.value = producto.nombre || producto.descripcion;
-    campoSku.value = producto.sku || producto.id;
-    campoNombre.value = producto.nombre || producto.descripcion;
-    campoStockActual.value = producto.stock ?? 0;
+    if (campoSku) campoSku.value = prod.sku;
+    if (campoNombre) campoNombre.value = prod.nombre;
+    if (campoStock) campoStock.value = prod.stock;
 
-    ocultarResultados();
-    if (campoCantidad) campoCantidad.focus();
+    ocultarLista();
 }
 
-function ocultarResultados() {
-    listaResultados.style.display = 'none';
-    listaResultados.innerHTML = '';
+function ocultarLista() {
+    if (listaResultados) {
+        listaResultados.style.display = 'none';
+        listaResultados.innerHTML = '';
+    }
 }
 
-function configurarAtajosTeclado() {
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'F9') {
-            e.preventDefault();
-            if (window.procesarOperacionInventario) {
-                window.procesarOperacionInventario();
-            }
-        }
-    });
-}
+// Ocultar si hace clic en cualquier otra parte de la pantalla
+document.addEventListener('click', (e) => {
+    if (inputBuscador && !inputBuscador.contains(e.target) && listaResultados && !listaResultados.contains(e.target)) {
+        ocultarLista();
+    }
+});
