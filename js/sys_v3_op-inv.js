@@ -23,6 +23,9 @@ const inputNombre = document.getElementById('inv-nombre');
 const inputStockActual = document.getElementById('inv-stock-actual');
 const inputCantidad = document.getElementById('inv-cantidad');
 
+// Helper para limpiar espacios y texto
+const normalizar = (texto) => String(texto || '').trim().toLowerCase();
+
 // 1. CARGA DE PRODUCTOS DESDE FIRESTORE EN TIEMPO REAL
 function cargarProductos() {
     if (!USER_ID) {
@@ -31,7 +34,10 @@ function cargarProductos() {
     }
     try {
         onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
-            productosLocales = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            productosLocales = snapshot.docs.map(doc => ({ 
+                id: doc.id, 
+                ...doc.data() 
+            }));
         });
     } catch (e) { 
         console.error("Error al cargar productos:", e); 
@@ -55,61 +61,82 @@ document.addEventListener('DOMContentLoaded', () => {
 // 2. BUSCADOR EN TIEMPO REAL
 if (buscador) {
     buscador.addEventListener('input', (e) => {
-        const val = e.target.value.toLowerCase().trim();
+        const val = normalizar(e.target.value);
+        
         if (!val) { 
-            dropdown.style.display = 'none'; 
-            aviso.style.display = 'none'; 
+            if (dropdown) dropdown.style.display = 'none'; 
+            if (aviso) aviso.style.display = 'none'; 
             return; 
         }
         
-        const filtrados = productosLocales.filter(p => 
-            (p.sku && String(p.sku).toLowerCase().includes(val)) || 
-            (p.barras && String(p.barras).toLowerCase().includes(val)) || 
-            (p.nombre && String(p.nombre).toLowerCase().includes(val))
-        );
+        // Búsqueda flexible por SKU, Código de barras, Nombre o Descripción
+        const filtrados = productosLocales.filter(p => {
+            const sku = normalizar(p.sku || p.codigo);
+            const barras = normalizar(p.barras);
+            const nombre = normalizar(p.nombre || p.descripcion);
+            
+            return sku.includes(val) || barras.includes(val) || nombre.includes(val);
+        });
         
         if (filtrados.length > 0) {
-            aviso.style.display = 'none';
-            dropdown.innerHTML = filtrados.map(p => `
-                <div class="search-item" style="padding:10px; cursor:pointer; border-bottom:1px solid #eee; background:white;" 
-                     onclick="window.seleccionar('${p.sku}')">
-                    <strong>${p.nombre}</strong><br>
-                    <small>SKU: ${p.sku} | Stock Actual: ${p.stock || 0}</small>
-                </div>
-            `).join('');
-            dropdown.style.display = 'block';
+            if (aviso) aviso.style.display = 'none';
+            if (dropdown) {
+                dropdown.innerHTML = filtrados.map(p => {
+                    const skuMostrar = p.sku || p.codigo || 'S/C';
+                    const nombreMostrar = p.nombre || p.descripcion || 'Sin Nombre';
+                    
+                    // Se utiliza p.id (ID del doc en Firestore) como identificador seguro
+                    return `
+                        <div class="search-item" style="padding:10px; cursor:pointer; border-bottom:1px solid #eee; background:white;" 
+                             onclick="window.seleccionar('${p.id}')">
+                            <strong>${nombreMostrar}</strong><br>
+                            <small>SKU: ${skuMostrar} | Stock Actual: ${p.stock || 0}</small>
+                        </div>
+                    `;
+                }).join('');
+                dropdown.style.display = 'block';
+            }
         } else {
-            dropdown.style.display = 'none';
-            aviso.style.display = 'block'; 
+            if (dropdown) dropdown.style.display = 'none';
+            if (aviso) aviso.style.display = 'block'; 
         }
     });
 
-    // Búsqueda directa por escáner / Enter
+    // Búsqueda directa por escáner de código de barras / Enter
     buscador.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
-            const criterio = buscador.value.trim();
-            const prod = productosLocales.find(p => p.sku === criterio || p.barras === criterio);
+            const criterio = normalizar(buscador.value);
+            
+            // Busca coincidencia exacta por SKU/Código o Barras
+            const prod = productosLocales.find(p => 
+                normalizar(p.sku || p.codigo) === criterio || 
+                normalizar(p.barras) === criterio
+            );
             
             if (prod) {
-                aviso.style.display = 'none';
-                window.seleccionar(prod.sku);
+                if (aviso) aviso.style.display = 'none';
+                window.seleccionar(prod.id);
             } else {
-                aviso.style.display = 'block';
+                if (aviso) aviso.style.display = 'block';
                 limpiarFormulario();
             }
         }
     });
 }
 
-// 3. SELECCIÓN DE PRODUCTO
-window.seleccionar = (sku) => {
-    const prod = productosLocales.find(p => p.sku === sku);
+// 3. SELECCIÓN DE PRODUCTO POR ID
+window.seleccionar = (docId) => {
+    const prod = productosLocales.find(p => p.id === docId);
     if (prod) {
-        inputSku.value = prod.sku;
+        inputSku.value = prod.sku || prod.codigo || '';
         inputBarras.value = prod.barras || '';
-        inputNombre.value = prod.nombre;
+        inputNombre.value = prod.nombre || prod.descripcion || '';
         inputStockActual.value = parseInt(prod.stock) || 0;
+        
+        // Guardamos el ID del documento en un dataset del input SKU para la actualización posterior
+        inputSku.dataset.docId = prod.id;
+        
         inputCantidad.value = '';
         
         if (aviso) aviso.style.display = 'none';
@@ -122,13 +149,14 @@ window.seleccionar = (sku) => {
 
 // 4. ANEXAR A LA LISTA TEMPORAL
 window.agregarALista = () => {
+    const docId = inputSku.dataset.docId;
     const sku = inputSku.value;
     const nombre = inputNombre.value;
     const cantidadModificar = parseInt(inputCantidad.value) || 0;
     const stockActual = parseInt(inputStockActual.value) || 0;
     const operacion = tipoOperacion.value; // 'carga' o 'descarga'
 
-    if (!sku || !nombre) {
+    if (!docId || !nombre) {
         return alert("Por favor busque y seleccione un producto primero.");
     }
     if (cantidadModificar <= 0) {
@@ -145,13 +173,14 @@ window.agregarALista = () => {
         ? stockActual + cantidadModificar 
         : stockActual - cantidadModificar;
 
-    const idx = listaTemporal.findIndex(item => item.sku === sku);
+    const idx = listaTemporal.findIndex(item => item.docId === docId);
     if (idx !== -1) {
         listaTemporal[idx].cantidadModificar = cantidadModificar;
         listaTemporal[idx].operacion = operacion;
         listaTemporal[idx].nuevoStock = nuevoStock;
     } else {
         listaTemporal.push({
+            docId,
             sku,
             barras: inputBarras.value,
             nombre,
@@ -179,7 +208,7 @@ function renderizarTabla() {
 
         return `
             <tr>
-                <td>${item.sku}</td>
+                <td>${item.sku || 'S/C'}</td>
                 <td>${item.nombre}</td>
                 <td style="text-align: center;">${item.stockActual}</td>
                 <td style="text-align: center; ${badgeStyle}">
@@ -207,14 +236,15 @@ window.procesarOperacionInventario = async () => {
 
     try {
         for (const item of listaTemporal) {
-            const prodActual = productosLocales.find(p => p.sku === item.sku);
+            const prodActual = productosLocales.find(p => p.id === item.docId);
             const stockBase = parseInt(prodActual?.stock) || 0;
 
             const stockFinal = item.operacion === 'carga' 
                 ? stockBase + item.cantidadModificar 
                 : stockBase - item.cantidadModificar;
 
-            await setDoc(doc(db, "usuarios", USER_ID, "productos", item.sku), {
+            // Actualización por ID único de Firestore
+            await setDoc(doc(db, "usuarios", USER_ID, "productos", item.docId), {
                 stock: stockFinal
             }, { merge: true });
         }
@@ -230,7 +260,10 @@ window.procesarOperacionInventario = async () => {
 };
 
 function limpiarFormulario() {
-    if (inputSku) inputSku.value = ''; 
+    if (inputSku) {
+        inputSku.value = ''; 
+        delete inputSku.dataset.docId;
+    }
     if (inputBarras) inputBarras.value = '';
     if (inputNombre) inputNombre.value = ''; 
     if (inputStockActual) inputStockActual.value = '0';
