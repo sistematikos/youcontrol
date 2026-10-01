@@ -6,12 +6,13 @@
 import { db } from './firebase-config.js';
 import { collection, onSnapshot, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+// Obtención dinámica del ID del usuario autenticado
 const USER_ID = localStorage.getItem('youcontrol_empresa_id'); 
 
 let productosLocales = [];
 let listaTemporal = []; 
 
-// Vinculación DOM basada en sys_v3_op-inv.html
+// Referencias al DOM
 const tipoOperacion = document.getElementById('tipo-operacion');
 const buscador = document.getElementById('buscador-dinamico');
 const dropdown = document.getElementById('dropdown-resultados');
@@ -23,55 +24,43 @@ const inputNombre = document.getElementById('inv-nombre');
 const inputStockActual = document.getElementById('inv-stock-actual');
 const inputCantidad = document.getElementById('inv-cantidad');
 
-// Helper para limpiar espacios y texto
 const normalizar = (texto) => String(texto || '').trim().toLowerCase();
 
-// Exponer la función de selección en window inmediatamente para evitar errores de Scope
-window.seleccionar = (docId) => {
-    const prod = productosLocales.find(p => p.id === docId);
-    if (prod) {
-        if (inputSku) {
-            inputSku.value = prod.sku || prod.codigo || '';
-            inputSku.dataset.docId = prod.id;
-        }
-        if (inputBarras) inputBarras.value = prod.barras || prod.codigoBarras || '';
-        if (inputNombre) inputNombre.value = prod.nombre || prod.descripcion || '';
-        if (inputStockActual) inputStockActual.value = parseInt(prod.stock) || 0;
-        
-        if (inputCantidad) {
-            inputCantidad.value = '';
-            inputCantidad.focus();
-        }
-        
-        if (aviso) aviso.style.display = 'none';
-        if (dropdown) dropdown.style.display = 'none';
-        if (buscador) buscador.value = '';
-    }
-};
-
-// 1. CARGA DE PRODUCTOS DESDE FIRESTORE EN TIEMPO REAL
+// 1. CARGA DINÁMICA DE PRODUCTOS DESDE FIRESTORE
 function cargarProductos() {
     if (!USER_ID) {
-        console.warn("No se encontró el ID de empresa en localStorage ('youcontrol_empresa_id').");
+        console.warn("⚠️ No hay una sesión activa de empresa (youcontrol_empresa_id está vacío).");
+        if (aviso) {
+            aviso.textContent = "Error: Sesión no identificada. Inicie sesión nuevamente.";
+            aviso.style.display = 'block';
+        }
         return;
     }
+
     try {
+        // Escucha en tiempo real la subcolección 'productos' del usuario dinámico
         onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
-            productosLocales = snapshot.docs.map(doc => ({ 
-                id: doc.id, 
-                ...doc.data() 
-            }));
-            console.log("Productos cargados en tiempo real:", productosLocales.length);
+            productosLocales = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return { 
+                    id: doc.id, // ID del documento (ej. 'ACE-01', 'ANI-01')
+                    sku: data.sku || data.codigo || doc.id,
+                    nombre: data.nombre || data.descripcion || 'Sin Nombre',
+                    stock: data.stock ?? 0,
+                    barras: data.barras || data.codigoBarras || '',
+                    ...data 
+                };
+            });
+            console.log(`✅ ${productosLocales.length} productos cargados para la empresa: ${USER_ID}`);
         });
     } catch (e) { 
-        console.error("Error al cargar productos de Firestore:", e); 
+        console.error("❌ Error al cargar productos desde Firestore:", e); 
     }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     cargarProductos();
 
-    // Evento al presionar ENTER en el campo de cantidad para anexar directamente
     if (inputCantidad) {
         inputCantidad.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
@@ -93,36 +82,33 @@ if (buscador) {
             return; 
         }
         
-        // Búsqueda flexible por SKU, Código de barras o Nombre
+        // Coincidencia flexible por SKU, Barras, Nombre o ID de Documento
         const filtrados = productosLocales.filter(p => {
-            const sku = normalizar(p.sku || p.codigo);
-            const barras = normalizar(p.barras || p.codigoBarras);
-            const nombre = normalizar(p.nombre || p.descripcion);
+            const docId = normalizar(p.id);
+            const sku = normalizar(p.sku);
+            const barras = normalizar(p.barras);
+            const nombre = normalizar(p.nombre);
             
-            return sku.includes(val) || barras.includes(val) || nombre.includes(val);
+            return docId.includes(val) || sku.includes(val) || barras.includes(val) || nombre.includes(val);
         });
         
         if (filtrados.length > 0) {
             if (aviso) aviso.style.display = 'none';
             if (dropdown) {
-                dropdown.innerHTML = ''; // Limpiar previo
+                dropdown.innerHTML = ''; // Limpiar el contenedor previo
 
-                // Construcción segura con asignación de eventos programática
                 filtrados.slice(0, 10).forEach(p => {
-                    const skuMostrar = p.sku || p.codigo || 'S/C';
-                    const nombreMostrar = p.nombre || p.descripcion || 'Sin Nombre';
-                    
                     const item = document.createElement('div');
                     item.className = 'search-item';
                     item.style.cssText = 'padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; background: white;';
                     item.innerHTML = `
-                        <strong>${nombreMostrar}</strong><br>
-                        <small>SKU: ${skuMostrar} | Stock Actual: ${p.stock ?? 0}</small>
+                        <strong>${p.nombre}</strong><br>
+                        <small>SKU / Código: ${p.sku} | Stock Actual: ${p.stock}</small>
                     `;
                     
-                    // Asignación directa de evento de clic
+                    // Manejador del evento clic asignado directamente al objeto
                     item.addEventListener('click', () => {
-                        window.seleccionar(p.id);
+                        seleccionarProducto(p);
                     });
 
                     dropdown.appendChild(item);
@@ -132,32 +118,64 @@ if (buscador) {
             }
         } else {
             if (dropdown) dropdown.style.display = 'none';
-            if (aviso) aviso.style.display = 'block'; 
+            if (aviso) {
+                aviso.textContent = "Producto no encontrado.";
+                aviso.style.display = 'block'; 
+            }
         }
     });
 
-    // Búsqueda directa por escáner de código de barras / Enter
+    // Escáner de código de barras / Enter directo
     buscador.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
             const criterio = normalizar(buscador.value);
             
-            // Busca coincidencia exacta por SKU/Código o Barras
             const prod = productosLocales.find(p => 
-                normalizar(p.sku || p.codigo) === criterio || 
-                normalizar(p.barras || p.codigoBarras) === criterio
+                normalizar(p.id) === criterio ||
+                normalizar(p.sku) === criterio || 
+                normalizar(p.barras) === criterio
             );
             
             if (prod) {
                 if (aviso) aviso.style.display = 'none';
-                window.seleccionar(prod.id);
+                seleccionarProducto(prod);
             } else {
-                if (aviso) aviso.style.display = 'block';
+                if (aviso) {
+                    aviso.textContent = "Producto no encontrado.";
+                    aviso.style.display = 'block';
+                }
                 limpiarFormulario();
             }
         }
     });
 }
+
+// 3. SELECCIÓN DE PRODUCTO Y POPULACIÓN DE CAMPOS
+function seleccionarProducto(prod) {
+    if (inputSku) {
+        inputSku.value = prod.sku;
+        inputSku.dataset.docId = prod.id; // Almacena el ID del documento para la actualización
+    }
+    if (inputBarras) inputBarras.value = prod.barras;
+    if (inputNombre) inputNombre.value = prod.nombre;
+    if (inputStockActual) inputStockActual.value = prod.stock;
+    
+    if (inputCantidad) {
+        inputCantidad.value = '';
+        inputCantidad.focus();
+    }
+    
+    if (aviso) aviso.style.display = 'none';
+    if (dropdown) dropdown.style.display = 'none';
+    if (buscador) buscador.value = '';
+}
+
+// Exponer la selección en window por compatibilidad
+window.seleccionar = (docId) => {
+    const prod = productosLocales.find(p => p.id === docId);
+    if (prod) seleccionarProducto(prod);
+};
 
 // 4. ANEXAR A LA LISTA TEMPORAL
 window.agregarALista = () => {
@@ -166,7 +184,7 @@ window.agregarALista = () => {
     const nombre = inputNombre ? inputNombre.value : '';
     const cantidadModificar = parseInt(inputCantidad ? inputCantidad.value : 0) || 0;
     const stockActual = parseInt(inputStockActual ? inputStockActual.value : 0) || 0;
-    const operacion = tipoOperacion ? tipoOperacion.value : 'carga'; // 'carga' o 'descarga'
+    const operacion = tipoOperacion ? tipoOperacion.value : 'carga';
 
     if (!docId || !nombre) {
         return alert("Por favor busque y seleccione un producto primero.");
@@ -242,6 +260,9 @@ window.eliminarDeLista = (index) => {
 
 // 5. GUARDAR CAMBIOS MASIVOS EN FIRESTORE
 window.procesarOperacionInventario = async () => {
+    if (!USER_ID) {
+        return alert("Error de sesión. No se puede guardar sin una empresa activa.");
+    }
     if (listaTemporal.length === 0) {
         return alert("La lista de productos a modificar está vacía.");
     }
@@ -255,7 +276,7 @@ window.procesarOperacionInventario = async () => {
                 ? stockBase + item.cantidadModificar 
                 : stockBase - item.cantidadModificar;
 
-            // Actualización por ID único de Firestore
+            // Actualización dinámica en el documento específico del usuario logueado
             await setDoc(doc(db, "usuarios", USER_ID, "productos", item.docId), {
                 stock: stockFinal
             }, { merge: true });
