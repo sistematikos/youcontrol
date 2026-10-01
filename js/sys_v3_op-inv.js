@@ -11,7 +11,6 @@ const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 let productosLocales = [];
 let listaTemporal = []; 
 
-// Referencias DOM
 const tipoOperacion = document.getElementById('tipo-operacion');
 const buscador = document.getElementById('buscador-dinamico');
 const dropdown = document.getElementById('dropdown-resultados');
@@ -25,7 +24,7 @@ const inputCantidad = document.getElementById('inv-cantidad');
 
 const normalizar = (texto) => String(texto || '').trim().toLowerCase();
 
-// 1. CARGA EN TIEMPO REAL (Mismo esquema que Ventas)
+// 1. CARGA DE PRODUCTOS DESDE FIRESTORE
 function cargarProductos() {
     if (!USER_ID) {
         console.warn("No se encontró el ID de empresa registrado.");
@@ -34,7 +33,7 @@ function cargarProductos() {
     try {
         onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
             productosLocales = snapshot.docs.map(doc => ({ 
-                id: doc.id, // Ejemplo: "ACE-01", "ANI-01"
+                id: doc.id,
                 ...doc.data() 
             }));
             console.log("✅ Productos cargados en Operaciones:", productosLocales.length);
@@ -57,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// 2. BUSCADOR EN TIEMPO REAL (Lógica calcada del Módulo Ventas)
+// 2. BUSCADOR EN TIEMPO REAL
 if (buscador) {
     buscador.addEventListener('input', (e) => {
         const criterio = normalizar(e.target.value);
@@ -68,7 +67,7 @@ if (buscador) {
             return; 
         }
         
-        // Búsqueda idéntica al módulo de ventas
+        // Coincidencia exacta usando id (código de producto), nombre o código de barras
         const filtrados = productosLocales.filter(p => 
             normalizar(p.id).includes(criterio) || 
             normalizar(p.nombre || p.descripcion).includes(criterio) || 
@@ -78,7 +77,7 @@ if (buscador) {
         if (filtrados.length > 0) {
             if (aviso) aviso.style.display = 'none';
             if (dropdown) {
-                dropdown.innerHTML = ''; // Limpiamos desplegable
+                dropdown.innerHTML = ''; 
 
                 filtrados.slice(0, 10).forEach(p => {
                     const codigoMostrar = p.id || p.sku || 'S/C';
@@ -86,14 +85,14 @@ if (buscador) {
                     
                     const item = document.createElement('div');
                     item.className = 'search-item';
-                    item.style.cssText = 'padding:10px; cursor:pointer; border-bottom:1px solid #eee; background:white;';
                     item.innerHTML = `
                         <strong>${nombreMostrar}</strong><br>
                         <small>CÓDIGO: ${codigoMostrar} | Stock Actual: ${p.stock ?? 0}</small>
                     `;
                     
-                    // Asignación limpia del evento de selección
-                    item.addEventListener('click', () => {
+                    // Evento mousedown para respuesta inmediata al toque o clic
+                    item.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
                         seleccionarProducto(p);
                     });
 
@@ -108,7 +107,7 @@ if (buscador) {
         }
     });
 
-    // Enter / Escáner de código de barras
+    // Enter para escáner
     buscador.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -130,7 +129,7 @@ if (buscador) {
     });
 }
 
-// 3. SELECCIÓN DE PRODUCTO
+// 3. SELECCIONAR Y LLENAR CAMPOS
 function seleccionarProducto(prod) {
     if (inputSku) {
         inputSku.value = prod.id || prod.sku || '';
@@ -150,12 +149,7 @@ function seleccionarProducto(prod) {
     if (buscador) buscador.value = '';
 }
 
-window.seleccionar = (docId) => {
-    const prod = productosLocales.find(p => p.id === docId);
-    if (prod) seleccionarProducto(prod);
-};
-
-// 4. AGREGAR A LISTA TEMPORAL
+// 4. AGREGAR A LA TABLA
 window.agregarALista = () => {
     const docId = inputSku ? inputSku.dataset.docId : null;
     const sku = inputSku ? inputSku.value : '';
@@ -236,7 +230,7 @@ window.eliminarDeLista = (index) => {
     renderizarTabla();
 };
 
-// 5. PROCESAR Y ACTUALIZAR EN FIRESTORE
+// 5. GUARDAR EN FIRESTORE
 window.procesarOperacionInventario = async () => {
     if (!USER_ID) {
         return alert("Error de sesión. No se puede actualizar el inventario.");
