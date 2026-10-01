@@ -118,6 +118,10 @@
             max-height: 250px;
             overflow-y: auto;
             border: 1px solid var(--border);
+            position: absolute;
+            width: 100%;
+            z-index: 1050;
+            background: #ffffff;
         }
 
         .search-item {
@@ -138,12 +142,14 @@
             window.location.href = 'sys_v1_menu.html?refresh=' + new Date().getTime();
         }
 
-        // Cierra el menú de resultados si el usuario hace clic fuera de la búsqueda
-        document.addEventListener('click', function(e) {
+        // Control seguro para cerrar dropdown al hacer clic fuera
+        document.addEventListener('pointerdown', function(e) {
             const dropdown = document.getElementById('dropdown-resultados');
             const buscador = document.getElementById('buscador-dinamico');
-            if (dropdown && buscador && !buscador.contains(e.target) && !dropdown.contains(e.target)) {
-                dropdown.style.display = 'none';
+            if (dropdown && buscador) {
+                if (!buscador.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.style.display = 'none';
+                }
             }
         });
     </script>
@@ -184,7 +190,7 @@
             <div class="position-relative">
                 <input type="text" id="buscador-dinamico" class="form-control form-control-lg" 
                        placeholder="🔍 Buscar por Nombre, SKU o Código de Barras..." autocomplete="off">
-                <div id="dropdown-resultados" class="position-absolute w-100 shadow bg-white rounded mt-1" style="display:none; z-index:1000;"></div>
+                <div id="dropdown-resultados" class="shadow rounded mt-1" style="display:none;"></div>
                 <small id="aviso-no-registrado" class="text-danger mt-1 fw-bold" style="display:none;">Producto no encontrado.</small>
             </div>
         </div>
@@ -241,7 +247,7 @@
                         </tr>
                     </thead>
                     <tbody id="tabla-items-operacion">
-                        <!-- Filas añadidas dinámicamente desde sys_v3_op-inv.js -->
+                        <!-- Filas añadidas dinámicamente -->
                     </tbody>
                 </table>
             </div>
@@ -257,7 +263,6 @@
 
 </main>
 
-<!-- Vinculación del módulo JS de Operaciones de Inventario -->
 <script type="module" src="./sys_v3_op-inv.js"></script>
 
 </body>
