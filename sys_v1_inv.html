@@ -4,33 +4,114 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>INVENTARIO | YOU CONTROL</title>
+    
+    <!-- FontAwesome & Google Fonts -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
-        body { font-family: 'Poppins', sans-serif; background: #F1F5F9; padding: 20px; color: #1E293B; margin: 0; }
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background: #F1F5F9; 
+            padding: 20px; 
+            color: #1E293B; 
+            margin: 0; 
+        }
         
         /* Estilos de la Cabecera */
         .header-panel { 
-            background: #ffffff; padding: 0 20px; border-radius: 12px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; 
-            display: flex; justify-content: space-between; align-items: center; 
-            margin-bottom: 15px; height: 70px; 
+            background: #ffffff; 
+            padding: 0 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+            border: 1px solid #E2E8F0; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 15px; 
+            height: 70px; 
         }
+
         .btn-back { 
-            background: #F1F5F9; color: #1E293B; padding: 8px 15px; 
-            border-radius: 8px; text-decoration: none; font-size: 0.8rem; 
-            font-weight: 700; border: 1px solid #E2E8F0; 
-            display: inline-flex; align-items: center; gap: 5px; cursor: pointer;
+            background: #F1F5F9; 
+            color: #1E293B; 
+            padding: 8px 15px; 
+            border-radius: 8px; 
+            text-decoration: none; 
+            font-size: 0.8rem; 
+            font-weight: 700; 
+            border: 1px solid #E2E8F0; 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 5px; 
+            cursor: pointer;
+            transition: background 0.2s ease;
         }
-        .btn-back:hover { background: #E2E8F0; }
-        .logo-header { height: 90%; width: auto; object-fit: contain; }
+
+        .btn-back:hover { 
+            background: #E2E8F0; 
+        }
+
+        .logo-header { 
+            height: 40px; 
+            width: auto; 
+            object-fit: contain; 
+        }
 
         /* Contenido */
-        .card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #E2E8F0; margin-bottom: 20px; }
-        .controls { display: flex; gap: 15px; margin-bottom: 20px; }
-        select, input { padding: 10px; border: 1px solid #E2E8F0; border-radius: 6px; }
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 12px; border-bottom: 2px solid #E2E8F0; color: #64748B; }
-        td { padding: 12px; border-bottom: 1px solid #F1F5F9; }
+        .card { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            border: 1px solid #E2E8F0; 
+            margin-bottom: 20px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .controls { 
+            display: flex; 
+            gap: 15px; 
+            margin-bottom: 20px; 
+        }
+
+        select, input { 
+            padding: 10px; 
+            border: 1px solid #E2E8F0; 
+            border-radius: 6px; 
+            font-family: inherit;
+            font-size: 0.88rem;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            font-size: 0.9rem;
+        }
+
+        th { 
+            text-align: left; 
+            padding: 12px; 
+            border-bottom: 2px solid #E2E8F0; 
+            color: #64748B; 
+            font-weight: 600;
+        }
+
+        td { 
+            padding: 12px; 
+            border-bottom: 1px solid #F1F5F9; 
+        }
+
+        tr:hover td {
+            background-color: #F8FAFC;
+        }
     </style>
 
     <!-- Script para evitar caché al regresar al menú principal -->
@@ -52,7 +133,7 @@
                 INVENTARIO
             </h1>
         </div>
-        <img src="img/logo.png" class="logo-header" alt="Logo">
+        <img src="img/logo.png" class="logo-header" alt="Logo" onerror="this.style.display='none'">
     </header>
 
     <main>
@@ -61,16 +142,27 @@
                 <select id="filtro-depto" onchange="window.filtrarPorDepto()">
                     <option value="TODOS">TODOS LOS DEPARTAMENTOS</option>
                 </select>
-                <input type="text" id="buscador-inv" placeholder="🔍 Buscar producto...">
+                <input type="text" id="buscador-inv" placeholder="🔍 Buscar por Código, Nombre, SKU...">
             </div>
-            <table>
-               <thead>
-                 <tr>
-                   <th>Nombre</th><th>Depto</th><th>Costo</th><th>%</th><th>Precio</th><th>Stock</th>
-                 </tr>
-               </thead>
-                <tbody id="cuerpo-tabla"></tbody>
-            </table>
+
+            <div class="table-responsive">
+                <table>
+                   <thead>
+                     <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Depto</th>
+                        <th>Costo</th>
+                        <th>%</th>
+                        <th>Precio</th>
+                        <th>Stock</th>
+                     </tr>
+                   </thead>
+                   <tbody id="cuerpo-tabla">
+                       <!-- Filas generadas dinámicamente desde js/sys_v1_inv.js -->
+                   </tbody>
+                </table>
+            </div>
         </div>
     </main>
 
