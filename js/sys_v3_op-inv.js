@@ -1,147 +1,171 @@
-import { auth, db } from './firebase_config.js'; // Ajusta a tu archivo de configuración
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+/**
+ * YOU CONTROL - SISTEMATIKOS
+ * Módulo: Operaciones de Inventario unificado con Ficha de Producto
+ */
 
-let listaProductos = [];
+import { db } from './firebase-config.js';
+import { collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const inputBuscador = document.getElementById('buscador-prod-inv');
-const listaResultados = document.getElementById('lista-resultados-inv');
+// Obtenemos el ID de la empresa exactamente igual que en la Ficha de Producto
+const USER_ID = localStorage.getItem('youcontrol_empresa_id');
+let listaProductosGlobal = [];
+let indiceRes = -1;
+let productoSeleccionado = null;
 
-// 1. Escuchar la sesión de Firebase
-onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-        console.warn("No hay usuario autenticado.");
-        window.location.href = 'index.html';
+// Inicialización
+async function iniciarOperacionesInventario() {
+    if (!USER_ID) {
+        console.warn("No se encontró el ID de empresa en localStorage (youcontrol_empresa_id).");
         return;
     }
 
-    console.log("Usuario autenticado UID:", user.uid);
-    await cargarProductos(user.uid);
-});
-
-// 2. Cargar los productos guardados en Firebase
-async function cargarProductos(uid) {
     try {
-        listaProductos = [];
-        
-        // Consultar productos del usuario
-        // Si no usas campo 'userId', puedes usar: collection(db, "productos")
-        const q = query(collection(db, "productos"), where("userId", "==", uid));
-        const querySnapshot = await getDocs(q);
-
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            listaProductos.push({
-                id: doc.id,
-                // Mapeo flexible por si varían los nombres de campos guardados
-                sku: data.sku || data.codigo || data.id || '',
-                nombre: data.nombre || data.descripcion || data.producto || 'Sin Nombre',
-                barras: data.barras || data.codigoBarras || '',
-                stock: data.stock !== undefined ? data.stock : (data.existencia || 0)
-            });
-        });
-
-        console.log("Productos cargados exitosamente:", listaProductos);
-    } catch (error) {
-        console.error("Error leyendo Firebase:", error);
-        
-        // Respaldo: Si falla la consulta filtrada, intenta traer la colección directa
-        try {
-            const snap = await getDocs(collection(db, "productos"));
-            listaProductos = [];
-            snap.forEach(doc => {
-                const data = doc.data();
-                listaProductos.push({
-                    id: doc.id,
-                    sku: data.sku || data.codigo || doc.id,
-                    nombre: data.nombre || data.descripcion || 'Sin Nombre',
-                    barras: data.barras || '',
-                    stock: data.stock ?? 0
-                });
-            });
-            console.log("Cargado por respaldo general:", listaProductos);
-        } catch (e) {
-            console.error("Fallo total al cargar productos:", e);
-        }
+        // Misma consulta de colección jerárquica usada en Ficha de Producto
+        const snapProds = await getDocs(collection(db, "usuarios", USER_ID, "productos"));
+        listaProductosGlobal = snapProds.docs.map(d => ({ id: d.id, ...d.data() }));
+        console.log("Productos cargados para inventario:", listaProductosGlobal.length);
+    } catch (e) {
+        console.error("Error al cargar productos de Firestore:", e);
     }
 }
 
-// 3. Filtrar en tiempo real al escribir
-if (inputBuscador) {
-    inputBuscador.addEventListener('input', (e) => {
-        const texto = e.target.value.trim().toLowerCase();
+// 1. Lógica de filtrado en tiempo real (al escribir)
+const buscador = document.getElementById('buscador-prod-inv');
+if (buscador) {
+    buscador.addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase().trim();
+        const lista = document.getElementById('lista-resultados-inv');
+        indiceRes = -1;
 
-        if (texto === '') {
-            ocultarLista();
-            return;
+        if (term.length < 1) { 
+            lista.style.display = 'none'; 
+            return; 
         }
 
-        const resultados = listaProductos.filter(p => 
-            p.nombre.toLowerCase().includes(texto) ||
-            p.sku.toLowerCase().includes(texto) ||
-            p.barras.toLowerCase().includes(texto)
+        const filtrados = listaProductosGlobal.filter(p => 
+            (p.nombre?.toLowerCase().includes(term) || 
+             p.sku?.toLowerCase().includes(term) || 
+             p.barras?.toLowerCase().includes(term))
         );
 
-        mostrarLista(resultados);
+        if (filtrados.length > 0) {
+            lista.style.display = 'block';
+            lista.innerHTML = filtrados.map((p, i) => `
+                <div class="item-res-inv" id="res-inv-${i}" onclick="window.cargarProductoInv('${p.id}')" style="padding:10px; cursor:pointer; border-bottom:1px solid #f1f5f9;">
+                    <strong>${p.nombre || 'Sin nombre'}</strong><br>
+                    <small style="color:#64748B;">SKU: ${p.sku || p.id} | Stock Actual: ${p.stock ?? 0}</small>
+                </div>
+            `).join('');
+        } else {
+            lista.style.display = 'block';
+            lista.innerHTML = `<div style="padding:10px; color:#94A3B8;"><small>No hay coincidencias</small></div>`;
+        }
+    });
+
+    // 2. Navegación por teclado (Flechas y Enter)
+    buscador.addEventListener('keydown', (e) => {
+        const lista = document.getElementById('lista-resultados-inv');
+        const items = lista.querySelectorAll('.item-res-inv');
+
+        if (e.key === 'ArrowDown' && indiceRes < items.length - 1) { 
+            indiceRes++; 
+            items.forEach((it, i) => it.style.background = (i === indiceRes) ? '#F1F5F9' : 'white'); 
+        } 
+        else if (e.key === 'ArrowUp' && indiceRes > 0) { 
+            indiceRes--; 
+            items.forEach((it, i) => it.style.background = (i === indiceRes) ? '#F1F5F9' : 'white'); 
+        } 
+        else if (e.key === 'Enter') {
+            e.preventDefault();
+            const term = buscador.value.trim();
+
+            if (indiceRes >= 0 && items[indiceRes]) {
+                items[indiceRes].click();
+            } else {
+                const encontrado = listaProductosGlobal.find(p => p.sku === term || p.barras === term);
+                if (encontrado) {
+                    window.cargarProductoInv(encontrado.id);
+                } else {
+                    alert("⚠️ CÓDIGO O PRODUCTO NO REGISTRADO");
+                }
+            }
+        }
     });
 }
 
-// 4. Renderizar el menú flotante
-function mostrarLista(items) {
-    if (!listaResultados) return;
-    listaResultados.innerHTML = '';
+// Cargar producto elegido al formulario de inventario
+window.cargarProductoInv = (id) => {
+    const p = listaProductosGlobal.find(x => x.id === id);
+    if (!p) return;
 
-    if (items.length === 0) {
-        listaResultados.innerHTML = `<div class="item-res-inv" style="color:#94A3B8;"><small>No hay coincidencias</small></div>`;
-        listaResultados.style.display = 'block';
+    productoSeleccionado = p;
+
+    document.getElementById('inv-sku').value = p.sku || p.id || "";
+    document.getElementById('inv-nombre').value = p.nombre || "";
+    document.getElementById('inv-stock-actual').value = p.stock !== undefined ? p.stock : 0;
+    document.getElementById('buscador-prod-inv').value = p.nombre || "";
+
+    const lista = document.getElementById('lista-resultados-inv');
+    if (lista) lista.style.display = 'none';
+
+    const campoCant = document.getElementById('inv-cantidad');
+    if (campoCant) campoCant.focus();
+};
+
+// Procesar Entrada / Salida / Ajuste
+window.procesarOperacionInventario = async function() {
+    if (!productoSeleccionado) {
+        alert("Por favor selecciona un producto registrado.");
         return;
     }
 
-    items.slice(0, 10).forEach(prod => {
-        const div = document.createElement('div');
-        div.className = 'item-res-inv';
-        div.innerHTML = `
-            <strong>${prod.nombre}</strong><br>
-            <small>SKU: ${prod.sku} | Stock: ${prod.stock}</small>
-        `;
+    const cantidadInput = document.getElementById('inv-cantidad').value;
+    const cantidad = parseFloat(cantidadInput);
+    const tipoOp = document.getElementById('inv-tipo-op').value;
 
-        // Usar pointerdown evita que se pierda el clic al hacer foco fuera
-        div.addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-            seleccionar(prod);
-        });
-
-        listaResultados.appendChild(div);
-    });
-
-    listaResultados.style.display = 'block';
-}
-
-// 5. Asignar el producto elegido a los campos
-function seleccionar(prod) {
-    inputBuscador.value = prod.nombre;
-    
-    const campoSku = document.getElementById('inv-sku');
-    const campoNombre = document.getElementById('inv-nombre');
-    const campoStock = document.getElementById('inv-stock-actual');
-
-    if (campoSku) campoSku.value = prod.sku;
-    if (campoNombre) campoNombre.value = prod.nombre;
-    if (campoStock) campoStock.value = prod.stock;
-
-    ocultarLista();
-}
-
-function ocultarLista() {
-    if (listaResultados) {
-        listaResultados.style.display = 'none';
-        listaResultados.innerHTML = '';
+    if (isNaN(cantidad) || cantidad <= 0) {
+        alert("Ingresa una cantidad válida.");
+        return;
     }
-}
 
-// Ocultar si hace clic en cualquier otra parte de la pantalla
-document.addEventListener('click', (e) => {
-    if (inputBuscador && !inputBuscador.contains(e.target) && listaResultados && !listaResultados.contains(e.target)) {
-        ocultarLista();
+    let stockActual = parseInt(productoSeleccionado.stock || 0);
+    let nuevoStock = stockActual;
+
+    if (tipoOp === 'ENTRADA') nuevoStock += cantidad;
+    else if (tipoOp === 'SALIDA') nuevoStock -= cantidad;
+    else if (tipoOp === 'AJUSTE') nuevoStock = cantidad;
+
+    try {
+        // Actualiza exactamente la misma ruta de Firestore usada en la Ficha de Producto
+        await setDoc(doc(db, "usuarios", USER_ID, "productos", productoSeleccionado.id), {
+            stock: parseInt(nuevoStock)
+        }, { merge: true });
+
+        alert("¡Inventario actualizado con éxito!");
+        
+        // Actualizar el valor en memoria local para no requerir recargar la página
+        productoSeleccionado.stock = nuevoStock;
+        
+        // Limpieza de campos
+        document.getElementById('inv-sku').value = "";
+        document.getElementById('inv-nombre').value = "";
+        document.getElementById('inv-stock-actual').value = "0";
+        document.getElementById('inv-cantidad').value = "";
+        document.getElementById('buscador-prod-inv').value = "";
+        productoSeleccionado = null;
+
+        iniciarOperacionesInventario();
+    } catch (e) {
+        alert("Error al actualizar inventario: " + e.message);
+    }
+};
+
+// Atajo global F9
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'F9') {
+        e.preventDefault();
+        window.procesarOperacionInventario();
     }
 });
+
+document.addEventListener('DOMContentLoaded', iniciarOperacionesInventario);
