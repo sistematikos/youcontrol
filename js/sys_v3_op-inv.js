@@ -1,10 +1,16 @@
 /**
  * Módulo de Operaciones de Inventario - YOU CONTROL
+ * Filtrado estricto por Usuario Autenticado
  */
 
-// Estado global local para el catálogo de productos
+import { auth, db } from './firebase_config.js'; // Ajusta la ruta a tu config de Firebase
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+// Estado global aislado
 let productosBD = [];
 let productoSeleccionado = null;
+let usuarioActual = null;
 
 // Elementos DOM
 const buscadorInput = document.getElementById('buscador-prod-inv');
@@ -13,33 +19,52 @@ const listaResultados = document.getElementById('lista-resultados-inv');
 const campoSku = document.getElementById('inv-sku');
 const campoNombre = document.getElementById('inv-nombre');
 const campoStockActual = document.getElementById('inv-stock-actual');
-
-const campoTipoOp = document.getElementById('inv-tipo-op');
 const campoCantidad = document.getElementById('inv-cantidad');
+const campoTipoOp = document.getElementById('inv-tipo-op');
 const campoConcepto = document.getElementById('inv-concepto');
 
-// Inicialización
+// Escuchar cambios de estado de sesión
 document.addEventListener('DOMContentLoaded', () => {
-    cargarCatalogoProductos();
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            usuarioActual = user;
+            // Limpiar catálogo previo inmediatamente antes de cargar el del nuevo usuario
+            productosBD = [];
+            cargarCatalogoProductos(user.uid);
+        } else {
+            // Si no hay sesión activa, redirigir al login y limpiar todo
+            usuarioActual = null;
+            productosBD = [];
+            window.location.href = 'index.html';
+        }
+    });
+
     configurarBuscador();
     configurarAtajosTeclado();
 });
 
 /**
- * Carga la lista de productos desde la fuente de datos (Firestore / Mock)
+ * Carga EXCLUSIVAMENTE los productos del usuario que inició sesión
+ * @param {string} userId - UID del usuario autenticado
  */
-async function cargarCatalogoProductos() {
+async function cargarCatalogoProductos(userId) {
     try {
-        // Sustituir por la llamada real a tu base de datos / Firestore
-        // Ejemplo: const querySnapshot = await getDocs(collection(db, "productos"));
-        
-        productosBD = [
-            { id: "SKU001", sku: "SKU001", nombre: "ACEITE DE MOTOR 20W50", barras: "750123456789", stock: 15 },
-            { id: "SKU002", sku: "SKU002", nombre: "FILTRO DE ACEITE UNIVERSAL", barras: "750987654321", stock: 8 },
-            { id: "SKU003", sku: "SKU003", nombre: "PASTILLAS DE FRENO DELANTERAS", barras: "750456789012", stock: 22 }
-        ];
+        productosBD = []; // Garantiza que no se conserven productos de otros usuarios
+
+        // Consulta filtrada por userId
+        const q = query(collection(db, "productos"), where("userId", "==", userId));
+        const querySnapshot = await getDocs(q);
+
+        querySnapshot.forEach((doc) => {
+            productosBD.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+
+        console.log(`Catálogo cargado correctamente: ${productosBD.length} productos para el usuario ${userId}`);
     } catch (error) {
-        console.error("Error cargando productos:", error);
+        console.error("Error al cargar los productos del usuario:", error);
     }
 }
 
@@ -49,27 +74,26 @@ async function cargarCatalogoProductos() {
 function configurarBuscador() {
     if (!buscadorInput || !listaResultados) return;
 
-    // Filtrado en tiempo real
     buscadorInput.addEventListener('input', (e) => {
-        const query = e.target.value.trim().toLowerCase();
+        const queryTexto = e.target.value.trim().toLowerCase();
 
-        if (query.length === 0) {
+        if (queryTexto.length === 0) {
             ocultarResultados();
             return;
         }
 
+        // Filtra solo sobre el arreglo previamente validado para este usuario
         const filtrados = productosBD.filter(p => {
             const sku = (p.sku || p.id || '').toLowerCase();
-            const nombre = (p.nombre || '').toLowerCase();
-            const barras = (p.barras || '').toLowerCase();
+            const nombre = (p.nombre || p.descripcion || '').toLowerCase();
+            const barras = (p.barras || p.codigoBarras || '').toLowerCase();
 
-            return sku.includes(query) || nombre.includes(query) || barras.includes(query);
+            return sku.includes(queryTexto) || nombre.includes(queryTexto) || barras.includes(queryTexto);
         });
 
         renderizarResultados(filtrados);
     });
 
-    // Cierre seguro al hacer clic fuera del control
     document.addEventListener('click', (e) => {
         if (!buscadorInput.contains(e.target) && !listaResultados.contains(e.target)) {
             ocultarResultados();
@@ -78,7 +102,7 @@ function configurarBuscador() {
 }
 
 /**
- * Muestra el listado flotante de coincidencias
+ * Renderiza la lista flotante
  */
 function renderizarResultados(resultados) {
     listaResultados.innerHTML = '';
@@ -86,7 +110,7 @@ function renderizarResultados(resultados) {
     if (resultados.length === 0) {
         listaResultados.innerHTML = `
             <div class="item-res-inv" style="cursor: default; color: #94A3B8;">
-                <small>No se encontraron coincidencias</small>
+                <small>No se encontraron coincidencias en tu catálogo</small>
             </div>
         `;
         listaResultados.style.display = 'block';
@@ -97,11 +121,10 @@ function renderizarResultados(resultados) {
         const item = document.createElement('div');
         item.className = 'item-res-inv';
         item.innerHTML = `
-            <strong>${p.nombre}</strong><br>
+            <strong>${p.nombre || p.descripcion}</strong><br>
             <small>SKU: ${p.sku || p.id} | Stock Actual: ${p.stock ?? 0}</small>
         `;
 
-        // USO CLAVE DE 'pointerdown': Previene el cierre prematuro al perder el foco
         item.addEventListener('pointerdown', (e) => {
             e.preventDefault();
             seleccionarProducto(p);
@@ -113,99 +136,30 @@ function renderizarResultados(resultados) {
     listaResultados.style.display = 'block';
 }
 
-/**
- * Carga la información del producto seleccionado en el formulario
- */
 function seleccionarProducto(producto) {
     productoSeleccionado = producto;
 
-    buscadorInput.value = producto.nombre;
+    buscadorInput.value = producto.nombre || producto.descripcion;
     campoSku.value = producto.sku || producto.id;
-    campoNombre.value = producto.nombre;
+    campoNombre.value = producto.nombre || producto.descripcion;
     campoStockActual.value = producto.stock ?? 0;
 
     ocultarResultados();
-    
     if (campoCantidad) campoCantidad.focus();
 }
 
-/**
- * Oculta la lista desplegable de resultados
- */
 function ocultarResultados() {
     listaResultados.style.display = 'none';
     listaResultados.innerHTML = '';
 }
 
-/**
- * Procesa la actualización del inventario
- */
-window.procesarOperacionInventario = async function() {
-    if (!productoSeleccionado) {
-        alert("Por favor, selecciona un producto primero.");
-        buscadorInput.focus();
-        return;
-    }
-
-    const cantidad = parseFloat(campoCantidad.value);
-    const tipoOp = campoTipoOp.value;
-    const concepto = campoConcepto.value.trim();
-
-    if (isNaN(cantidad) || cantidad <= 0) {
-        alert("Ingresa una cantidad válida mayor a 0.");
-        campoCantidad.focus();
-        return;
-    }
-
-    let nuevoStock = productoSeleccionado.stock;
-
-    if (tipoOp === 'ENTRADA') {
-        nuevoStock += cantidad;
-    } else if (tipoOp === 'SALIDA') {
-        if (cantidad > productoSeleccionado.stock) {
-            alert("La cantidad de salida excede el stock actual.");
-            return;
-        }
-        nuevoStock -= cantidad;
-    } else if (tipoOp === 'AJUSTE') {
-        nuevoStock = cantidad;
-    }
-
-    try {
-        // Aquí ejecutas la actualización en la BD / Firestore
-        productoSeleccionado.stock = nuevoStock;
-        campoStockActual.value = nuevoStock;
-
-        alert(`Operación procesada con éxito.\nNuevo stock: ${nuevoStock}`);
-        limpiarFormulario();
-    } catch (error) {
-        console.error("Error al guardar la operación:", error);
-        alert("Ocurrió un error al procesar la operación.");
-    }
-};
-
-/**
- * Restablece el formulario a su estado inicial
- */
-function limpiarFormulario() {
-    productoSeleccionado = null;
-    buscadorInput.value = '';
-    campoSku.value = '';
-    campoNombre.value = '';
-    campoStockActual.value = '0';
-    campoCantidad.value = '';
-    campoConcepto.value = '';
-    ocultarResultados();
-}
-
-/**
- * Captura de atajos de teclado (F9 para guardar)
- */
 function configurarAtajosTeclado() {
     document.addEventListener('keydown', (e) => {
         if (e.key === 'F9') {
             e.preventDefault();
-            window.procesarOperacionInventario();
+            if (window.procesarOperacionInventario) {
+                window.procesarOperacionInventario();
+            }
         }
     });
 }
