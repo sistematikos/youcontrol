@@ -3,9 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TÍTULO DE LA PÁGINA | YOU CONTROL</title>
+    <title>Operaciones de Inventario - YOU CONTROL</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts Poppins -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
     <style>
         :root {
             --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
@@ -15,13 +21,14 @@
             --amber: #F59E0B; 
             --rose: #F43F5E;
             --border: #E2E8F0;
+            --white: #FFFFFF;
         }
 
         body { 
             font-family: 'Poppins', sans-serif; 
             background: var(--bg-gradient); 
             margin: 0; 
-            padding: 10px 0; 
+            padding: 15px 0; 
             min-height: 100vh; 
             color: var(--text-dark); 
         }
@@ -34,7 +41,7 @@
 
         /* Encabezado Principal */
         .header-panel { 
-            background: #ffffff; 
+            background: var(--white); 
             padding: 0 20px; 
             border-radius: 12px; 
             box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
@@ -42,7 +49,7 @@
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            margin-bottom: 15px; 
+            margin-bottom: 20px; 
             height: 70px; 
         }
 
@@ -62,50 +69,52 @@
         .btn-back { 
             background: #F1F5F9; 
             color: var(--text-dark); 
-            padding: 6px 12px; 
+            padding: 8px 14px; 
             border-radius: 8px; 
             text-decoration: none; 
-            font-size: 0.75rem; 
+            font-size: 0.8rem; 
             font-weight: 700; 
             border: 1px solid var(--border); 
             display: inline-flex; 
             align-items: center; 
-            gap: 5px; 
+            gap: 6px; 
             cursor: pointer; 
-            transition: background 0.2s ease;
+            transition: all 0.2s ease;
         }
 
         .btn-back:hover { 
             background: #E2E8F0; 
+            color: var(--text-dark);
+            transform: translateY(-1px);
         }
 
         .logo-header { 
-            height: 80%; 
+            height: 40px; 
             width: auto; 
             object-fit: contain; 
         }
 
-        /* Estilos generales para componentes */
-        .card { 
-            background: white; 
-            padding: 15px; 
-            border-radius: 12px; 
-            border: 1px solid var(--border); 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.03); 
-            position: relative; 
-            border-left: 6px solid var(--border); 
+        /* Adaptaciones de diseño a las Tarjetas */
+        .card {
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
         }
 
-        .border-sky { border-left-color: var(--sky); }
-        .border-emerald { border-left-color: var(--emerald); }
-        .border-amber { border-left-color: var(--amber); }
-        .border-rose { border-left-color: var(--rose); }
+        .form-control, .form-select {
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            border-radius: 8px;
+        }
 
-        h3 { margin-top: 0; font-size: 1rem; margin-bottom: 10px; }
-        input, select { width: 100%; padding: 10px; margin: 4px 0; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; }
+        .btn {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            border-radius: 8px;
+        }
     </style>
 
-    <!-- Script de navegación -->
+    <!-- Script de navegación con prevención de caché -->
     <script>
         function volverAlMenu(e) {
             e.preventDefault();
@@ -114,20 +123,115 @@
     </script>
 </head>
 <body>
-    <main class="layout-width">
-        <!-- Encabezado Adaptado -->
-        <header class="header-panel">
-            <div class="header-title-container">
-                <a href="#" class="btn-back" onclick="volverAlMenu(event)">
-                    <i class="fas fa-arrow-left"></i> VOLVER
-                </a>
-                <h1 class="header-title">Título del Módulo</h1>
+
+<main class="layout-width">
+
+    <!-- Encabezado Estándar -->
+    <header class="header-panel">
+        <div class="header-title-container">
+            <a href="#" class="btn-back" onclick="volverAlMenu(event)">
+                <i class="fas fa-arrow-left"></i> VOLVER
+            </a>
+            <h1 class="header-title">Operaciones de Inventario</h1>
+        </div>
+        <img src="img/logo.png" alt="Logo YOU CONTROL" class="logo-header" onerror="this.style.display='none'">
+    </header>
+
+    <!-- Tipo de Operación -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <label for="tipo-operacion" class="form-label fw-bold">Acción a Realizar:</label>
+                    <select id="tipo-operacion" class="form-select">
+                        <option value="carga">CARGA (+ Sumar Inventario)</option>
+                        <option value="descarga">DESCARGA (- Restar Inventario)</option>
+                    </select>
+                </div>
             </div>
-            <img src="img/logo.png" alt="Logo YOU CONTROL" class="logo-header">
-        </header>
+        </div>
+    </div>
 
-        <!-- Contenido principal aquí -->
+    <!-- Buscador -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="position-relative">
+                <input type="text" id="buscador-dinamico" class="form-control form-control-lg" placeholder="Buscar por Nombre, SKU o Código de Barras...">
+                <div id="dropdown-resultados" class="position-absolute w-100 shadow bg-white rounded mt-1" style="display:none; z-index:1000;"></div>
+                <small id="aviso-no-registrado" class="text-danger mt-1" style="display:none;">Producto no encontrado.</small>
+            </div>
+        </div>
+    </div>
 
-    </main>
+    <!-- Formulario de Selección e Ingreso de Cantidad -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row g-2 align-items-end">
+                <input type="hidden" id="inv-barras">
+                
+                <div class="col-md-2">
+                    <label for="inv-sku" class="form-label font-weight-bold">SKU</label>
+                    <input type="text" id="inv-sku" class="form-control" readonly>
+                </div>
+                
+                <div class="col-md-4">
+                    <label for="inv-nombre" class="form-label font-weight-bold">Producto</label>
+                    <input type="text" id="inv-nombre" class="form-control" readonly>
+                </div>
+                
+                <div class="col-md-2">
+                    <label for="inv-stock-actual" class="form-label font-weight-bold">Stock Actual</label>
+                    <input type="number" id="inv-stock-actual" class="form-control bg-light" readonly>
+                </div>
+                
+                <div class="col-md-2">
+                    <label for="inv-cantidad" class="form-label font-weight-bold">Cantidad</label>
+                    <input type="number" id="inv-cantidad" class="form-control border-primary" min="1" placeholder="0">
+                </div>
+                
+                <div class="col-md-2">
+                    <button class="btn btn-success w-100" onclick="window.agregarALista()">
+                        <i class="fas fa-plus"></i> Anexar Línea
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Movimientos Anexados -->
+    <div class="card mb-3">
+        <div class="card-body p-0 overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover m-0 align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>SKU</th>
+                            <th>Producto</th>
+                            <th class="text-center">Stock Actual</th>
+                            <th class="text-center">Operación</th>
+                            <th class="text-center">Nuevo Stock</th>
+                            <th class="text-center">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-items-operacion">
+                        <!-- Filas añadidas dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botón Guardar Masivo -->
+    <div class="d-flex justify-content-end mb-4">
+        <button class="btn btn-primary btn-lg px-4" onclick="window.procesarOperacionInventario()">
+            <i class="fas fa-save me-1"></i> Guardar Operación
+        </button>
+    </div>
+
+</main>
+
+<!-- Módulo JS para Firebase -->
+<script type="module" src="./sys_v3_op-inv.js"></script>
+
 </body>
 </html>
