@@ -16,7 +16,7 @@ const buscadorInv = document.getElementById('buscador-inv');
 const mapaDeptos = {};
 let tasaBCV = 1.00;
 
-// Helper para prevenir inyecciones de HTML/XSS
+// Helper para prevenir inyecciones de HTML / XSS
 const escapeHTML = (str) => {
     if (!str) return '';
     return String(str)
@@ -33,7 +33,6 @@ function aplicarFiltros() {
     const termBuscador = buscadorInv ? buscadorInv.value.trim().toLowerCase() : '';
 
     document.querySelectorAll('#cuerpo-tabla tr').forEach(tr => {
-        // Ignorar fila de "sin registros"
         if (tr.dataset.noData) return;
 
         const deptoFila = (tr.dataset.deptoId || "").trim().toLowerCase();
@@ -46,11 +45,11 @@ function aplicarFiltros() {
     });
 }
 
-// Escuchadores para los filtros
+// Escuchadores de eventos para los filtros
 if (filtroDepto) {
     filtroDepto.addEventListener('change', aplicarFiltros);
 }
-window.filtrarPorDepto = aplicarFiltros; // Compatibilidad si se llama inline en HTML
+window.filtrarPorDepto = aplicarFiltros;
 
 if (buscadorInv) {
     buscadorInv.addEventListener('input', aplicarFiltros);
@@ -59,11 +58,10 @@ if (buscadorInv) {
 // --- INICIALIZACIÓN ---
 async function init() {
     try {
-        // 1. Escuchar la tasa BCV en tiempo real desde el documento del usuario/empresa
+        // 1. Escuchar la tasa BCV en tiempo real
         onSnapshot(doc(db, "usuarios", USER_ID), (docSnap) => {
             if (docSnap.exists()) {
                 tasaBCV = parseFloat(docSnap.data().tasa_bcv) || 1.00;
-                // Si la tasa cambia, actualizar la tabla si ya hay filas renderizadas
                 recalcularPreciosBs();
             }
         });
@@ -86,7 +84,7 @@ async function init() {
             cuerpoTabla.innerHTML = "";
             
             if (snap.empty) {
-                cuerpoTabla.innerHTML = `<tr data-no-data="true"><td colspan="6" style="text-align:center; color:#64748B;">No hay productos registrados.</td></tr>`;
+                cuerpoTabla.innerHTML = `<tr data-no-data="true"><td colspan="7" style="text-align:center; color:#64748B;">No hay productos registrados.</td></tr>`;
                 return;
             }
 
@@ -97,12 +95,17 @@ async function init() {
                 const precioBs = (precioUSD * tasaBCV).toFixed(2);
                 const deptoId = p.departamento || '';
                 const nombreDeptoMostrado = mapaDeptos[deptoId] || 'GENERAL';
-                
+
+                // Obtener el código o SKU disponible
+                const codigoProd = p.sku || p.codigo || p.barras || 'S/C';
+
                 const tr = document.createElement('tr');
                 tr.dataset.deptoId = deptoId;
-                tr.dataset.precioUsd = precioUSD; // Guardado para recalcular en tiempo real si cambia la tasa
+                tr.dataset.precioUsd = precioUSD;
                 
+                // Renderizado completo de las 7 columnas
                 tr.innerHTML = `
+                    <td><b>${escapeHTML(codigoProd)}</b></td>
                     <td>${escapeHTML(p.nombre || p.descripcion || 'Sin nombre')}</td>
                     <td>${escapeHTML(nombreDeptoMostrado)}</td>
                     <td>$${costoUSD.toFixed(2)}</td>
@@ -113,7 +116,6 @@ async function init() {
                 cuerpoTabla.appendChild(tr);
             });
 
-            // Reaplicar filtros tras la actualización del DOM
             aplicarFiltros();
         }, (error) => {
             console.error("Error al escuchar productos:", error);
@@ -124,7 +126,7 @@ async function init() {
     }
 }
 
-// Función auxiliar para recalcular precios en Bs si cambia la tasa BCV sin volver a consultar Firestore
+// Recalcular precios en bolívares si cambia la tasa sin recargar la página
 function recalcularPreciosBs() {
     document.querySelectorAll('#cuerpo-tabla tr').forEach(tr => {
         if (tr.dataset.precioUsd) {
