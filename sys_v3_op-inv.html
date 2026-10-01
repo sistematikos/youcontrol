@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>INVENTARIO | YOU CONTROL</title>
+    <title>Operaciones de Inventario - YOU CONTROL</title>
     
     <!-- Bootstrap 5 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
@@ -16,6 +16,10 @@
         :root {
             --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
             --text-dark: #1E293B;
+            --emerald: #10B981; 
+            --sky: #0EA5E9; 
+            --amber: #F59E0B; 
+            --rose: #F43F5E;
             --border: #E2E8F0;
             --white: #FFFFFF;
         }
@@ -35,7 +39,7 @@
             margin: 0 auto; 
         }
 
-        /* Encabezado */
+        /* Encabezado Principal */
         .header-panel { 
             background: var(--white); 
             padding: 0 20px; 
@@ -47,6 +51,19 @@
             align-items: center; 
             margin-bottom: 20px; 
             height: 70px; 
+        }
+
+        .header-title-container {
+            display: flex; 
+            align-items: center; 
+            gap: 15px;
+        }
+
+        .header-title {
+            font-size: 1.2rem; 
+            font-weight: 700;
+            margin: 0;
+            color: var(--text-dark);
         }
 
         .btn-back { 
@@ -68,6 +85,7 @@
         .btn-back:hover { 
             background: #E2E8F0; 
             color: var(--text-dark);
+            transform: translateY(-1px);
         }
 
         .logo-header { 
@@ -80,7 +98,7 @@
             background: var(--white);
             border-radius: 12px;
             border: 1px solid var(--border);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
         }
 
         .form-control, .form-select {
@@ -89,9 +107,15 @@
             border-radius: 8px;
         }
 
-        /* Estilo para los ítems del desplegable de sugerencias */
+        .btn {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            border-radius: 8px;
+        }
+
+        /* Contenedor de Sugerencias de Búsqueda */
         #dropdown-resultados {
-            max-height: 280px;
+            max-height: 250px;
             overflow-y: auto;
             border: 1px solid var(--border);
         }
@@ -99,12 +123,12 @@
         .search-item {
             padding: 10px 15px;
             cursor: pointer;
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 1px solid #F1F5F9;
             transition: background 0.15s ease;
         }
 
         .search-item:hover {
-            background-color: #f8fafc;
+            background-color: #F8FAFC !important;
         }
     </style>
 
@@ -114,7 +138,7 @@
             window.location.href = 'sys_v1_menu.html?refresh=' + new Date().getTime();
         }
 
-        // Detecta clics fuera de la caja de búsqueda para ocultar el desplegable
+        // Cierra el menú de resultados si el usuario hace clic fuera de la búsqueda
         document.addEventListener('click', function(e) {
             const dropdown = document.getElementById('dropdown-resultados');
             const buscador = document.getElementById('buscador-dinamico');
@@ -128,67 +152,112 @@
 
 <main class="layout-width">
 
-    <!-- Encabezado -->
+    <!-- Encabezado Estándar -->
     <header class="header-panel">
-        <div class="d-flex align-items-center gap-3">
+        <div class="header-title-container">
             <a href="#" class="btn-back" onclick="volverAlMenu(event)">
                 <i class="fas fa-arrow-left"></i> VOLVER
             </a>
-            <h1 class="h5 m-0 fw-bold">INVENTARIO</h1>
+            <h1 class="header-title">Operaciones de Inventario</h1>
         </div>
         <img src="img/logo.png" alt="Logo YOU CONTROL" class="logo-header" onerror="this.style.display='none'">
     </header>
 
-    <!-- Controles de Filtro y Buscador -->
-    <div class="card mb-3 p-3">
-        <div class="row g-2">
-            <div class="col-md-4">
-                <select id="filtro-depto" class="form-select">
-                    <option value="TODOS">TODOS LOS DEPARTAMENTOS</option>
-                </select>
+    <!-- Tipo de Operación (Carga / Descarga) -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <label for="tipo-operacion" class="form-label fw-bold">Acción a Realizar:</label>
+                    <select id="tipo-operacion" class="form-select">
+                        <option value="carga">CARGA (+ Sumar Inventario)</option>
+                        <option value="descarga">DESCARGA (- Restar Inventario)</option>
+                    </select>
+                </div>
             </div>
-            
-            <div class="col-md-8 position-relative">
-                <input type="text" 
-                       id="buscador-dinamico" 
-                       class="form-control" 
-                       placeholder="🔍 Buscar por Código, Nombre, SKU..." 
-                       autocomplete="off">
-                
-                <!-- Desplegable dinámico alimentado desde JS -->
+        </div>
+    </div>
+
+    <!-- Buscador Dinámico de Productos -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="position-relative">
+                <input type="text" id="buscador-dinamico" class="form-control form-control-lg" 
+                       placeholder="🔍 Buscar por Nombre, SKU o Código de Barras..." autocomplete="off">
                 <div id="dropdown-resultados" class="position-absolute w-100 shadow bg-white rounded mt-1" style="display:none; z-index:1000;"></div>
-                
-                <!-- Mensaje de estado -->
                 <small id="aviso-no-registrado" class="text-danger mt-1 fw-bold" style="display:none;">Producto no encontrado.</small>
             </div>
         </div>
     </div>
 
-    <!-- Tabla Principal de Productos -->
-    <div class="card p-0 overflow-hidden mb-4">
-        <div class="table-responsive">
-            <table class="table table-striped table-hover m-0 align-middle">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Código / SKU</th>
-                        <th>Nombre del Producto</th>
-                        <th>Departamento</th>
-                        <th class="text-end">Costo</th>
-                        <th class="text-center">%</th>
-                        <th class="text-end">Precio</th>
-                        <th class="text-center">Stock</th>
-                    </tr>
-                </thead>
-                <tbody id="cuerpo-tabla">
-                    <!-- Filas generadas dinámicamente desde el JS -->
-                </tbody>
-            </table>
+    <!-- Formulario de Selección e Ingreso de Cantidad -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row g-2 align-items-end">
+                <input type="hidden" id="inv-barras">
+                
+                <div class="col-md-2">
+                    <label for="inv-sku" class="form-label fw-bold">SKU / Código</label>
+                    <input type="text" id="inv-sku" class="form-control bg-light" readonly>
+                </div>
+                
+                <div class="col-md-4">
+                    <label for="inv-nombre" class="form-label fw-bold">Producto</label>
+                    <input type="text" id="inv-nombre" class="form-control bg-light" readonly>
+                </div>
+                
+                <div class="col-md-2">
+                    <label for="inv-stock-actual" class="form-label fw-bold">Stock Actual</label>
+                    <input type="number" id="inv-stock-actual" class="form-control bg-light" readonly>
+                </div>
+                
+                <div class="col-md-2">
+                    <label for="inv-cantidad" class="form-label fw-bold">Cantidad</label>
+                    <input type="number" id="inv-cantidad" class="form-control border-primary" min="1" placeholder="0">
+                </div>
+                
+                <div class="col-md-2">
+                    <button class="btn btn-success w-100" onclick="window.agregarALista()">
+                        <i class="fas fa-plus"></i> Anexar Línea
+                    </button>
+                </div>
+            </div>
         </div>
+    </div>
+
+    <!-- Tabla de Movimientos Anexados -->
+    <div class="card mb-3">
+        <div class="card-body p-0 overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover m-0 align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>SKU / Código</th>
+                            <th>Producto</th>
+                            <th class="text-center">Stock Actual</th>
+                            <th class="text-center">Operación</th>
+                            <th class="text-center">Nuevo Stock</th>
+                            <th class="text-center">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-items-operacion">
+                        <!-- Filas añadidas dinámicamente desde sys_v3_op-inv.js -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botón Guardar Masivo -->
+    <div class="d-flex justify-content-end mb-4">
+        <button class="btn btn-primary btn-lg px-4" onclick="window.procesarOperacionInventario()">
+            <i class="fas fa-save me-1"></i> Guardar Operación
+        </button>
     </div>
 
 </main>
 
-<!-- Carga del Módulo JavaScript -->
+<!-- Vinculación del módulo JS de Operaciones de Inventario -->
 <script type="module" src="./sys_v3_op-inv.js"></script>
 
 </body>
