@@ -3,45 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Operaciones de Inventario - YOU CONTROL</title>
-    
-    <!-- Bootstrap 5 CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <!-- FontAwesome Icons -->
+    <title>OPERACIONES DE INVENTARIO | YOU CONTROL</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- Google Fonts Poppins -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
-            --text-dark: #1E293B;
+        :root { 
+            --bg: #F1F5F9; 
             --emerald: #10B981; 
-            --sky: #0EA5E9; 
-            --amber: #F59E0B; 
-            --rose: #F43F5E;
+            --blue: #2563EB;
+            --red: #EF4444;
+            --dark: #1E293B;
             --border: #E2E8F0;
-            --white: #FFFFFF;
         }
 
         body { 
             font-family: 'Poppins', sans-serif; 
-            background: var(--bg-gradient); 
+            background: var(--bg); 
             margin: 0; 
-            padding: 15px 0; 
-            min-height: 100vh; 
-            color: var(--text-dark); 
+            padding: 20px; 
+            color: var(--dark);
         }
-
-        .layout-width { 
-            width: 95%; 
-            max-width: 1200px; 
-            margin: 0 auto; 
-        }
-
-        /* Encabezado Principal */
+        
+        /* Cabecera */
         .header-panel { 
-            background: var(--white); 
+            background: #ffffff; 
             padding: 0 20px; 
             border-radius: 12px; 
             box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
@@ -49,27 +34,15 @@
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            margin-bottom: 20px; 
+            max-width: 800px; 
+            margin: 0 auto 15px auto; 
             height: 70px; 
-        }
-
-        .header-title-container {
-            display: flex; 
-            align-items: center; 
-            gap: 15px;
-        }
-
-        .header-title {
-            font-size: 1.2rem; 
-            font-weight: 700;
-            margin: 0;
-            color: var(--text-dark);
         }
 
         .btn-back { 
             background: #F1F5F9; 
-            color: var(--text-dark); 
-            padding: 8px 14px; 
+            color: var(--dark); 
+            padding: 8px 15px; 
             border-radius: 8px; 
             text-decoration: none; 
             font-size: 0.8rem; 
@@ -77,193 +50,187 @@
             border: 1px solid var(--border); 
             display: inline-flex; 
             align-items: center; 
-            gap: 6px; 
+            gap: 5px; 
             cursor: pointer; 
-            transition: all 0.2s ease;
+            transition: background 0.2s; 
         }
 
         .btn-back:hover { 
             background: #E2E8F0; 
-            color: var(--text-dark);
-            transform: translateY(-1px);
         }
 
         .logo-header { 
-            height: 40px; 
+            height: 50px; 
             width: auto; 
-            object-fit: contain; 
         }
 
-        .card {
-            background: var(--white);
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+        /* Contenido y Tarjeta Principal */
+        .card { 
+            background: white; 
+            padding: 25px; 
+            border-radius: 12px; 
+            max-width: 800px; 
+            margin: auto; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+            position: relative; 
         }
 
-        .form-control, .form-select {
-            font-family: 'Poppins', sans-serif;
-            font-size: 0.9rem;
-            border-radius: 8px;
+        .grid-form { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 20px; 
+            margin-top: 15px;
         }
 
-        .btn {
-            font-family: 'Poppins', sans-serif;
-            font-weight: 600;
-            border-radius: 8px;
+        label { 
+            font-size: 0.8rem; 
+            font-weight: 600; 
+            color: #64748B; 
+            margin-bottom: 5px; 
+            display: block; 
         }
 
-        /* Contenedor de Sugerencias de Búsqueda */
-        #dropdown-resultados {
-            max-height: 250px;
-            overflow-y: auto;
-            border: 1px solid var(--border);
-            position: absolute;
+        input, select { 
+            width: 100%; 
+            padding: 10px; 
+            margin-bottom: 15px; 
+            border: 1px solid var(--border); 
+            border-radius: 8px; 
+            box-sizing: border-box; 
+            font-family: inherit;
+        }
+
+        input:disabled {
+            background-color: #F8FAFC;
+            color: #64748B;
+        }
+
+        /* Buscador Flotante */
+        .contenedor-buscador {
+            position: relative;
             width: 100%;
-            z-index: 1050;
-            background: #ffffff;
         }
 
-        .search-item {
-            padding: 10px 15px;
-            cursor: pointer;
-            border-bottom: 1px solid #F1F5F9;
-            transition: background 0.15s ease;
+        #lista-resultados-inv { 
+            position: absolute; 
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white; 
+            border: 1px solid var(--border); 
+            border-radius: 0 0 8px 8px; 
+            z-index: 1000; 
+            display: none; 
+            max-height: 220px; 
+            overflow-y: auto; 
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); 
         }
 
-        .search-item:hover {
-            background-color: #F8FAFC !important;
+        .item-res-inv { 
+            padding: 12px; 
+            cursor: pointer; 
+            border-bottom: 1px solid #F1F5F9; 
+            transition: background 0.15s ease-in-out;
+        }
+
+        .item-res-inv:hover { 
+            background: #F1F5F9; 
+        }
+
+        .item-res-inv strong {
+            color: var(--dark);
+            font-size: 0.9rem;
+        }
+
+        .item-res-inv small {
+            color: #64748B;
+            font-size: 0.8rem;
+        }
+
+        /* Botón de Acción */
+        .btn-process { 
+            background: var(--blue); 
+            color: white; 
+            padding: 15px; 
+            border: none; 
+            border-radius: 8px; 
+            width: 100%; 
+            font-weight: 800; 
+            cursor: pointer; 
+            transition: opacity 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-process:hover {
+            opacity: 0.9;
         }
     </style>
 
+    <!-- Script para limpiar caché al retornar -->
     <script>
-        function volverAlMenu(e) {
+        function irAlMenu(e) {
             e.preventDefault();
             window.location.href = 'sys_v1_menu.html?refresh=' + new Date().getTime();
         }
-
-        // Control seguro para cerrar dropdown al hacer clic fuera
-        document.addEventListener('pointerdown', function(e) {
-            const dropdown = document.getElementById('dropdown-resultados');
-            const buscador = document.getElementById('buscador-dinamico');
-            if (dropdown && buscador) {
-                if (!buscador.contains(e.target) && !dropdown.contains(e.target)) {
-                    dropdown.style.display = 'none';
-                }
-            }
-        });
     </script>
 </head>
 <body>
 
-<main class="layout-width">
-
-    <!-- Encabezado Estándar -->
     <header class="header-panel">
-        <div class="header-title-container">
-            <a href="#" class="btn-back" onclick="volverAlMenu(event)">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <a href="#" class="btn-back" onclick="irAlMenu(event)">
                 <i class="fas fa-arrow-left"></i> VOLVER
             </a>
-            <h1 class="header-title">Operaciones de Inventario</h1>
+            <h1 style="font-size: 1.2rem; margin: 0; font-weight: 700; color: #1E293B;">
+                OPERACIONES DE INVENTARIO
+            </h1>
         </div>
-        <img src="img/logo.png" alt="Logo YOU CONTROL" class="logo-header" onerror="this.style.display='none'">
+        <img src="img/logo.png" class="logo-header" alt="Logo">
     </header>
 
-    <!-- Tipo de Operación (Carga / Descarga) -->
-    <div class="card mb-3">
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-4">
-                    <label for="tipo-operacion" class="form-label fw-bold">Acción a Realizar:</label>
-                    <select id="tipo-operacion" class="form-select">
-                        <option value="carga">CARGA (+ Sumar Inventario)</option>
-                        <option value="descarga">DESCARGA (- Restar Inventario)</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-    </div>
+    <main class="card">
+        <h2><i class="fas fa-boxes-stacked"></i> Movimiento de Inventario</h2>
 
-    <!-- Buscador Dinámico de Productos -->
-    <div class="card mb-3">
-        <div class="card-body">
-            <div class="position-relative">
-                <input type="text" id="buscador-dinamico" class="form-control form-control-lg" 
-                       placeholder="🔍 Buscar por Nombre, SKU o Código de Barras..." autocomplete="off">
-                <div id="dropdown-resultados" class="shadow rounded mt-1" style="display:none;"></div>
-                <small id="aviso-no-registrado" class="text-danger mt-1 fw-bold" style="display:none;">Producto no encontrado.</small>
-            </div>
+        <!-- Buscador con Desplegable Flotante -->
+        <div class="contenedor-buscador">
+            <label>BUSCAR PRODUCTO</label>
+            <input type="text" id="buscador-prod-inv" placeholder="Buscar por nombre, SKU o código de barras..." autocomplete="off">
+            <div id="lista-resultados-inv"></div>
         </div>
-    </div>
 
-    <!-- Formulario de Selección e Ingreso de Cantidad -->
-    <div class="card mb-3">
-        <div class="card-body">
-            <div class="row g-2 align-items-end">
-                <input type="hidden" id="inv-barras">
-                
-                <div class="col-md-2">
-                    <label for="inv-sku" class="form-label fw-bold">SKU / Código</label>
-                    <input type="text" id="inv-sku" class="form-control bg-light" readonly>
-                </div>
-                
-                <div class="col-md-4">
-                    <label for="inv-nombre" class="form-label fw-bold">Producto</label>
-                    <input type="text" id="inv-nombre" class="form-control bg-light" readonly>
-                </div>
-                
-                <div class="col-md-2">
-                    <label for="inv-stock-actual" class="form-label fw-bold">Stock Actual</label>
-                    <input type="number" id="inv-stock-actual" class="form-control bg-light" readonly>
-                </div>
-                
-                <div class="col-md-2">
-                    <label for="inv-cantidad" class="form-label fw-bold">Cantidad</label>
-                    <input type="number" id="inv-cantidad" class="form-control border-primary" min="1" placeholder="0">
-                </div>
-                
-                <div class="col-md-2">
-                    <button class="btn btn-success w-100" onclick="window.agregarALista()">
-                        <i class="fas fa-plus"></i> Anexar Línea
-                    </button>
-                </div>
-            </div>
+        <div class="grid-form">
+            <section>
+                <label>SKU Producto</label>
+                <input type="text" id="inv-sku" disabled>
+
+                <label>Nombre del Producto</label>
+                <input type="text" id="inv-nombre" disabled>
+
+                <label>Stock Actual</label>
+                <input type="number" id="inv-stock-actual" disabled value="0">
+            </section>
+
+            <section>
+                <label>Tipo de Operación</label>
+                <select id="inv-tipo-op">
+                    <option value="ENTRADA">ENTRADA (+)</option>
+                    <option value="SALIDA">SALIDA (-)</option>
+                    <option value="AJUSTE">AJUSTE MANUAL (=)</option>
+                </select>
+
+                <label>Cantidad a Procesar</label>
+                <input type="number" id="inv-cantidad" min="1" placeholder="Ej: 10">
+
+                <label>Concepto / Motivo</label>
+                <input type="text" id="inv-concepto" placeholder="Ej: Compra a proveedor, Ajuste de stock...">
+            </section>
         </div>
-    </div>
 
-    <!-- Tabla de Movimientos Anexados -->
-    <div class="card mb-3">
-        <div class="card-body p-0 overflow-hidden">
-            <div class="table-responsive">
-                <table class="table table-striped table-hover m-0 align-middle">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>SKU / Código</th>
-                            <th>Producto</th>
-                            <th class="text-center">Stock Actual</th>
-                            <th class="text-center">Operación</th>
-                            <th class="text-center">Nuevo Stock</th>
-                            <th class="text-center">Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-items-operacion">
-                        <!-- Filas añadidas dinámicamente -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Botón Guardar Masivo -->
-    <div class="d-flex justify-content-end mb-4">
-        <button class="btn btn-primary btn-lg px-4" onclick="window.procesarOperacionInventario()">
-            <i class="fas fa-save me-1"></i> Guardar Operación
+        <button class="btn-process" onclick="window.procesarOperacionInventario()">
+            PROCESAR OPERACIÓN (F9)
         </button>
-    </div>
+    </main>
 
-</main>
-
-<script type="module" src="./sys_v3_op-inv.js"></script>
-
+    <script type="module" src="./js/sys_v3_op-inv.js"></script>
 </body>
 </html>
