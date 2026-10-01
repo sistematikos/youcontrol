@@ -1,104 +1,133 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Operaciones de Inventario - YOU CONTROL</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TÍTULO DE LA PÁGINA | YOU CONTROL</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
+            --text-dark: #1E293B;
+            --emerald: #10B981; 
+            --sky: #0EA5E9; 
+            --amber: #F59E0B; 
+            --rose: #F43F5E;
+            --border: #E2E8F0;
+        }
+
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background: var(--bg-gradient); 
+            margin: 0; 
+            padding: 10px 0; 
+            min-height: 100vh; 
+            color: var(--text-dark); 
+        }
+
+        .layout-width { 
+            width: 95%; 
+            max-width: 1200px; 
+            margin: 0 auto; 
+        }
+
+        /* Encabezado Principal */
+        .header-panel { 
+            background: #ffffff; 
+            padding: 0 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+            border: 1px solid var(--border); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 15px; 
+            height: 70px; 
+        }
+
+        .header-title-container {
+            display: flex; 
+            align-items: center; 
+            gap: 15px;
+        }
+
+        .header-title {
+            font-size: 1.2rem; 
+            font-weight: 700;
+            margin: 0;
+            color: var(--text-dark);
+        }
+
+        .btn-back { 
+            background: #F1F5F9; 
+            color: var(--text-dark); 
+            padding: 6px 12px; 
+            border-radius: 8px; 
+            text-decoration: none; 
+            font-size: 0.75rem; 
+            font-weight: 700; 
+            border: 1px solid var(--border); 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 5px; 
+            cursor: pointer; 
+            transition: background 0.2s ease;
+        }
+
+        .btn-back:hover { 
+            background: #E2E8F0; 
+        }
+
+        .logo-header { 
+            height: 80%; 
+            width: auto; 
+            object-fit: contain; 
+        }
+
+        /* Estilos generales para componentes */
+        .card { 
+            background: white; 
+            padding: 15px; 
+            border-radius: 12px; 
+            border: 1px solid var(--border); 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03); 
+            position: relative; 
+            border-left: 6px solid var(--border); 
+        }
+
+        .border-sky { border-left-color: var(--sky); }
+        .border-emerald { border-left-color: var(--emerald); }
+        .border-amber { border-left-color: var(--amber); }
+        .border-rose { border-left-color: var(--rose); }
+
+        h3 { margin-top: 0; font-size: 1rem; margin-bottom: 10px; }
+        input, select { width: 100%; padding: 10px; margin: 4px 0; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; }
+    </style>
+
+    <!-- Script de navegación -->
+    <script>
+        function volverAlMenu(e) {
+            e.preventDefault();
+            window.location.href = 'sys_v1_menu.html?refresh=' + new Date().getTime();
+        }
+    </script>
 </head>
 <body>
+    <main class="layout-width">
+        <!-- Encabezado Adaptado -->
+        <header class="header-panel">
+            <div class="header-title-container">
+                <a href="#" class="btn-back" onclick="volverAlMenu(event)">
+                    <i class="fas fa-arrow-left"></i> VOLVER
+                </a>
+                <h1 class="header-title">Título del Módulo</h1>
+            </div>
+            <img src="img/logo.png" alt="Logo YOU CONTROL" class="logo-header">
+        </header>
 
-<div class="container my-4">
-  <h3 class="mb-3">Operaciones de Inventario</h3>
+        <!-- Contenido principal aquí -->
 
-  <!-- Tipo de Operación -->
-  <div class="card mb-3">
-    <div class="card-body">
-      <div class="row">
-        <div class="col-md-4">
-          <label for="tipo-operacion" class="form-label font-weight-bold">Acción a Realizar:</label>
-          <select id="tipo-operacion" class="form-select">
-            <option value="carga">CARGA (+ Sumar Inventario)</option>
-            <option value="descarga">DESCARGA (- Restar Inventario)</option>
-          </select>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Buscador -->
-  <div class="card mb-3">
-    <div class="card-body">
-      <div class="position-relative">
-        <input type="text" id="buscador-dinamico" class="form-control form-control-lg" placeholder="Buscar por Nombre, SKU o Código de Barras...">
-        <div id="dropdown-resultados" class="position-absolute w-100 shadow" style="display:none; z-index:1000;"></div>
-        <small id="aviso-no-registrado" class="text-danger mt-1" style="display:none;">Producto no encontrado.</small>
-      </div>
-    </div>
-  </div>
-
-  <!-- Formulario de Selección e Ingreso de Cantidad -->
-  <div class="card mb-3">
-    <div class="card-body">
-      <div class="row g-2 align-items-end">
-        <input type="hidden" id="inv-barras">
-        
-        <div class="col-md-2">
-          <label for="inv-sku" class="form-label">SKU</label>
-          <input type="text" id="inv-sku" class="form-control" readonly>
-        </div>
-        
-        <div class="col-md-4">
-          <label for="inv-nombre" class="form-label">Producto</label>
-          <input type="text" id="inv-nombre" class="form-control" readonly>
-        </div>
-        
-        <div class="col-md-2">
-          <label for="inv-stock-actual" class="form-label">Stock Actual</label>
-          <input type="number" id="inv-stock-actual" class="form-control bg-light" readonly>
-        </div>
-        
-        <div class="col-md-2">
-          <label for="inv-cantidad" class="form-label">Cantidad</label>
-          <input type="number" id="inv-cantidad" class="form-control border-primary" min="1" placeholder="0">
-        </div>
-        
-        <div class="col-md-2">
-          <button class="btn btn-success w-100" onclick="window.agregarALista()">Anexar Línea</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Tabla de Movimientos Anexados -->
-  <div class="card">
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-striped table-hover m-0">
-          <thead class="table-dark">
-            <tr>
-              <th>SKU</th>
-              <th>Producto</th>
-              <th class="text-center">Stock Actual</th>
-              <th class="text-center">Operación</th>
-              <th class="text-center">Nuevo Stock</th>
-              <th class="text-center">Acción</th>
-            </tr>
-          </thead>
-          <tbody id="tabla-items-operacion">
-            <!-- Filas añadidas dinámicamente -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- Botón Guardar Masivo -->
-  <div class="d-flex justify-content-end mt-3">
-    <button class="btn btn-primary btn-lg" onclick="window.procesarOperacionInventario()">Guardar Operación</button>
-  </div>
-</div>
-
-<!-- Importante: cargar como module para que Firebase trabaje correctamente -->
-<script type="module" src="./sys_v3_op-inv.js"></script>
+    </main>
 </body>
 </html>
