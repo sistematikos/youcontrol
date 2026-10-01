@@ -1,5 +1,5 @@
 import { db } from './firebase-config.js';
-import { collection, onSnapshot, doc, updateDoc, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, onSnapshot, doc, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // Obtener dinámicamente el ID de la empresa activa desde el navegador
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
@@ -31,16 +31,6 @@ document.getElementById('buscador-inv').addEventListener('input', (e) => {
         tr.style.display = tr.innerText.toLowerCase().includes(term) ? '' : 'none';
     });
 });
-
-// --- GUARDAR STOCK ---
-window.actualizarSoloStock = async (id, val) => {
-    try {
-        await updateDoc(doc(db, "usuarios", USER_ID, "productos", id), { stock: parseInt(val) || 0 });
-    } catch (error) {
-        console.error("Error al actualizar stock:", error);
-        alert("No se pudo actualizar el stock.");
-    }
-};
 
 // --- INICIALIZACIÓN ---
 async function init() {
@@ -89,8 +79,7 @@ async function init() {
                     <td>$${parseFloat(p.costo || 0).toFixed(2)}</td>
                     <td style="color: #6366f1; font-weight: bold;">${p.ganancia || p.porcentaje || 0}%</td>
                     <td>$${precioUSD.toFixed(2)} / <b>${precioBs} Bs</b></td>
-                    <td><input type="number" class="input-stock" value="${p.stock || 0}" 
-                        onchange="window.actualizarSoloStock('${d.id}', this.value)"></td>
+                    <td style="font-weight: 600;">${p.stock || 0}</td>
                 `;
                 cuerpoTabla.appendChild(tr);
             });
