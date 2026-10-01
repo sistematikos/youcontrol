@@ -6,17 +6,12 @@
 import { db } from './firebase-config.js';
 import { collection, onSnapshot, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Obtener dinámicamente el ID de la empresa activa desde el navegador
 const USER_ID = localStorage.getItem('youcontrol_empresa_id'); 
-
-if (!USER_ID) {
-    console.warn("Sesión no encontrada o expirada en localStorage.");
-}
 
 let productosLocales = [];
 let listaTemporal = []; 
 
-// Vinculación DOM basada en sys_v3_op-inv.html
+// Referencias DOM
 const tipoOperacion = document.getElementById('tipo-operacion');
 const buscador = document.getElementById('buscador-dinamico');
 const dropdown = document.getElementById('dropdown-resultados');
@@ -30,27 +25,18 @@ const inputCantidad = document.getElementById('inv-cantidad');
 
 const normalizar = (texto) => String(texto || '').trim().toLowerCase();
 
-// 1. CARGA DE PRODUCTOS EN TIEMPO REAL DESDE FIRESTORE
+// 1. CARGA EN TIEMPO REAL (Mismo esquema que Ventas)
 function cargarProductos() {
-    if (!USER_ID) return;
-
+    if (!USER_ID) {
+        console.warn("No se encontró el ID de empresa registrado.");
+        return;
+    }
     try {
         onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
-            productosLocales = snapshot.docs.map(doc => {
-                const data = doc.data();
-                // OBTENER CÓDIGO/SKU: Si data.sku o data.codigo no existen, usa doc.id (ej. 'ACE-01', 'ANI-01')
-                const codigoFinal = data.sku || data.codigo || doc.id;
-                const nombreFinal = data.nombre || data.descripcion || 'Sin Nombre';
-
-                return { 
-                    id: doc.id,
-                    sku: codigoFinal,
-                    nombre: nombreFinal,
-                    stock: parseInt(data.stock || 0, 10),
-                    barras: data.barras || data.codigoBarras || '',
-                    ...data 
-                };
-            });
+            productosLocales = snapshot.docs.map(doc => ({ 
+                id: doc.id, // Ejemplo: "ACE-01", "ANI-01"
+                ...doc.data() 
+            }));
             console.log("✅ Productos cargados en Operaciones:", productosLocales.length);
         });
     } catch (e) { 
@@ -71,42 +57,42 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// 2. BUSCADOR EN TIEMPO REAL CON RENDERIZADO SEGURO DE EVENTOS
+// 2. BUSCADOR EN TIEMPO REAL (Lógica calcada del Módulo Ventas)
 if (buscador) {
     buscador.addEventListener('input', (e) => {
-        const val = normalizar(e.target.value);
+        const criterio = normalizar(e.target.value);
         
-        if (!val) { 
+        if (!criterio) { 
             if (dropdown) dropdown.style.display = 'none'; 
             if (aviso) aviso.style.display = 'none'; 
             return; 
         }
         
-        // Coincidencia flexible por ID de Documento, SKU, Código de barras o Nombre
-        const filtrados = productosLocales.filter(p => {
-            const idDoc = normalizar(p.id);
-            const sku = normalizar(p.sku);
-            const barras = normalizar(p.barras);
-            const nombre = normalizar(p.nombre);
-            
-            return idDoc.includes(val) || sku.includes(val) || barras.includes(val) || nombre.includes(val);
-        });
+        // Búsqueda idéntica al módulo de ventas
+        const filtrados = productosLocales.filter(p => 
+            normalizar(p.id).includes(criterio) || 
+            normalizar(p.nombre || p.descripcion).includes(criterio) || 
+            normalizar(p.barras || p.codigoBarras).includes(criterio)
+        );
         
         if (filtrados.length > 0) {
             if (aviso) aviso.style.display = 'none';
             if (dropdown) {
-                dropdown.innerHTML = ''; // Limpiar dropdown
+                dropdown.innerHTML = ''; // Limpiamos desplegable
 
                 filtrados.slice(0, 10).forEach(p => {
+                    const codigoMostrar = p.id || p.sku || 'S/C';
+                    const nombreMostrar = p.nombre || p.descripcion || 'Sin Nombre';
+                    
                     const item = document.createElement('div');
                     item.className = 'search-item';
-                    item.style.cssText = 'padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; background: white;';
+                    item.style.cssText = 'padding:10px; cursor:pointer; border-bottom:1px solid #eee; background:white;';
                     item.innerHTML = `
-                        <strong>${p.nombre}</strong><br>
-                        <small>SKU / CÓDIGO: ${p.sku} | Stock Actual: ${p.stock}</small>
+                        <strong>${nombreMostrar}</strong><br>
+                        <small>CÓDIGO: ${codigoMostrar} | Stock Actual: ${p.stock ?? 0}</small>
                     `;
                     
-                    // Asignación directa del evento click para evitar problemas de window scope
+                    // Asignación limpia del evento de selección
                     item.addEventListener('click', () => {
                         seleccionarProducto(p);
                     });
@@ -122,16 +108,15 @@ if (buscador) {
         }
     });
 
-    // Búsqueda por escáner de código de barras o ENTER directo
+    // Enter / Escáner de código de barras
     buscador.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
             const criterio = normalizar(buscador.value);
             
             const prod = productosLocales.find(p => 
-                normalizar(p.id) === criterio ||
-                normalizar(p.sku) === criterio || 
-                normalizar(p.barras) === criterio
+                normalizar(p.id) === criterio || 
+                normalizar(p.barras || p.codigoBarras) === criterio
             );
             
             if (prod) {
@@ -145,15 +130,15 @@ if (buscador) {
     });
 }
 
-// 3. SELECCIÓN Y LLENADO DE CAMPOS
+// 3. SELECCIÓN DE PRODUCTO
 function seleccionarProducto(prod) {
     if (inputSku) {
-        inputSku.value = prod.sku;
+        inputSku.value = prod.id || prod.sku || '';
         inputSku.dataset.docId = prod.id;
     }
-    if (inputBarras) inputBarras.value = prod.barras;
-    if (inputNombre) inputNombre.value = prod.nombre;
-    if (inputStockActual) inputStockActual.value = prod.stock;
+    if (inputBarras) inputBarras.value = prod.barras || prod.codigoBarras || '';
+    if (inputNombre) inputNombre.value = prod.nombre || prod.descripcion || '';
+    if (inputStockActual) inputStockActual.value = parseInt(prod.stock, 10) || 0;
     
     if (inputCantidad) {
         inputCantidad.value = '';
@@ -170,7 +155,7 @@ window.seleccionar = (docId) => {
     if (prod) seleccionarProducto(prod);
 };
 
-// 4. ANEXAR A LA LISTA TEMPORAL
+// 4. AGREGAR A LISTA TEMPORAL
 window.agregarALista = () => {
     const docId = inputSku ? inputSku.dataset.docId : null;
     const sku = inputSku ? inputSku.value : '';
@@ -251,7 +236,7 @@ window.eliminarDeLista = (index) => {
     renderizarTabla();
 };
 
-// 5. GUARDAR CAMBIOS EN FIRESTORE
+// 5. PROCESAR Y ACTUALIZAR EN FIRESTORE
 window.procesarOperacionInventario = async () => {
     if (!USER_ID) {
         return alert("Error de sesión. No se puede actualizar el inventario.");
