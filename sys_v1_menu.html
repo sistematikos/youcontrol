@@ -3,13 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Encabezados para evitar caché de navegador -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
     <title>YOU CONTROL | Sistema de Gestión</title>
     
     <link rel="manifest" href="manifest.json">
     <script>
+        // Registro de Service Worker con actualización forzada
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
+                    .then(reg => reg.update()) // Fuerza la búsqueda de nueva versión
                     .catch(err => console.log('SW no registrado', err));
             });
         }
@@ -34,11 +41,11 @@
         .nav-logo { color: white; font-weight: 700; font-size: 1.1rem; text-decoration: none; display: flex; align-items: center; gap: 8px; }
         
         .nav-menu { display: flex; list-style: none; margin: 0; padding: 0; gap: 5px; align-items: center; }
-        .nav-item { position: relative; }
+        .nav-item { position: relative; padding-bottom: 10px; margin-bottom: -10px; }
         .nav-link { color: #E2E8F0; text-decoration: none; padding: 8px 14px; font-size: 0.85rem; font-weight: 500; display: flex; align-items: center; gap: 6px; border-radius: 8px; transition: 0.2s; }
         .nav-link:hover, .nav-item:hover .nav-link { background: rgba(255,255,255,0.1); color: #ffffff; }
 
-        /* DROPDOWN CORREGIDO PARA EVITAR QUE SE CIERRE */
+        /* DROPDOWN */
         .dropdown-menu { 
             position: absolute; 
             top: 100%; 
@@ -52,10 +59,6 @@
             margin: 0; 
             display: none; 
             border: 1px solid #E2E8F0; 
-        }
-        .nav-item {
-            padding-bottom: 10px; 
-            margin-bottom: -10px;
         }
         .nav-item:hover .dropdown-menu { display: block; }
         .dropdown-item a { color: var(--text-dark); padding: 10px 16px; text-decoration: none; display: flex; align-items: center; gap: 10px; font-size: 0.8rem; font-weight: 500; transition: background 0.15s; }
@@ -81,8 +84,8 @@
     (function() {
         const ultimaCarga = sessionStorage.getItem('menu_recargado');
         const ahora = Date.now();
-        if (!ultimaCarga || (ahora - ultimaCarga > 2000)) {
-            sessionStorage.setItem('menu_recargado', me);
+        if (!ultimaCarga || (ahora - Number(ultimaCarga) > 2000)) {
+            sessionStorage.setItem('menu_recargado', ahora.toString()); // CORREGIDO: Se usa 'ahora' en lugar de 'me'
             if (window.location.search.indexOf('nocache') === -1) {
                 window.location.replace(window.location.pathname + '?nocache=' + ahora);
             }
@@ -112,7 +115,6 @@
                     <ul class="dropdown-menu">
                         <li class="dropdown-item"><a href="sys_v1_vt.html"><i class="fas fa-cash-register"></i> Ventas (POS)</a></li>
                         <li class="dropdown-item"><a href="sys_v2_clt.html"><i class="fas fa-users"></i> Clientes</a></li>
-                        <!-- Cuentas por Cobrar reubicado en la sección de Ventas -->
                         <li class="dropdown-item"><a href="sys_v5_cxc.html"><i class="fas fa-file-invoice-dollar"></i> Cuentas por Cobrar</a></li>
                     </ul>
                 </li>
@@ -170,27 +172,38 @@
         async function cargarDatosEmpresa() {
             const empresaID = localStorage.getItem('youcontrol_empresa_id');
             const lblEmpresa = document.getElementById('lblEmpresa');
-            if (empresaID) {
-                try {
-                    const docSnap = await getDoc(doc(db, "empresas_config", empresaID));
-                    if (docSnap.exists()) {
-                        const d = docSnap.data();
-                        lblEmpresa.innerHTML = `
-                            <div style="font-size: 1.1rem;">${d.nombre || 'N/A'}</div>
-                            <div>RIF: ${d.rif || 'N/A'}</div>
-                            <div>${d.direccion || 'N/A'}</div>
-                        `;
-                    }
-                } catch (e) { lblEmpresa.innerText = "Error al cargar"; }
+
+            if (!empresaID) {
+                lblEmpresa.innerText = "Sesión no válida (Falta ID de empresa)";
+                console.warn("No se encontró 'youcontrol_empresa_id' en localStorage.");
+                return;
+            }
+
+            try {
+                const docSnap = await getDoc(doc(db, "empresas_config", empresaID));
+                if (docSnap.exists()) {
+                    const d = docSnap.data();
+                    lblEmpresa.innerHTML = `
+                        <div style="font-size: 1.1rem;">${d.nombre || 'N/A'}</div>
+                        <div>RIF: ${d.rif || 'N/A'}</div>
+                        <div>${d.direccion || 'N/A'}</div>
+                    `;
+                } else {
+                    lblEmpresa.innerText = "Empresa no encontrada";
+                }
+            } catch (e) { 
+                console.error("Error consultando Firestore:", e);
+                lblEmpresa.innerText = "Error al cargar datos"; 
             }
         }
+
         cargarDatosEmpresa();
 
         document.getElementById('btn-catalogo').addEventListener('click', (e) => {
             e.preventDefault();
             const id = localStorage.getItem('youcontrol_empresa_id');
             if (id) window.open(`node_v2_505.html?empresa=${id}`, '_blank');
-            else alert("Error de sesión.");
+            else alert("Error de sesión: No se identificó la empresa.");
         });
     </script>
 </body>
