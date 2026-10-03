@@ -170,68 +170,75 @@
     </main>
 
    <!-- LÓGICA DE FIREBASE PARA CARGAR DATOS DE LA EMPRESA -->
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-        apiKey: "TU_API_KEY",
-        authDomain: "youcontrol-1d60a.firebaseapp.com",
-        projectId: "youcontrol-1d60a",
-        storageBucket: "youcontrol-1d60a.appspot.com",
-        messagingSenderId: "812100760013",
-        appId: "1:812100760013:web:7574906aa285555faf5484"
-    };
+        const firebaseConfig = {
+            apiKey: "TU_API_KEY",
+            authDomain: "youcontrol-1d60a.firebaseapp.com",
+            projectId: "youcontrol-1d60a",
+            storageBucket: "youcontrol-1d60a.appspot.com",
+            messagingSenderId: "812100760013",
+            appId: "1:812100760013:web:7574906aa285555faf5484"
+        };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-    async function cargarDatosEmpresa() {
-        // Obtenemos el ID aplicando .trim() para evitar espacios invisibles
-        const empresaID = (localStorage.getItem('youcontrol_empresa_id') || '').trim();
-        const lblEmpresa = document.getElementById('lblEmpresa');
+        async function cargarDatosEmpresa() {
+            // Obtenemos el ID aplicando .trim() para evitar espacios accidentales
+            const empresaID = (localStorage.getItem('youcontrol_empresa_id') || '').trim();
+            const lblEmpresa = document.getElementById('lblEmpresa');
 
-        if (!empresaID) {
-            lblEmpresa.innerText = "Sesión no válida. Redirigiendo...";
-            console.warn("No se encontró 'youcontrol_empresa_id' en localStorage.");
-            setTimeout(() => { window.location.href = "login.html"; }, 2000); // Cambia login.html por tu página de acceso
-            return;
-        }
-
-        try {
-            const docSnap = await getDoc(doc(db, "empresas_config", empresaID));
-            
-            if (docSnap.exists()) {
-                const d = docSnap.data();
-                lblEmpresa.innerHTML = `
-                    <div style="font-size: 1.1rem; font-weight: bold;">${d.nombre || 'N/A'}</div>
-                    <div>RIF: ${d.rif || 'N/A'}</div>
-                    <div>${d.direccion || 'N/A'}</div>
-                `;
-            } else {
-                lblEmpresa.innerText = "Empresa no encontrada. Inicie sesión de nuevo...";
-                console.error(`El ID de empresa '${empresaID}' no existe en Firestore.`);
-                
-                // Si la empresa no existe en la BD, se borra el ID corrupto para obligar a un re-login
-                localStorage.removeItem('youcontrol_empresa_id');
+            if (!empresaID) {
+                lblEmpresa.innerText = "Sesión no iniciada. Redirigiendo a la página principal...";
+                console.warn("No se encontró 'youcontrol_empresa_id' en localStorage.");
                 setTimeout(() => {
-                    window.location.href = "login.html"; // Cambia login.html por tu página de acceso
-                }, 2500);
+                    window.location.href = "index.html";
+                }, 1500);
+                return;
             }
-        } catch (e) { 
-            console.error("Error consultando Firestore:", e);
-            lblEmpresa.innerText = "Error de conexión/permisos"; 
+
+            try {
+                const docSnap = await getDoc(doc(db, "empresas_config", empresaID));
+                
+                if (docSnap.exists()) {
+                    const d = docSnap.data();
+                    lblEmpresa.innerHTML = `
+                        <div style="font-size: 1.1rem; font-weight: bold;">${d.nombre || 'N/A'}</div>
+                        <div>RIF: ${d.rif || 'N/A'}</div>
+                        <div>${d.direccion || 'N/A'}</div>
+                    `;
+                } else {
+                    lblEmpresa.innerText = "Empresa no encontrada. Redirigiendo...";
+                    console.error(`El ID de empresa '${empresaID}' no existe en Firestore.`);
+                    
+                    // Borramos la clave con el ID inválido para limpiar el navegador
+                    localStorage.removeItem('youcontrol_empresa_id');
+                    
+                    setTimeout(() => {
+                        window.location.href = "index.html";
+                    }, 2000);
+                }
+            } catch (e) { 
+                console.error("Error consultando Firestore:", e);
+                lblEmpresa.innerText = "Error de conexión con el servidor"; 
+            }
         }
-    }
 
-    cargarDatosEmpresa();
+        cargarDatosEmpresa();
 
-    document.getElementById('btn-catalogo').addEventListener('click', (e) => {
-        e.preventDefault();
-        const id = (localStorage.getItem('youcontrol_empresa_id') || '').trim();
-        if (id) window.open(`node_v2_505.html?empresa=${id}`, '_blank');
-        else alert("Error de sesión: No se identificó la empresa.");
-    });
-</script>
+        document.getElementById('btn-catalogo').addEventListener('click', (e) => {
+            e.preventDefault();
+            const id = (localStorage.getItem('youcontrol_empresa_id') || '').trim();
+            if (id) {
+                window.open(`node_v2_505.html?empresa=${id}`, '_blank');
+            } else {
+                alert("Error de sesión: No se identificó la empresa.");
+                window.location.href = "index.html";
+            }
+        });
+    </script>
 </body>
 </html>
