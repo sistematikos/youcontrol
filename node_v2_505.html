@@ -11,7 +11,7 @@
         .page-wrapper { max-width: 800px; margin: 0 auto; width: 100%; box-sizing: border-box; }
         .app-header { padding: 15px; position: sticky; top: 0; z-index: 100; background: var(--bg-light); }
         
-        /* Layout Grid ajustado a 3 filas */
+        /* Layout Grid */
         .header-grid { 
             display: grid; 
             grid-template-columns: 110px 1fr 1fr; 
@@ -26,7 +26,6 @@
         
         .card-right { background: white; border-radius: 12px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; padding: 0 10px; font-weight: 800; font-size: 0.8rem; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
         
-        /* Nueva tarjeta para la dirección */
         .card-direccion { 
             grid-column: 2 / 4; 
             background: white; 
@@ -49,7 +48,6 @@
         }
         
         .search-bar { grid-column: 1 / 4; width: 100%; padding: 0 15px; border: 1px solid var(--border); border-radius: 12px; background: white; box-sizing: border-box; }
-        
         .grid-catalog { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 0 15px; }
         .card-prod { background: white; border-radius: 12px; padding: 14px; border: 1px solid var(--border); border-left: 6px solid var(--emerald); }
         
@@ -65,7 +63,7 @@
                     <img id="logo-empresa" src="" class="logo-img" style="display:none;" onerror="this.style.display='none'">
                 </div>
                 <div class="card-right" style="display: flex; justify-content: space-between; align-items: center;">
-                    <span id="nombre-empresa" style="opacity: 0; transition: opacity 0.5s ease;">CARGANDO...</span>
+                    <span id="nombre-empresa" style="opacity: 1; transition: opacity 0.5s ease;">CARGANDO...</span>
                     <button onclick="window.abrirWhatsApp()" style="background: #25D366; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; font-size: 16px; margin-left: 10px; display: flex; align-items: center; justify-content: center;">💬</button>
                 </div>
                 <div class="card-right">TASA BCV: <span id="tasa-cliente" style="margin-left:5px;">0.00</span></div>
@@ -86,6 +84,31 @@
         <button onclick="enviarPedido()" style="background:var(--emerald); color:white; border:none; padding:10px 20px; border-radius:12px; font-weight:800;">Pedir (<span id="cart-count">0</span>)</button>
     </div>
     
+    <!-- Diagnóstico previo de protocolo y parámetros URL -->
+    <script>
+        (function() {
+            // Verificar si el archivo se abrió directamente desde el sistema de archivos local (file://)
+            if (window.location.protocol === 'file:') {
+                alert("Advertencia: El catálogo debe ejecutarse a través de un servidor web (http/https). La carga directa de módulos localmente está bloqueada por el navegador.");
+            }
+
+            // Validar o recuperar el parámetro empresa
+            const urlParams = new URLSearchParams(window.location.search);
+            let empresaID = urlParams.get('empresa');
+
+            if (!empresaID) {
+                empresaID = (localStorage.getItem('youcontrol_empresa_id') || '').trim();
+                if (empresaID) {
+                    window.history.replaceState(null, '', `?empresa=${empresaID}`);
+                } else {
+                    document.getElementById('nombre-empresa').innerText = "ERROR DE EMPRESA";
+                    document.getElementById('direccion-empresa').innerText = "No se identificó la empresa en la URL.";
+                }
+            }
+        })();
+    </script>
+
+    <!-- Carga del módulo JS -->
     <script type="module" src="js/catalogo.js"></script>
 </body>
 </html>
