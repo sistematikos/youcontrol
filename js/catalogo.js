@@ -7,51 +7,55 @@ let deptoAbierto = null;
 
 function iniciarCatalogo() {
     const urlParams = new URLSearchParams(window.location.search);
-    let idDeLaURL = urlParams.get('empresa');
+    let idDeLaURL = urlParams.get('empresa') || urlParams.get('u');
     
-    if (idDeLaURL) localStorage.setItem('youcontrol_empresa_id', idDeLaURL);
+    if (idDeLaURL) {
+        localStorage.setItem('youcontrol_empresa_id', idDeLaURL.trim());
+    }
     USER_ID = idDeLaURL || localStorage.getItem('youcontrol_empresa_id');
 
     if (!USER_ID) {
-        document.getElementById('nombre-empresa').innerText = "ERROR: Empresa no encontrada";
+        const nombreEl = document.getElementById('nombre-empresa');
+        if (nombreEl) nombreEl.innerText = "ERROR: EMPRESA NO ESPECIFICADA";
         return;
     }
 
-   // Configuración empresa y logo
-onSnapshot(doc(db, "empresas_config", USER_ID), (snap) => {
-    const nombreEl = document.getElementById('nombre-empresa');
-    const logoImg = document.getElementById('logo-empresa');
-    // NUEVA LÍNEA: Capturamos el elemento de dirección
-    const dirEl = document.getElementById('direccion-empresa');
+    // 1. Configuración de empresa, teléfono y dirección
+    onSnapshot(doc(db, "empresas_config", USER_ID), (snap) => {
+        const nombreEl = document.getElementById('nombre-empresa');
+        const logoImg = document.getElementById('logo-empresa');
+        const dirEl = document.getElementById('direccion-empresa');
 
-    if (snap.exists()) {
-        const data = snap.data();
-        
-        // Bloque de teléfono
-        let telLimpio = (data.telefono || "").replace(/-/g, "").replace(/\s/g, "");
-        if (telLimpio.startsWith("0")) {
-            telLimpio = "58" + telLimpio.substring(1);
+        if (snap.exists()) {
+            const data = snap.data();
+            
+            // Formateo de Teléfono para WhatsApp
+            let telLimpio = (data.telefono || "").replace(/-/g, "").replace(/\s/g, "");
+            if (telLimpio.startsWith("0")) {
+                telLimpio = "58" + telLimpio.substring(1);
+            }
+            telefonoEmpresa = telLimpio;
+
+            // Nombre
+            if (data.nombre && nombreEl) {
+                nombreEl.innerText = data.nombre.toUpperCase();
+                nombreEl.style.opacity = "1";
+            }
+
+            // Dirección
+            if (dirEl && data.direccion) {
+                dirEl.innerText = "📍 " + data.direccion;
+            }
+
+            // Logo dinámico
+            if (logoImg) {
+                logoImg.src = `https://raw.githubusercontent.com/sistematikos/youcontrol/main/img/${USER_ID}.png?t=${new Date().getTime()}`;
+                logoImg.style.display = 'block';
+            }
         }
-        telefonoEmpresa = telLimpio;
+    });
 
-        // Nombre
-        if (data.nombre) {
-            nombreEl.innerText = data.nombre.toUpperCase();
-            nombreEl.style.opacity = "1";
-        }
-
-        // NUEVA LÍNEA: Actualizamos la dirección en el HTML
-        if (dirEl && data.direccion) {
-            dirEl.innerText = "📍 " + data.direccion;
-        }
-
-        // Logo
-        logoImg.src = `https://raw.githubusercontent.com/sistematikos/youcontrol/main/img/${USER_ID}.png?t=${new Date().getTime()}`;
-        logoImg.style.display = 'block';
-    }
-});
-
-    // Tasa BCV
+    // 2. Tasa BCV
     onSnapshot(doc(db, "usuarios", USER_ID), (snap) => {
         if (snap.exists()) {
             tasaActual = parseFloat(snap.data().tasa_bcv || 1);
@@ -61,7 +65,7 @@ onSnapshot(doc(db, "empresas_config", USER_ID), (snap) => {
         }
     });
 
-    // Carga de Departamentos (Mapeo de código a nombre)
+    // 3. Carga de Departamentos
     onSnapshot(collection(db, "usuarios", USER_ID, "departamentos"), (snap) => {
         mapaNombresDepto = {};
         snap.forEach(d => {
@@ -71,33 +75,46 @@ onSnapshot(doc(db, "empresas_config", USER_ID), (snap) => {
         renderizarCatalogo(productosGlobales);
     });
     
-    // Carga de Productos
+    // 4. Carga de Productos
     onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
         productosGlobales = [];
         snapshot.forEach(d => productosGlobales.push({ id: d.id, ...d.data() }));
         renderizarCatalogo(productosGlobales);
     });
 
-    // Buscador
+    // 5. Buscador interactivo (Abre automáticamente la categoría si se busca algo)
     const buscador = document.getElementById('buscador-prod');
     if (buscador) {
         buscador.addEventListener('input', (e) => {
-            const busqueda = e.target.value.toLowerCase();
-            renderizarCatalogo(productosGlobales.filter(p => p.nombre.toLowerCase().includes(busqueda)));
+            const busqueda = e.target.value.toLowerCase().trim();
+            if (busqueda.length > 0) {
+                const filtrados = productosGlobales.filter(p => (p.nombre || "").toLowerCase().includes(busqueda));
+                // Si hay resultados en la búsqueda, auto-abrir los departamentos que coincidan
+                if (filtrados.length > 0) {
+                    deptoAbierto = filtrados[0].departamento || 'GENERAL';
+                }
+                renderizarCatalogo(filtrados);
+            } else {
+                renderizarCatalogo(productosGlobales);
+            }
         });
     }
 }
 
-// Funciones del Carrito (sin cambios)
+// Funciones globales del Carrito
 window.cambiarCant = function(id, cambio, nombre, precio, stock) {
+    const numPrecio = parseFloat(precio) || 0;
+    const numStock = parseInt(stock) || 0;
+
     if (!carrito[id]) {
         if (cambio < 0) return;
-        carrito[id] = { nombre: nombre, precio: precio, cantidad: 0 };
+        carrito[id] = { nombre: nombre, precio: numPrecio, cantidad: 0 };
     }
     let nuevaCant = carrito[id].cantidad + cambio;
-    if (nuevaCant > stock) { alert("¡Stock máximo alcanzado!"); return; }
+    if (nuevaCant > numStock) { alert("¡Stock máximo alcanzado!"); return; }
     if (nuevaCant <= 0) { delete carrito[id]; } 
     else { carrito[id].cantidad = nuevaCant; }
+    
     const qtySpan = document.getElementById(`qty-${id}`);
     if (qtySpan) qtySpan.innerText = carrito[id] ? carrito[id].cantidad : 0;
     window.actualizarFooter();
@@ -118,7 +135,6 @@ window.actualizarFooter = function() {
     }
 };
 
-// Bloque a modificar: función enviarPedido
 window.enviarPedido = function() {
     if (Object.keys(carrito).length === 0) return;
     let mensaje = "¡Hola! Quisiera realizar el siguiente pedido:\n\n";
@@ -131,7 +147,6 @@ window.enviarPedido = function() {
     }
     mensaje += `\n*TOTAL:* $${totalUSD.toFixed(2)}\n*TOTAL (Bs):* ${(totalUSD * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 })} Bs`;
     
-    // Aquí se usa la variable dinámica
     window.open(`https://wa.me/${telefonoEmpresa}?text=${encodeURIComponent(mensaje)}`, '_blank');
 };
 
@@ -158,29 +173,28 @@ function renderizarCatalogo(lista) {
         const nombreMostrado = (mapaNombresDepto[cod] || cod).toUpperCase();
         const esAbierto = deptoAbierto === cod;
         
-        // HTML de los productos (solo si está abierto)
         let itemsHTML = "";
         if (esAbierto) {
             itemsHTML = `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px 0;">` +
             agrupados[cod].map(p => {
                 const nombreLimpio = p.nombre.replace(/'/g, "\\'");
+                const precioNum = parseFloat(p.precio) || 0;
                 return `
-                <div class="card-prod" style="border: 1px solid #E2E8F0; padding: 10px; border-radius: 8px;">
-                    <h3 style="font-size:0.9rem; margin:0 0 5px 0;">${p.nombre}</h3>
+                <div class="card-prod" style="border: 1px solid #E2E8F0; padding: 10px; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between;">
+                    <h3 style="font-size:0.85rem; margin:0 0 5px 0;">${p.nombre}</h3>
                     <div style="display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px;">
-                        <span style="font-size: 0.85rem; color: #64748B;">$${parseFloat(p.precio).toFixed(2)} USD</span>
-                        <span style="font-weight:900; color:#10B981; font-size:1.1rem;">${(p.precio * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 })} Bs</span>
+                        <span style="font-size: 0.8rem; color: #64748B;">$${precioNum.toFixed(2)} USD</span>
+                        <span style="font-weight:900; color:#10B981; font-size:1rem;">${(precioNum * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 })} Bs</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <button onclick="window.cambiarCant('${p.id}', -1, '${nombreLimpio}', ${p.precio}, ${p.stock})">-</button>
+                        <button onclick="window.cambiarCant('${p.id}', -1, '${nombreLimpio}', ${precioNum}, ${p.stock})" style="padding: 2px 10px; font-weight:bold;">-</button>
                         <span id="qty-${p.id}" style="font-weight: bold;">${carrito[p.id]?.cantidad || 0}</span>
-                        <button onclick="window.cambiarCant('${p.id}', 1, '${nombreLimpio}', ${p.precio}, ${p.stock})">+</button>
+                        <button onclick="window.cambiarCant('${p.id}', 1, '${nombreLimpio}', ${precioNum}, ${p.stock})" style="padding: 2px 10px; font-weight:bold;">+</button>
                     </div>
                 </div>`;
             }).join('') + `</div>`;
         }
         
-        // Botón del departamento
         return `
         <div style="width: 100%; margin-top: 10px;">
             <div onclick="window.toggleDepto('${cod}')" style="cursor:pointer; background: #F8FAFC; padding: 15px; border-radius: 8px; font-weight:900; color:#475569; border: 1px solid #E2E8F0; display:flex; justify-content:space-between; align-items:center;">
