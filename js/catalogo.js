@@ -5,13 +5,32 @@ import { collection, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/
 let tasaActual = 1, carrito = {}, productosGlobales = [], USER_ID = "", mapaNombresDepto = {}, telefonoEmpresa = "";
 let deptoAbierto = null;
 
+// Función para extraer el ID exacto aun cuando contenga & sin codificar en la URL
+function obtenerEmpresaIDDeURL() {
+    const query = window.location.search;
+    if (!query) return null;
+
+    // Buscar si existe el parámetro 'empresa=' o 'u='
+    const match = query.match(/[?&](empresa|u)=([^&]*.*)/);
+    if (match && match[2]) {
+        // Tomar todo el valor después de 'empresa=' hasta el final o hasta otro parámetro real
+        let rawId = match[2];
+        
+        // Si hay otros parámetros pegados con &, se pueden limpiar, pero para el ID completo decodificamos:
+        try {
+            return decodeURIComponent(rawId.trim());
+        } catch(e) {
+            return rawId.trim();
+        }
+    }
+    return null;
+}
+
 function iniciarCatalogo() {
-    const urlParams = new URLSearchParams(window.location.search);
-    let idDeLaURL = urlParams.get('empresa') || urlParams.get('u');
+    // Extraer el ID soportando el carácter '&' directo en la URL
+    let idDeLaURL = obtenerEmpresaIDDeURL();
     
-    // CORRECCIÓN 1: Decodificar el ID para interpretar el %26 como & en caso de venir codificado de la URL
     if (idDeLaURL) {
-        idDeLaURL = decodeURIComponent(idDeLaURL.trim());
         localStorage.setItem('youcontrol_empresa_id', idDeLaURL);
     }
     USER_ID = idDeLaURL || localStorage.getItem('youcontrol_empresa_id');
@@ -46,7 +65,6 @@ function iniciarCatalogo() {
                 dirEl.innerText = "📍 " + data.direccion;
             }
 
-            // CORRECCIÓN 2: Escapar el USER_ID para que la imagen de GitHub cargue sin error si tiene &
             if (logoImg) {
                 logoImg.src = `https://raw.githubusercontent.com/sistematikos/youcontrol/main/img/${encodeURIComponent(USER_ID)}.png?t=${new Date().getTime()}`;
                 logoImg.style.display = 'block';
@@ -101,7 +119,6 @@ function iniciarCatalogo() {
             const id = btn.getAttribute('data-id');
             const cambio = parseInt(btn.getAttribute('data-cambio'));
             
-            // CORRECCIÓN 3: Decodificar el nombre del producto
             const nombre = decodeURIComponent(btn.getAttribute('data-nombre') || '');
             const precio = parseFloat(btn.getAttribute('data-precio'));
             const stock = parseInt(btn.getAttribute('data-stock'));
@@ -135,7 +152,6 @@ function modificarCantidad(id, cambio, nombre, precio, stock) {
         carrito[pID].precio = precioLimpio;
     }
     
-    // Buscar elemento por dataset en lugar de usar ID en Selector
     const qtySpan = document.querySelector(`span[data-qty-id="${CSS.escape(pID)}"]`);
     if (qtySpan) {
         qtySpan.innerText = carrito[pID] ? carrito[pID].cantidad : 0;
