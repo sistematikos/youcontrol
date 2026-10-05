@@ -3,15 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catálogo Digital</title>
+    <title>Catálogo Digital - YOU CONTROL</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#001432">
+
     <style>
-        :root { --bg-light: #F8FAFC; --text-main: #1E293B; --electric: #3B82F6; --emerald: #10B981; --border: #E2E8F0; }
-        body { font-family: 'Poppins', sans-serif; background: var(--bg-light); margin: 0; padding-bottom: 140px; }
+        :root { 
+            --bg-light: #F8FAFC; 
+            --text-main: #1E293B; 
+            --electric: #3B82F6; 
+            --emerald: #10B981; 
+            --border: #E2E8F0; 
+        }
         
-        .page-wrapper { max-width: 800px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-light); margin: 0; padding-bottom: 140px; color: var(--text-main); }
+        
+        .page-wrapper { max-width: 800px; margin: 0 auto; width: 100%; }
         .app-header { padding: 15px; position: sticky; top: 0; z-index: 100; background: var(--bg-light); }
         
-        /* Layout Grid */
+        /* Layout Grid Header */
         .header-grid { 
             display: grid; 
             grid-template-columns: 110px 1fr 1fr; 
@@ -21,10 +34,32 @@
             margin-bottom: 10px; 
         }
         
-        .card-logo { grid-row: 1 / 3; background: white; border-radius: 12px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
+        .card-logo { 
+            grid-row: 1 / 3; 
+            background: white; 
+            border-radius: 12px; 
+            border: 1px solid var(--border); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            overflow: hidden; 
+            padding: 0; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03); 
+        }
         .logo-img { width: 100%; height: 100%; object-fit: contain; padding: 5px; }
         
-        .card-right { background: white; border-radius: 12px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; padding: 0 10px; font-weight: 800; font-size: 0.8rem; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
+        .card-right { 
+            background: white; 
+            border-radius: 12px; 
+            border: 1px solid var(--border); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 0 10px; 
+            font-weight: 800; 
+            font-size: 0.8rem; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03); 
+        }
         
         .card-direccion { 
             grid-column: 2 / 4; 
@@ -34,24 +69,155 @@
             display: flex; 
             align-items: center; 
             padding: 0 10px; 
-            font-size: 0.75rem; 
+            font-size: 0.72rem; 
             color: #64748B; 
-            font-weight: 600;
+            font-weight: 700;
             box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+            text-transform: uppercase;
         }
         
         #nombre-empresa { 
             color: black !important; 
-            font-size: 1.1rem; 
+            font-size: 1.05rem; 
             font-weight: 900; 
             text-transform: uppercase;
         }
         
-        .search-bar { grid-column: 1 / 4; width: 100%; padding: 0 15px; border: 1px solid var(--border); border-radius: 12px; background: white; box-sizing: border-box; }
-        .grid-catalog { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 0 15px; }
-        .card-prod { background: white; border-radius: 12px; padding: 14px; border: 1px solid var(--border); border-left: 6px solid var(--emerald); }
-        
-        #cart-footer { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 380px; background: white; padding: 15px 20px; border-radius: 20px; display: none; align-items: center; justify-content: space-between; box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 1000; border: 1px solid var(--border); }
+        .search-bar { 
+            grid-column: 1 / 4; 
+            width: 100%; 
+            padding: 0 15px; 
+            border: 1px solid var(--border); 
+            border-radius: 12px; 
+            background: white; 
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        /* Bloques de Categorías (Acordeones) */
+        .category-header {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin: 15px 15px 10px 15px;
+            font-weight: 900;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            text-transform: uppercase;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        /* Grid de Productos */
+        .grid-catalog { 
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 12px; 
+            padding: 0 15px; 
+        }
+
+        /* Tarjeta de Producto */
+        .card-prod { 
+            background: white; 
+            border-radius: 12px; 
+            padding: 12px; 
+            border: 1px solid var(--border); 
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .prod-title {
+            font-weight: 900;
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            color: #0F172A;
+            line-height: 1.2;
+        }
+
+        .prod-price-usd {
+            color: #94A3B8;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .prod-price-bs {
+            color: var(--emerald);
+            font-weight: 900;
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+        }
+
+        /* Controles de Cantidad (+ / -) */
+        .qty-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #F1F5F9;
+            border-radius: 8px;
+            padding: 2px;
+        }
+
+        .btn-qty {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            width: 28px;
+            height: 28px;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            user-select: none;
+        }
+
+        .qty-number {
+            font-weight: 900;
+            font-size: 0.85rem;
+        }
+
+        /* Footer Flotante del Carrito */
+        #cart-footer { 
+            position: fixed; 
+            bottom: 20px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            width: 90%; 
+            max-width: 380px; 
+            background: white; 
+            padding: 12px 20px; 
+            border-radius: 20px; 
+            display: none; 
+            align-items: center; 
+            justify-content: space-between; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15); 
+            z-index: 1000; 
+            border: 1px solid var(--border); 
+        }
+
+        .total-box {
+            line-height: 1.2;
+        }
+        .total-box span { font-weight: 900; font-size: 0.95rem; }
+        .total-box small { color: #64748B; font-weight: 700; font-size: 0.8rem; }
+
+        .btn-pedir {
+            background: var(--emerald); 
+            color: white; 
+            border: none; 
+            padding: 10px 22px; 
+            border-radius: 12px; 
+            font-weight: 800;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -63,10 +229,10 @@
                     <img id="logo-empresa" src="" class="logo-img" style="display:none;" onerror="this.style.display='none'">
                 </div>
                 <div class="card-right" style="display: flex; justify-content: space-between; align-items: center;">
-                    <span id="nombre-empresa" style="opacity: 1; transition: opacity 0.5s ease;">CARGANDO...</span>
-                    <button onclick="window.abrirWhatsApp()" style="background: #25D366; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; font-size: 16px; margin-left: 10px; display: flex; align-items: center; justify-content: center;">💬</button>
+                    <span id="nombre-empresa">CARGANDO...</span>
+                    <button id="btn-whatsapp" onclick="window.abrirWhatsApp()" style="background: #25D366; color: white; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 15px; margin-left: 8px; display: flex; align-items: center; justify-content: center;">💬</button>
                 </div>
-                <div class="card-right">TASA BCV: <span id="tasa-cliente" style="margin-left:5px;">0.00</span></div>
+                <div class="card-right">TASA BCV: <span id="tasa-cliente" style="margin-left:5px;">0,00</span></div>
                 
                 <!-- Fila 2: Dirección -->
                 <div class="card-direccion" id="direccion-empresa">📍 Cargando dirección...</div>
@@ -76,23 +242,36 @@
             </div>
         </header>
 
-        <main id="contenedor-catalogo" class="grid-catalog"></main>
+        <!-- Contenedor principal de categorías y productos -->
+        <main id="contenedor-catalogo"></main>
     </div>
 
+    <!-- Barra Inferior del Carrito -->
     <div id="cart-footer">
-        <div class="total-box"><span>$<span id="cart-total-usd">0.00</span></span><br><small><span id="cart-total-bs">0.00</span> Bs</small></div>
-        <button onclick="enviarPedido()" style="background:var(--emerald); color:white; border:none; padding:10px 20px; border-radius:12px; font-weight:800;">Pedir (<span id="cart-count">0</span>)</button>
+        <div class="total-box">
+            <span>$<span id="cart-total-usd">0.00</span></span><br>
+            <small><span id="cart-total-bs">0,00</span> Bs</small>
+        </div>
+        <button class="btn-pedir" onclick="window.enviarPedido()">Pedir (<span id="cart-count">0</span>)</button>
     </div>
-    
-    <!-- Diagnóstico previo de protocolo y parámetros URL -->
+
+    <!-- Script de registro de Service Worker y comprobaciones previas -->
     <script>
+        // Registro del Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW registrado correctamente:', reg.scope))
+                    .catch(err => console.warn('Error al registrar SW:', err));
+            });
+        }
+
+        // Diagnóstico de protocolo y parámetros URL
         (function() {
-            // Verificar si el archivo se abrió directamente desde el sistema de archivos local (file://)
             if (window.location.protocol === 'file:') {
-                alert("Advertencia: El catálogo debe ejecutarse a través de un servidor web (http/https). La carga directa de módulos localmente está bloqueada por el navegador.");
+                alert("Advertencia: El catálogo debe ejecutarse desde un servidor web (http/https).");
             }
 
-            // Validar o recuperar el parámetro empresa
             const urlParams = new URLSearchParams(window.location.search);
             let empresaID = urlParams.get('empresa');
 
@@ -101,14 +280,14 @@
                 if (empresaID) {
                     window.history.replaceState(null, '', `?empresa=${empresaID}`);
                 } else {
-                    document.getElementById('nombre-empresa').innerText = "ERROR DE EMPRESA";
-                    document.getElementById('direccion-empresa').innerText = "No se identificó la empresa en la URL.";
+                    document.getElementById('nombre-empresa').innerText = "ERROR EMPRESA";
+                    document.getElementById('direccion-empresa').innerText = "Sin parámetro de empresa en la URL.";
                 }
             }
         })();
     </script>
 
-    <!-- Carga del módulo JS -->
+    <!-- Carga del módulo JS del catálogo -->
     <script type="module" src="js/catalogo.js"></script>
 </body>
 </html>
