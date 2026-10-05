@@ -3,12 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catálogo Digital - YOU CONTROL</title>
-    
-    <!-- PWA Manifest & Meta -->
-    <link rel="manifest" href="./manifest.json">
-    <meta name="theme-color" content="#001432">
-
+    <title>Catálogo Digital</title>
     <style>
         :root { --bg-light: #F8FAFC; --text-main: #1E293B; --electric: #3B82F6; --emerald: #10B981; --border: #E2E8F0; }
         body { font-family: 'Poppins', sans-serif; background: var(--bg-light); margin: 0; padding-bottom: 140px; }
@@ -44,7 +39,6 @@
             color: #64748B; 
             font-weight: 600;
             box-shadow: 0 2px 4px rgba(0,0,0,0.03);
-            text-transform: uppercase;
         }
         
         #nombre-empresa { 
@@ -56,50 +50,9 @@
         
         .search-bar { grid-column: 1 / 4; width: 100%; padding: 0 15px; border: 1px solid var(--border); border-radius: 12px; background: white; box-sizing: border-box; }
         
-        /* Grid del catálogo */
-        .grid-catalog { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 0 15px; margin-bottom: 15px; }
-        .card-prod { background: white; border-radius: 12px; padding: 14px; border: 1px solid var(--border); border-left: 6px solid var(--emerald); display: flex; flex-direction: column; justify-content: space-between; }
+        .grid-catalog { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 0 15px; }
+        .card-prod { background: white; border-radius: 12px; padding: 14px; border: 1px solid var(--border); border-left: 6px solid var(--emerald); }
         
-        /* Estilos de Acordeones / Categorías */
-        .category-header {
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 12px 16px;
-            margin: 10px 15px;
-            font-weight: 900;
-            font-size: 0.88rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            text-transform: uppercase;
-            color: #1E293B;
-        }
-
-        /* Controles de cantidad (+ / -) */
-        .qty-controls {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: #F1F5F9;
-            border-radius: 8px;
-            padding: 2px 6px;
-            margin-top: 8px;
-        }
-        .btn-qty {
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            width: 28px;
-            height: 28px;
-            font-weight: 800;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
         #cart-footer { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 380px; background: white; padding: 15px 20px; border-radius: 20px; display: none; align-items: center; justify-content: space-between; box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 1000; border: 1px solid var(--border); }
     </style>
 </head>
@@ -112,10 +65,10 @@
                     <img id="logo-empresa" src="" class="logo-img" style="display:none;" onerror="this.style.display='none'">
                 </div>
                 <div class="card-right" style="display: flex; justify-content: space-between; align-items: center;">
-                    <span id="nombre-empresa" style="opacity: 1; transition: opacity 0.5s ease;">CARGANDO...</span>
+                    <span id="nombre-empresa" style="opacity: 0; transition: opacity 0.5s ease;">CARGANDO...</span>
                     <button onclick="window.abrirWhatsApp()" style="background: #25D366; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; cursor: pointer; font-size: 16px; margin-left: 10px; display: flex; align-items: center; justify-content: center;">💬</button>
                 </div>
-                <div class="card-right">TASA BCV: <span id="tasa-cliente" style="margin-left:5px;">0,00</span></div>
+                <div class="card-right">TASA BCV: <span id="tasa-cliente" style="margin-left:5px;">0.00</span></div>
                 
                 <!-- Fila 2: Dirección -->
                 <div class="card-direccion" id="direccion-empresa">📍 Cargando dirección...</div>
@@ -125,39 +78,14 @@
             </div>
         </header>
 
-        <!-- Se remueve la clase grid-catalog de main para que no colapse las categorías -->
-        <main id="contenedor-catalogo"></main>
+        <main id="contenedor-catalogo" class="grid-catalog"></main>
     </div>
 
     <div id="cart-footer">
-        <div class="total-box">
-            <span>$<span id="cart-total-usd">0.00</span></span><br>
-            <small><span id="cart-total-bs">0,00</span> Bs</small>
-        </div>
-        <button onclick="window.enviarPedido()" style="background:var(--emerald); color:white; border:none; padding:10px 20px; border-radius:12px; font-weight:800; cursor:pointer;">Pedir (<span id="cart-count">0</span>)</button>
+        <div class="total-box"><span>$<span id="cart-total-usd">0.00</span></span><br><small><span id="cart-total-bs">0.00</span> Bs</small></div>
+        <button onclick="enviarPedido()" style="background:var(--emerald); color:white; border:none; padding:10px 20px; border-radius:12px; font-weight:800;">Pedir (<span id="cart-count">0</span>)</button>
     </div>
     
-    <!-- Script de diagnóstico PWA y verificación de URL -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(err => console.warn('SW err:', err));
-            });
-        }
-
-        (function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            let empresaID = urlParams.get('empresa');
-
-            if (!empresaID) {
-                empresaID = (localStorage.getItem('youcontrol_empresa_id') || '').trim();
-                if (empresaID) {
-                    window.history.replaceState(null, '', `?empresa=${empresaID}`);
-                }
-            }
-        })();
-    </script>
-
     <script type="module" src="js/catalogo.js"></script>
 </body>
 </html>
