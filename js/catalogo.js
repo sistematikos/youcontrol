@@ -18,7 +18,7 @@ function iniciarCatalogo() {
         return;
     }
 
-    // Configuración empresa y logo
+    // 1. Configuración de empresa y logo
     onSnapshot(doc(db, "empresas_config", USER_ID), (snap) => {
         const nombreEl = document.getElementById('nombre-empresa');
         const logoImg = document.getElementById('logo-empresa');
@@ -49,7 +49,7 @@ function iniciarCatalogo() {
         }
     });
 
-    // Tasa BCV
+    // 2. Tasa BCV
     onSnapshot(doc(db, "usuarios", USER_ID), (snap) => {
         if (snap.exists()) {
             const tasaRaw = snap.data().tasa_bcv;
@@ -60,7 +60,7 @@ function iniciarCatalogo() {
         }
     });
 
-    // Carga de Departamentos
+    // 3. Carga de Departamentos
     onSnapshot(collection(db, "usuarios", USER_ID, "departamentos"), (snap) => {
         mapaNombresDepto = {};
         snap.forEach(d => {
@@ -70,14 +70,14 @@ function iniciarCatalogo() {
         renderizarCatalogo(productosGlobales);
     });
     
-    // Carga de Productos
+    // 4. Carga de Productos
     onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
         productosGlobales = [];
-        snapshot.forEach(d => productosGlobales.push({ id: d.id, ...d.data() }));
+        snapshot.forEach(d => productosGlobales.push({ id: String(d.id), ...d.data() }));
         renderizarCatalogo(productosGlobales);
     });
 
-    // Buscador
+    // 5. Buscador
     const buscador = document.getElementById('buscador-prod');
     if (buscador) {
         buscador.addEventListener('input', (e) => {
@@ -85,34 +85,59 @@ function iniciarCatalogo() {
             renderizarCatalogo(productosGlobales.filter(p => (p.nombre || "").toLowerCase().includes(busqueda)));
         });
     }
+
+    // 6. DELEGACIÓN DE EVENTOS PARA BOTONES DE CANTIDAD (Infallible para cualquier ID o Nombre)
+    const contenedor = document.getElementById('contenedor-catalogo');
+    if (contenedor) {
+        contenedor.addEventListener('click', (e) => {
+            const btn = e.target.closest('.btn-cant');
+            if (!btn) return;
+
+            const id = btn.getAttribute('data-id');
+            const cambio = parseInt(btn.getAttribute('data-cambio'));
+            const nombre = btn.getAttribute('data-nombre');
+            const precio = parseFloat(btn.getAttribute('data-precio'));
+            const stock = parseInt(btn.getAttribute('data-stock'));
+
+            modificarCantidad(id, cambio, nombre, precio, stock);
+        });
+    }
 }
 
-// CORRECCIÓN 1: Aseguramos conversión limpia a Número en cambiarCant
-window.cambiarCant = function(id, cambio, nombre, precio, stock) {
-    // Normalizamos precio si viene con coma o como String
-    let precioLimpio = parseFloat(String(precio).replace(',', '.')) || 0;
-    let stockLimpio = parseInt(stock) || 0;
+// Lógica segura de actualización del carrito
+function modificarCantidad(id, cambio, nombre, precio, stock) {
+    const pID = String(id);
+    const precioLimpio = parseFloat(precio) || 0;
+    const stockLimpio = parseInt(stock) || 0;
 
-    if (!carrito[id]) {
+    if (!carrito[pID]) {
         if (cambio < 0) return;
-        carrito[id] = { nombre: nombre, precio: precioLimpio, cantidad: 0 };
+        carrito[pID] = { nombre: nombre, precio: precioLimpio, cantidad: 0 };
     }
     
-    let nuevaCant = carrito[id].cantidad + cambio;
-    if (nuevaCant > stockLimpio) { alert("¡Stock máximo alcanzado!"); return; }
-    if (nuevaCant <= 0) { delete carrito[id]; } 
-    else { 
-        carrito[id].cantidad = nuevaCant;
-        carrito[id].precio = precioLimpio; // Reaseguramos el precio limpio
+    let nuevaCant = carrito[pID].cantidad + cambio;
+    if (nuevaCant > stockLimpio) { 
+        alert("¡Stock máximo alcanzado!"); 
+        return; 
     }
     
-    const qtySpan = document.getElementById(`qty-${id}`);
-    if (qtySpan) qtySpan.innerText = carrito[id] ? carrito[id].cantidad : 0;
-    window.actualizarFooter();
-};
+    if (nuevaCant <= 0) { 
+        delete carrito[pID]; 
+    } else { 
+        carrito[pID].cantidad = nuevaCant;
+        carrito[pID].precio = precioLimpio;
+    }
+    
+    // Buscar elemento por dataset en lugar de usar ID en Selector
+    const qtySpan = document.querySelector(`span[data-qty-id="${pID}"]`);
+    if (qtySpan) {
+        qtySpan.innerText = carrito[pID] ? carrito[pID].cantidad : 0;
+    }
+    
+    actualizarFooter();
+}
 
-// CORRECCIÓN 2: Aseguramos operaciones matemáticas con Number
-window.actualizarFooter = function() {
+function actualizarFooter() {
     let total = 0, items = 0;
     for (let id in carrito) { 
         const pUSD = parseFloat(carrito[id].precio) || 0;
@@ -127,7 +152,7 @@ window.actualizarFooter = function() {
         document.getElementById('cart-total-bs').innerText = (total * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 });
         document.getElementById('cart-count').innerText = items;
     }
-};
+}
 
 window.enviarPedido = function() {
     if (Object.keys(carrito).length === 0) return;
@@ -173,22 +198,21 @@ function renderizarCatalogo(lista) {
         if (esAbierto) {
             itemsHTML = `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px 0;">` +
             agrupados[cod].map(p => {
-                const nombreLimpio = (p.nombre || "").replace(/'/g, "\\'");
-                // CORRECCIÓN 3: Parseo estricto del precio al generar la vista
                 const precioNum = parseFloat(String(p.precio).replace(',', '.')) || 0;
                 const stockNum = parseInt(p.stock) || 0;
+                const prodID = String(p.id);
 
                 return `
                 <div class="card-prod" style="border: 1px solid #E2E8F0; padding: 10px; border-radius: 8px;">
-                    <h3 style="font-size:0.9rem; margin:0 0 5px 0;">${p.nombre}</h3>
+                    <h3 style="font-size:0.9rem; margin:0 0 5px 0;">${p.nombre || 'Producto'}</h3>
                     <div style="display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px;">
                         <span style="font-size: 0.85rem; color: #64748B;">$${precioNum.toFixed(2)} USD</span>
                         <span style="font-weight:900; color:#10B981; font-size:1.1rem;">${(precioNum * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 })} Bs</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <button onclick="window.cambiarCant('${p.id}', -1, '${nombreLimpio}', ${precioNum}, ${stockNum})">-</button>
-                        <span id="qty-${p.id}" style="font-weight: bold;">${carrito[p.id]?.cantidad || 0}</span>
-                        <button onclick="window.cambiarCant('${p.id}', 1, '${nombreLimpio}', ${precioNum}, ${stockNum})">+</button>
+                        <button class="btn-cant" data-id="${prodID}" data-cambio="-1" data-nombre="${encodeURIComponent(p.nombre || '')}" data-precio="${precioNum}" data-stock="${stockNum}">-</button>
+                        <span data-qty-id="${prodID}" style="font-weight: bold;">${carrito[prodID]?.cantidad || 0}</span>
+                        <button class="btn-cant" data-id="${prodID}" data-cambio="1" data-nombre="${encodeURIComponent(p.nombre || '')}" data-precio="${precioNum}" data-stock="${stockNum}">+</button>
                     </div>
                 </div>`;
             }).join('') + `</div>`;
