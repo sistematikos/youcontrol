@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Prevención de Caché -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
     <title>PROVEEDORES | YOU CONTROL</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -10,8 +15,11 @@
         :root {
             --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
             --text-dark: #1E293B;
-            --emerald: #10B981; --sky: #0EA5E9; --rose: #F43F5E;
+            --emerald: #10B981; 
+            --sky: #0EA5E9; 
+            --rose: #F43F5E;
             --border: #E2E8F0;
+            --amber: #F59E0B;
         }
         body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 10px 0; min-height: 100vh; color: var(--text-dark); }
         .layout-width { width: 95%; max-width: 1200px; margin: 0 auto; }
@@ -20,37 +28,48 @@
         .header-panel { background: #ffffff; padding: 0 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; height: 70px; }
         .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 6px 12px; border-radius: 8px; text-decoration: none; font-size: 0.75rem; font-weight: 700; border: 1px solid var(--border); transition: 0.3s; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
         .btn-back:hover { background: #E2E8F0; }
-        .logo-header { height: 90%; width: auto; object-fit: contain; }
+        .logo-header { height: 70%; width: auto; object-fit: contain; }
 
         /* TARJETAS */
         .main-layout { display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
-        .card { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); border-left: 6px solid var(--sky); position: relative; }
+        .card { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); border-left: 6px solid var(--amber); position: relative; }
         h3 { margin-top: 0; font-size: 1rem; margin-bottom: 15px; }
 
-        /* BUSCADOR INTELIGENTE (Contenedor) */
+        /* BUSCADOR INTELIGENTE EN CÓDIGO */
         #lista-resultados { 
-            position: absolute; width: 310px; background: white; border: 1px solid var(--border); 
+            position: absolute; width: calc(100% - 40px); background: white; border: 1px solid var(--border); 
             border-radius: 0 0 8px 8px; z-index: 1000; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+            max-height: 180px; overflow-y: auto;
         }
-        .item-res { padding: 10px; cursor: pointer; font-size: 0.85rem; }
-        .item-res:hover { background-color: #F1F5F9; }
+        .item-res { padding: 10px; cursor: pointer; font-size: 0.85rem; border-bottom: 1px solid #F1F5F9; }
+        .item-res:hover { background-color: #F1F5F9; color: var(--sky); }
 
         /* FORMULARIO */
-        .form-group { margin-bottom: 15px; }
+        .form-group { margin-bottom: 12px; position: relative; }
         .form-group label { display: block; font-size: 0.75rem; font-weight: 700; color: #64748B; margin-bottom: 5px; }
-        input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; }
+        input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; font-family: inherit; font-size: 0.85rem; }
+        input:focus { outline: none; border-color: var(--amber); }
         .btn-primary { width: 100%; background: var(--text-dark); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.3s; margin-top: 10px; }
-        .btn-primary:hover { background: var(--sky); }
+        .btn-primary:hover { background: var(--amber); color: #000; }
+        .btn-cancel { width: 100%; background: #64748B; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.3s; margin-top: 8px; display: none; }
+        .btn-cancel:hover { background: #475569; }
         #aviso-no-registrado { color: var(--rose); font-size: 0.75rem; font-weight: 700; display: none; margin-top: 5px; }
 
         /* TABLA */
+        .table-responsive { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         th { color: #64748B; border-bottom: 2px solid #F1F5F9; padding: 12px; text-align: left; }
         td { padding: 12px; border-bottom: 1px solid #F1F5F9; }
-        .btn-table { border: none; background: #F1F5F9; padding: 5px 8px; border-radius: 4px; cursor: pointer; color: var(--text-dark); }
+        .btn-table { border: none; background: #F1F5F9; padding: 6px 10px; border-radius: 6px; cursor: pointer; color: var(--text-dark); font-size: 0.8rem; margin-right: 4px; transition: 0.2s; }
+        .btn-table:hover { background: #E2E8F0; }
+        .btn-delete { color: var(--rose); }
+        .btn-delete:hover { background: #FFE4E6; }
+
+        @media (max-width: 850px) {
+            .main-layout { grid-template-columns: 1fr; }
+        }
     </style>
 
-    <!-- Script para limpiar caché al regresar al menú -->
     <script>
         function volverAlMenu(e) {
             e.preventDefault();
@@ -58,15 +77,331 @@
         }
     </script>
 </head>
-<body>
+<body oncontextmenu="return false">
     <main class="layout-width">
         <header class="header-panel">
             <div style="display: flex; align-items: center; gap: 15px;">
                 <a href="#" class="btn-back" onclick="volverAlMenu(event)"><i class="fas fa-arrow-left"></i> VOLVER</a>
                 <h1 style="font-size: 1.2rem; margin: 0;">Gestión de Proveedores</h1>
             </div>
-            <img src="img/logo.png" class="logo-header">
+            <img src="img/youcontrol.png" alt="You Control" class="logo-header" onerror="this.style.display='none'">
         </header>
 
         <div class="main-layout">
-            <section class
+            <!-- SECCIÓN FORMULARIO DE PROVEEDOR -->
+            <section class="card">
+                <h3 id="form-title"><i class="fas fa-truck-field"></i> Ficha Proveedor</h3>
+                <form id="form-proveedor">
+                    <input type="hidden" id="prov-id">
+                    
+                    <div class="form-group">
+                        <label>Código del Proveedor</label>
+                        <input type="text" id="prov-codigo" placeholder="Ej: PRV-001" required autocomplete="off">
+                        <div id="lista-resultados"></div>
+                        <div id="aviso-no-registrado"><i class="fas fa-exclamation-circle"></i> Código nuevo (Se registrará al guardar)</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Razón Social / Nombre</label>
+                        <input type="text" id="prov-nombre" placeholder="Nombre de la empresa o proveedor" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>RIF / Identificación Fiscal</label>
+                        <input type="text" id="prov-rif" placeholder="J-12345678-0">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Contacto / Persona Enlace</label>
+                        <input type="text" id="prov-contacto" placeholder="Nombre del representante">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="text" id="prov-telefono" placeholder="0412-0000000">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Dirección</label>
+                        <input type="text" id="prov-direccion" placeholder="Dirección fiscal o depósito">
+                    </div>
+                    
+                    <button type="submit" id="btn-guardar-proveedor" class="btn-primary">GUARDAR PROVEEDOR</button>
+                    <button type="button" id="btn-cancelar-edicion" class="btn-cancel">CANCELAR EDICIÓN</button>
+                </form>
+            </section>
+
+            <!-- SECCIÓN LISTADO Y TABLA -->
+            <section class="card" style="border-left-color: var(--emerald);">
+                <h3><i class="fas fa-list"></i> Listado de Proveedores</h3>
+                <input type="text" id="buscar-proveedor" placeholder="🔍 Filtrar por código, nombre o RIF..." style="margin-bottom:15px;">
+                
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Proveedor / Razón Social</th>
+                                <th>RIF</th>
+                                <th>Teléfono</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-proveedores">
+                            <tr>
+                                <td colspan="5" style="text-align:center; color: #64748B;">Cargando proveedores...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- INTEGACIÓN COMPLETA DE FIREBASE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { 
+            getFirestore, collection, doc, setDoc, getDocs, deleteDoc, getDoc 
+        } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "TU_API_KEY",
+            authDomain: "youcontrol-1d60a.firebaseapp.com",
+            projectId: "youcontrol-1d60a",
+            storageBucket: "youcontrol-1d60a.appspot.com",
+            messagingSenderId: "812100760013",
+            appId: "1:812100760013:web:7574906aa285555faf5484"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Obtener ID de la Empresa
+        const empresaID = (localStorage.getItem('youcontrol_empresa_id') || '').trim();
+
+        if (!empresaID) {
+            alert("No se ha iniciado sesión con una empresa válida.");
+            window.location.href = "index.html";
+        }
+
+        // Elementos DOM
+        const formProv = document.getElementById('form-proveedor');
+        const provIdInput = document.getElementById('prov-id');
+        const provCodigoInput = document.getElementById('prov-codigo');
+        const provNombreInput = document.getElementById('prov-nombre');
+        const provRifInput = document.getElementById('prov-rif');
+        const provContactoInput = document.getElementById('prov-contacto');
+        const provTelefonoInput = document.getElementById('prov-telefono');
+        const provDireccionInput = document.getElementById('prov-direccion');
+        
+        const btnGuardar = document.getElementById('btn-guardar-proveedor');
+        const btnCancelar = document.getElementById('btn-cancelar-edicion');
+        const formTitle = document.getElementById('form-title');
+        const tablaProv = document.getElementById('tabla-proveedores');
+        const buscarInput = document.getElementById('buscar-proveedor');
+        const listaResultados = document.getElementById('lista-resultados');
+        const avisoNoRegistrado = document.getElementById('aviso-no-registrado');
+
+        let listaProveedores = [];
+
+        // Referencia a Firestore: empresas_config/{empresaID}/proveedores
+        const proveedoresRef = collection(db, "empresas_config", empresaID, "proveedores");
+
+        // --- CARGAR PROVEEDORES DESDE FIREBASE ---
+        async function cargarProveedores() {
+            try {
+                const snapshot = await getDocs(proveedoresRef);
+                listaProveedores = [];
+                
+                snapshot.forEach(docSnap => {
+                    listaProveedores.push({ id: docSnap.id, ...docSnap.data() });
+                });
+
+                renderizarTabla(listaProveedores);
+            } catch (error) {
+                console.error("Error cargando proveedores:", error);
+                tablaProv.innerHTML = `<tr><td colspan="5" style="color:red; text-align:center;">Error al cargar los datos</td></tr>`;
+            }
+        }
+
+        // --- RENDERIZAR TABLA ---
+        function renderizarTabla(datos) {
+            tablaProv.innerHTML = '';
+            
+            if (datos.length === 0) {
+                tablaProv.innerHTML = `<tr><td colspan="5" style="text-align:center; color: #64748B;">No hay proveedores registrados.</td></tr>`;
+                return;
+            }
+
+            datos.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${p.codigo || 'S/C'}</strong></td>
+                    <td>${p.nombre || 'N/A'}</td>
+                    <td>${p.rif || 'N/A'}</td>
+                    <td>${p.telefono || 'N/A'}</td>
+                    <td>
+                        <button class="btn-table btn-edit" data-id="${p.id}" title="Editar"><i class="fas fa-pen"></i></button>
+                        <button class="btn-table btn-delete" data-id="${p.id}" title="Eliminar"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+                tablaProv.appendChild(tr);
+            });
+
+            // Asignar eventos a botones de editar y eliminar
+            document.querySelectorAll('.btn-edit').forEach(b => b.addEventListener('click', (e) => cargarEdicion(e.currentTarget.dataset.id)));
+            document.querySelectorAll('.btn-delete').forEach(b => b.addEventListener('click', (e) => eliminarProveedor(e.currentTarget.dataset.id)));
+        }
+
+        // --- GUARDAR O ACTUALIZAR PROVEEDOR ---
+        formProv.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const codigo = provCodigoInput.value.trim().toUpperCase();
+            const nombre = provNombreInput.value.trim();
+            const rif = provRifInput.value.trim().toUpperCase();
+            const contacto = provContactoInput.value.trim();
+            const telefono = provTelefonoInput.value.trim();
+            const direccion = provDireccionInput.value.trim();
+
+            if (!codigo || !nombre) {
+                alert("Por favor completa el código y el nombre del proveedor.");
+                return;
+            }
+
+            // Usar el ID guardado si es edición, o usar el Código como ID del documento
+            const idDoc = provIdInput.value ? provIdInput.value : codigo.replace(/[^a-zA-Z0-9_-]/g, '_');
+
+            btnGuardar.disabled = true;
+            btnGuardar.innerText = "GUARDANDO...";
+
+            try {
+                await setDoc(doc(proveedoresRef, idDoc), {
+                    codigo: codigo,
+                    nombre: nombre,
+                    rif: rif,
+                    contacto: contacto,
+                    telefono: telefono,
+                    direccion: direccion,
+                    fecha_actualizacion: new Date().toISOString()
+                }, { merge: true });
+
+                alert("Proveedor guardado exitosamente.");
+                limpiarFormulario();
+                await cargarProveedores();
+            } catch (error) {
+                console.error("Error al guardar proveedor:", error);
+                alert("Ocurrió un error al guardar en la base de datos.");
+            } finally {
+                btnGuardar.disabled = false;
+                btnGuardar.innerText = "GUARDAR PROVEEDOR";
+            }
+        });
+
+        // --- MODO EDICIÓN ---
+        function cargarEdicion(id) {
+            const prov = listaProveedores.find(p => p.id === id);
+            if (!prov) return;
+
+            provIdInput.value = prov.id;
+            provCodigoInput.value = prov.codigo || '';
+            provNombreInput.value = prov.nombre || '';
+            provRifInput.value = prov.rif || '';
+            provContactoInput.value = prov.contacto || '';
+            provTelefonoInput.value = prov.telefono || '';
+            provDireccionInput.value = prov.direccion || '';
+
+            formTitle.innerHTML = `<i class="fas fa-edit"></i> Editando Proveedor`;
+            btnGuardar.innerText = "ACTUALIZAR PROVEEDOR";
+            btnCancelar.style.display = "block";
+            avisoNoRegistrado.style.display = "none";
+            listaResultados.style.display = "none";
+        }
+
+        // --- ELIMINAR PROVEEDOR ---
+        async function eliminarProveedor(id) {
+            if (!confirm("¿Está seguro de que desea eliminar este proveedor?")) return;
+
+            try {
+                await deleteDoc(doc(proveedoresRef, id));
+                alert("Proveedor eliminado.");
+                await cargarProveedores();
+            } catch (error) {
+                console.error("Error eliminando proveedor:", error);
+                alert("No se pudo eliminar el registro.");
+            }
+        }
+
+        // --- BÚSQUEDA EN TIEMPO REAL / AUTOCOMPLETADO EN CÓDIGO ---
+        provCodigoInput.addEventListener('input', () => {
+            const query = provCodigoInput.value.trim().toLowerCase();
+            listaResultados.innerHTML = '';
+
+            if (query.length < 1) {
+                listaResultados.style.display = 'none';
+                avisoNoRegistrado.style.display = 'none';
+                return;
+            }
+
+            const coincidencia = listaProveedores.filter(p => 
+                (p.codigo && p.codigo.toLowerCase().includes(query)) ||
+                (p.nombre && p.nombre.toLowerCase().includes(query))
+            );
+
+            if (coincidencia.length > 0) {
+                avisoNoRegistrado.style.display = 'none';
+                listaResultados.style.display = 'block';
+
+                coincidencia.slice(0, 5).forEach(p => {
+                    const item = document.createElement('div');
+                    item.className = 'item-res';
+                    item.innerHTML = `<strong>${p.codigo}</strong> - ${p.nombre}`;
+                    item.addEventListener('click', () => {
+                        cargarEdicion(p.id);
+                    });
+                    listaResultados.appendChild(item);
+                });
+            } else {
+                listaResultados.style.display = 'none';
+                avisoNoRegistrado.style.display = 'block';
+            }
+        });
+
+        // Ocultar dropdown al hacer clic fuera
+        document.addEventListener('click', (e) => {
+            if (!provCodigoInput.contains(e.target) && !listaResultados.contains(e.target)) {
+                listaResultados.style.display = 'none';
+            }
+        });
+
+        // --- BÚSQUEDA DE FILTRADO EN LA TABLA ---
+        buscarInput.addEventListener('input', () => {
+            const query = buscarInput.value.trim().toLowerCase();
+            const filtrados = listaProveedores.filter(p => 
+                (p.codigo && p.codigo.toLowerCase().includes(query)) ||
+                (p.nombre && p.nombre.toLowerCase().includes(query)) ||
+                (p.rif && p.rif.toLowerCase().includes(query))
+            );
+            renderizarTabla(filtrados);
+        });
+
+        // --- BOTÓN CANCELAR ---
+        btnCancelar.addEventListener('click', limpiarFormulario);
+
+        function limpiarFormulario() {
+            formProv.reset();
+            provIdInput.value = '';
+            formTitle.innerHTML = `<i class="fas fa-truck-field"></i> Ficha Proveedor`;
+            btnGuardar.innerText = "GUARDAR PROVEEDOR";
+            btnCancelar.style.display = "none";
+            avisoNoRegistrado.style.display = "none";
+            listaResultados.style.display = "none";
+        }
+
+        // Cargar datos al iniciar
+        window.addEventListener('DOMContentLoaded', cargarProveedores);
+    </script>
+</body>
+</html>
