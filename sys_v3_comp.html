@@ -48,6 +48,8 @@
         /* BUSCADOR Y DROPDOWN */
         .dropdown-container { position: relative; }
         #dropdown-resultados { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--border); border-radius: 0 0 8px 8px; max-height: 200px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: none; }
+        .dropdown-item { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #F1F5F9; font-size: 0.85rem; }
+        .dropdown-item:hover { background: #F1F5F9; }
     </style>
 
     <script>
@@ -87,7 +89,7 @@
 
         <!-- 2 Y 3. DATOS DE PRODUCTO Y COSTOS -->
         <div class="grid-middle">
-            <!-- Datos del Producto Registrado -->
+            <!-- Datos del Producto -->
             <section class="card border-sky" style="margin-bottom: 0;">
                 <h3><i class="fas fa-box"></i> Datos Producto</h3>
                 
@@ -105,12 +107,12 @@
 
                 <div class="form-group">
                     <label class="form-label">CÓDIGO SKU / ID</label>
-                    <input type="text" id="comp-sku" placeholder="Ej. ACE-01" style="text-transform: uppercase;" readonly style="background-color: #F8FAFC;">
+                    <input type="text" id="comp-sku" placeholder="Ej. ACE-01" style="text-transform: uppercase;">
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">DESCRIPCIÓN / NOMBRE DEL PRODUCTO</label>
-                    <input type="text" id="comp-nombre" placeholder="Nombre completo" style="text-transform: uppercase;" readonly style="background-color: #F8FAFC;">
+                    <input type="text" id="comp-nombre" placeholder="Nombre completo" style="text-transform: uppercase;">
                 </div>
 
                 <div class="form-group">
