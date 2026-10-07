@@ -1,8 +1,9 @@
 // js/sys_v3_comp.js
 import { db } from './firebase-config.js';
-import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, getDocs, addDoc, doc, setTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 let productosCache = []; // Almacén local temporal para filtrar rápido sin recargar Firestore a cada rato
+let listaCompraTemporal = []; // Lista temporal de productos añadidos
 
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. Cargar proveedores y productos desde Firestore al iniciar
@@ -12,6 +13,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const buscador = document.getElementById('buscador-dinamico');
     const dropdown = document.getElementById('dropdown-resultados');
     const selectProveedor = document.getElementById('comp-proveedor');
+    const btnAgregar = document.getElementById('btn-agregar-lista');
+    const btnRegistrar = document.getElementById('btn-registrar-compra');
 
     if (selectProveedor) {
         selectProveedor.addEventListener('change', (e) => {
@@ -19,12 +22,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // 2. ACTIVAR CÁLCULOS AUTOMÁTICOS DE PRECIOS Y GANANCIAS
+    // 2. ACTIVAR CÁLCULOS AUTOMÁTICOS DE PRECIOS Y BS
     inicializarCalculosPrecios();
+
+    // 3. EVENTO BOTÓN AGREGAR A LA LISTA
+    if (btnAgregar) {
+        btnAgregar.addEventListener('click', (e) => {
+            e.preventDefault();
+            agregarItemALista();
+        });
+    }
+
+    // 4. EVENTO BOTÓN REGISTRAR / GUARDAR
+    if (btnRegistrar) {
+        btnRegistrar.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await registrarCompraFirestore();
+        });
+    }
 
     if (!buscador || !dropdown) return;
 
-    // 3. BÚSQUEDA DE PRODUCTOS EN TIEMPO REAL (Filtra sobre la caché de Firestore)
+    // 5. BÚSQUEDA DE PRODUCTOS EN TIEMPO REAL
     buscador.addEventListener('input', (e) => {
         const query = e.target.value.trim().toLowerCase();
 
@@ -74,7 +93,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         dropdown.style.display = 'block';
     }
 
-    // 4. SELECCIÓN DE PRODUCTO
+    // 6. SELECCIÓN DE PRODUCTO DESDE EL DROPDOWN
     dropdown.addEventListener('mousedown', (e) => {
         const item = e.target.closest('.dropdown-item');
         if (!item || !item.dataset.producto) return;
@@ -98,8 +117,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (gananciaInput) gananciaInput.value = prod.ganancia || prod.porcentajeGanancia || '0';
         if (precioInput) precioInput.value = prod.precio || prod.precioVenta || '0.00';
 
-        // Disparar recálculo de precios tras asignar valores
-        calcularPrecioVenta();
+        calcularPrecioVenta(); // Recalcular con los nuevos valores
 
         dropdown.style.display = 'none';
         buscador.value = `${prod.sku || prod.codigo || prod.id || ''} - ${prod.nombre || prod.descripcion || ''}`;
@@ -108,6 +126,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (aviso) aviso.style.display = 'none';
 
         if (cantidadInput) {
+            cantidadInput.value = '1';
             cantidadInput.focus();
             cantidadInput.select();
         }
@@ -120,7 +139,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 });
 
-// 5. FUNCIONES DE CÁLCULO DE PORCENTAJES Y PRECIOS
+// ==========================================
+// SECCIÓN: CÁLCULOS DE PRECIOS Y TASA BCV
+// ==========================================
 function inicializarCalculosPrecios() {
     const costoInput = document.getElementById('comp-costo');
     const gananciaInput = document.getElementById('comp-ganancia');
@@ -137,18 +158,23 @@ function calcularPrecioVenta() {
     const precioInput = document.getElementById('comp-precio');
     const precioBsInput = document.getElementById('comp-precio-bs');
 
-    // Fórmula: Precio = Costo + (Costo * (Ganancia / 100))
+    // Fórmula: Precio Venta = Costo + (Costo * (% Ganancia / 100))
     const precioVenta = costo + (costo * (ganancia / 100));
 
     if (precioInput) {
         precioInput.value = precioVenta.toFixed(2);
     }
 
-    // Cálculo opcional en Bolívares (Si manejas tasa BCV almacenada, puedes ajustarlo aquí)
+    // Cálculo del precio en Bolívares usando la tasa almacenada en localStorage
     const tasaCambio = parseFloat(localStorage.getItem('sys_tasa_bcv')) || 1;
     if (precioBsInput) {
         const totalBs = precioVenta * tasaCambio;
-        precioBsInput.value = totalBs.toFixed(2) + ' Bs.';
+        // Si es un input o un span, manejamos ambos casos:
+        if (precioBsInput.tagName === 'INPUT') {
+            precioBsInput.value = totalBs.toFixed(2);
+        } else {
+            precioBsInput.textContent = totalBs.toFixed(2) + ' Bs.';
+        }
     }
 }
 
@@ -156,18 +182,151 @@ function calcularPorcentajeGanancia() {
     const costo = parseFloat(document.getElementById('comp-costo')?.value) || 0;
     const precioVenta = parseFloat(document.getElementById('comp-precio')?.value) || 0;
     const gananciaInput = document.getElementById('comp-ganancia');
+    const precioBsInput = document.getElementById('comp-precio-bs');
 
-    if (costo <= 0) return;
+    if (costo > 0) {
+        const ganancia = ((precioVenta - costo) / costo) * 100;
+        if (gananciaInput) {
+            gananciaInput.value = ganancia.toFixed(2);
+        }
+    }
 
-    // Fórmula inversa: % Ganancia = ((Precio - Costo) / Costo) * 100
-    const ganancia = ((precioVenta - costo) / costo) * 100;
-
-    if (gananciaInput) {
-        gananciaInput.value = ganancia.toFixed(2);
+    const tasaCambio = parseFloat(localStorage.getItem('sys_tasa_bcv')) || 1;
+    if (precioBsInput) {
+        const totalBs = precioVenta * tasaCambio;
+        if (precioBsInput.tagName === 'INPUT') {
+            precioBsInput.value = totalBs.toFixed(2);
+        } else {
+            precioBsInput.textContent = totalBs.toFixed(2) + ' Bs.';
+        }
     }
 }
 
-// 6. CARGAR PROVEEDORES DESDE FIRESTORE
+// ==========================================
+// SECCIÓN: AGREGAR A LISTA Y REGISTRAR
+// ==========================================
+function agregarItemALista() {
+    const sku = document.getElementById('comp-sku')?.value || '';
+    const nombre = document.getElementById('comp-nombre')?.value || '';
+    const costo = parseFloat(document.getElementById('comp-costo')?.value) || 0;
+    const ganancia = parseFloat(document.getElementById('comp-ganancia')?.value) || 0;
+    const precio = parseFloat(document.getElementById('comp-precio')?.value) || 0;
+    const cantidad = parseInt(document.getElementById('comp-cantidad')?.value) || 1;
+
+    if (!nombre || costo <= 0) {
+        alert("Por favor selecciona un producto válido e indica un costo mayor a 0.");
+        return;
+    }
+
+    const item = {
+        sku,
+        nombre,
+        costo,
+        ganancia,
+        precio,
+        cantidad,
+        subtotal: costo * cantidad
+    };
+
+    listaCompraTemporal.push(item);
+    renderizarTablaTemporal();
+    limpiarFormularioItem();
+}
+
+function renderizarTablaTemporal() {
+    const contenedorTabla = document.getElementById('tabla-detalle-compra') || document.getElementById('lista-items-container');
+    if (!contenedorTabla) return;
+
+    // Dependiendo de si es una tabla tradicional o un contenedor HTML, ajusta la estructura visual:
+    let html = '';
+    let totalGeneral = 0;
+
+    listaCompraTemporal.forEach((prod, index) => {
+        totalGeneral += prod.subtotal;
+        html += `
+            <tr>
+                <td>${prod.sku || 'S/N'}</td>
+                <td>${prod.nombre}</td>
+                <td>${prod.cantidad}</td>
+                <td>$${prod.costo.toFixed(2)}</td>
+                <td>$${prod.subtotal.toFixed(2)}</td>
+                <td><button type="button" onclick="eliminarItemTemporal(${index})" style="color:var(--rose); background:none; border:none; cursor:pointer;">❌</button></td>
+            </tr>
+        `;
+    });
+
+    // Si usas una tabla tbody directa:
+    if (contenedorTabla.tagName === 'TBODY') {
+        contenedorTabla.innerHTML = html;
+    }
+
+    const labelTotal = document.getElementById('label-total-compra');
+    if (labelTotal) labelTotal.textContent = `$${totalGeneral.toFixed(2)}`;
+}
+
+window.eliminarItemTemporal = function(index) {
+    listaCompraTemporal.splice(index, 1);
+    renderizarTablaTemporal();
+}
+
+function limpiarFormularioItem() {
+    const buscador = document.getElementById('buscador-dinamico');
+    const skuInput = document.getElementById('comp-sku');
+    const nombreInput = document.getElementById('comp-nombre');
+    const costoInput = document.getElementById('comp-costo');
+    const gananciaInput = document.getElementById('comp-ganancia');
+    const precioInput = document.getElementById('comp-precio');
+    const cantidadInput = document.getElementById('comp-cantidad');
+
+    if (buscador) buscador.value = '';
+    if (skuInput) skuInput.value = '';
+    if (nombreInput) nombreInput.value = '';
+    if (costoInput) costoInput.value = '';
+    if (gananciaInput) gananciaInput.value = '';
+    if (precioInput) precioInput.value = '';
+    if (cantidadInput) cantidadInput.value = '1';
+    if (buscador) buscador.focus();
+}
+
+async function registrarCompraFirestore() {
+    const empresaId = localStorage.getItem('youcontrol_empresa_id');
+    const proveedorId = document.getElementById('comp-proveedor')?.value || 'casual';
+
+    if (!empresaId) {
+        alert("Error: No se encontró la empresa activa en la sesión.");
+        return;
+    }
+
+    if (listaCompraTemporal.length === 0) {
+        alert("La lista de compra está vacía. Agrega al menos un producto.");
+        return;
+    }
+
+    try {
+        const datosCompra = {
+            proveedorId,
+            items: listaCompraTemporal,
+            fecha: new Date().toISOString(),
+            total: listaCompraTemporal.reduce((acc, curr) => acc + curr.subtotal, 0)
+        };
+
+        // Guardar en Firestore bajo la ruta de la empresa (ej: compras o egresos)
+        await addDoc(collection(db, "usuarios", empresaId, "compras"), datosCompra);
+
+        alert("¡Compra registrada y guardada con éxito en Firestore!");
+        listaCompraTemporal = [];
+        renderizarTablaTemporal();
+        limpiarFormularioItem();
+
+    } catch (error) {
+        console.error("Error al registrar la compra:", error);
+        alert("Hubo un error al guardar la compra en la base de datos.");
+    }
+}
+
+// ==========================================
+// SECCIÓN: CARGAS INICIALES DE DATOS
+// ==========================================
 async function cargarProveedoresFirestore() {
     const selectProveedor = document.getElementById('comp-proveedor');
     if (!selectProveedor) return;
@@ -197,7 +356,6 @@ async function cargarProveedoresFirestore() {
     }
 }
 
-// 7. CARGAR PRODUCTOS DESDE FIRESTORE
 async function cargarProductosFirestore() {
     try {
         const empresaId = localStorage.getItem('youcontrol_empresa_id');
@@ -210,7 +368,6 @@ async function cargarProductosFirestore() {
             productosCache.push({ id: docSnap.id, ...docSnap.data() });
         });
 
-        console.log(`Productos cargados desde Firestore: ${productosCache.length}`);
     } catch (error) {
         console.error("Error al cargar productos de Firestore:", error);
         productosCache = JSON.parse(localStorage.getItem('sys_productos')) || [];
@@ -218,12 +375,12 @@ async function cargarProductosFirestore() {
 }
 
 function manejarSeleccionProveedor(valor) {
-    const selectProveedor = document.getElementById('comp-proveedor');
     const infoPanel = document.getElementById('info-proveedor');
     const rifSpan = document.getElementById('prov-info-rif');
     const contactoSpan = document.getElementById('prov-info-contacto');
+    const selectProveedor = document.getElementById('comp-proveedor');
 
-    if (!selectProveedor || !infoPanel) return;
+    if (!infoPanel) return;
 
     if (!valor) {
         infoPanel.style.display = 'none';
@@ -235,10 +392,8 @@ function manejarSeleccionProveedor(valor) {
     const selectedOption = selectProveedor.options[selectProveedor.selectedIndex];
     if (selectedOption && selectedOption.dataset.proveedor) {
         const prov = JSON.parse(selectedOption.dataset.proveedor);
-        
         if (rifSpan) rifSpan.textContent = prov.rif || prov.documento || prov.id || 'N/A';
         if (contactoSpan) contactoSpan.textContent = prov.contacto || prov.telefono || prov.correo || 'N/A';
-        
         infoPanel.style.display = 'block';
     } else {
         infoPanel.style.display = 'none';
