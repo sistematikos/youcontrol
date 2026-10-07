@@ -4,119 +4,134 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PROVEEDORES | YOU CONTROL</title>
-    <!-- Tailwind CSS y FontAwesome -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
+            --text-dark: #1E293B;
+            --emerald: #10B981; --sky: #0EA5E9; --rose: #F43F5E; --amber: #F59E0B;
+            --border: #E2E8F0;
+        }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 10px 0; min-height: 100vh; color: var(--text-dark); }
+        .layout-width { width: 95%; max-width: 1200px; margin: 0 auto; }
+
+        /* CABECERA */
+        .header-panel { background: #ffffff; padding: 0 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; height: 70px; }
+        .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 6px 12px; border-radius: 8px; text-decoration: none; font-size: 0.75rem; font-weight: 700; border: 1px solid var(--border); transition: 0.3s; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+        .btn-back:hover { background: #E2E8F0; }
+        .logo-header { height: 90%; width: auto; object-fit: contain; }
+
+        /* TARJETAS */
+        .main-layout { display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
+        .card { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); border-left: 6px solid var(--amber); position: relative; }
+        h3 { margin-top: 0; font-size: 1rem; margin-bottom: 15px; }
+
+        /* BUSCADOR INTELIGENTE (Contenedor) */
+        #lista-resultados { 
+            position: absolute; width: 310px; background: white; border: 1px solid var(--border); 
+            border-radius: 0 0 8px 8px; z-index: 1000; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+        }
+        .item-res { padding: 10px; cursor: pointer; font-size: 0.85rem; }
+        .item-res:hover { background-color: #F1F5F9; }
+
+        /* FORMULARIO */
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 0.75rem; font-weight: 700; color: #64748B; margin-bottom: 5px; }
+        input, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; font-family: inherit; font-size: 0.85rem; }
+        .btn-primary { width: 100%; background: var(--text-dark); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .btn-primary:hover { background: var(--amber); }
+        #aviso-no-registrado { color: var(--rose); font-size: 0.75rem; font-weight: 700; display: none; margin-top: 5px; }
+
+        /* TABLA */
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { color: #64748B; border-bottom: 2px solid #F1F5F9; padding: 12px; text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid #F1F5F9; }
+        .btn-table { border: none; background: #F1F5F9; padding: 5px 8px; border-radius: 4px; cursor: pointer; color: var(--text-dark); transition: 0.2s; }
+        .btn-table:hover { background: #E2E8F0; }
+        .btn-table.delete:hover { background: #FFE4E6; color: var(--rose); }
+    </style>
+
+    <!-- Script para limpiar caché al regresar al menú -->
+    <script>
+        function volverAlMenu(e) {
+            e.preventDefault();
+            window.location.href = 'sys_v1_menu.html?refresh=' + new Date().getTime();
+        }
+    </script>
 </head>
-<body class="bg-slate-100 min-h-screen font-sans">
-
-    <!-- Encabezado -->
-    <div class="p-4 bg-white shadow-sm flex justify-between items-center px-8 border-b border-slate-200">
-        <div class="flex items-center space-x-4">
-            <button onclick="window.history.back()" class="bg-slate-200 hover:bg-slate-300 px-4 py-2 rounded-lg font-bold text-slate-700 text-sm transition">
-                <i class="fa-solid fa-arrow-left mr-2"></i>VOLVER
-            </button>
-            <h1 class="text-xl font-bold text-slate-800">Gestión de Proveedores</h1>
-        </div>
-        <div class="flex items-center space-x-2">
-            <span class="text-xs font-bold text-blue-900 tracking-wider">YOU CONTROL</span>
-        </div>
-    </div>
-
-    <!-- Contenedor Principal -->
-    <div class="p-6 max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6">
-
-        <!-- Formulario (Ficha Proveedor) -->
-        <div class="md:col-span-5 bg-white p-6 rounded-xl shadow-md border-t-4 border-amber-500">
-            <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
-                <i class="fa-solid fa-truck mr-2 text-amber-500"></i>Ficha Proveedor
-            </h2>
-
-            <form id="form-proveedor" onsubmit="guardarProveedor(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Código del Proveedor</label>
-                    <input type="text" id="prov-codigo" required placeholder="Ej: BENF" 
-                        class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm font-semibold uppercase focus:ring-2 focus:ring-amber-500 focus:outline-none">
-                    <span id="prov-estado-codigo" class="text-xs font-bold text-rose-500 mt-1 block"></span>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Razón Social / Nombre</label>
-                    <input type="text" id="prov-nombre" required placeholder="Nombre de la empresa" 
-                        class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm font-semibold uppercase focus:ring-2 focus:ring-amber-500 focus:outline-none">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">RIF / Identificación Fiscal</label>
-                    <input type="text" id="prov-rif" placeholder="Ej: J-12345678-0" 
-                        class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm font-semibold uppercase focus:ring-2 focus:ring-amber-500 focus:outline-none">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Contacto / Persona Enlace</label>
-                    <input type="text" id="prov-contacto" placeholder="Nombre del contacto" 
-                        class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm font-semibold uppercase focus:ring-2 focus:ring-amber-500 focus:outline-none">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Teléfono</label>
-                    <input type="text" id="prov-telefono" placeholder="Ej: 0424-1234567" 
-                        class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-amber-500 focus:outline-none">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Dirección</label>
-                    <textarea id="prov-direccion" rows="2" placeholder="Ciudad / Estado / Dirección" 
-                        class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm font-semibold uppercase focus:ring-2 focus:ring-amber-500 focus:outline-none"></textarea>
-                </div>
-
-                <div class="pt-2 flex space-x-2">
-                    <button type="submit" id="btn-guardar" 
-                        class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 px-4 rounded-lg text-sm tracking-wide shadow-md transition duration-200">
-                        GUARDAR PROVEEDOR
-                    </button>
-                    <button type="button" onclick="limpiarFormulario()" 
-                        class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 px-4 rounded-lg text-sm transition">
-                        LIMPIAR
-                    </button>
-                </div>
-            </form>
-        </div>
-
-        <!-- Tabla / Listado de Proveedores -->
-        <div class="md:col-span-7 bg-white p-6 rounded-xl shadow-md border-t-4 border-emerald-500">
-            <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
-                <i class="fa-solid fa-list-check mr-2 text-emerald-500"></i>Listado de Proveedores
-            </h2>
-
-            <!-- Búsqueda -->
-            <div class="mb-4">
-                <input type="text" id="prov-buscar" oninput="filtrarProveedores()" placeholder="Buscar por código, nombre o RIF..." 
-                    class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+<body>
+    <main class="layout-width">
+        <header class="header-panel">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <a href="#" class="btn-back" onclick="volverAlMenu(event)"><i class="fas fa-arrow-left"></i> VOLVER</a>
+                <h1 style="font-size: 1.2rem; margin: 0;">Gestión de Proveedores</h1>
             </div>
+            <img src="img/logo.png" class="logo-header" alt="Logo">
+        </header>
 
-            <!-- Tabla -->
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs border-collapse">
+        <div class="main-layout">
+            <!-- Ficha del Proveedor -->
+            <section class="card">
+                <h3 id="form-title"><i class="fas fa-truck"></i> Ficha Proveedor</h3>
+                <form id="form-proveedor" onsubmit="guardarProveedor(event)">
+                    <div class="form-group">
+                        <label>Código del Proveedor</label>
+                        <input type="text" id="prov-codigo" placeholder="Ej: BENF" required autocomplete="off" style="text-transform: uppercase;">
+                        <div id="aviso-no-registrado"><i class="fas fa-info-circle"></i> Código nuevo (Se registrará al guardar)</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Razón Social / Nombre</label>
+                        <input type="text" id="prov-nombre" required style="text-transform: uppercase;">
+                    </div>
+
+                    <div class="form-group">
+                        <label>RIF / Identificación Fiscal</label>
+                        <input type="text" id="prov-rif" placeholder="Ej: J-12345678-0" style="text-transform: uppercase;">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Contacto / Persona Enlace</label>
+                        <input type="text" id="prov-contacto" style="text-transform: uppercase;">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="text" id="prov-telefono" placeholder="Ej: 0424-1234567">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Dirección</label>
+                        <textarea id="prov-direccion" rows="2" style="text-transform: uppercase;"></textarea>
+                    </div>
+
+                    <button type="submit" id="btn-guardar-proveedor" class="btn-primary">GUARDAR PROVEEDOR</button>
+                    <button type="button" id="btn-cancelar-edicion" class="btn-primary" onclick="limpiarFormulario()" style="background:#64748B; display:none; margin-top:5px;">CANCELAR EDICIÓN</button>
+                </form>
+            </section>
+
+            <!-- Listado de Proveedores -->
+            <section class="card" style="border-left-color: var(--emerald);">
+                <h3><i class="fas fa-list"></i> Listado de Proveedores</h3>
+                <input type="text" id="buscar-proveedor" oninput="filtrarProveedores()" placeholder="🔍 Filtrar por código, nombre o RIF..." style="margin-bottom:15px;">
+                <table>
                     <thead>
-                        <tr class="bg-slate-100 text-slate-600 uppercase font-bold border-b border-slate-200">
-                            <th class="p-2.5">Código</th>
-                            <th class="p-2.5">Proveedor / Razón Social</th>
-                            <th class="p-2.5">RIF</th>
-                            <th class="p-2.5">Teléfono</th>
-                            <th class="p-2.5 text-center">Acción</th>
+                        <tr>
+                            <th>Código</th>
+                            <th>Razón Social</th>
+                            <th>RIF</th>
+                            <th>Teléfono</th>
+                            <th style="text-align: center;">Acción</th>
                         </tr>
                     </thead>
-                    <tbody id="tabla-proveedores-body" class="divide-y divide-slate-100 text-slate-700 font-medium">
-                        <tr>
-                            <td colspan="5" class="text-center py-6 text-slate-400">Cargando proveedores...</td>
-                        </tr>
+                    <tbody id="tabla-proveedores">
+                        <tr><td colspan="5" style="text-align: center; color: #94A3B8;">Cargando proveedores...</td></tr>
                     </tbody>
                 </table>
-            </div>
+            </section>
         </div>
-
-    </div>
+    </main>
 
     <!-- MÓDULO FIREBASE JS -->
     <script type="module">
@@ -131,14 +146,10 @@
             serverTimestamp 
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Configuración apuntando al proyecto youcontrol-1d60a
         const firebaseConfig = {
-            apiKey: "AIzaSy...", // Reemplaza con tu apiKey real si es necesario
             authDomain: "youcontrol-1d60a.firebaseapp.com",
             projectId: "youcontrol-1d60a",
-            storageBucket: "youcontrol-1d60a.appspot.com",
-            messagingSenderId: "1234567890",
-            appId: "1:1234567890:web:abc123def456"
+            storageBucket: "youcontrol-1d60a.appspot.com"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -146,7 +157,6 @@
 
         let listaProveedores = [];
 
-        // Obtener ID de la Licencia
         function obtenerLicencia() {
             return localStorage.getItem('youcontrol_empresa_id');
         }
@@ -154,12 +164,8 @@
         // Cargar Proveedores en Tiempo Real
         function escucharProveedores() {
             const ID_LICENCIA = obtenerLicencia();
-            if (!ID_LICENCIA) {
-                console.warn("No hay ID_LICENCIA en localStorage aún.");
-                return;
-            }
+            if (!ID_LICENCIA) return;
 
-            // Ruta: usuarios / {ID_LICENCIA} / proveedores
             const refColeccion = collection(db, "usuarios", ID_LICENCIA, "proveedores");
 
             onSnapshot(refColeccion, (snapshot) => {
@@ -175,29 +181,24 @@
 
         // Renderizar datos en la tabla
         function renderizarTabla(datos) {
-            const tbody = document.getElementById('tabla-proveedores-body');
+            const tbody = document.getElementById('tabla-proveedores');
             tbody.innerHTML = '';
 
             if (datos.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-400">No hay proveedores registrados.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #94A3B8;">No hay proveedores registrados.</td></tr>`;
                 return;
             }
 
             datos.forEach((prov) => {
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 transition";
                 tr.innerHTML = `
-                    <td class="p-2.5 font-bold text-slate-800">${prov.codigo || prov.id}</td>
-                    <td class="p-2.5 uppercase">${prov.nombre || '-'}</td>
-                    <td class="p-2.5 uppercase">${prov.rif || '-'}</td>
-                    <td class="p-2.5">${prov.telefono || '-'}</td>
-                    <td class="p-2.5 text-center space-x-1">
-                        <button onclick="cargarParaEditar('${prov.id}')" class="px-2 py-1 bg-amber-100 text-amber-700 rounded hover:bg-amber-200 text-xs font-bold" title="Editar">
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
-                        <button onclick="eliminarProveedor('${prov.id}')" class="px-2 py-1 bg-rose-100 text-rose-700 rounded hover:bg-rose-200 text-xs font-bold" title="Eliminar">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
+                    <td style="font-weight: 700;">${prov.codigo || prov.id}</td>
+                    <td>${prov.nombre || '-'}</td>
+                    <td>${prov.rif || '-'}</td>
+                    <td>${prov.telefono || '-'}</td>
+                    <td style="text-align: center;">
+                        <button onclick="cargarParaEditar('${prov.id}')" class="btn-table" title="Editar"><i class="fas fa-edit"></i></button>
+                        <button onclick="eliminarProveedor('${prov.id}')" class="btn-table delete" title="Eliminar"><i class="fas fa-trash"></i></button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -210,7 +211,7 @@
 
             const ID_LICENCIA = obtenerLicencia();
             if (!ID_LICENCIA) {
-                alert("Error: No se encontró la licencia en localStorage ('youcontrol_empresa_id').");
+                alert("Error: No se encontró la licencia activa en localStorage.");
                 return;
             }
 
@@ -222,16 +223,15 @@
             const direccion = document.getElementById('prov-direccion').value.trim().toUpperCase();
 
             if (!codigo || !nombre) {
-                alert("El Código y el Nombre/Razón Social son requeridos.");
+                alert("El Código y la Razón Social son requeridos.");
                 return;
             }
 
-            const btnGuardar = document.getElementById('btn-guardar');
+            const btnGuardar = document.getElementById('btn-guardar-proveedor');
             btnGuardar.disabled = true;
             btnGuardar.innerText = "GUARDANDO...";
 
             try {
-                // Referencia a: usuarios/{ID_LICENCIA}/proveedores/{codigo}
                 const refDoc = doc(db, "usuarios", ID_LICENCIA, "proveedores", codigo);
 
                 await setDoc(refDoc, {
@@ -244,68 +244,18 @@
                     updatedAt: serverTimestamp()
                 }, { merge: true });
 
-                alert("✅ Proveedor guardado con éxito.");
+                alert("✅ Proveedor guardado correctamente.");
                 limpiarFormulario();
             } catch (error) {
                 console.error("Error al guardar proveedor:", error);
-                alert("❌ Error de permisos o guardado: " + error.message);
+                alert("❌ Error: " + error.message);
             } finally {
                 btnGuardar.disabled = false;
                 btnGuardar.innerText = "GUARDAR PROVEEDOR";
             }
         };
 
-        // Editar
+        // Cargar en el formulario para editar
         window.cargarParaEditar = function(codigo) {
             const prov = listaProveedores.find(p => p.id === codigo || p.codigo === codigo);
-            if (!prov) return;
-
-            document.getElementById('prov-codigo').value = prov.codigo || prov.id;
-            document.getElementById('prov-codigo').readOnly = true;
-            document.getElementById('prov-nombre').value = prov.nombre || '';
-            document.getElementById('prov-rif').value = prov.rif || '';
-            document.getElementById('prov-contacto').value = prov.contacto || '';
-            document.getElementById('prov-telefono').value = prov.telefono || '';
-            document.getElementById('prov-direccion').value = prov.direccion || '';
-
-            document.getElementById('prov-estado-codigo').innerText = "(Modo Edición - Código bloqueado)";
-        };
-
-        // Eliminar
-        window.eliminarProveedor = async function(codigo) {
-            if (!confirm(`¿Desea eliminar el proveedor ${codigo}?`)) return;
-
-            const ID_LICENCIA = obtenerLicencia();
-            try {
-                const refDoc = doc(db, "usuarios", ID_LICENCIA, "proveedores", codigo);
-                await deleteDoc(refDoc);
-                alert("🗑️ Proveedor eliminado.");
-            } catch (error) {
-                console.error("Error al eliminar proveedor:", error);
-                alert("❌ Error: " + error.message);
-            }
-        };
-
-        // Filtrar
-        window.filtrarProveedores = function() {
-            const q = document.getElementById('prov-buscar').value.toLowerCase().trim();
-            const filtrados = listaProveedores.filter(p => 
-                (p.codigo && p.codigo.toLowerCase().includes(q)) ||
-                (p.nombre && p.nombre.toLowerCase().includes(q)) ||
-                (p.rif && p.rif.toLowerCase().includes(q))
-            );
-            renderizarTabla(filtrados);
-        };
-
-        // Limpiar
-        window.limpiarFormulario = function() {
-            document.getElementById('form-proveedor').reset();
-            document.getElementById('prov-codigo').readOnly = false;
-            document.getElementById('prov-estado-codigo').innerText = "";
-        };
-
-        // Iniciar al cargar
-        escucharProveedores();
-    </script>
-</body>
-</html>
+            if (!prov) return
