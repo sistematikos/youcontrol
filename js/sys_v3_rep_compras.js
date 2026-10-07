@@ -57,7 +57,8 @@ async function cargarReporteCompras() {
                 fechaStr = c.fecha;
             }
 
-            const nroCompraStr = c.nro_compra || c.nroCompra || c.factura || id.slice(0,6);
+            // LEER NRO DE CONTROL MANUAL (con respaldo si no existiera en registros viejos)
+            const nroControlStr = c.nro_control || c.nroCompra || c.factura || id.slice(0, 6);
             const tr = document.createElement('tr');
             tr.className = "fila-compra";
 
@@ -66,7 +67,7 @@ async function cargarReporteCompras() {
                 tr.innerHTML = `
                     <td class="text-center"><input type="radio" name="select_compra" class="radio-compra" data-id="${id}" disabled></td>
                     <td>${fechaStr}</td>
-                    <td><strong>${nroCompraStr}</strong></td>
+                    <td><strong>${nroControlStr}</strong></td>
                     <td colspan="3" class="text-center font-bold text-red-600">*** COMPRA ANULADA ***</td>
                 `;
             } else {
@@ -90,7 +91,7 @@ async function cargarReporteCompras() {
                 tr.innerHTML = `
                     <td class="text-center"><input type="radio" name="select_compra" class="radio-compra" data-id="${id}"></td>
                     <td>${fechaStr}</td>
-                    <td><strong>${nroCompraStr}</strong></td>
+                    <td><strong>${nroControlStr}</strong></td>
                     <td>${c.proveedor || c.nombre_proveedor || 'PROVEEDOR GENERAL'}</td>
                     <td>${productosHTML}</td>
                     <td class="text-right"><strong>$${montoCompra.toFixed(2)}</strong></td>
@@ -127,7 +128,9 @@ document.getElementById('btn-anular-seleccionada').addEventListener('click', asy
         return;
     }
 
-    if (!confirm(`¿Estás seguro de anular la compra ${compraSeleccionadaData.nro_compra || compraSeleccionadaId}? Esta acción restará los artículos del inventario y marcará la compra como anulada.`)) {
+    const nroControlActual = compraSeleccionadaData.nro_control || compraSeleccionadaData.nro_compra || compraSeleccionadaId;
+
+    if (!confirm(`¿Estás seguro de anular la compra con Nro. Control ${nroControlActual}? Esta acción restará los artículos del inventario y marcará la compra como anulada.`)) {
         return;
     }
 
