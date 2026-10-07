@@ -19,9 +19,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // 2. ACTIVAR CÁLCULOS AUTOMÁTICOS DE PRECIOS Y GANANCIAS
+    inicializarCalculosPrecios();
+
     if (!buscador || !dropdown) return;
 
-    // 2. BÚSQUEDA DE PRODUCTOS EN TIEMPO REAL (Filtra sobre la caché de Firestore)
+    // 3. BÚSQUEDA DE PRODUCTOS EN TIEMPO REAL (Filtra sobre la caché de Firestore)
     buscador.addEventListener('input', (e) => {
         const query = e.target.value.trim().toLowerCase();
 
@@ -71,7 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         dropdown.style.display = 'block';
     }
 
-    // 3. SELECCIÓN DE PRODUCTO
+    // 4. SELECCIÓN DE PRODUCTO
     dropdown.addEventListener('mousedown', (e) => {
         const item = e.target.closest('.dropdown-item');
         if (!item || !item.dataset.producto) return;
@@ -95,6 +98,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (gananciaInput) gananciaInput.value = prod.ganancia || prod.porcentajeGanancia || '0';
         if (precioInput) precioInput.value = prod.precio || prod.precioVenta || '0.00';
 
+        // Disparar recálculo de precios tras asignar valores
+        calcularPrecioVenta();
+
         dropdown.style.display = 'none';
         buscador.value = `${prod.sku || prod.codigo || prod.id || ''} - ${prod.nombre || prod.descripcion || ''}`;
 
@@ -114,7 +120,54 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 });
 
-// 4. CARGAR PROVEEDORES DESDE FIRESTORE
+// 5. FUNCIONES DE CÁLCULO DE PORCENTAJES Y PRECIOS
+function inicializarCalculosPrecios() {
+    const costoInput = document.getElementById('comp-costo');
+    const gananciaInput = document.getElementById('comp-ganancia');
+    const precioInput = document.getElementById('comp-precio');
+
+    if (costoInput) costoInput.addEventListener('input', calcularPrecioVenta);
+    if (gananciaInput) gananciaInput.addEventListener('input', calcularPrecioVenta);
+    if (precioInput) precioInput.addEventListener('input', calcularPorcentajeGanancia);
+}
+
+function calcularPrecioVenta() {
+    const costo = parseFloat(document.getElementById('comp-costo')?.value) || 0;
+    const ganancia = parseFloat(document.getElementById('comp-ganancia')?.value) || 0;
+    const precioInput = document.getElementById('comp-precio');
+    const precioBsInput = document.getElementById('comp-precio-bs');
+
+    // Fórmula: Precio = Costo + (Costo * (Ganancia / 100))
+    const precioVenta = costo + (costo * (ganancia / 100));
+
+    if (precioInput) {
+        precioInput.value = precioVenta.toFixed(2);
+    }
+
+    // Cálculo opcional en Bolívares (Si manejas tasa BCV almacenada, puedes ajustarlo aquí)
+    const tasaCambio = parseFloat(localStorage.getItem('sys_tasa_bcv')) || 1;
+    if (precioBsInput) {
+        const totalBs = precioVenta * tasaCambio;
+        precioBsInput.value = totalBs.toFixed(2) + ' Bs.';
+    }
+}
+
+function calcularPorcentajeGanancia() {
+    const costo = parseFloat(document.getElementById('comp-costo')?.value) || 0;
+    const precioVenta = parseFloat(document.getElementById('comp-precio')?.value) || 0;
+    const gananciaInput = document.getElementById('comp-ganancia');
+
+    if (costo <= 0) return;
+
+    // Fórmula inversa: % Ganancia = ((Precio - Costo) / Costo) * 100
+    const ganancia = ((precioVenta - costo) / costo) * 100;
+
+    if (gananciaInput) {
+        gananciaInput.value = ganancia.toFixed(2);
+    }
+}
+
+// 6. CARGAR PROVEEDORES DESDE FIRESTORE
 async function cargarProveedoresFirestore() {
     const selectProveedor = document.getElementById('comp-proveedor');
     if (!selectProveedor) return;
@@ -144,13 +197,12 @@ async function cargarProveedoresFirestore() {
     }
 }
 
-// 5. CARGAR PRODUCTOS DESDE FIRESTORE
+// 7. CARGAR PRODUCTOS DESDE FIRESTORE
 async function cargarProductosFirestore() {
     try {
         const empresaId = localStorage.getItem('youcontrol_empresa_id');
         if (!empresaId) return;
 
-        // Ajusta "productos" si tu colección en Firestore se llama diferente (ej. "inventario")
         const querySnapshot = await getDocs(collection(db, "usuarios", empresaId, "productos"));
         
         productosCache = [];
@@ -161,7 +213,6 @@ async function cargarProductosFirestore() {
         console.log(`Productos cargados desde Firestore: ${productosCache.length}`);
     } catch (error) {
         console.error("Error al cargar productos de Firestore:", error);
-        // Fallback a localStorage por si acaso la colección usa otro nombre
         productosCache = JSON.parse(localStorage.getItem('sys_productos')) || [];
     }
 }
