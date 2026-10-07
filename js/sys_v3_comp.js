@@ -1,10 +1,10 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * Módulo de Compras e Inventario (sys_v3_comp.js) - Versión Completa
+ * Módulo de Compras e Inventario (sys_v3_comp.js) - Con Fecha Personalizada
  */
 
 import { db } from './firebase-config.js'; 
-import { collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, onSnapshot, addDoc, doc, getDoc, updateDoc, increment, Timestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // --- VALIDACIÓN DE SESIÓN ---
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
@@ -31,6 +31,15 @@ async function cargarConfiguracionGlobal() {
         }
     } catch (e) {
         console.error("Error al cargar configuración:", e);
+    }
+}
+
+// --- ESTABLECER FECHA ACTUAL POR DEFECTO EN EL INPUT ---
+function inicializarFechaCompra() {
+    const inputFecha = document.getElementById('comp-fecha');
+    if (inputFecha && !inputFecha.value) {
+        const hoy = new Date().toISOString().split('T')[0];
+        inputFecha.value = hoy;
     }
 }
 
@@ -132,7 +141,6 @@ function initBuscadorDinamico() {
 }
 
 window.cargarDatosProducto = (id) => {
-    console.log("Intentando cargar producto con ID:", id);
     const prod = window.productosLocales.find(p => p.id === id);
     
     if (!prod) {
@@ -296,6 +304,15 @@ window.procesarIngresoMercancia = async () => {
         const provId = provSelect?.value || "Casual";
         const provNombre = window.proveedorSeleccionado ? (window.proveedorSeleccionado.nombre || window.proveedorSeleccionado.razon_social) : "Casual / General";
 
+        // Capturar la fecha del input HTML (ej: "2026-06-07")
+        const inputFecha = document.getElementById('comp-fecha');
+        let fechaCompraFinal = new Date(); // Por defecto hoy
+
+        if (inputFecha && inputFecha.value) {
+            // Creamos la fecha asegurando que tome la zona horaria local correctamente al mediodía para evitar desfases de día
+            fechaCompraFinal = new Date(inputFecha.value + 'T12:00:00');
+        }
+
         const totalCompraUSD = window.listaIngreso.reduce((sum, item) => sum + item.subtotalCosto, 0);
 
         const entradaData = {
@@ -304,7 +321,7 @@ window.procesarIngresoMercancia = async () => {
             items: window.listaIngreso,
             total_usd: totalCompraUSD,
             tasa_aplicada: window.tasaActual,
-            fecha: serverTimestamp()
+            fecha: Timestamp.fromDate(fechaCompraFinal) // Guardamos la fecha seleccionada en Firestore como Timestamp
         };
 
         await addDoc(collection(db, "usuarios", USER_ID, "compras"), entradaData);
@@ -318,12 +335,13 @@ window.procesarIngresoMercancia = async () => {
             });
         }
 
-        alert("✅ Entrada de mercancía procesada y stock de productos actualizado con éxito.");
+        alert("✅ Entrada de mercancía procesada con la fecha seleccionada y stock actualizado con éxito.");
 
         window.listaIngreso = [];
         renderizarTablaLista();
         if (provSelect) provSelect.value = '';
         window.seleccionarProveedor('');
+        inicializarFechaCompra(); // Resetea al día actual
 
     } catch (error) {
         console.error("Error al guardar mercancía:", error);
@@ -334,6 +352,7 @@ window.procesarIngresoMercancia = async () => {
 // --- INICIALIZACIÓN ---
 document.addEventListener('DOMContentLoaded', async () => {
     await cargarConfiguracionGlobal();
+    inicializarFechaCompra();
     inicializarProveedores();
     inicializarProductos();
     initBuscadorDinamico();
