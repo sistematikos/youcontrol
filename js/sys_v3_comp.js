@@ -1,10 +1,13 @@
 // js/sys_v3_comp.js
-import { db } from './firebase-config.js'; // Ajusta la ruta a tu archivo de configuración si es necesario
+import { db } from './firebase-config.js';
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-document.addEventListener('DOMContentLoaded', () => {
-    // 1. Cargar proveedores desde Firestore usando la clave correcta de la empresa
-    cargarProveedoresFirestore();
+let productosCache = []; // Almacén local temporal para filtrar rápido sin recargar Firestore a cada rato
+
+document.addEventListener('DOMContentLoaded', async () => {
+    // 1. Cargar proveedores y productos desde Firestore al iniciar
+    await cargarProveedoresFirestore();
+    await cargarProductosFirestore();
 
     const buscador = document.getElementById('buscador-dinamico');
     const dropdown = document.getElementById('dropdown-resultados');
@@ -18,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!buscador || !dropdown) return;
 
-    // 2. BÚSQUEDA DE PRODUCTOS EN TIEMPO REAL
+    // 2. BÚSQUEDA DE PRODUCTOS EN TIEMPO REAL (Filtra sobre la caché de Firestore)
     buscador.addEventListener('input', (e) => {
         const query = e.target.value.trim().toLowerCase();
 
@@ -28,10 +31,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const productos = JSON.parse(localStorage.getItem('sys_productos')) || [];
-
-        const resultados = productos.filter(p => {
-            const sku = (p.sku || p.id || '').toString().toLowerCase();
+        const resultados = productosCache.filter(p => {
+            const sku = (p.sku || p.codigo || p.id || '').toString().toLowerCase();
             const nombre = (p.nombre || p.descripcion || '').toString().toLowerCase();
             return sku.includes(query) || nombre.includes(query);
         });
@@ -43,16 +44,22 @@ document.addEventListener('DOMContentLoaded', () => {
         dropdown.innerHTML = '';
 
         if (lista.length === 0) {
-            dropdown.innerHTML = '<div style="padding: 10px; font-size: 0.8rem; color: #94A3B8;">Producto no registrado</div>';
+            dropdown.innerHTML = '<div style="padding: 10px; font-size: 0.8rem; color: var(--rose);">Producto no registrado</div>';
             dropdown.style.display = 'block';
+            
+            const aviso = document.getElementById('aviso-no-registrado');
+            if (aviso) aviso.style.display = 'block';
             return;
         }
+
+        const aviso = document.getElementById('aviso-no-registrado');
+        if (aviso) aviso.style.display = 'none';
 
         lista.forEach(prod => {
             const item = document.createElement('div');
             item.className = 'dropdown-item';
             
-            const skuTxt = prod.sku || prod.id || 'S/N';
+            const skuTxt = prod.sku || prod.codigo || prod.id || 'S/N';
             const nombreTxt = prod.nombre || prod.descripcion || 'Sin Nombre';
 
             item.innerHTML = `<strong>${skuTxt}</strong> - ${nombreTxt}`;
@@ -82,14 +89,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const precioInput = document.getElementById('comp-precio');
         const cantidadInput = document.getElementById('comp-cantidad');
 
-        if (skuInput) skuInput.value = prod.sku || prod.id || '';
+        if (skuInput) skuInput.value = prod.sku || prod.codigo || prod.id || '';
         if (nombreInput) nombreInput.value = prod.nombre || prod.descripcion || '';
-        if (costoInput) costoInput.value = prod.costo || '0.00';
-        if (gananciaInput) gananciaInput.value = prod.ganancia || '0';
-        if (precioInput) precioInput.value = prod.precio || '0.00';
+        if (costoInput) costoInput.value = prod.costo || prod.precioCosto || '0.00';
+        if (gananciaInput) gananciaInput.value = prod.ganancia || prod.porcentajeGanancia || '0';
+        if (precioInput) precioInput.value = prod.precio || prod.precioVenta || '0.00';
 
         dropdown.style.display = 'none';
-        buscador.value = `${prod.sku || prod.id || ''} - ${prod.nombre || prod.descripcion || ''}`;
+        buscador.value = `${prod.sku || prod.codigo || prod.id || ''} - ${prod.nombre || prod.descripcion || ''}`;
 
         const aviso = document.getElementById('aviso-no-registrado');
         if (aviso) aviso.style.display = 'none';
@@ -107,32 +114,25 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// 4. CARGAR PROVEEDORES DESDE FIRESTORE CON LA RUTA CORRECTA
+// 4. CARGAR PROVEEDORES DESDE FIRESTORE
 async function cargarProveedoresFirestore() {
     const selectProveedor = document.getElementById('comp-proveedor');
     if (!selectProveedor) return;
 
     try {
-        // Clave exacta utilizada en tu app para aislar los datos por empresa
         const empresaId = localStorage.getItem('youcontrol_empresa_id');
+        if (!empresaId) return;
 
-        if (!empresaId) {
-            console.warn("No se encontró 'youcontrol_empresa_id' en el localStorage.");
-            return;
-        }
-
-        // Ruta exacta: usuarios/{ID_DE_EMPRESA}/proveedores
         const querySnapshot = await getDocs(collection(db, "usuarios", empresaId, "proveedores"));
         
         selectProveedor.innerHTML = '<option value="">-- Casual / General --</option>';
 
         querySnapshot.forEach((docSnap) => {
             const prov = docSnap.data();
-            const provId = docSnap.id; // Ej: "BENF"
+            const provId = docSnap.id;
 
             const opt = document.createElement('option');
             opt.value = provId;
-            // Muestra el nombre o el ID del documento si no tiene la propiedad nombre
             opt.textContent = prov.nombre || prov.empresa || provId;
             opt.dataset.proveedor = JSON.stringify({ id: provId, ...prov });
             
@@ -140,7 +140,29 @@ async function cargarProveedoresFirestore() {
         });
 
     } catch (error) {
-        console.error("Error al cargar proveedores desde Firestore:", error);
+        console.error("Error al cargar proveedores:", error);
+    }
+}
+
+// 5. CARGAR PRODUCTOS DESDE FIRESTORE
+async function cargarProductosFirestore() {
+    try {
+        const empresaId = localStorage.getItem('youcontrol_empresa_id');
+        if (!empresaId) return;
+
+        // Ajusta "productos" si tu colección en Firestore se llama diferente (ej. "inventario")
+        const querySnapshot = await getDocs(collection(db, "usuarios", empresaId, "productos"));
+        
+        productosCache = [];
+        querySnapshot.forEach((docSnap) => {
+            productosCache.push({ id: docSnap.id, ...docSnap.data() });
+        });
+
+        console.log(`Productos cargados desde Firestore: ${productosCache.length}`);
+    } catch (error) {
+        console.error("Error al cargar productos de Firestore:", error);
+        // Fallback a localStorage por si acaso la colección usa otro nombre
+        productosCache = JSON.parse(localStorage.getItem('sys_productos')) || [];
     }
 }
 
