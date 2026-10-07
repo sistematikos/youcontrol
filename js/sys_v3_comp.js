@@ -1,6 +1,6 @@
 // js/sys_v3_comp.js
 import { db } from './firebase-config.js';
-import { collection, getDocs, addDoc, doc, setTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 let productosCache = []; // Almacén local temporal para filtrar rápido sin recargar Firestore a cada rato
 let listaCompraTemporal = []; // Lista temporal de productos añadidos
@@ -16,16 +16,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnAgregar = document.getElementById('btn-agregar-lista');
     const btnRegistrar = document.getElementById('btn-registrar-compra');
 
+    // 2. CONFIGURAR SELECTOR DE PROVEEDORES
     if (selectProveedor) {
         selectProveedor.addEventListener('change', (e) => {
             manejarSeleccionProveedor(e.target.value);
         });
     }
 
-    // 2. ACTIVAR CÁLCULOS AUTOMÁTICOS DE PRECIOS Y BS
+    // 3. ACTIVAR CÁLCULOS AUTOMÁTICOS DE PRECIOS Y BS
     inicializarCalculosPrecios();
 
-    // 3. EVENTO BOTÓN AGREGAR A LA LISTA
+    // 4. EVENTO BOTÓN AGREGAR A LA LISTA
     if (btnAgregar) {
         btnAgregar.addEventListener('click', (e) => {
             e.preventDefault();
@@ -33,7 +34,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // 4. EVENTO BOTÓN REGISTRAR / GUARDAR
+    // 5. EVENTO BOTÓN REGISTRAR / GUARDAR
     if (btnRegistrar) {
         btnRegistrar.addEventListener('click', async (e) => {
             e.preventDefault();
@@ -41,9 +42,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // Si no existen los elementos del buscador de productos, salimos de esta sección sin romper el resto
     if (!buscador || !dropdown) return;
 
-    // 5. BÚSQUEDA DE PRODUCTOS EN TIEMPO REAL
+    // 6. BÚSQUEDA DE PRODUCTOS EN TIEMPO REAL
     buscador.addEventListener('input', (e) => {
         const query = e.target.value.trim().toLowerCase();
 
@@ -93,7 +95,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         dropdown.style.display = 'block';
     }
 
-    // 6. SELECCIÓN DE PRODUCTO DESDE EL DROPDOWN
+    // 7. SELECCIÓN DE PRODUCTO DESDE EL DROPDOWN
     dropdown.addEventListener('mousedown', (e) => {
         const item = e.target.closest('.dropdown-item');
         if (!item || !item.dataset.producto) return;
@@ -117,7 +119,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (gananciaInput) gananciaInput.value = prod.ganancia || prod.porcentajeGanancia || '0';
         if (precioInput) precioInput.value = prod.precio || prod.precioVenta || '0.00';
 
-        calcularPrecioVenta(); // Recalcular con los nuevos valores
+        calcularPrecioVenta(); // Recalcular con los nuevos valores y su conversión a Bs
 
         dropdown.style.display = 'none';
         buscador.value = `${prod.sku || prod.codigo || prod.id || ''} - ${prod.nombre || prod.descripcion || ''}`;
@@ -169,8 +171,7 @@ function calcularPrecioVenta() {
     const tasaCambio = parseFloat(localStorage.getItem('sys_tasa_bcv')) || 1;
     if (precioBsInput) {
         const totalBs = precioVenta * tasaCambio;
-        // Si es un input o un span, manejamos ambos casos:
-        if (precioBsInput.tagName === 'INPUT') {
+        if (precioBsInput.tagName === 'INPUT' || precioBsInput.tagName === 'TEXTAREA') {
             precioBsInput.value = totalBs.toFixed(2);
         } else {
             precioBsInput.textContent = totalBs.toFixed(2) + ' Bs.';
@@ -194,7 +195,7 @@ function calcularPorcentajeGanancia() {
     const tasaCambio = parseFloat(localStorage.getItem('sys_tasa_bcv')) || 1;
     if (precioBsInput) {
         const totalBs = precioVenta * tasaCambio;
-        if (precioBsInput.tagName === 'INPUT') {
+        if (precioBsInput.tagName === 'INPUT' || precioBsInput.tagName === 'TEXTAREA') {
             precioBsInput.value = totalBs.toFixed(2);
         } else {
             precioBsInput.textContent = totalBs.toFixed(2) + ' Bs.';
@@ -237,7 +238,6 @@ function renderizarTablaTemporal() {
     const contenedorTabla = document.getElementById('tabla-detalle-compra') || document.getElementById('lista-items-container');
     if (!contenedorTabla) return;
 
-    // Dependiendo de si es una tabla tradicional o un contenedor HTML, ajusta la estructura visual:
     let html = '';
     let totalGeneral = 0;
 
@@ -255,7 +255,6 @@ function renderizarTablaTemporal() {
         `;
     });
 
-    // Si usas una tabla tbody directa:
     if (contenedorTabla.tagName === 'TBODY') {
         contenedorTabla.innerHTML = html;
     }
@@ -277,6 +276,7 @@ function limpiarFormularioItem() {
     const gananciaInput = document.getElementById('comp-ganancia');
     const precioInput = document.getElementById('comp-precio');
     const cantidadInput = document.getElementById('comp-cantidad');
+    const precioBsInput = document.getElementById('comp-precio-bs');
 
     if (buscador) buscador.value = '';
     if (skuInput) skuInput.value = '';
@@ -285,6 +285,10 @@ function limpiarFormularioItem() {
     if (gananciaInput) gananciaInput.value = '';
     if (precioInput) precioInput.value = '';
     if (cantidadInput) cantidadInput.value = '1';
+    if (precioBsInput) {
+        if (precioBsInput.tagName === 'INPUT') precioBsInput.value = '';
+        else precioBsInput.textContent = '0.00 Bs.';
+    }
     if (buscador) buscador.focus();
 }
 
@@ -310,7 +314,6 @@ async function registrarCompraFirestore() {
             total: listaCompraTemporal.reduce((acc, curr) => acc + curr.subtotal, 0)
         };
 
-        // Guardar en Firestore bajo la ruta de la empresa (ej: compras o egresos)
         await addDoc(collection(db, "usuarios", empresaId, "compras"), datosCompra);
 
         alert("¡Compra registrada y guardada con éxito en Firestore!");
