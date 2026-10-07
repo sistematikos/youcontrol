@@ -42,12 +42,25 @@
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
         
         /* Tarjetas */
-        .card { background: white; padding: 25px; border-radius: 16px; text-decoration: none; color: #1E293B; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.3s; display: block; border: 2px solid transparent; }
+        .card { background: white; padding: 25px; border-radius: 16px; text-decoration: none; color: #1E293B; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.3s; display: block; border: 2px solid transparent; cursor: pointer; }
         .card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px rgba(0,0,0,0.1); border-color: #0284C7; }
         .card i { font-size: 2rem; color: #0284C7; margin-bottom: 15px; }
         .card h3 { margin: 0 0 5px 0; font-size: 1rem; }
         .card p { font-size: 0.85rem; color: #64748B; margin: 0; }
+
+        /* Estilo especial para la tarjeta de cerrar sesión */
+        .card-danger i { color: #F43F5E; }
+        .card-danger:hover { border-color: #F43F5E; }
     </style>
+    <script>
+        function cerrarSesion(e) {
+            e.preventDefault();
+            if (confirm("¿Estás seguro de que deseas cerrar sesión?")) {
+                localStorage.removeItem('youcontrol_empresa_id');
+                window.location.href = "index.html";
+            }
+        }
+    </script>
 </head>
 <body>
 
@@ -68,7 +81,7 @@
             <p>Configurar el valor de la tasa BCV del día.</p>
         </a>
         
-        <!-- Nueva Tarjeta de Configuración de Tickera -->
+        <!-- Configuración de Tickera -->
         <a href="config_tickera.html" class="card">
             <i class="fas fa-print"></i>
             <h3>Configuración de Tickera</h3>
@@ -79,6 +92,13 @@
             <i class="fas fa-file-invoice"></i>
             <h3>Formato Factura</h3>
             <p>Elegir el estilo y tamaño de tu facturación.</p>
+        </a>
+
+        <!-- Botón / Tarjeta de Cerrar Sesión -->
+        <a href="#" class="card card-danger" onclick="cerrarSesion(event)">
+            <i class="fas fa-right-from-bracket"></i>
+            <h3>Cerrar Sesión</h3>
+            <p>Salir de la sesión actual de la empresa.</p>
         </a>
     </div>
 
