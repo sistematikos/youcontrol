@@ -1,183 +1,110 @@
-import { db } from './firebase-config.js';
-import { collection, onSnapshot, doc, deleteDoc, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-const ID_LICENCIA = localStorage.getItem('youcontrol_empresa_id');
-let proveedoresMaster = [];
-let indiceRes = -1;
-
-// --- FUNCIONES GLOBALES (Para interacción con el DOM) ---
-window.cargarDatosProveedor = (p) => {
-    document.getElementById('proveedor-id').value = p.id;
-    document.getElementById('pr-codigo').value = p.codigo;
-    document.getElementById('pr-codigo').readOnly = true;
-    document.getElementById('pr-nombre').value = p.nombre;
-    document.getElementById('pr-rif').value = p.rif || '';
-    document.getElementById('pr-telefono').value = p.telefono || '';
-    document.getElementById('pr-direccion').value = p.direccion || '';
-    document.getElementById('btn-guardar-proveedor').innerHTML = `<i class="fas fa-sync-alt"></i> ACTUALIZAR`;
-    document.getElementById('btn-cancelar-edicion').style.display = 'block';
-    document.getElementById('aviso-no-registrado').style.display = 'none';
-    document.getElementById('pr-nombre').focus();
-    const list = document.getElementById('lista-resultados');
-    if (list) list.style.display = 'none';
-};
-
-window.prepararEdicion = (id) => {
-    const p = proveedoresMaster.find(x => x.id === id);
-    if (p) window.cargarDatosProveedor(p);
-};
-
-window.eliminarProveedor = async (id) => {
-    if (confirm("¿Eliminar este proveedor?")) {
-        try {
-            await deleteDoc(doc(db, "usuarios", ID_LICENCIA, "proveedores", id));
-        } catch (error) {
-            alert("Error al eliminar proveedor: " + error.message);
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PROVEEDORES | YOU CONTROL</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
+            --text-dark: #1E293B;
+            --emerald: #10B981; --sky: #0EA5E9; --rose: #F43F5E; --amber: #F59E0B;
+            --border: #E2E8F0;
         }
-    }
-};
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 10px 0; min-height: 100vh; color: var(--text-dark); }
+        .layout-width { width: 95%; max-width: 1200px; margin: 0 auto; }
 
-function resetearFormulario() {
-    const form = document.getElementById('form-proveedor');
-    if (form) form.reset();
-    document.getElementById('pr-codigo').readOnly = false;
-    document.getElementById('btn-guardar-proveedor').innerHTML = `GUARDAR PROVEEDOR`;
-    document.getElementById('btn-cancelar-edicion').style.display = 'none';
-    document.getElementById('aviso-no-registrado').style.display = 'none';
-    const list = document.getElementById('lista-resultados');
-    if (list) list.style.display = 'none';
-}
+        .header-panel { background: #ffffff; padding: 0 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; height: 70px; }
+        .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 6px 12px; border-radius: 8px; text-decoration: none; font-size: 0.75rem; font-weight: 700; border: 1px solid var(--border); transition: 0.3s; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+        .btn-back:hover { background: #E2E8F0; }
+        .logo-header { height: 90%; width: auto; object-fit: contain; }
 
-// --- LÓGICA PRINCIPAL ---
-document.addEventListener('DOMContentLoaded', () => {
-    const formProveedor = document.getElementById('form-proveedor');
-    const inputCodigo = document.getElementById('pr-codigo');
-    const listaResultados = document.getElementById('lista-resultados');
-    const inputBuscar = document.getElementById('buscar-proveedor');
-    const btnCancelar = document.getElementById('btn-cancelar-edicion');
+        .main-layout { display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
+        .card { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); border-left: 6px solid var(--amber); position: relative; }
+        h3 { margin-top: 0; font-size: 1rem; margin-bottom: 15px; }
 
-    if (btnCancelar) btnCancelar.addEventListener('click', resetearFormulario);
-
-    // Función para renderizar filas en la tabla
-    const renderTabla = (lista) => {
-        const tabla = document.getElementById('tabla-proveedores');
-        if (tabla) {
-            tabla.innerHTML = lista.map(p => `
-                <tr>
-                    <td>${p.codigo}</td>
-                    <td><b>${p.nombre}</b></td>
-                    <td>${p.rif || '-'}</td>
-                    <td>
-                        <button class="btn-table" onclick="window.prepararEdicion('${p.id}')"><i class="fas fa-edit"></i></button>
-                        <button class="btn-table" onclick="window.eliminarProveedor('${p.id}')"><i class="fas fa-trash"></i></button>
-                    </td>
-                </tr>
-            `).join('');
+        #lista-resultados { 
+            position: absolute; width: 310px; background: white; border: 1px solid var(--border); 
+            border-radius: 0 0 8px 8px; z-index: 1000; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
         }
-    };
+        .item-res { padding: 10px; cursor: pointer; font-size: 0.85rem; }
+        .item-res:hover { background-color: #F1F5F9; }
 
-    // 1. Carga de datos en tiempo real desde Firestore
-    onSnapshot(collection(db, "usuarios", ID_LICENCIA, "proveedores"), (snapshot) => {
-        proveedoresMaster = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderTabla(proveedoresMaster);
-    });
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 0.75rem; font-weight: 700; color: #64748B; margin-bottom: 5px; }
+        input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; }
+        .btn-primary { width: 100%; background: var(--text-dark); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .btn-primary:hover { background: var(--amber); }
+        #aviso-no-registrado { color: var(--rose); font-size: 0.75rem; font-weight: 700; display: none; margin-top: 5px; }
 
-    // 2. Filtro dinámico en la tabla
-    if (inputBuscar) {
-        inputBuscar.addEventListener('input', (e) => {
-            const term = e.target.value.toLowerCase();
-            const filtrados = proveedoresMaster.filter(p => 
-                p.nombre?.toLowerCase().includes(term) || 
-                p.codigo?.toLowerCase().includes(term) ||
-                p.rif?.toLowerCase().includes(term)
-            );
-            renderTabla(filtrados);
-        });
-    }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { color: #64748B; border-bottom: 2px solid #F1F5F9; padding: 12px; text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid #F1F5F9; }
+        .btn-table { border: none; background: #F1F5F9; padding: 5px 8px; border-radius: 4px; cursor: pointer; color: var(--text-dark); }
+    </style>
 
-    // 3. Autocompletar / Buscador dinámico por Código
-    inputCodigo.addEventListener('input', (e) => {
-        const term = e.target.value.toLowerCase();
-        indiceRes = -1;
-        if (term.length < 2) { 
-            if (listaResultados) listaResultados.style.display = 'none'; 
-            return; 
-        }
-
-        const filtrados = proveedoresMaster.filter(p => 
-            p.nombre?.toLowerCase().includes(term) || 
-            p.codigo?.toLowerCase().includes(term)
-        );
-
-        if (listaResultados && filtrados.length > 0) {
-            listaResultados.style.display = 'block';
-            listaResultados.innerHTML = filtrados.map((p, i) => `
-                <div class="item-res" id="res-${i}" data-id="${p.id}">
-                    ${p.nombre} (Cod: ${p.codigo})
-                </div>
-            `).join('');
-
-            document.querySelectorAll('.item-res').forEach(el => {
-                el.onclick = () => {
-                    const proveedor = proveedoresMaster.find(x => x.id === el.dataset.id);
-                    if (proveedor) window.cargarDatosProveedor(proveedor);
-                };
-            });
-        } else {
-            if (listaResultados) listaResultados.style.display = 'none';
-        }
-    });
-
-    // 4. Navegación por teclado dentro del autocompletar
-    inputCodigo.addEventListener('keydown', (e) => {
-        if (!listaResultados || listaResultados.style.display === 'none') return;
-        const items = listaResultados.querySelectorAll('.item-res');
-
-        if (e.key === 'ArrowDown' && indiceRes < items.length - 1) {
-            indiceRes++;
-            items.forEach((it, i) => it.style.background = (i === indiceRes) ? '#F1F5F9' : 'white');
-        } else if (e.key === 'ArrowUp' && indiceRes > 0) {
-            indiceRes--;
-            items.forEach((it, i) => it.style.background = (i === indiceRes) ? '#F1F5F9' : 'white');
-        } else if (e.key === 'Enter') {
+    <script>
+        function volverAlMenu(e) {
             e.preventDefault();
-            if (indiceRes >= 0 && items[indiceRes]) {
-                items[indiceRes].click();
-            } else {
-                const term = inputCodigo.value.trim().toUpperCase();
-                const proveedor = proveedoresMaster.find(p => p.codigo?.toUpperCase() === term);
-                if (proveedor) {
-                    window.cargarDatosProveedor(proveedor);
-                } else {
-                    document.getElementById('aviso-no-registrado').style.display = 'block';
-                    document.getElementById('pr-nombre').focus();
-                }
-            }
+            window.location.href = 'sys_v1_menu.html?refresh=' + new Date().getTime();
         }
-    });
+    </script>
+</head>
+<body>
+    <main class="layout-width">
+        <header class="header-panel">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <a href="#" class="btn-back" onclick="volverAlMenu(event)"><i class="fas fa-arrow-left"></i> VOLVER</a>
+                <h1 style="font-size: 1.2rem; margin: 0;">Gestión de Proveedores</h1>
+            </div>
+            <img src="img/logo.png" class="logo-header">
+        </header>
 
-    // 5. Guardar / Actualizar Registro
-    if (formProveedor) {
-        formProveedor.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const codigo = inputCodigo.value.trim().toUpperCase();
-            if (!codigo) return alert("Ingrese un código válido.");
+        <div class="main-layout">
+            <section class="card">
+                <h3 id="form-title"><i class="fas fa-truck"></i> Ficha Proveedor</h3>
+                <form id="form-proveedor">
+                    <input type="hidden" id="prov-id">
+                    
+                    <div class="form-group">
+                        <label>Código del Proveedor</label>
+                        <input type="text" id="prov-codigo" placeholder="Ej: PRV-001" required autocomplete="off">
+                        <div id="lista-resultados"></div>
+                        <div id="aviso-no-registrado"><i class="fas fa-exclamation-circle"></i> Código nuevo (Se registrará al guardar)</div>
+                    </div>
 
-            try {
-                await setDoc(doc(db, "usuarios", ID_LICENCIA, "proveedores", codigo), {
-                    codigo,
-                    nombre: document.getElementById('pr-nombre').value.trim().toUpperCase(),
-                    rif: document.getElementById('pr-rif').value.trim().toUpperCase(),
-                    telefono: document.getElementById('pr-telefono').value.trim(),
-                    direccion: document.getElementById('pr-direccion').value.trim().toUpperCase(),
-                    updatedAt: serverTimestamp()
-                }, { merge: true });
+                    <div class="form-group"><label>Razón Social / Nombre</label><input type="text" id="prov-nombre" required></div>
+                    <div class="form-group"><label>RIF / Identificación Fiscal</label><input type="text" id="prov-rif"></div>
+                    <div class="form-group"><label>Contacto / Persona Enlace</label><input type="text" id="prov-contacto"></div>
+                    <div class="form-group"><label>Teléfono</label><input type="text" id="prov-telefono"></div>
+                    <div class="form-group"><label>Dirección</label><input type="text" id="prov-direccion"></div>
+                    
+                    <button type="submit" id="btn-guardar-proveedor" class="btn-primary">GUARDAR PROVEEDOR</button>
+                    <button type="button" id="btn-cancelar-edicion" class="btn-primary" style="background:#64748B; display:none;">CANCELAR EDICIÓN</button>
+                </form>
+            </section>
 
-                alert("✅ Proveedor guardado con éxito");
-                resetearFormulario();
-            } catch (error) {
-                alert("Error al guardar: " + error.message);
-            }
-        });
-    }
-});
+            <section class="card" style="border-left-color: var(--emerald);">
+                <h3><i class="fas fa-list"></i> Listado de Proveedores</h3>
+                <input type="text" id="buscar-proveedor" placeholder="🔍 Filtrar por código, nombre o RIF..." style="margin-bottom:15px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Proveedor</th>
+                            <th>RIF</th>
+                            <th>Teléfono</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-proveedores"></tbody>
+                </table>
+            </section>
+        </div>
+    </main>
+
+    <script type="module" src="./js/sys_v2_prov.js"></script>
+</body>
+</html>
