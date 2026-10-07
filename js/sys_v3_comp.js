@@ -1,17 +1,25 @@
 // js/sys_v3_comp.js
-import { db, auth } from './firebase-config.js'; // Ajusta la ruta a tu archivo de configuración de Firebase si es necesario
+import { db } from './firebase-config.js'; // Ajusta la ruta si es necesario
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. CARGAR PROVEEDORES DESDE FIRESTORE AL INICIAR
-    cargarProveedoresDesdeFirestore();
+    // 1. Cargar proveedores desde Firestore al iniciar la vista
+    cargarProveedoresFirestore();
 
     const buscador = document.getElementById('buscador-dinamico');
     const dropdown = document.getElementById('dropdown-resultados');
+    const selectProveedor = document.getElementById('comp-proveedor');
+
+    // Manejador del cambio de proveedor por evento nativo (evita problemas de scope en módulos)
+    if (selectProveedor) {
+        selectProveedor.addEventListener('change', (e) => {
+            manejarSeleccionProveedor(e.target.value);
+        });
+    }
 
     if (!buscador || !dropdown) return;
 
-    // 2. EVENTO DE BÚSQUEDA DE PRODUCTOS EN TIEMPO REAL
+    // 2. BÚSQUEDA DE PRODUCTOS EN TIEMPO REAL
     buscador.addEventListener('input', (e) => {
         const query = e.target.value.trim().toLowerCase();
 
@@ -57,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
         dropdown.style.display = 'block';
     }
 
-    // 3. CAPTURAR CLIC EN RESULTADO DE PRODUCTO
+    // 3. SELECCIÓN DE PRODUCTO (Usando mousedown para prevenir pérdida de foco)
     dropdown.addEventListener('mousedown', (e) => {
         const item = e.target.closest('.dropdown-item');
         if (!item || !item.dataset.producto) return;
@@ -100,19 +108,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// 4. CARGAR PROVEEDORES DESDE LA SUBCOLECCIÓN DE FIRESTORE
-async function cargarProveedoresDesdeFirestore() {
+// 4. FUNCIONES DE PROVEEDORES CONECTADAS A FIRESTORE
+async function cargarProveedoresFirestore() {
     const selectProveedor = document.getElementById('comp-proveedor');
     if (!selectProveedor) return;
 
     try {
-        // Obtener el ID del usuario activo guardado en sessionStorage o localStorage (ej. 'YC-20260919-F2')
-        const usuarioActivoId = localStorage.getItem('usuario_activo_id') || sessionStorage.getItem('usuario_activo_id');
-        
-        // Si tienes una forma global de obtener el ID del usuario actual, asegúrate de colocarlo aquí.
-        // O bien, si ya manejas una ruta fija para la empresa actual:
+        // Busca el ID de usuario activo en localStorage o sessionStorage (Ej: "YC-20260919-F2")
+        const usuarioActivoId = localStorage.getItem('usuario_activo_id') || 
+                                sessionStorage.getItem('usuario_activo_id') ||
+                                localStorage.getItem('sys_usuario_id');
+
         if (!usuarioActivoId) {
-            console.warn("No se encontró el ID de usuario activo para buscar los proveedores.");
+            console.warn("No se encontró el ID de usuario activo en el almacenamiento local.");
             return;
         }
 
@@ -122,23 +130,22 @@ async function cargarProveedoresDesdeFirestore() {
 
         querySnapshot.forEach((docSnap) => {
             const prov = docSnap.data();
-            const provId = docSnap.id; // Ejemplo: "BENF"
+            const provId = docSnap.id; // Ej: "BENF"
 
             const opt = document.createElement('option');
             opt.value = provId;
             opt.textContent = prov.nombre || prov.empresa || provId;
-            
-            // Guardamos los datos completos en el dataset para mostrarlos al seleccionar
             opt.dataset.proveedor = JSON.stringify({ id: provId, ...prov });
+            
             selectProveedor.appendChild(opt);
         });
 
     } catch (error) {
-        console.error("Error al cargar los proveedores desde Firestore:", error);
+        console.error("Error al cargar proveedores desde Firestore:", error);
     }
 }
 
-window.seleccionarProveedor = function(valor) {
+function manejarSeleccionProveedor(valor) {
     const selectProveedor = document.getElementById('comp-proveedor');
     const infoPanel = document.getElementById('info-proveedor');
     const rifSpan = document.getElementById('prov-info-rif');
@@ -158,7 +165,7 @@ window.seleccionarProveedor = function(valor) {
         const prov = JSON.parse(selectedOption.dataset.proveedor);
         
         if (rifSpan) rifSpan.textContent = prov.rif || prov.documento || prov.id || 'N/A';
-        if (contactoSpan) contactoSpan.textContent = prov.contacto || prov.telefono || 'N/A';
+        if (contactoSpan) contactoSpan.textContent = prov.contacto || prov.telefono || prov.correo || 'N/A';
         
         infoPanel.style.display = 'block';
     } else {
