@@ -1,12 +1,15 @@
 // js/sys_v3_comp.js
 
 document.addEventListener('DOMContentLoaded', () => {
+    // 1. CARGAR PROVEEDORES AL SELECT
+    cargarProveedores();
+
     const buscador = document.getElementById('buscador-dinamico');
     const dropdown = document.getElementById('dropdown-resultados');
 
     if (!buscador || !dropdown) return;
 
-    // 1. EVENTO DE BÚSQUEDA EN TIEMPO REAL
+    // 2. EVENTO DE BÚSQUEDA DE PRODUCTOS EN TIEMPO REAL
     buscador.addEventListener('input', (e) => {
         const query = e.target.value.trim().toLowerCase();
 
@@ -16,10 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Recuperar productos desde localStorage o memoria local
         const productos = JSON.parse(localStorage.getItem('sys_productos')) || [];
 
-        // Filtrar coincidencia por SKU o Nombre
         const resultados = productos.filter(p => {
             const sku = (p.sku || p.id || '').toString().toLowerCase();
             const nombre = (p.nombre || p.descripcion || '').toString().toLowerCase();
@@ -29,7 +30,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderizarResultados(resultados);
     });
 
-    // 2. RENDERIZAR RESULTADOS
     function renderizarResultados(lista) {
         dropdown.innerHTML = '';
 
@@ -47,8 +47,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const nombreTxt = prod.nombre || prod.descripcion || 'Sin Nombre';
 
             item.innerHTML = `<strong>${skuTxt}</strong> - ${nombreTxt}`;
-            
-            // Guardar el objeto en el elemento como atributo JSON para recuperarlo de forma segura
             item.dataset.producto = JSON.stringify(prod);
 
             dropdown.appendChild(item);
@@ -57,19 +55,16 @@ document.addEventListener('DOMContentLoaded', () => {
         dropdown.style.display = 'block';
     }
 
-    // 3. CAPTURAR EL CLIC EN LA OPCIÓN (Uso de 'mousedown' para evitar la pérdida de foco)
+    // 3. CAPTURAR CLIC EN RESULTADO DE PRODUCTO
     dropdown.addEventListener('mousedown', (e) => {
-        // Encontrar el contenedor '.dropdown-item' más cercano
         const item = e.target.closest('.dropdown-item');
         if (!item || !item.dataset.producto) return;
 
-        e.preventDefault(); // Previene que el buscador pierda el foco antes de tiempo
-        
+        e.preventDefault();
         const prod = JSON.parse(item.dataset.producto);
         seleccionarProducto(prod);
     });
 
-    // 4. ASIGNAR VALORES AL FORMULARIO Y CERRAR DROPDOWN
     function seleccionarProducto(prod) {
         const skuInput = document.getElementById('comp-sku');
         const nombreInput = document.getElementById('comp-nombre');
@@ -84,25 +79,71 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gananciaInput) gananciaInput.value = prod.ganancia || '0';
         if (precioInput) precioInput.value = prod.precio || '0.00';
 
-        // Ocultar la lista flotante y actualizar el buscador
         dropdown.style.display = 'none';
         buscador.value = `${prod.sku || prod.id || ''} - ${prod.nombre || prod.descripcion || ''}`;
 
-        // Ocultar mensaje de alerta si estaba activo
         const aviso = document.getElementById('aviso-no-registrado');
         if (aviso) aviso.style.display = 'none';
 
-        // Enfocar directamente el campo de cantidad para ingresar el stock
         if (cantidadInput) {
             cantidadInput.focus();
             cantidadInput.select();
         }
     }
 
-    // 5. CERRAR EL DROPDOWN SI SE HACE CLIC FUERA
     document.addEventListener('click', (e) => {
         if (!buscador.contains(e.target) && !dropdown.contains(e.target)) {
             dropdown.style.display = 'none';
         }
     });
 });
+
+// 4. FUNCIONES GLOBALES PARA EL MANEJO DE PROVEEDORES
+window.cargarProveedores = function() {
+    const selectProveedor = document.getElementById('comp-proveedor');
+    if (!selectProveedor) return;
+
+    // Obtener proveedores guardados (ajusta la clave según tu localStorage, ej: 'sys_proveedores')
+    const proveedores = JSON.parse(localStorage.getItem('sys_proveedores')) || [];
+
+    // Mantener la opción por defecto
+    selectProveedor.innerHTML = '<option value="">-- Casual / General --</option>';
+
+    proveedores.forEach((prov, index) => {
+        const opt = document.createElement('option');
+        // Usamos el id o el nombre como valor
+        opt.value = prov.id || prov.nombre || index;
+        opt.textContent = prov.nombre || prov.empresa || 'Proveedor sin nombre';
+        // Guardamos el objeto como atributo para consultarlo fácilmente al seleccionar
+        opt.dataset.proveedor = JSON.stringify(prov);
+        selectProveedor.appendChild(opt);
+    });
+}
+
+window.seleccionarProveedor = function(valor) {
+    const selectProveedor = document.getElementById('comp-proveedor');
+    const infoPanel = document.getElementById('info-proveedor');
+    const rifSpan = document.getElementById('prov-info-rif');
+    const contactoSpan = document.getElementById('prov-info-contacto');
+
+    if (!selectProveedor || !infoPanel) return;
+
+    if (!valor) {
+        infoPanel.style.display = 'none';
+        if (rifSpan) rifSpan.textContent = '-';
+        if (contactoSpan) contactoSpan.textContent = '-';
+        return;
+    }
+
+    const selectedOption = selectProveedor.options[selectProveedor.selectedIndex];
+    if (selectedOption && selectedOption.dataset.proveedor) {
+        const prov = JSON.parse(selectedOption.dataset.proveedor);
+        
+        if (rifSpan) rifSpan.textContent = prov.rif || prov.documento || 'N/A';
+        if (contactoSpan) contactoSpan.textContent = prov.contacto || prov.telefono || 'N/A';
+        
+        infoPanel.style.display = 'block';
+    } else {
+        infoPanel.style.display = 'none';
+    }
+}
