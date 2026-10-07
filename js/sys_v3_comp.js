@@ -16,9 +16,9 @@ if (!USER_ID) {
 window.USER_ID = USER_ID;
 window.productosLocales = [];
 window.proveedoresLocales = [];
+window.listaIngreso = [];
 window.tasaActual = 1.0;
-window.proveedorSeleccionadoID = null;
-window.nombreProveedorSeleccionado = null;
+window.proveedorSeleccionado = null;
 
 // --- CARGA DE CONFIGURACIÓN Y TASA ---
 async function cargarConfiguracionGlobal() {
@@ -28,15 +28,57 @@ async function cargarConfiguracionGlobal() {
         if (snapConfig.exists()) {
             const data = snapConfig.data();
             window.tasaActual = data.tasa_bcv || 1.0;
-            const spanTasa = document.getElementById('txt-tasa');
-            if (spanTasa) spanTasa.innerText = window.tasaActual.toLocaleString('es-VE', { minimumFractionDigits: 2 });
         }
     } catch (e) {
         console.error("Error al cargar configuración:", e);
     }
 }
 
-// --- ESCUCHA DE FIRESTORE EN TIEMPO REAL ---
+// --- ESCUCHA DE PROVEEDORES Y POBLACIÓN DEL SELECT ---
+function inicializarProveedores() {
+    const proveedoresRef = collection(db, "usuarios", USER_ID, "proveedores");
+    onSnapshot(proveedoresRef, (snapshot) => {
+        window.proveedoresLocales = [];
+        const selectProv = document.getElementById('comp-proveedor');
+        if (!selectProv) return;
+
+        // Limpiar opciones manteniendo la inicial
+        selectProv.innerHTML = '<option value="">-- Casual / General --</option>';
+
+        snapshot.forEach(docSnap => {
+            const provData = { id: docSnap.id, ...docSnap.data() };
+            window.proveedoresLocales.push(provData);
+
+            const option = document.createElement('option');
+            option.value = provData.id;
+            option.textContent = provData.nombre || provData.razon_social || provData.id;
+            selectProv.appendChild(option);
+        });
+    });
+}
+
+// --- SELECCIÓN DE PROVEEDOR Y MOSTRAR INFO ---
+window.seleccionarProveedor = (id) => {
+    const infoBox = document.getElementById('info-proveedor');
+    const txtRif = document.getElementById('prov-info-rif');
+    const txtContacto = document.getElementById('prov-info-contacto');
+
+    if (!id) {
+        window.proveedorSeleccionado = null;
+        if (infoBox) infoBox.style.display = 'none';
+        return;
+    }
+
+    const prov = window.proveedoresLocales.find(p => p.id === id);
+    if (prov) {
+        window.proveedorSeleccionado = prov;
+        if (txtRif) txtRif.innerText = prov.rif || prov.id || '-';
+        if (txtContacto) txtContacto.innerText = prov.telefono || prov.contacto || '-';
+        if (infoBox) infoBox.style.display = 'block';
+    }
+};
+
+// --- ESCUCHA DE PRODUCTOS Y BUSCADOR DINÁMICO ---
 function inicializarProductos() {
     const productosRef = collection(db, "usuarios", USER_ID, "productos");
     onSnapshot(productosRef, (snapshot) => {
@@ -47,211 +89,242 @@ function inicializarProductos() {
     });
 }
 
-function inicializarProveedores() {
-    const proveedoresRef = collection(db, "usuarios", USER_ID, "proveedores");
-    onSnapshot(proveedoresRef, (snapshot) => {
-        window.proveedoresLocales = [];
-        snapshot.forEach(docSnap => {
-            window.proveedoresLocales.push({ id: docSnap.id, ...docSnap.data() });
-        });
-    });
-}
+function initBuscadorDinamico() {
+    const inputBuscador = document.getElementById('buscador-dinamico');
+    const dropdown = document.getElementById('dropdown-resultados');
+    const avisoNoReg = document.getElementById('aviso-no-registrado');
 
-// --- FUNCIONES DE BÚSQUEDA ---
-window.buscarProducto = (texto) => {
-    const criterio = texto.toLowerCase().trim();
-    if (!criterio) return [];
-    return window.productosLocales.filter(p => 
-        (p.id || '').toLowerCase().includes(criterio) || 
-        (p.sku || '').toLowerCase().includes(criterio) || 
-        (p.barras || '').toLowerCase().includes(criterio) || 
-        (p.nombre || '').toLowerCase().includes(criterio)
-    );
-};
-
-window.buscarProveedor = (texto) => {
-    const criterio = texto.toLowerCase().trim();
-    if (!criterio) return [];
-    return window.proveedoresLocales.filter(p => 
-        (p.id || '').toLowerCase().includes(criterio) || 
-        (p.rif || '').toLowerCase().includes(criterio) || 
-        (p.nombre || '').toLowerCase().includes(criterio) || 
-        (p.razon_social || '').toLowerCase().includes(criterio)
-    );
-};
-
-// --- SELECCIÓN Y BINDING ---
-window.seleccionarProveedor = (id, nombre) => {
-    const inputProv = document.getElementById('buscar-proveedor');
-    if (inputProv) inputProv.value = nombre;
-    
-    const divRes = document.getElementById('resultados-proveedor');
-    if (divRes) divRes.style.display = 'none';
-
-    window.proveedorSeleccionadoID = id;
-    window.nombreProveedorSeleccionado = nombre;
-};
-
-window.seleccionarProductoCompra = (id) => {
-    const prod = window.productosLocales.find(p => p.id === id || p.sku === id);
-    if (!prod) return;
-
-    const inputBuscador = document.getElementById('buscar-producto-compra');
-    const inputSku = document.getElementById('in-sku');
-    const inputNombre = document.getElementById('in-nombre');
-    const inputCosto = document.getElementById('in-costo');
-    const inputPrecio = document.getElementById('in-precio');
-    const divRes = document.getElementById('resultados-producto-compra');
-
-    if (inputBuscador) inputBuscador.value = prod.nombre || '';
-    if (inputSku) inputSku.value = prod.sku || prod.id || '';
-    if (inputNombre) inputNombre.value = prod.nombre || '';
-    if (inputCosto) inputCosto.value = prod.costo || 0;
-    if (inputPrecio) inputPrecio.value = prod.precio || 0;
-    if (divRes) divRes.style.display = 'none';
-};
-
-// --- INICIALIZACIÓN DE INPUTS Y EVENTOS ---
-function initBuscadores() {
-    // Buscador de Proveedor
-    const inputProv = document.getElementById('buscar-proveedor');
-    const divResProv = document.getElementById('resultados-proveedor');
-
-    inputProv?.addEventListener('input', (e) => {
-        const texto = e.target.value.trim();
-        if (!divResProv) return;
+    inputBuscador?.addEventListener('input', (e) => {
+        const texto = e.target.value.trim().toLowerCase();
+        if (!dropdown) return;
 
         if (texto === "") {
-            divResProv.style.display = 'none';
+            dropdown.style.display = 'none';
+            if (avisoNoReg) avisoNoReg.style.display = 'none';
             return;
         }
 
-        const resultados = window.buscarProveedor(texto);
-        if (resultados.length > 0) {
-            divResProv.style.display = 'block';
-            divResProv.innerHTML = resultados.map(p => {
-                const nombreMostrar = p.nombre || p.razon_social || 'SIN NOMBRE';
-                const idMostrar = p.rif || p.id;
-                return `
-                    <div class="resultado-item" 
-                         style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; background: white;" 
-                         onclick="window.seleccionarProveedor('${p.id}', '${nombreMostrar.replace(/'/g, "\\'")}')">
-                        <strong>${nombreMostrar}</strong><br>
-                        <small style="color: #64748b;">RIF / CÓD: ${idMostrar}</small>
-                    </div>
-                `;
-            }).join('');
-        } else {
-            divResProv.style.display = 'block';
-            divResProv.innerHTML = `<div style="padding: 10px; color: #64748b;">No se encontraron proveedores</div>`;
-        }
-    });
+        const coindicencias = window.productosLocales.filter(p => 
+            (p.id || '').toLowerCase().includes(texto) ||
+            (p.sku || '').toLowerCase().includes(texto) ||
+            (p.barras || '').toLowerCase().includes(texto) ||
+            (p.nombre || '').toLowerCase().includes(texto)
+        );
 
-    // Buscador de Producto
-    const inputProd = document.getElementById('buscar-producto-compra');
-    const divResProd = document.getElementById('resultados-producto-compra');
-
-    inputProd?.addEventListener('input', (e) => {
-        const texto = e.target.value.trim();
-        if (!divResProd) return;
-
-        if (texto === "") {
-            divResProd.style.display = 'none';
-            return;
-        }
-
-        const resultados = window.buscarProducto(texto);
-        if (resultados.length > 0) {
-            divResProd.style.display = 'block';
-            divResProd.innerHTML = resultados.map(p => `
-                <div class="resultado-item" 
-                     style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; background: white;" 
-                     onclick="window.seleccionarProductoCompra('${p.id}')">
-                    <strong>${p.nombre}</strong><br>
-                    <small style="color: #64748b;">SKU: ${p.sku || p.id} | Costo: $${p.costo || 0}</small>
+        if (coindicencias.length > 0) {
+            dropdown.style.display = 'block';
+            if (avisoNoReg) avisoNoReg.style.display = 'none';
+            dropdown.innerHTML = coindicencias.map(p => `
+                <div style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--border); font-size: 0.8rem;" 
+                     onclick="window.cargarDatosProducto('${p.id}')">
+                    <strong>${p.nombre}</strong> <br>
+                    <small style="color: #64748B;">SKU: ${p.sku || p.id} | Costo: $${p.costo || 0}</small>
                 </div>
             `).join('');
         } else {
-            divResProd.style.display = 'block';
-            divResProd.innerHTML = `<div style="padding: 10px; color: #64748b;">Producto no registrado (Complete los datos para nuevo ingreso)</div>`;
+            dropdown.style.display = 'none';
+            if (avisoNoReg) avisoNoReg.style.display = 'block';
         }
     });
 }
 
-// --- REGISTRO DE COMPRA EN FIRESTORE ---
-window.registrarCompra = async () => {
-    const sku = document.getElementById('in-sku')?.value.trim();
-    const nombre = document.getElementById('in-nombre')?.value.trim();
-    const cantidad = parseFloat(document.getElementById('in-cantidad')?.value) || 0;
-    const costo = parseFloat(document.getElementById('in-costo')?.value) || 0;
-    const precio = parseFloat(document.getElementById('in-precio')?.value) || 0;
-    const nroFactura = document.getElementById('in-factura-compra')?.value.trim() || "S/N";
+window.cargarDatosProducto = (id) => {
+    const prod = window.productosLocales.find(p => p.id === id);
+    if (!prod) return;
+
+    document.getElementById('comp-sku').value = prod.sku || prod.id || '';
+    document.getElementById('comp-barras').value = prod.barras || '';
+    document.getElementById('comp-nombre').value = prod.nombre || '';
+    document.getElementById('comp-costo').value = prod.costo || 0.00;
+    document.getElementById('comp-precio').value = prod.precio || 0.00;
+    
+    // Calcular ganancia si hay costo y precio
+    const costo = parseFloat(prod.costo) || 0;
+    const precio = parseFloat(prod.precio) || 0;
+    if (costo > 0 && precio > 0) {
+        const ganancia = ((precio - costo) / costo) * 100;
+        document.getElementById('comp-ganancia').value = ganancia.toFixed(0);
+    }
+
+    calcularPrecioBs();
+
+    const dropdown = document.getElementById('dropdown-resultados');
+    if (dropdown) dropdown.style.display = 'none';
+    const inputBuscador = document.getElementById('buscador-dinamico');
+    if (inputBuscador) inputBuscador.value = '';
+};
+
+// --- CÁLCULOS DE PRECIO Y GANANCIA EN TIEMPO REAL ---
+function initCalculosPrecios() {
+    const inputCosto = document.getElementById('comp-costo');
+    const inputGanancia = document.getElementById('comp-ganancia');
+    const inputPrecio = document.getElementById('comp-precio');
+
+    const recalcular = () => {
+        const costo = parseFloat(inputCosto.value) || 0;
+        const ganancia = parseFloat(inputGanancia.value) || 0;
+        
+        if (costo > 0) {
+            const precioSugerido = costo + (costo * (ganancia / 100));
+            inputPrecio.value = precioSugerido.toFixed(2);
+        }
+        calcularPrecioBs();
+    };
+
+    inputCosto?.addEventListener('input', recalcular);
+    inputGanancia?.addEventListener('input', recalcular);
+    inputPrecio?.addEventListener('input', calcularPrecioBs);
+}
+
+function calcularPrecioBs() {
+    const precioUsd = parseFloat(document.getElementById('comp-precio')?.value) || 0;
+    const precioBsInput = document.getElementById('comp-precio-bs');
+    if (precioBsInput) {
+        const totalBs = precioUsd * window.tasaActual;
+        precioBsInput.value = `${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2})} Bs.`;
+    }
+}
+
+// --- AGREGAR A LA TABLA LISTA DE INGRESO ---
+window.agregarALista = () => {
+    const sku = document.getElementById('comp-sku').value.trim().toUpperCase();
+    const barras = document.getElementById('comp-barras').value.trim();
+    const nombre = document.getElementById('comp-nombre').value.trim().toUpperCase();
+    const cantidad = parseInt(document.getElementById('comp-cantidad').value) || 0;
+    const costo = parseFloat(document.getElementById('comp-costo').value) || 0;
+    const precio = parseFloat(document.getElementById('comp-precio').value) || 0;
+    const depto = document.getElementById('comp-depto').value;
 
     if (!sku || !nombre || cantidad <= 0) {
-        return alert("Por favor llene el SKU, Nombre y una Cantidad mayor a 0.");
+        return alert("Por favor complete SKU, Nombre y una Cantidad mayor a 0.");
+    }
+
+    window.listaIngreso.push({
+        sku, barras, nombre, cantidad, costo, precio, depto,
+        subtotalCosto: cantidad * costo
+    });
+
+    renderizarTablaLista();
+    limpiarFormularioProducto();
+};
+
+function renderizarTablaLista() {
+    const tbody = document.getElementById('tabla-items-compra');
+    const txtTotal = document.getElementById('total-compra-monto');
+
+    if (window.listaIngreso.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #94A3B8; padding: 15px;">No hay productos agregados a la lista.</td></tr>`;
+        if (txtTotal) txtTotal.innerText = "$0.00";
+        return;
+    }
+
+    let totalAcumulado = 0;
+    tbody.innerHTML = window.listaIngreso.map((item, index) => {
+        totalAcumulado += item.subtotalCosto;
+        return `
+            <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 8px;"><strong>${item.sku}</strong></td>
+                <td>${item.nombre}</td>
+                <td>${item.cantidad}</td>
+                <td>$${item.costo.toFixed(2)}</td>
+                <td>$${item.precio.toFixed(2)}</td>
+                <td style="text-align: center;">
+                    <button style="background: var(--rose); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;" onclick="window.eliminarDeLista(${index})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    if (txtTotal) txtTotal.innerText = `$${totalAcumulado.toFixed(2)}`;
+}
+
+window.eliminarDeLista = (index) => {
+    window.listaIngreso.splice(index, 1);
+    renderizarTablaLista();
+};
+
+function limpiarFormularioProducto() {
+    document.getElementById('comp-sku').value = '';
+    document.getElementById('comp-barras').value = '';
+    document.getElementById('comp-nombre').value = '';
+    document.getElementById('comp-cantidad').value = '0';
+    document.getElementById('comp-costo').value = '0.00';
+    document.getElementById('comp-ganancia').value = '0';
+    document.getElementById('comp-precio').value = '0.00';
+    document.getElementById('comp-precio-bs').value = '';
+}
+
+// --- GUARDAR Y PROCESAR COMPRA EN FIRESTORE ---
+window.procesarIngresoMercancia = async () => {
+    if (window.listaIngreso.length === 0) {
+        return alert("La lista de mercancía está vacía.");
     }
 
     try {
-        const prodExistente = window.productosLocales.find(p => p.id === sku || p.sku === sku);
-        const provNombre = window.nombreProveedorSeleccionado || document.getElementById('buscar-proveedor')?.value || "Proveedor General";
-        const provId = window.proveedorSeleccionadoID || "anonimo";
+        const provSelect = document.getElementById('comp-proveedor');
+        const provId = provSelect.value || "Casual";
+        const provNombre = window.proveedorSeleccionado ? (window.proveedorSeleccionado.nombre || window.proveedorSeleccionado.razon_social) : "Casual / General";
 
-        // 1. Guardar documento de la Recepción / Compra
-        const compraData = {
+        const totalCompraUSD = window.listaIngreso.reduce((sum, item) => sum + item.subtotalCosto, 0);
+
+        // 1. Crear Registro de la Entrada
+        const entradaData = {
             proveedor_id: provId,
             nombre_proveedor: provNombre,
-            nro_factura_proveedor: nroFactura,
-            sku: sku,
-            nombre_producto: nombre,
-            cantidad: cantidad,
-            costo_unitario_usd: costo,
-            precio_venta_usd: precio,
-            total_usd: cantidad * costo,
+            items: window.listaIngreso,
+            total_usd: totalCompraUSD,
+            tasa_aplicada: window.tasaActual,
             fecha: serverTimestamp()
         };
 
-        await addDoc(collection(db, "usuarios", USER_ID, "compras"), compraData);
+        await addDoc(collection(db, "usuarios", USER_ID, "compras"), entradaData);
 
-        // 2. Actualizar o Crear Producto en el Inventario
-        if (prodExistente) {
-            const prodRef = doc(db, "usuarios", USER_ID, "productos", prodExistente.id);
-            await updateDoc(prodRef, {
-                stock: increment(cantidad),
-                costo: costo,
-                precio: precio > 0 ? precio : (prodExistente.precio || 0)
-            });
-        } else {
-            // Si el producto no existe, lo crea usando el SKU como ID del documento
-            const nuevoProdRef = doc(db, "usuarios", USER_ID, "productos", sku);
-            await updateDoc(nuevoProdRef, {
-                sku: sku,
-                nombre: nombre,
-                stock: cantidad,
-                costo: costo,
-                precio: precio
-            });
+        // 2. Actualizar o Crear Productos en el Inventario
+        for (const item of window.listaIngreso) {
+            const prodExistente = window.productosLocales.find(p => p.id === item.sku || p.sku === item.sku);
+
+            if (prodExistente) {
+                const prodRef = doc(db, "usuarios", USER_ID, "productos", prodExistente.id);
+                await updateDoc(prodRef, {
+                    stock: increment(item.cantidad),
+                    costo: item.costo,
+                    precio: item.precio,
+                    barras: item.barras || prodExistente.barras || ''
+                });
+            } else {
+                const nuevoRef = doc(db, "usuarios", USER_ID, "productos", item.sku);
+                await updateDoc(nuevoRef, {
+                    sku: item.sku,
+                    barras: item.barras,
+                    nombre: item.nombre,
+                    stock: item.cantidad,
+                    costo: item.costo,
+                    precio: item.precio,
+                    departamento: item.depto
+                });
+            }
         }
 
-        alert("✅ Compra/Entrada registrada correctamente.");
+        alert("✅ Entrada de mercancía procesada e inventario actualizado.");
 
-        // Limpiar campos
-        document.getElementById('in-sku').value = '';
-        document.getElementById('in-nombre').value = '';
-        document.getElementById('in-cantidad').value = '';
-        document.getElementById('in-costo').value = '';
-        document.getElementById('in-precio').value = '';
-        if (document.getElementById('buscar-producto-compra')) document.getElementById('buscar-producto-compra').value = '';
+        window.listaIngreso = [];
+        renderizarTablaLista();
+        provSelect.value = '';
+        window.seleccionarProveedor('');
 
     } catch (error) {
-        console.error("Error al registrar la compra:", error);
-        alert("Error al registrar compra: " + error.message);
+        console.error("Error al guardar mercancía:", error);
+        alert("Error al procesar: " + error.message);
     }
 };
 
-// --- INICIALIZACIÓN GENERAL ---
+// --- INICIALIZACIÓN ---
 document.addEventListener('DOMContentLoaded', async () => {
     await cargarConfiguracionGlobal();
-    inicializarProductos();
     inicializarProveedores();
-    initBuscadores();
+    inicializarProductos();
+    initBuscadorDinamico();
+    initCalculosPrecios();
 });
