@@ -160,14 +160,12 @@ function calcularPrecioVenta() {
     const precioInput = document.getElementById('comp-precio');
     const precioBsInput = document.getElementById('comp-precio-bs');
 
-    // Fórmula: Precio Venta = Costo + (Costo * (% Ganancia / 100))
     const precioVenta = costo + (costo * (ganancia / 100));
 
     if (precioInput) {
         precioInput.value = precioVenta.toFixed(2);
     }
 
-    // Cálculo del precio en Bolívares usando la tasa almacenada en localStorage
     const tasaCambio = parseFloat(localStorage.getItem('sys_tasa_bcv')) || 1;
     if (precioBsInput) {
         const totalBs = precioVenta * tasaCambio;
@@ -214,8 +212,9 @@ function agregarItemALista() {
     const precio = parseFloat(document.getElementById('comp-precio')?.value) || 0;
     const cantidad = parseInt(document.getElementById('comp-cantidad')?.value) || 1;
 
-    if (!nombre || costo <= 0) {
-        alert("Por favor selecciona un producto válido e indica un costo mayor a 0.");
+    // Validación flexible: Permite costo 0 si es un producto gratuito u obsequio, exigiendo al menos nombre
+    if (!nombre.trim()) {
+        alert("Por favor selecciona o escribe el nombre de un producto válido.");
         return;
     }
 
@@ -235,8 +234,12 @@ function agregarItemALista() {
 }
 
 function renderizarTablaTemporal() {
+    // Buscamos dinámicamente cualquier contenedor o tbody disponible
     const contenedorTabla = document.getElementById('tabla-detalle-compra') || document.getElementById('lista-items-container');
-    if (!contenedorTabla) return;
+    if (!contenedorTabla) {
+        console.warn("No se encontró el contenedor de la tabla en el DOM.");
+        return;
+    }
 
     let html = '';
     let totalGeneral = 0;
@@ -250,13 +253,22 @@ function renderizarTablaTemporal() {
                 <td>${prod.cantidad}</td>
                 <td>$${prod.costo.toFixed(2)}</td>
                 <td>$${prod.subtotal.toFixed(2)}</td>
-                <td><button type="button" onclick="eliminarItemTemporal(${index})" style="color:var(--rose); background:none; border:none; cursor:pointer;">❌</button></td>
+                <td><button type="button" onclick="window.eliminarItemTemporal(${index})" style="color:var(--rose); background:none; border:none; cursor:pointer;">❌</button></td>
             </tr>
         `;
     });
 
-    if (contenedorTabla.tagName === 'TBODY') {
+    // Si el contenedor es un TBODY o un DIV contenedor general
+    if (contenedorTabla.tagName === 'TB2ODY' || contenedorTabla.tagName === 'TBODY') {
         contenedorTabla.innerHTML = html;
+    } else {
+        // Si es un div contenedor, buscamos su tabla interna o reemplazamos el HTML interno
+        const tbodyInterno = contenedorTabla.querySelector('tbody');
+        if (tbodyInterno) {
+            tbodyInterno.innerHTML = html;
+        } else {
+            contenedorTabla.innerHTML = html;
+        }
     }
 
     const labelTotal = document.getElementById('label-total-compra');
