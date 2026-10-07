@@ -1,8 +1,10 @@
 // js/sys_v3_comp.js
+import { db, auth } from './firebase-config.js'; // Ajusta la ruta a tu archivo de configuración de Firebase si es necesario
+import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. CARGAR PROVEEDORES AL SELECT
-    cargarProveedores();
+    // 1. CARGAR PROVEEDORES DESDE FIRESTORE AL INICIAR
+    cargarProveedoresDesdeFirestore();
 
     const buscador = document.getElementById('buscador-dinamico');
     const dropdown = document.getElementById('dropdown-resultados');
@@ -98,26 +100,42 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// 4. FUNCIONES GLOBALES PARA EL MANEJO DE PROVEEDORES
-window.cargarProveedores = function() {
+// 4. CARGAR PROVEEDORES DESDE LA SUBCOLECCIÓN DE FIRESTORE
+async function cargarProveedoresDesdeFirestore() {
     const selectProveedor = document.getElementById('comp-proveedor');
     if (!selectProveedor) return;
 
-    // Obtener proveedores guardados (ajusta la clave según tu localStorage, ej: 'sys_proveedores')
-    const proveedores = JSON.parse(localStorage.getItem('sys_proveedores')) || [];
+    try {
+        // Obtener el ID del usuario activo guardado en sessionStorage o localStorage (ej. 'YC-20260919-F2')
+        const usuarioActivoId = localStorage.getItem('usuario_activo_id') || sessionStorage.getItem('usuario_activo_id');
+        
+        // Si tienes una forma global de obtener el ID del usuario actual, asegúrate de colocarlo aquí.
+        // O bien, si ya manejas una ruta fija para la empresa actual:
+        if (!usuarioActivoId) {
+            console.warn("No se encontró el ID de usuario activo para buscar los proveedores.");
+            return;
+        }
 
-    // Mantener la opción por defecto
-    selectProveedor.innerHTML = '<option value="">-- Casual / General --</option>';
+        const querySnapshot = await getDocs(collection(db, "usuarios", usuarioActivoId, "proveedores"));
+        
+        selectProveedor.innerHTML = '<option value="">-- Casual / General --</option>';
 
-    proveedores.forEach((prov, index) => {
-        const opt = document.createElement('option');
-        // Usamos el id o el nombre como valor
-        opt.value = prov.id || prov.nombre || index;
-        opt.textContent = prov.nombre || prov.empresa || 'Proveedor sin nombre';
-        // Guardamos el objeto como atributo para consultarlo fácilmente al seleccionar
-        opt.dataset.proveedor = JSON.stringify(prov);
-        selectProveedor.appendChild(opt);
-    });
+        querySnapshot.forEach((docSnap) => {
+            const prov = docSnap.data();
+            const provId = docSnap.id; // Ejemplo: "BENF"
+
+            const opt = document.createElement('option');
+            opt.value = provId;
+            opt.textContent = prov.nombre || prov.empresa || provId;
+            
+            // Guardamos los datos completos en el dataset para mostrarlos al seleccionar
+            opt.dataset.proveedor = JSON.stringify({ id: provId, ...prov });
+            selectProveedor.appendChild(opt);
+        });
+
+    } catch (error) {
+        console.error("Error al cargar los proveedores desde Firestore:", error);
+    }
 }
 
 window.seleccionarProveedor = function(valor) {
@@ -139,7 +157,7 @@ window.seleccionarProveedor = function(valor) {
     if (selectedOption && selectedOption.dataset.proveedor) {
         const prov = JSON.parse(selectedOption.dataset.proveedor);
         
-        if (rifSpan) rifSpan.textContent = prov.rif || prov.documento || 'N/A';
+        if (rifSpan) rifSpan.textContent = prov.rif || prov.documento || prov.id || 'N/A';
         if (contactoSpan) contactoSpan.textContent = prov.contacto || prov.telefono || 'N/A';
         
         infoPanel.style.display = 'block';
