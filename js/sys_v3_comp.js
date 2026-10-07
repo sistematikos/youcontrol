@@ -1,6 +1,6 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * Módulo de Compras e Inventario (sys_v3_comp.js) - Solo Productos Existentes
+ * Módulo de Compras e Inventario (sys_v3_comp.js) - Versión Completa
  */
 
 import { db } from './firebase-config.js'; 
@@ -113,13 +113,17 @@ function initBuscadorDinamico() {
         if (coindicencias.length > 0) {
             dropdown.style.display = 'block';
             if (avisoNoReg) avisoNoReg.style.display = 'none';
-            dropdown.innerHTML = coindicencias.map(p => `
-                <div style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--border); font-size: 0.8rem;" 
-                     onclick="window.cargarDatosProducto('${p.id}')">
-                    <strong>${p.nombre}</strong> <br>
-                    <small style="color: #64748B;">SKU: ${p.sku || p.id} | Stock Actual: ${p.stock || 0}</small>
-                </div>
-            `).join('');
+            
+            dropdown.innerHTML = coindicencias.map(p => {
+                const safeId = String(p.id).replace(/'/g, "\\'");
+                return `
+                    <div style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--border); font-size: 0.8rem;" 
+                         onclick="window.cargarDatosProducto('${safeId}')">
+                        <strong>${p.nombre || 'Sin Nombre'}</strong> <br>
+                        <small style="color: #64748B;">SKU: ${p.sku || p.id} | Stock Actual: ${p.stock || 0} | Costo: $${p.costo || 0}</small>
+                    </div>
+                `;
+            }).join('');
         } else {
             dropdown.style.display = 'none';
             if (avisoNoReg) avisoNoReg.style.display = 'block';
@@ -128,26 +132,40 @@ function initBuscadorDinamico() {
 }
 
 window.cargarDatosProducto = (id) => {
+    console.log("Intentando cargar producto con ID:", id);
     const prod = window.productosLocales.find(p => p.id === id);
-    if (!prod) return;
+    
+    if (!prod) {
+        console.error("No se encontró el producto en window.productosLocales con ID:", id);
+        return;
+    }
 
-    document.getElementById('comp-sku').value = prod.sku || prod.id || '';
-    document.getElementById('comp-barras').value = prod.barras || '';
-    document.getElementById('comp-nombre').value = prod.nombre || '';
-    document.getElementById('comp-costo').value = prod.costo || 0.00;
-    document.getElementById('comp-precio').value = prod.precio || 0.00;
+    const setInputValue = (elementId, value) => {
+        const el = document.getElementById(elementId);
+        if (el) el.value = value;
+    };
+
+    setInputValue('comp-sku', prod.sku || prod.id || '');
+    setInputValue('comp-barras', prod.barras || '');
+    setInputValue('comp-nombre', prod.nombre || '');
+    setInputValue('comp-costo', prod.costo || 0.00);
+    setInputValue('comp-precio', prod.precio || 0.00);
+    setInputValue('comp-cantidad', '1'); 
     
     const costo = parseFloat(prod.costo) || 0;
     const precio = parseFloat(prod.precio) || 0;
     if (costo > 0 && precio > 0) {
         const ganancia = ((precio - costo) / costo) * 100;
-        document.getElementById('comp-ganancia').value = ganancia.toFixed(0);
+        setInputValue('comp-ganancia', ganancia.toFixed(0));
+    } else {
+        setInputValue('comp-ganancia', '0');
     }
 
     calcularPrecioBs();
 
     const dropdown = document.getElementById('dropdown-resultados');
     if (dropdown) dropdown.style.display = 'none';
+    
     const inputBuscador = document.getElementById('buscador-dinamico');
     if (inputBuscador) inputBuscador.value = '';
 };
@@ -159,12 +177,12 @@ function initCalculosPrecios() {
     const inputPrecio = document.getElementById('comp-precio');
 
     const recalcular = () => {
-        const costo = parseFloat(inputCosto.value) || 0;
-        const ganancia = parseFloat(inputGanancia.value) || 0;
+        const costo = parseFloat(inputCosto?.value) || 0;
+        const ganancia = parseFloat(inputGanancia?.value) || 0;
         
         if (costo > 0) {
             const precioSugerido = costo + (costo * (ganancia / 100));
-            inputPrecio.value = precioSugerido.toFixed(2);
+            if (inputPrecio) inputPrecio.value = precioSugerido.toFixed(2);
         }
         calcularPrecioBs();
     };
@@ -183,7 +201,7 @@ function calcularPrecioBs() {
     }
 }
 
-// --- AGREGAR A LA TABLA LISTA DE INGRESO (VALIDANDO EXISTENCIA) ---
+// --- AGREGAR A LA TABLA LISTA DE INGRESO ---
 window.agregarALista = () => {
     const skuField = document.getElementById('comp-sku');
     const cantidadField = document.getElementById('comp-cantidad');
@@ -197,14 +215,13 @@ window.agregarALista = () => {
         return alert("Por favor seleccione un producto válido y una cantidad mayor a 0.");
     }
 
-    // VALIDACIÓN ESTRICTA: El producto DEBE existir en la ficha de productos
     const prodExistente = window.productosLocales.find(p => p.id === sku || p.sku === sku);
     if (!prodExistente) {
         return alert(`❌ El producto con SKU/Código "${sku}" no se encuentra registrado en la ficha de productos terminados. Debe crearlo primero en el inventario.`);
     }
 
     window.listaIngreso.push({
-        idFirestore: prodExistente.id, // Guardamos el ID exacto del documento
+        idFirestore: prodExistente.id,
         sku: prodExistente.sku || sku,
         barras: prodExistente.barras || '',
         nombre: prodExistente.nombre || 'Sin Nombre',
@@ -257,17 +274,18 @@ window.eliminarDeLista = (index) => {
 };
 
 function limpiarFormularioProducto() {
-    document.getElementById('comp-sku').value = '';
-    document.getElementById('comp-barras').value = '';
-    document.getElementById('comp-nombre').value = '';
-    document.getElementById('comp-cantidad').value = '1';
-    document.getElementById('comp-costo').value = '0.00';
-    document.getElementById('comp-ganancia').value = '0';
-    document.getElementById('comp-precio').value = '0.00';
-    document.getElementById('comp-precio-bs').value = '';
+    const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+    setVal('comp-sku', '');
+    setVal('comp-barras', '');
+    setVal('comp-nombre', '');
+    setVal('comp-cantidad', '1');
+    setVal('comp-costo', '0.00');
+    setVal('comp-ganancia', '0');
+    setVal('comp-precio', '0.00');
+    setVal('comp-precio-bs', '');
 }
 
-// --- GUARDAR Y PROCESAR COMPRA EN FIRESTORE (SOLO ACTUALIZACIÓN) ---
+// --- GUARDAR Y PROCESAR COMPRA EN FIRESTORE ---
 window.procesarIngresoMercancia = async () => {
     if (window.listaIngreso.length === 0) {
         return alert("La lista de mercancía está vacía.");
@@ -280,7 +298,6 @@ window.procesarIngresoMercancia = async () => {
 
         const totalCompraUSD = window.listaIngreso.reduce((sum, item) => sum + item.subtotalCosto, 0);
 
-        // 1. Crear Registro de la Entrada de Compra (Historial)
         const entradaData = {
             proveedor_id: provId,
             nombre_proveedor: provNombre,
@@ -292,7 +309,6 @@ window.procesarIngresoMercancia = async () => {
 
         await addDoc(collection(db, "usuarios", USER_ID, "compras"), entradaData);
 
-        // 2. Actualizar el Stock y Precios de los Productos Existentes
         for (const item of window.listaIngreso) {
             const prodRef = doc(db, "usuarios", USER_ID, "productos", item.idFirestore);
             await updateDoc(prodRef, {
