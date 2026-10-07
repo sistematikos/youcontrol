@@ -1,16 +1,15 @@
 // js/sys_v3_comp.js
-import { db } from './firebase-config.js'; // Ajusta la ruta si es necesario
+import { db } from './firebase-config.js'; // Ajusta la ruta a tu archivo de configuración si es necesario
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Cargar proveedores desde Firestore al iniciar la vista
+    // 1. Cargar proveedores desde Firestore usando la clave correcta de la empresa
     cargarProveedoresFirestore();
 
     const buscador = document.getElementById('buscador-dinamico');
     const dropdown = document.getElementById('dropdown-resultados');
     const selectProveedor = document.getElementById('comp-proveedor');
 
-    // Manejador del cambio de proveedor por evento nativo (evita problemas de scope en módulos)
     if (selectProveedor) {
         selectProveedor.addEventListener('change', (e) => {
             manejarSeleccionProveedor(e.target.value);
@@ -65,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
         dropdown.style.display = 'block';
     }
 
-    // 3. SELECCIÓN DE PRODUCTO (Usando mousedown para prevenir pérdida de foco)
+    // 3. SELECCIÓN DE PRODUCTO
     dropdown.addEventListener('mousedown', (e) => {
         const item = e.target.closest('.dropdown-item');
         if (!item || !item.dataset.producto) return;
@@ -108,23 +107,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// 4. FUNCIONES DE PROVEEDORES CONECTADAS A FIRESTORE
+// 4. CARGAR PROVEEDORES DESDE FIRESTORE CON LA RUTA CORRECTA
 async function cargarProveedoresFirestore() {
     const selectProveedor = document.getElementById('comp-proveedor');
     if (!selectProveedor) return;
 
     try {
-        // Busca el ID de usuario activo en localStorage o sessionStorage (Ej: "YC-20260919-F2")
-        const usuarioActivoId = localStorage.getItem('usuario_activo_id') || 
-                                sessionStorage.getItem('usuario_activo_id') ||
-                                localStorage.getItem('sys_usuario_id');
+        // Clave exacta utilizada en tu app para aislar los datos por empresa
+        const empresaId = localStorage.getItem('youcontrol_empresa_id');
 
-        if (!usuarioActivoId) {
-            console.warn("No se encontró el ID de usuario activo en el almacenamiento local.");
+        if (!empresaId) {
+            console.warn("No se encontró 'youcontrol_empresa_id' en el localStorage.");
             return;
         }
 
-        const querySnapshot = await getDocs(collection(db, "usuarios", usuarioActivoId, "proveedores"));
+        // Ruta exacta: usuarios/{ID_DE_EMPRESA}/proveedores
+        const querySnapshot = await getDocs(collection(db, "usuarios", empresaId, "proveedores"));
         
         selectProveedor.innerHTML = '<option value="">-- Casual / General --</option>';
 
@@ -134,6 +132,7 @@ async function cargarProveedoresFirestore() {
 
             const opt = document.createElement('option');
             opt.value = provId;
+            // Muestra el nombre o el ID del documento si no tiene la propiedad nombre
             opt.textContent = prov.nombre || prov.empresa || provId;
             opt.dataset.proveedor = JSON.stringify({ id: provId, ...prov });
             
