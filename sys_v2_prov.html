@@ -84,7 +84,8 @@
                 <a href="#" class="btn-back" onclick="volverAlMenu(event)"><i class="fas fa-arrow-left"></i> VOLVER</a>
                 <h1 style="font-size: 1.2rem; margin: 0;">Gestión de Proveedores</h1>
             </div>
-            <img src="img/youcontrol.png" alt="You Control" class="logo-header" onerror="this.style.display='none'">
+            <!-- IMAGEN CORREGIDA A 'youcontrol.png' -->
+            <img src="img/youcontrol.png" alt="You Control Logo" class="logo-header" onerror="this.style.display='none'">
         </header>
 
         <div class="main-layout">
@@ -158,11 +159,11 @@
         </div>
     </main>
 
-    <!-- INTEGACIÓN COMPLETA DE FIREBASE -->
+    <!-- INTEGRACIÓN COMPLETA DE FIREBASE -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { 
-            getFirestore, collection, doc, setDoc, getDocs, deleteDoc, getDoc 
+            getFirestore, collection, doc, setDoc, getDocs, deleteDoc 
         } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
         // Configuración de Firebase
@@ -178,7 +179,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Obtener ID de la Empresa
+        // Obtener ID de la Empresa de localStorage
         const empresaID = (localStorage.getItem('youcontrol_empresa_id') || '').trim();
 
         if (!empresaID) {
@@ -250,7 +251,7 @@
                 tablaProv.appendChild(tr);
             });
 
-            // Asignar eventos a botones de editar y eliminar
+            // Asignar eventos a los botones
             document.querySelectorAll('.btn-edit').forEach(b => b.addEventListener('click', (e) => cargarEdicion(e.currentTarget.dataset.id)));
             document.querySelectorAll('.btn-delete').forEach(b => b.addEventListener('click', (e) => eliminarProveedor(e.currentTarget.dataset.id)));
         }
@@ -271,7 +272,6 @@
                 return;
             }
 
-            // Usar el ID guardado si es edición, o usar el Código como ID del documento
             const idDoc = provIdInput.value ? provIdInput.value : codigo.replace(/[^a-zA-Z0-9_-]/g, '_');
 
             btnGuardar.disabled = true;
@@ -334,7 +334,7 @@
             }
         }
 
-        // --- BÚSQUEDA EN TIEMPO REAL / AUTOCOMPLETADO EN CÓDIGO ---
+        // --- BÚSQUEDA EN TIEMPO REAL EN EL CAMPO CÓDIGO ---
         provCodigoInput.addEventListener('input', () => {
             const query = provCodigoInput.value.trim().toLowerCase();
             listaResultados.innerHTML = '';
@@ -376,7 +376,7 @@
             }
         });
 
-        // --- BÚSQUEDA DE FILTRADO EN LA TABLA ---
+        // --- BÚSQUEDA Y FILTRADO EN LA TABLA ---
         buscarInput.addEventListener('input', () => {
             const query = buscarInput.value.trim().toLowerCase();
             const filtrados = listaProveedores.filter(p => 
