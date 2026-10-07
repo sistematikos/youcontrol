@@ -67,7 +67,7 @@
             <img src="img/logo.png" class="logo-header" alt="Logo">
         </header>
 
-        <!-- 1. SELECCIÓN DE PROVEEDOR (ARRIBA - ANCHO COMPLETO) -->
+        <!-- 1. SELECCIÓN DE PROVEEDOR -->
         <section class="card border-purple">
             <h3><i class="fas fa-truck"></i> Proveedor</h3>
             <div class="prov-flex" style="display: flex; gap: 20px; align-items: flex-start;">
@@ -85,9 +85,9 @@
             </div>
         </section>
 
-        <!-- 2 Y 3. DATOS DE PRODUCTO Y COSTOS (UNA AL LADO DE LA OTRA) -->
+        <!-- 2 Y 3. DATOS DE PRODUCTO Y COSTOS -->
         <div class="grid-middle">
-            <!-- Datos del Producto -->
+            <!-- Datos del Producto Registrado -->
             <section class="card border-sky" style="margin-bottom: 0;">
                 <h3><i class="fas fa-box"></i> Datos Producto</h3>
                 
@@ -105,17 +105,12 @@
 
                 <div class="form-group">
                     <label class="form-label">CÓDIGO SKU / ID</label>
-                    <input type="text" id="comp-sku" placeholder="Ej. ACE-01" style="text-transform: uppercase;">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">CÓDIGO DE BARRAS</label>
-                    <input type="text" id="comp-barras" placeholder="Escanear o tipear...">
+                    <input type="text" id="comp-sku" placeholder="Ej. ACE-01" style="text-transform: uppercase;" readonly style="background-color: #F8FAFC;">
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">DESCRIPCIÓN / NOMBRE DEL PRODUCTO</label>
-                    <input type="text" id="comp-nombre" placeholder="Nombre completo" style="text-transform: uppercase;">
+                    <input type="text" id="comp-nombre" placeholder="Nombre completo" style="text-transform: uppercase;" readonly style="background-color: #F8FAFC;">
                 </div>
 
                 <div class="form-group">
@@ -127,13 +122,6 @@
             <!-- Costos y Precios -->
             <section class="card border-emerald" style="margin-bottom: 0;">
                 <h3><i class="fas fa-tag"></i> Costos y Precios</h3>
-                
-                <div class="form-group">
-                    <label class="form-label">DEPARTAMENTO</label>
-                    <select id="comp-depto">
-                        <option value="GENERAL">GENERAL</option>
-                    </select>
-                </div>
 
                 <div class="form-group">
                     <label class="form-label">COSTO UNITARIO ($)</label>
