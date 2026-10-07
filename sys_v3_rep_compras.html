@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Compras - YouControl</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --danger: #dc2626;
+            --text-muted: #6b7280;
+        }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        .header-panel { 
+            background: #ffffff; 
+            padding: 0 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+            border: 1px solid #E2E8F0; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 20px; 
+            height: 70px; 
+        }
+        .btn-back { 
+            background: #F1F5F9; 
+            color: #1E293B; 
+            padding: 8px 15px; 
+            border-radius: 8px; 
+            text-decoration: none; 
+            font-size: 0.8rem; 
+            font-weight: 700; 
+            border: 1px solid #E2E8F0; 
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .logo-header { 
+            height: 90%; 
+            width: auto; 
+            object-fit: contain; 
+        }
+        .kpi-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+            font-size: 14px;
+        }
+        th {
+            background-color: #f9fafb;
+            font-weight: 600;
+        }
+        .fila-factura {
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .fila-factura:hover, .fila-factura.seleccionada {
+            background-color: #eff6ff;
+        }
+        .fila-anulada {
+            background-color: #fef2f2 !important;
+            color: #991b1b;
+        }
+        .fila-anulada:hover {
+            background-color: #fee2e2 !important;
+        }
+        .lista-productos {
+            margin: 0;
+            padding-left: 15px;
+            font-size: 13px;
+            color: #4b5563;
+        }
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: background-color 0.2s;
+        }
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-danger { background-color: var(--danger); color: white; }
+        .btn:hover { opacity: 0.9; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Panel de Cabecera -->
+        <header class="header-panel">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <a href="sys_v1_menu.html" class="btn-back" onclick="event.preventDefault(); window.location.href='sys_v1_menu.html?v=' + Date.now();">
+                    <i class="fas fa-arrow-left"></i> VOLVER
+                </a>
+                <h1 style="font-size: 1.2rem; margin: 0; font-weight: 700; color: #1E293B;">
+                    Reporte y Control de Compras
+                </h1>
+            </div>
+            <img src="img/logo.png" class="logo-header" alt="Logo">
+        </header>
+
+        <!-- Filtros de Fecha y Acciones -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 items-end">
+            <div>
+                <label for="filtro-desde" class="block text-sm font-medium mb-1">Desde:</label>
+                <input type="date" id="filtro-desde" class="w-full border rounded p-2">
+            </div>
+            <div>
+                <label for="filtro-hasta" class="block text-sm font-medium mb-1">Hasta:</label>
+                <input type="date" id="filtro-hasta" class="w-full border rounded p-2">
+            </div>
+            <div>
+                <button id="btn-buscar" class="btn btn-primary w-full">
+                    <i class="fas fa-search mr-2"></i>Buscar Compras
+                </button>
+            </div>
+            <div>
+                <button id="btn-anular-seleccionada" class="btn btn-danger w-full">
+                    <i class="fas fa-ban mr-2"></i>Anular Seleccionada
+                </button>
+            </div>
+        </div>
+
+        <!-- Tarjetas de Resumen (KPIs) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div class="kpi-card">
+                <p class="text-sm text-gray-500">Total Comprado</p>
+                <p id="kpi-total-usd" class="text-2xl font-bold text-blue-600">$ 0.00</p>
+            </div>
+            <div class="kpi-card">
+                <p class="text-sm text-gray-500">Cantidad de Compras / Facturas</p>
+                <p id="kpi-total-facturas" class="text-2xl font-bold text-gray-700">0</p>
+            </div>
+        </div>
+
+        <!-- Tabla de Resultados -->
+        <div class="overflow-x-auto">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="w-10 text-center">Sel</th>
+                        <th>Fecha / Hora</th>
+                        <th>Nro Factura</th>
+                        <th>Proveedor</th>
+                        <th>Productos Ingresados</th>
+                        <th class="text-right">Total</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-reporte-compras">
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                            Cargando datos...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Enlace al módulo JavaScript modular de Compras -->
+    <script type="module" src="./sys_v3_rep_compras.js"></script>
+</body>
+</html>
