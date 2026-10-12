@@ -1,5 +1,5 @@
 import { db } from './firebase-config.js';
-import { collection, query, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 
@@ -13,18 +13,15 @@ window.cargarReporteVentas = async () => {
     }
 
     try {
+        // Consultamos sin orderBy para evitar errores por índices faltantes en proyectos nuevos
         const ventasRef = collection(db, "usuarios", USER_ID, "ventas");
-        const q = query(ventasRef, orderBy("fecha", "desc"));
-        const snapshot = await getDocs(q);
+        const snapshot = await getDocs(ventasRef);
 
-        let html = '';
-        let totalVendido = 0;
-        let contadorFacturas = 0;
+        let ventasArray = [];
 
-        for (const vDoc of snapshot.docs) {
+        // Recorremos y filtramos/convertimos las fechas
+        snapshot.forEach(vDoc => {
             const data = vDoc.data();
-            
-            // CORRECCIÓN: Convertimos el Timestamp a fecha local YYYY-MM-DD
             if (data.fecha && typeof data.fecha.toDate === 'function') {
                 const d = data.fecha.toDate();
                 const yyyy = d.getFullYear();
@@ -32,25 +29,40 @@ window.cargarReporteVentas = async () => {
                 const dd = String(d.getDate()).padStart(2, '0');
                 const fechaStr = `${yyyy}-${mm}-${dd}`;
 
-                // Comparamos cadenas (ej: "2026-05-26" >= "2026-05-26")
                 if (fechaStr >= desde && fechaStr <= hasta) {
-                    totalVendido += (data.total_usd || 0);
-                    contadorFacturas++;
-                    
-                    const nombreCliente = data.nombre_cliente || "Anónimo";
-                    const listaItems = (data.items || []).map(i => 
-                        `<li>${i.nombre} (${i.cantidad} x $${(i.precio || 0).toFixed(2)})</li>`
-                    ).join('');
-
-                    html += `<tr>
-                        <td><strong>${data.nro_factura}</strong><br><small>${fechaStr}</small></td>
-                        <td>${nombreCliente}</td>
-                        <td><ul style="margin:0; padding-left:15px;">${listaItems}</ul></td>
-                        <td style="text-align:right;"><strong>$${(data.total_usd || 0).toFixed(2)}</strong></td>
-                    </tr>`;
+                    ventasArray.push({
+                        id: vDoc.id,
+                        fechaDate: d, // Guardamos el objeto Date real para ordenar después
+                        fechaStr: fechaStr,
+                        ...data
+                    });
                 }
             }
-        }
+        });
+
+        // Ordenamos de más reciente a más antiguo directamente en JS (descendente)
+        ventasArray.sort((a, b) => b.fechaDate - a.fechaDate);
+
+        let html = '';
+        let totalVendido = 0;
+        let contadorFacturas = 0;
+
+        ventasArray.forEach(v => {
+            totalVendido += (v.total_usd || 0);
+            contadorFacturas++;
+            
+            const nombreCliente = v.nombre_cliente || "Anónimo";
+            const listaItems = (v.items || []).map(i => 
+                `<li>${i.nombre} (${i.cantidad} x $${(i.precio || 0).toFixed(2)})</li>`
+            ).join('');
+
+            html += `<tr>
+                <td><strong>${v.nro_factura || 'S/N'}</strong><br><small>${v.fechaStr}</small></td>
+                <td>${nombreCliente}</td>
+                <td><ul style="margin:0; padding-left:15px;">${listaItems}</ul></td>
+                <td style="text-align:right;"><strong>$${(v.total_usd || 0).toFixed(2)}</strong></td>
+            </tr>`;
+        });
 
         document.getElementById('tabla-reporte-ventas').innerHTML = html || '<tr><td colspan="4" style="text-align:center;">No hay ventas en este rango.</td></tr>';
         document.getElementById('kpi-total-usd').textContent = `$ ${totalVendido.toFixed(2)}`;
@@ -58,6 +70,6 @@ window.cargarReporteVentas = async () => {
 
     } catch (error) {
         console.error("Error al cargar reporte:", error);
-        alert("Error al cargar el reporte.");
+        alert("Error al cargar el reporte: " + error.message);
     }
 };
