@@ -170,10 +170,10 @@
         </div>
     </main>
 
-   <!-- LÓGICA DE FIREBASE USANDO EL ARCHIVO CENTRALIZADO -->
+   <!-- LÓGICA DE FIREBASE CONSULTANDO LA MAESTRA PARA CONFIGURACIÓN -->
     <script type="module">
-        import { db } from './js/firebase-config.js';
-        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         async function cargarDatosEmpresa() {
             const empresaID = (localStorage.getItem('youcontrol_empresa_id') || '').trim();
@@ -189,7 +189,19 @@
             }
 
             try {
-                const docSnap = await getDoc(doc(db, "empresas_config", empresaID));
+                // Conexión directa a la base de datos MAESTRA para leer la configuración de empresas_config
+                const defaultConfig = {
+                    apiKey: "AIzaSyAMkpj9tFps526mL6hO-ciePWrTdx_NK9Q", 
+                    authDomain: "youcontrol-1d60a.firebaseapp.com",
+                    projectId: "youcontrol-1d60a",
+                    storageBucket: "youcontrol-1d60a.firebasestorage.app",
+                    messagingSenderId: "812100760013",
+                    appId: "1:812100760013:web:7574906aa285555faf5484"
+                };
+                const masterApp = initializeApp(defaultConfig, "master_menu_app_" + Math.random());
+                const dbMaster = getFirestore(masterApp);
+
+                const docSnap = await getDoc(doc(dbMaster, "empresas_config", empresaID));
                 
                 if (docSnap.exists()) {
                     const d = docSnap.data();
@@ -200,7 +212,7 @@
                     `;
                 } else {
                     lblEmpresa.innerText = "Empresa no encontrada. Redirigiendo...";
-                    console.error(`El ID de empresa '${empresaID}' no existe en Firestore.`);
+                    console.error(`El ID de empresa '${empresaID}' no existe en la base de datos maestra.`);
                     
                     localStorage.removeItem('youcontrol_empresa_id');
                     
@@ -209,7 +221,7 @@
                     }, 2000);
                 }
             } catch (e) { 
-                console.error("Error consultando Firestore:", e);
+                console.error("Error consultando Firestore maestro:", e);
                 lblEmpresa.innerText = "Error de conexión con el servidor"; 
             }
         }
