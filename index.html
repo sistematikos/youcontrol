@@ -15,7 +15,6 @@
     </style>
 
     <script>
-        // Capta el evento de instalación nativo globalmente al cargar la página
         window.deferredPrompt = null;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
@@ -32,7 +31,6 @@
             }
         });
 
-        // REGISTRO DEL SERVICE WORKER
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW error', err));
@@ -47,104 +45,128 @@
         <h2 style="color:#002D72; margin-top: 0;">Activación</h2>
         <p style="color:#64748b;">Pega tu código de licencia:</p>
         <textarea id="tokenInput" placeholder="Pega el código aquí..."></textarea>
-        <button onclick="procesarActivacion()">ACTIVAR SISTEMA</button>
+        <!-- Botón conectado de forma segura -->
+        <button id="btnActivar">ACTIVAR SISTEMA</button>
     </div>
 
     <script type="module">
-        import { db } from './js/firebase-config.js';
-        import { doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Configuración por defecto (Base de datos principal para buscar la licencia)
+        const defaultConfig = {
+            apiKey: "AIzaSyAMkpj9tFps526mL6hO-ciePWrTdx_NK9Q",
+            authDomain: "youcontrol-1d60a.firebaseapp.com",
+            projectId: "youcontrol-1d60a",
+            storageBucket: "youcontrol-1d60a.firebasestorage.app",
+            messagingSenderId: "812100760013",
+            appId: "1:812100760013:web:7574906aa285555faf5484"
+        };
+
+        const appPrincipal = initializeApp(defaultConfig);
+        const dbPrincipal = getFirestore(appPrincipal);
 
         const getHardwareID = () => btoa(navigator.userAgent + navigator.language);
 
-        window.procesarActivacion = async () => {
-    const rawToken = document.getElementById('tokenInput').value.trim();
-    if (!rawToken) return alert("Pega el código primero.");
-    
-    try {
-        const data = JSON.parse(atob(rawToken));
-        const hwID = getHardwareID();
-        const activationId = data.activation_id;
+        async function procesarActivacion() {
+            const rawToken = document.getElementById('tokenInput').value.trim();
+            if (!rawToken) return alert("Pega el código primero.");
+            
+            try {
+                const data = JSON.parse(atob(rawToken));
+                const hwID = getHardwareID();
+                const activationId = data.activation_id;
 
-        // Referencias a los documentos en ambas colecciones
-        const licenciaRef = doc(db, "licencias", activationId);
-        const empresaRef = doc(db, "empresas_config", activationId);
+                // 1. Consultar primero en la base de datos principal la configuración de la empresa (para ver si tiene Firebase propio)
+                const empresaRefPrincipal = doc(dbPrincipal, "empresas_config", activationId);
+                const snapEmpresaPrincipal = await getDoc(empresaRefPrincipal);
 
-        // Obtener ambos documentos simultáneamente
-        const [snapLicencia, snapEmpresa] = await Promise.all([
-            getDoc(licenciaRef),
-            getDoc(empresaRef)
-        ]);
+                let dbObjetivo = dbPrincipal; // Por defecto usa la principal
 
-        // --- 1. PROCESAR COLECCIÓN: LICENCIAS ---
-        let equiposLicencia = [];
-        let limiteLicencia = data.l || 1;
+                if (snapEmpresaPrincipal.exists()) {
+                    const datosEmpresaConfig = snapEmpresaPrincipal.data();
+                    if (datosEmpresaConfig.firebaseConfig) {
+                        // Si tiene base de datos independiente configurada, la guardamos en localStorage para el firebase-config.js
+                        localStorage.setItem(`youcontrol_tenant_${activationId}`, JSON.stringify(datosEmpresaConfig));
+                        console.log("🔌 Empresa con Base de Datos Independiente detectada.");
+                    }
+                }
 
-        if (snapLicencia.exists()) {
-            const dbData = snapLicencia.data();
-            equiposLicencia = Array.isArray(dbData.equipos) ? dbData.equipos : [];
-            limiteLicencia = dbData.limite || limiteLicencia;
+                // Referencias en la base de datos principal (Licencias y Empresas se quedan en la madre)
+                const licenciaRef = doc(dbPrincipal, "licencias", activationId);
+                const snapLicencia = await getDoc(licenciaRef);
 
-            if (!equiposLicencia.includes(hwID) && equiposLicencia.length >= limiteLicencia) {
-                return alert("Error: Límite de dispositivos alcanzado en la licencia.");
+                let equiposLicencia = [];
+                let limiteLicencia = data.l || 1;
+
+                if (snapLicencia.exists()) {
+                    const dbData = snapLicencia.data();
+                    equiposLicencia = Array.isArray(dbData.equipos) ? dbData.equipos : [];
+                    limiteLicencia = dbData.limite || limiteLicencia;
+
+                    if (!equiposLicencia.includes(hwID) && equiposLicencia.length >= limiteLicencia) {
+                        return alert("Error: Límite de dispositivos alcanzado en la licencia.");
+                    }
+
+                    if (!equiposLicencia.includes(hwID)) {
+                        equiposLicencia.push(hwID);
+                        await updateDoc(licenciaRef, { equipos: equiposLicencia });
+                    }
+                } else {
+                    equiposLicencia = [hwID];
+                    await setDoc(licenciaRef, { 
+                        cliente: data.n || "", 
+                        limite: limiteLicencia, 
+                        equipos: equiposLicencia, 
+                        fecha_registro: new Date().toISOString() 
+                    });
+                }
+
+                // Actualizar o crear en empresas_config principal
+                if (snapEmpresaPrincipal.exists()) {
+                    const dbEmpresa = snapEmpresaPrincipal.data();
+                    const equiposEmpresa = Array.isArray(dbEmpresa.equipos) ? dbEmpresa.equipos : [];
+                    if (!equiposEmpresa.includes(hwID)) {
+                        await updateDoc(empresaRefPrincipal, { 
+                            equipos: [...equiposEmpresa, hwID],
+                            licencia_token: rawToken
+                        });
+                    }
+                } else {
+                    await setDoc(empresaRefPrincipal, { 
+                        nombre: data.n || "",
+                        rif: data.rif || "",
+                        email: data.email || "",
+                        telefono: data.tel || "",
+                        direccion: data.dir || "",
+                        logoUrl: data.logoUrl || "img/logo.png",
+                        limite_equipos: limiteLicencia, 
+                        equipos: [hwID], 
+                        licencia_token: rawToken,
+                        timestamp: new Date().toISOString() 
+                    });
+                }
+
+                // Guardar credenciales locales de sesión
+                localStorage.setItem('youcontrol_empresa_id', activationId);
+                localStorage.setItem('licencia_validada', 'true');
+
+                if (window.deferredPrompt) {
+                    window.deferredPrompt.prompt();
+                    await window.deferredPrompt.userChoice;
+                    window.deferredPrompt = null;
+                }
+
+                window.location.replace('sys_v1_menu.html');
+                
+            } catch (e) {
+                console.error("Error al procesar activación:", e);
+                alert("Código de licencia inválido o error en la conexión con Firebase.");
             }
-
-            if (!equiposLicencia.includes(hwID)) {
-                equiposLicencia.push(hwID);
-                await updateDoc(licenciaRef, { equipos: equiposLicencia });
-            }
-        } else {
-            equiposLicencia = [hwID];
-            await setDoc(licenciaRef, { 
-                cliente: data.n || "", 
-                limite: limiteLicencia, 
-                equipos: equiposLicencia, 
-                fecha_registro: new Date().toISOString() 
-            });
         }
 
-        // --- 2. PROCESAR COLECCIÓN: EMPRESAS_CONFIG ---
-        if (snapEmpresa.exists()) {
-            const dbEmpresa = snapEmpresa.data();
-            const equiposEmpresa = Array.isArray(dbEmpresa.equipos) ? dbEmpresa.equipos : [];
-            if (!equiposEmpresa.includes(hwID)) {
-                await updateDoc(empresaRef, { 
-                    equipos: [...equiposEmpresa, hwID],
-                    licencia_token: rawToken
-                });
-            }
-        } else {
-            await setDoc(empresaRef, { 
-                nombre: data.n || "",
-                rif: data.rif || "",
-                email: data.email || "",
-                telefono: data.tel || "",
-                direccion: data.dir || "",
-                logoUrl: data.logoUrl || "img/logo.png",
-                limite_equipos: limiteLicencia, 
-                equipos: [hwID], 
-                licencia_token: rawToken,
-                timestamp: new Date().toISOString() 
-            });
-        }
-
-        // --- 3. GUARDAR CREDENCIALES LOCALES Y DISPARAR PWA ---
-        localStorage.setItem('youcontrol_empresa_id', activationId);
-        localStorage.setItem('licencia_validada', 'true');
-
-        if (window.deferredPrompt) {
-            window.deferredPrompt.prompt();
-            await window.deferredPrompt.userChoice;
-            window.deferredPrompt = null;
-        }
-
-        // Redirigir al menú principal
-        window.location.replace('sys_v1_menu.html');
-        
-    } catch (e) {
-        console.error("Error al procesar activación:", e);
-        alert("Código de licencia inválido o error en la base de datos.");
-    }
-};
+        // Vincular el evento directamente al botón de manera segura una vez cargado el módulo
+        document.getElementById('btnActivar').addEventListener('click', procesarActivacion);
     </script>
 </body>
 </html>
