@@ -55,7 +55,8 @@
         <div class="card-form">
             <label>Valor actual de la tasa ($):</label>
             <input type="number" id="inputTasa" step="0.01" placeholder="0.00">
-            <button class="btn-act" onclick="guardarTasa()">GUARDAR NUEVA TASA</button>
+            <!-- Quitamos el onclick inline y dejamos un ID seguro -->
+            <button class="btn-act" id="btnGuardarTasa">GUARDAR NUEVA TASA</button>
         </div>
     </main>
 
@@ -81,8 +82,8 @@
             }
         }
 
-        window.guardarTasa = async () => {
-            const btn = document.querySelector('.btn-act');
+        async function guardarTasa() {
+            const btn = document.getElementById('btnGuardarTasa');
             const valor = document.getElementById('inputTasa').value;
             if (!valor) return alert("Ingresa un valor válido.");
 
@@ -98,7 +99,10 @@
                 btn.disabled = false;
                 btn.innerText = "GUARDAR NUEVA TASA";
             }
-        };
+        }
+
+        // Vincular de forma segura el evento al botón
+        document.getElementById('btnGuardarTasa').addEventListener('click', guardarTasa);
 
         cargarTasa();
     </script>
