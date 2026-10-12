@@ -1,5 +1,6 @@
 import { db } from './firebase-config.js';
-import { collection, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // Variables globales
 let tasaActual = 1, carrito = {}, productosGlobales = [], USER_ID = "", mapaNombresDepto = {}, telefonoEmpresa = "";
@@ -10,13 +11,9 @@ function obtenerEmpresaIDDeURL() {
     const query = window.location.search;
     if (!query) return null;
 
-    // Buscar si existe el parámetro 'empresa=' o 'u='
     const match = query.match(/[?&](empresa|u)=([^&]*.*)/);
     if (match && match[2]) {
-        // Tomar todo el valor después de 'empresa=' hasta el final o hasta otro parámetro real
         let rawId = match[2];
-        
-        // Si hay otros parámetros pegados con &, se pueden limpiar, pero para el ID completo decodificamos:
         try {
             return decodeURIComponent(rawId.trim());
         } catch(e) {
@@ -27,7 +24,6 @@ function obtenerEmpresaIDDeURL() {
 }
 
 function iniciarCatalogo() {
-    // Extraer el ID soportando el carácter '&' directo en la URL
     let idDeLaURL = obtenerEmpresaIDDeURL();
     
     if (idDeLaURL) {
@@ -41,59 +37,95 @@ function iniciarCatalogo() {
         return;
     }
 
-    // 1. Configuración de empresa y logo
-    onSnapshot(doc(db, "empresas_config", USER_ID), (snap) => {
+    // Instanciamos también la app maestra por si el proyecto es de los antiguos que leen de empresas_config maestro
+    const defaultConfig = {
+        apiKey: "AIzaSyAMkpj9tFps526mL6hO-ciePWrTdx_NK9Q", 
+        authDomain: "youcontrol-1d60a.firebaseapp.com",
+        projectId: "youcontrol-1d60a",
+        storageBucket: "youcontrol-1d60a.firebasestorage.app",
+        messagingSenderId: "812100760013",
+        appId: "1:812100760013:web:7574906aa285555faf5484"
+    };
+    const masterApp = initializeApp(defaultConfig, "master_catalogo_app_" + Math.random());
+    const dbMaster = getFirestore(masterApp);
+
+    // Función auxiliar para pintar la info de la empresa (nombre, logo, teléfono)
+    function aplicarDatosEmpresa(data) {
         const nombreEl = document.getElementById('nombre-empresa');
         const logoImg = document.getElementById('logo-empresa');
         const dirEl = document.getElementById('direccion-empresa');
 
+        let telLimpio = (data.telefono || "").replace(/-/g, "").replace(/\s/g, "");
+        if (telLimpio.startsWith("0")) {
+            telLimpio = "58" + telLimpio.substring(1);
+        }
+        telefonoEmpresa = telLimpio;
+
+        if (data.nombre && nombreEl) {
+            nombreEl.innerText = data.nombre.toUpperCase();
+            nombreEl.style.opacity = "1";
+        }
+
+        if (dirEl && data.direccion) {
+            dirEl.innerText = "📍 " + data.direccion;
+        }
+
+        if (logoImg) {
+            logoImg.src = `https://raw.githubusercontent.com/sistematikos/youcontrol/main/img/${encodeURIComponent(USER_ID)}.png?t=${new Date().getTime()}`;
+            logoImg.style.display = 'block';
+        }
+    }
+
+    // 1. Configuración de empresa: Intentamos leer primero de la db operativa del tenant, y si no, de la maestra
+    onSnapshot(doc(db, "empresas_config", USER_ID), (snap) => {
         if (snap.exists()) {
-            const data = snap.data();
-            
-            let telLimpio = (data.telefono || "").replace(/-/g, "").replace(/\s/g, "");
-            if (telLimpio.startsWith("0")) {
-                telLimpio = "58" + telLimpio.substring(1);
-            }
-            telefonoEmpresa = telLimpio;
-
-            if (data.nombre && nombreEl) {
-                nombreEl.innerText = data.nombre.toUpperCase();
-                nombreEl.style.opacity = "1";
-            }
-
-            if (dirEl && data.direccion) {
-                dirEl.innerText = "📍 " + data.direccion;
-            }
-
-            if (logoImg) {
-                logoImg.src = `https://raw.githubusercontent.com/sistematikos/youcontrol/main/img/${encodeURIComponent(USER_ID)}.png?t=${new Date().getTime()}`;
-                logoImg.style.display = 'block';
-            }
+            aplicarDatosEmpresa(snap.data());
+        } else {
+            // Fallback a maestra si es proyecto viejo
+            onSnapshot(doc(dbMaster, "empresas_config", USER_ID), (snapMaster) => {
+                if (snapMaster.exists()) aplicarDatosEmpresa(snapMaster.data());
+            });
         }
     });
 
-    // 2. Tasa BCV
+    // 2. Tasa BCV: Soportamos tanto la ruta en usuarios/{USER_ID} como en empresas_config
     onSnapshot(doc(db, "usuarios", USER_ID), (snap) => {
-        if (snap.exists()) {
-            const tasaRaw = snap.data().tasa_bcv;
-            tasaActual = parseFloat(String(tasaRaw).replace(',', '.')) || 1;
-            const tasaEl = document.getElementById('tasa-cliente');
-            if (tasaEl) tasaEl.innerText = tasaActual.toLocaleString('es-VE', { minimumFractionDigits: 2 });
-            renderizarCatalogo(productosGlobales);
+        if (snap.exists() && snap.data().tasa_bcv) {
+            procesarTasa(snap.data().tasa_bcv);
+        } else {
+            onSnapshot(doc(db, "empresas_config", USER_ID), (snapCfg) => {
+                if (snapCfg.exists() && (snapCfg.data().tasa_bcv || snapCfg.data().tasa)) {
+                    procesarTasa(snapCfg.data().tasa_bcv || snapCfg.data().tasa);
+                } else {
+                    // Fallback a maestra
+                    onSnapshot(doc(dbMaster, "empresas_config", USER_ID), (snapMaster) => {
+                        if (snapMaster.exists()) {
+                            procesarTasa(snapMaster.data().tasa_bcv || snapMaster.data().tasa);
+                        }
+                    });
+                }
+            });
         }
     });
 
-    // 3. Carga de Departamentos
+    function procesarTasa(tasaRaw) {
+        tasaActual = parseFloat(String(tasaRaw).replace(',', '.')) || 1;
+        const tasaEl = document.getElementById('tasa-cliente');
+        if (tasaEl) tasaEl.innerText = tasaActual.toLocaleString('es-VE', { minimumFractionDigits: 2 });
+        renderizarCatalogo(productosGlobales);
+    }
+
+    // 3. Carga de Departamentos (desde la base de datos operativa del tenant)
     onSnapshot(collection(db, "usuarios", USER_ID, "departamentos"), (snap) => {
         mapaNombresDepto = {};
         snap.forEach(d => {
             const data = d.data();
-            mapaNombresDepto[d.id] = data.nombre; 
+            mapaNombresDepto[d.id] = data.nombre || data.descripcion; 
         });
         renderizarCatalogo(productosGlobales);
     });
     
-    // 4. Carga de Productos
+    // 4. Carga de Productos (desde la base de datos operativa del tenant)
     onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
         productosGlobales = [];
         snapshot.forEach(d => productosGlobales.push({ id: String(d.id), ...d.data() }));
