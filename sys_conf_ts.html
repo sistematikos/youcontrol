@@ -60,6 +60,7 @@
     </main>
 
     <script type="module">
+        import { db } from './js/firebase-config.js';
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -105,9 +106,17 @@
             btn.disabled = true;
             btn.innerText = "GUARDANDO...";
 
+            const tasaNum = parseFloat(valor);
+
             try {
-                await setDoc(tasaRef, { tasa_bcv: parseFloat(valor) }, { merge: true });
-                alert("¡Tasa guardada exitosamente en la base de datos central!");
+                // 1. Guardar en la base de datos maestra (empresas_config)
+                await setDoc(tasaRef, { tasa_bcv: tasaNum }, { merge: true });
+
+                // 2. Guardar también en la ruta operativa del tenant actual (usuarios/{USER_ID}) para compatibilidad total
+                const usuarioTenantRef = doc(db, "usuarios", USER_ID);
+                await setDoc(usuarioTenantRef, { tasa_bcv: tasaNum }, { merge: true });
+
+                alert("¡Tasa guardada y sincronizada exitosamente en todas las rutas!");
                 window.location.href = "sys_v1_menu.html?refresh=" + new Date().getTime();
             } catch (e) {
                 console.error("Error detallado al guardar:", e);
