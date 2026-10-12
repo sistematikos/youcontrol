@@ -1,34 +1,32 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * Módulo: Operaciones de Inventario unificado con ID de documento personalizado (00001)
+ * Módulo: Operaciones de Inventario por Lotes / Múltiples Ítems (00001 correlativo)
  */
 
 import { db } from './firebase-config.js';
 import { collection, getDocs, doc, setDoc, Timestamp, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Obtenemos el ID de la empresa
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 let listaProductosGlobal = [];
-let indiceRes = -1;
+window.listaMovimientoLote = [];
 let productoSeleccionado = null;
+let indiceRes = -1;
 
-// Inicialización
 async function iniciarOperacionesInventario() {
     if (!USER_ID) {
-        console.warn("No se encontró el ID de empresa en localStorage (youcontrol_empresa_id).");
+        console.warn("No se encontró el ID de empresa en localStorage.");
         return;
     }
 
     try {
         const snapProds = await getDocs(collection(db, "usuarios", USER_ID, "productos"));
         listaProductosGlobal = snapProds.docs.map(d => ({ id: d.id, ...d.data() }));
-        console.log("Productos cargados para inventario:", listaProductosGlobal.length);
     } catch (e) {
-        console.error("Error al cargar productos de Firestore:", e);
+        console.error("Error al cargar productos:", e);
     }
 }
 
-// 1. Lógica de filtrado en tiempo real (al escribir)
+// Buscador dinámico
 const buscador = document.getElementById('buscador-prod-inv');
 if (buscador) {
     buscador.addEventListener('input', (e) => {
@@ -50,7 +48,7 @@ if (buscador) {
         if (filtrados.length > 0) {
             lista.style.display = 'block';
             lista.innerHTML = filtrados.map((p, i) => `
-                <div class="item-res-inv" id="res-inv-${i}" onclick="window.cargarProductoInv('${p.id}')">
+                <div class="item-res-inv" onclick="window.cargarProductoInv('${p.id}')">
                     <strong>${p.nombre || 'Sin nombre'}</strong><br>
                     <small>SKU: ${p.sku || p.id} | Stock Actual: ${p.stock ?? 0}</small>
                 </div>
@@ -60,39 +58,8 @@ if (buscador) {
             lista.innerHTML = `<div style="padding:10px; color:#94A3B8;"><small>No hay coincidencias</small></div>`;
         }
     });
-
-    // 2. Navegación por teclado (Flechas y Enter)
-    buscador.addEventListener('keydown', (e) => {
-        const lista = document.getElementById('lista-resultados-inv');
-        const items = lista.querySelectorAll('.item-res-inv');
-
-        if (e.key === 'ArrowDown' && indiceRes < items.length - 1) { 
-            indiceRes++; 
-            items.forEach((it, i) => it.style.background = (i === indiceRes) ? '#F1F5F9' : 'white'); 
-        } 
-        else if (e.key === 'ArrowUp' && indiceRes > 0) { 
-            indiceRes--; 
-            items.forEach((it, i) => it.style.background = (i === indiceRes) ? '#F1F5F9' : 'white'); 
-        } 
-        else if (e.key === 'Enter') {
-            e.preventDefault();
-            const term = buscador.value.trim();
-
-            if (indiceRes >= 0 && items[indiceRes]) {
-                items[indiceRes].click();
-            } else {
-                const encontrado = listaProductosGlobal.find(p => p.sku === term || p.barras === term);
-                if (encontrado) {
-                    window.cargarProductoInv(encontrado.id);
-                } else {
-                    alert("⚠️ CÓDIGO O PRODUCTO NO REGISTRADO");
-                }
-            }
-        }
-    });
 }
 
-// Cargar producto elegido al formulario de inventario
 window.cargarProductoInv = (id) => {
     const p = listaProductosGlobal.find(x => x.id === id);
     if (!p) return;
@@ -107,11 +74,78 @@ window.cargarProductoInv = (id) => {
     const lista = document.getElementById('lista-resultados-inv');
     if (lista) lista.style.display = 'none';
 
-    const campoCant = document.getElementById('inv-cantidad');
-    if (campoCant) campoCant.focus();
+    document.getElementById('inv-cantidad').focus();
 };
 
-// Obtener el siguiente número correlativo secuencial
+window.agregarAListaInv = () => {
+    if (!productoSeleccionado) {
+        return alert("Por favor seleccione un producto del buscador.");
+    }
+
+    const cantidadInput = document.getElementById('inv-cantidad').value;
+    const cantidad = parseFloat(cantidadInput);
+
+    if (isNaN(cantidad) || cantidad <= 0) {
+        return alert("Ingrese una cantidad válida mayor a 0.");
+    }
+
+    // Verificar si ya está en la lista para sumarlo o agregarlo como nueva línea
+    window.listaMovimientoLote.push({
+        idFirestore: productoSeleccionado.id,
+        sku: productoSeleccionado.sku || productoSeleccionado.id,
+        nombre: productoSeleccionado.nombre || 'Sin nombre',
+        stockActual: parseInt(productoSeleccionado.stock || 0),
+        cantidad: cantidad,
+        costo: Number(productoSeleccionado.costo || 0)
+    });
+
+    renderizarTablaLote();
+    limpiarFormularioItem();
+};
+
+function renderizarTablaLote() {
+    const tbody = document.getElementById('tabla-items-movimiento');
+    const txtTotalItems = document.getElementById('total-items-lote');
+    if (!tbody) return;
+
+    if (window.listaMovimientoLote.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #94A3B8; padding: 15px;">No hay productos agregados a la lista.</td></tr>`;
+        if (txtTotalItems) txtTotalItems.innerText = "0";
+        return;
+    }
+
+    tbody.innerHTML = window.listaMovimientoLote.map((item, index) => `
+        <tr style="border-bottom: 1px solid var(--border);">
+            <td style="padding: 8px;"><strong>${item.sku}</strong></td>
+            <td>${item.nombre}</td>
+            <td>${item.stockActual}</td>
+            <td><strong>${item.cantidad}</strong></td>
+            <td style="text-align: center;">
+                <button type="button" style="background: var(--rose); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;" onclick="window.eliminarItemLote(${index})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+
+    if (txtTotalItems) txtTotalItems.innerText = window.listaMovimientoLote.length;
+}
+
+window.eliminarItemLote = (index) => {
+    window.listaMovimientoLote.splice(index, 1);
+    renderizarTablaLote();
+};
+
+function limpiarFormularioItem() {
+    productoSeleccionado = null;
+    document.getElementById('inv-sku').value = "";
+    document.getElementById('inv-nombre').value = "";
+    document.getElementById('inv-stock-actual').value = "0";
+    document.getElementById('inv-cantidad').value = "1";
+    document.getElementById('buscador-prod-inv').value = "";
+    document.getElementById('buscador-prod-inv').focus();
+}
+
 async function obtenerSiguienteNroMovimiento() {
     try {
         const movRef = collection(db, "usuarios", USER_ID, "mov_inventario");
@@ -127,82 +161,70 @@ async function obtenerSiguienteNroMovimiento() {
         }
         return siguienteNum;
     } catch (e) {
-        console.error("Error al calcular correlativo numérico:", e);
         return 1;
     }
 }
 
-// Procesar Entrada / Salida / Ajuste y guardar usando el número como ID del documento en Firestore
-window.procesarOperacionInventario = async function() {
-    if (!productoSeleccionado) {
-        alert("Por favor selecciona un producto registrado.");
-        return;
+window.procesarMovimientoLote = async function() {
+    if (window.listaMovimientoLote.length === 0) {
+        return alert("La lista de artículos está vacía.");
     }
 
-    const cantidadInput = document.getElementById('inv-cantidad').value;
-    const cantidad = parseFloat(cantidadInput);
     const tipoOp = document.getElementById('inv-tipo-op').value;
-    const concepto = document.getElementById('inv-concepto').value.trim() || 'Ajuste de inventario';
-
-    if (isNaN(cantidad) || cantidad <= 0) {
-        alert("Ingresa una cantidad válida.");
-        return;
-    }
-
-    let stockActual = parseInt(productoSeleccionado.stock || 0);
-    let nuevoStock = stockActual;
-
-    if (tipoOp === 'ENTRADA') nuevoStock += cantidad;
-    else if (tipoOp === 'SALIDA') nuevoStock -= cantidad;
-    else if (tipoOp === 'AJUSTE') nuevoStock = cantidad;
+    const concepto = document.getElementById('inv-concepto').value.trim() || 'Movimiento de inventario por lote';
 
     try {
-        // 1. Obtener correlativo numérico (1, 2, 3...)
         const correlativoNum = await obtenerSiguienteNroMovimiento();
-        const nroMovimientoStr = String(correlativoNum).padStart(5, '0'); // Formato "00001"
+        const nroMovimientoStr = String(correlativoNum).padStart(5, '0');
 
-        // 2. Actualizar stock en la colección de productos
-        await setDoc(doc(db, "usuarios", USER_ID, "productos", productoSeleccionado.id), {
-            stock: parseInt(nuevoStock)
-        }, { merge: true });
+        // Procesar cada ítem del lote
+        let itemsProcesados = [];
 
-        // 3. Guardar el documento en "mov_inventario" usando "nroMovimientoStr" (00001) como ID de Firestore
-        const movimientoData = {
+        for (const item of window.listaMovimientoLote) {
+            let nuevoStock = item.stockActual;
+            if (tipoOp === 'ENTRADA') nuevoStock += item.cantidad;
+            else if (tipoOp === 'SALIDA') nuevoStock -= item.cantidad;
+            else if (tipoOp === 'AJUSTE') nuevoStock = item.cantidad;
+
+            // Actualizar stock en la colección de productos
+            await setDoc(doc(db, "usuarios", USER_ID, "productos", item.idFirestore), {
+                stock: parseInt(nuevoStock)
+            }, { merge: true });
+
+            itemsProcesados.push({
+                producto_id: item.idFirestore,
+                sku: item.sku,
+                nombre_producto: item.nombre,
+                stock_anterior: item.stockActual,
+                stock_nuevo: parseInt(nuevoStock),
+                cantidad: item.cantidad
+            });
+        }
+
+        // Guardar documento consolidado en mov_inventario con ID 00001
+        const documentoLote = {
             correlativo: correlativoNum,
             nro_movimiento: nroMovimientoStr,
-            producto_id: productoSeleccionado.id,
-            sku: productoSeleccionado.sku || productoSeleccionado.id,
-            nombre_producto: productoSeleccionado.nombre || 'Sin nombre',
-            tipo_operacion: tipoOp, 
-            cantidad: cantidad,
-            stock_anterior: stockActual,
-            stock_nuevo: parseInt(nuevoStock),
+            tipo_operacion: tipoOp,
             concepto: concepto,
-            costo_unitario: Number(productoSeleccionado.costo || 0),
+            items: itemsProcesados,
+            total_items: itemsProcesados.length,
             fecha: Timestamp.now()
         };
 
-        // Usamos setDoc con el ID del documento establecido en "00001"
         const docMovRef = doc(db, "usuarios", USER_ID, "mov_inventario", nroMovimientoStr);
-        await setDoc(docMovRef, movimientoData);
+        await setDoc(docMovRef, documentoLote);
 
-        alert(`✅ Operación procesada con éxito.\nID Documento en Firebase: ${nroMovimientoStr}`);
-        
-        // Actualizar memoria local
-        productoSeleccionado.stock = nuevoStock;
-        
-        // Limpieza de campos
-        document.getElementById('inv-sku').value = "";
-        document.getElementById('inv-nombre').value = "";
-        document.getElementById('inv-stock-actual').value = "0";
-        document.getElementById('inv-cantidad').value = "";
+        alert(`✅ Movimiento por lote procesado con éxito.\nNro. de Documento: ${nroMovimientoStr}`);
+
+        // Limpieza general
+        window.listaMovimientoLote = [];
         document.getElementById('inv-concepto').value = "";
-        document.getElementById('buscador-prod-inv').value = "";
-        productoSeleccionado = null;
-
+        renderizarTablaLote();
         iniciarOperacionesInventario();
+
     } catch (e) {
-        alert("Error al actualizar inventario: " + e.message);
+        alert("Error al procesar el movimiento: " + e.message);
     }
 };
 
@@ -210,7 +232,7 @@ window.procesarOperacionInventario = async function() {
 document.addEventListener('keydown', (e) => {
     if (e.key === 'F9') {
         e.preventDefault();
-        window.procesarOperacionInventario();
+        window.procesarMovimientoLote();
     }
 });
 
