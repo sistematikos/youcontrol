@@ -45,7 +45,7 @@
 
         <!-- BUSCADOR -->
         <div class="search-container">
-            <input type="text" id="busquedaInput" placeholder="Buscar por ID de Licencia (ej. YC-2026-001)..." style="margin:0;">
+            <input type="text" id="busquedaInput" placeholder="Buscar por ID de Licencia o Nombre de Empresa..." style="margin:0;">
             <button class="btn-action" id="btnBuscar" style="width: 140px; margin:0;"><i class="fas fa-search"></i> Buscar</button>
         </div>
 
@@ -148,7 +148,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAMkpj9tFps526mL6hO-ciePWrTdx_NK9Q", 
@@ -173,7 +173,6 @@
             const limiteEquipos = licenciaData?.limite || data.limite_equipos || 3;
             document.getElementById('limite').value = limiteEquipos;
 
-            // Rellenar credenciales de Firebase personalizadas si existen
             const fbConfig = data.firebaseConfig || {};
             document.getElementById('fbApiKey').value = fbConfig.apiKey || "";
             document.getElementById('fbProjectId').value = fbConfig.projectId || "";
@@ -215,30 +214,58 @@
             document.getElementById('status').innerText = "✨ Escriba el ID de activación y sus datos.";
         });
 
-        // Botón Buscar
+        // Botón Buscar (Por UID exacto o por Nombre de Empresa)
         document.getElementById('btnBuscar').addEventListener('click', async () => {
             const busqueda = document.getElementById('busquedaInput').value.trim();
-            if (!busqueda) return alert("Escribe un ID para buscar.");
+            if (!busqueda) return alert("Escribe un ID o Nombre de empresa para buscar.");
             
             try {
-                const docEmpresa = await getDoc(doc(db, "empresas_config", busqueda));
-                const docLicencia = await getDoc(doc(db, "licencias", busqueda));
+                let empresaIdEncontrado = null;
+                let dataEmpresaFinal = null;
+                let dataLicenciaFinal = null;
 
-                if (docEmpresa.exists() || docLicencia.exists()) {
-                    const dataEmpresa = docEmpresa.exists() ? docEmpresa.data() : {};
-                    const dataLicencia = docLicencia.exists() ? docLicencia.data() : {};
+                // 1. Intentar buscar directamente por ID exacto (UID)
+                const docEmpresaSnap = await getDoc(doc(db, "empresas_config", busqueda));
+
+                if (docEmpresaSnap.exists()) {
+                    empresaIdEncontrado = busqueda;
+                    dataEmpresaFinal = docEmpresaSnap.data();
                     
-                    const dataFinal = { ...dataLicencia, ...dataEmpresa };
-                    llenarFormulario(busqueda, dataFinal, dataLicencia);
+                    const docLicenciaSnap = await getDoc(doc(db, "licencias", busqueda));
+                    if (docLicenciaSnap.exists()) {
+                        dataLicenciaFinal = docLicenciaSnap.data();
+                    }
                 } else {
-                    alert("No se encontró ningún registro con ese ID.");
+                    // 2. Si no existe por UID exacto, buscar por Nombre de Empresa
+                    const empresasRef = collection(db, "empresas_config");
+                    const q = query(empresasRef, where("nombre", ">=", busqueda), where("nombre", "<=", busqueda + "\uf8ff"));
+                    const querySnapshot = await getDocs(q);
+
+                    if (!querySnapshot.empty) {
+                        const primerDoc = querySnapshot.docs[0];
+                        empresaIdEncontrado = primerDoc.id;
+                        dataEmpresaFinal = primerDoc.data();
+
+                        const docLicenciaSnap = await getDoc(doc(db, "licencias", empresaIdEncontrado));
+                        if (docLicenciaSnap.exists()) {
+                            dataLicenciaFinal = docLicenciaSnap.data();
+                        }
+                    }
                 }
+
+                if (empresaIdEncontrado && dataEmpresaFinal) {
+                    const dataFinal = { ...(dataLicenciaFinal || {}), ...dataEmpresaFinal };
+                    llenarFormulario(empresaIdEncontrado, dataFinal, dataLicenciaFinal);
+                } else {
+                    alert("No se encontró ninguna empresa ni licencia con ese ID o Nombre.");
+                }
+
             } catch (e) {
                 alert("Error en la búsqueda: " + e.message);
             }
         });
 
-        // Botón Guardar en Firebase
+        // Botón Guardar en Firebase (Dual: empresas_config + licencias)
         document.getElementById('btnGuardar').addEventListener('click', async () => {
             const id = document.getElementById('empresaID').value.trim();
             if (!id) return alert("El ID de activación / empresa es obligatorio.");
@@ -249,7 +276,6 @@
             const limite = parseInt(document.getElementById('limite').value);
             const rif = document.getElementById('rif').value.trim();
 
-            // Capturar datos de Firebase independiente (si se llenaron)
             const apiKey = document.getElementById('fbApiKey').value.trim();
             const projectId = document.getElementById('fbProjectId').value.trim();
             const storageBucket = document.getElementById('fbStorageBucket').value.trim();
@@ -262,7 +288,7 @@
                     authDomain: `${projectId}.firebaseapp.com`,
                     projectId: projectId,
                     storageBucket: storageBucket || `${projectId}.firebasestorage.app`,
-                    messagingSenderId: "812100760013", // Se puede mantener o dejar flexible
+                    messagingSenderId: "812100760013",
                     appId: appId || "1:812100760013:web:custom"
                 };
             }
@@ -284,7 +310,7 @@
                 limite_equipos: limite,
                 licencia_token: tokenBase64,
                 logoUrl: `https://raw.githubusercontent.com/sistematikos/youcontrol/main/img/${id}.png`,
-                firebaseConfig: firebaseConfigPersonalizada, // Guardamos la config aquí
+                firebaseConfig: firebaseConfigPersonalizada,
                 timestamp: new Date().toISOString()
             };
 
