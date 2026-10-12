@@ -6,7 +6,7 @@
 import { db } from './firebase-config.js';
 import { collection, getDocs, doc, setDoc, addDoc, Timestamp, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Obtenemos el ID de la empresa exactamente igual que en la Ficha de Producto
+// Obtenemos el ID de la empresa
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 let listaProductosGlobal = [];
 let indiceRes = -1;
@@ -50,9 +50,9 @@ if (buscador) {
         if (filtrados.length > 0) {
             lista.style.display = 'block';
             lista.innerHTML = filtrados.map((p, i) => `
-                <div class="item-res-inv" id="res-inv-${i}" onclick="window.cargarProductoInv('${p.id}')" style="padding:10px; cursor:pointer; border-bottom:1px solid #f1f5f9;">
+                <div class="item-res-inv" id="res-inv-${i}" onclick="window.cargarProductoInv('${p.id}')">
                     <strong>${p.nombre || 'Sin nombre'}</strong><br>
-                    <small style="color:#64748B;">SKU: ${p.sku || p.id} | Stock Actual: ${p.stock ?? 0}</small>
+                    <small>SKU: ${p.sku || p.id} | Stock Actual: ${p.stock ?? 0}</small>
                 </div>
             `).join('');
         } else {
@@ -132,7 +132,7 @@ async function obtenerSiguienteNroMovimiento() {
     }
 }
 
-// Procesar Entrada / Salida / Ajuste y guardar en la bitácora "mov_inventario" con numeración 00001
+// Procesar Entrada / Salida / Ajuste y guardar en la bitácora "mov_inventario"
 window.procesarOperacionInventario = async function() {
     if (!productoSeleccionado) {
         alert("Por favor selecciona un producto registrado.");
@@ -141,7 +141,8 @@ window.procesarOperacionInventario = async function() {
 
     const cantidadInput = document.getElementById('inv-cantidad').value;
     const cantidad = parseFloat(cantidadInput);
-    const tipoOp = document.getElementById('inv-tipo-op').value; // ENTRADA, SALIDA o AJUSTE
+    const tipoOp = document.getElementById('inv-tipo-op').value;
+    const concepto = document.getElementById('inv-concepto').value.trim() || 'Ajuste de inventario';
 
     if (isNaN(cantidad) || cantidad <= 0) {
         alert("Ingresa una cantidad válida.");
@@ -156,16 +157,16 @@ window.procesarOperacionInventario = async function() {
     else if (tipoOp === 'AJUSTE') nuevoStock = cantidad;
 
     try {
-        // 1. Obtener el siguiente número correlativo secuencial
+        // 1. Obtener correlativo numérico secuencial (ej: 1, 2, 3...)
         const correlativoNum = await obtenerSiguienteNroMovimiento();
         const nroMovimientoStr = String(correlativoNum).padStart(5, '0'); // Formato "00001"
 
-        // 2. Actualizar el stock en la colección de productos
+        // 2. Actualizar stock en productos
         await setDoc(doc(db, "usuarios", USER_ID, "productos", productoSeleccionado.id), {
             stock: parseInt(nuevoStock)
         }, { merge: true });
 
-        // 3. Registrar la operación en la colección "mov_inventario" con su correlativo numérico
+        // 3. Registrar el movimiento en la colección "mov_inventario"
         const movimientoData = {
             correlativo: correlativoNum,
             nro_movimiento: nroMovimientoStr,
@@ -176,15 +177,16 @@ window.procesarOperacionInventario = async function() {
             cantidad: cantidad,
             stock_anterior: stockActual,
             stock_nuevo: parseInt(nuevoStock),
+            concepto: concepto,
             costo_unitario: Number(productoSeleccionado.costo || 0),
             fecha: Timestamp.now()
         };
 
         await addDoc(collection(db, "usuarios", USER_ID, "mov_inventario"), movimientoData);
 
-        alert(`¡Inventario actualizado con éxito! Nro. de Movimiento asignado: ${nroMovimientoStr}`);
+        alert(`✅ Operación procesada con éxito.\nNro. Movimiento: ${nroMovimientoStr}`);
         
-        // Actualizar el valor en memoria local
+        // Actualizar memoria local
         productoSeleccionado.stock = nuevoStock;
         
         // Limpieza de campos
@@ -192,6 +194,7 @@ window.procesarOperacionInventario = async function() {
         document.getElementById('inv-nombre').value = "";
         document.getElementById('inv-stock-actual').value = "0";
         document.getElementById('inv-cantidad').value = "";
+        document.getElementById('inv-concepto').value = "";
         document.getElementById('buscador-prod-inv').value = "";
         productoSeleccionado = null;
 
