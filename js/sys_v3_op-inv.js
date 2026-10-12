@@ -21,6 +21,7 @@ async function iniciarOperacionesInventario() {
     try {
         const snapProds = await getDocs(collection(db, "usuarios", USER_ID, "productos"));
         listaProductosGlobal = snapProds.docs.map(d => ({ id: d.id, ...d.data() }));
+        console.log("Productos cargados:", listaProductosGlobal.length);
     } catch (e) {
         console.error("Error al cargar productos:", e);
     }
@@ -47,7 +48,7 @@ if (buscador) {
 
         if (filtrados.length > 0) {
             lista.style.display = 'block';
-            lista.innerHTML = filtrados.map((p, i) => `
+            lista.innerHTML = filtrados.map((p) => `
                 <div class="item-res-inv" onclick="window.cargarProductoInv('${p.id}')">
                     <strong>${p.nombre || 'Sin nombre'}</strong><br>
                     <small>SKU: ${p.sku || p.id} | Stock Actual: ${p.stock ?? 0}</small>
@@ -56,6 +57,18 @@ if (buscador) {
         } else {
             lista.style.display = 'block';
             lista.innerHTML = `<div style="padding:10px; color:#94A3B8;"><small>No hay coincidencias</small></div>`;
+        }
+    });
+
+    // Permitir tabular o presionar Enter en el buscador
+    buscador.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const term = buscador.value.trim().toLowerCase();
+            const encontrado = listaProductosGlobal.find(p => p.sku?.toLowerCase() === term || p.barras?.toLowerCase() === term || p.nombre?.toLowerCase().includes(term));
+            if (encontrado) {
+                window.cargarProductoInv(encontrado.id);
+            }
         }
     });
 }
@@ -75,29 +88,37 @@ window.cargarProductoInv = (id) => {
     if (lista) lista.style.display = 'none';
 
     document.getElementById('inv-cantidad').focus();
+    document.getElementById('inv-cantidad').select();
 };
 
 window.agregarAListaInv = () => {
     if (!productoSeleccionado) {
-        return alert("Por favor seleccione un producto del buscador.");
+        alert("Por favor seleccione un producto del buscador.");
+        return;
     }
 
     const cantidadInput = document.getElementById('inv-cantidad').value;
     const cantidad = parseFloat(cantidadInput);
 
     if (isNaN(cantidad) || cantidad <= 0) {
-        return alert("Ingrese una cantidad válida mayor a 0.");
+        alert("Ingrese una cantidad válida mayor a 0.");
+        return;
     }
 
-    // Verificar si ya está en la lista para sumarlo o agregarlo como nueva línea
-    window.listaMovimientoLote.push({
-        idFirestore: productoSeleccionado.id,
-        sku: productoSeleccionado.sku || productoSeleccionado.id,
-        nombre: productoSeleccionado.nombre || 'Sin nombre',
-        stockActual: parseInt(productoSeleccionado.stock || 0),
-        cantidad: cantidad,
-        costo: Number(productoSeleccionado.costo || 0)
-    });
+    // Verificar si el producto ya existe en el lote actual para acumular la cantidad o agregarlo como nueva línea
+    const indexExistente = window.listaMovimientoLote.findIndex(item => item.idFirestore === productoSeleccionado.id);
+    
+    if (indexExistente >= 0) {
+        window.listaMovimientoLote[indexExistente].cantidad += cantidad;
+    } else {
+        window.listaMovimientoLote.push({
+            idFirestore: productoSeleccionado.id,
+            sku: productoSeleccionado.sku || productoSeleccionado.id,
+            nombre: productoSeleccionado.nombre || 'Sin nombre',
+            stockActual: parseInt(productoSeleccionado.stock || 0),
+            cantidad: cantidad
+        });
+    }
 
     renderizarTablaLote();
     limpiarFormularioItem();
@@ -121,7 +142,7 @@ function renderizarTablaLote() {
             <td>${item.stockActual}</td>
             <td><strong>${item.cantidad}</strong></td>
             <td style="text-align: center;">
-                <button type="button" style="background: var(--rose); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;" onclick="window.eliminarItemLote(${index})">
+                <button type="button" style="background: #F43F5E; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;" onclick="window.eliminarItemLote(${index})">
                     <i class="fas fa-trash"></i>
                 </button>
             </td>
@@ -167,7 +188,8 @@ async function obtenerSiguienteNroMovimiento() {
 
 window.procesarMovimientoLote = async function() {
     if (window.listaMovimientoLote.length === 0) {
-        return alert("La lista de artículos está vacía.");
+        alert("La lista de artículos está vacía.");
+        return;
     }
 
     const tipoOp = document.getElementById('inv-tipo-op').value;
@@ -177,7 +199,6 @@ window.procesarMovimientoLote = async function() {
         const correlativoNum = await obtenerSiguienteNroMovimiento();
         const nroMovimientoStr = String(correlativoNum).padStart(5, '0');
 
-        // Procesar cada ítem del lote
         let itemsProcesados = [];
 
         for (const item of window.listaMovimientoLote) {
