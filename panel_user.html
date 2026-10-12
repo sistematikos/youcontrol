@@ -73,7 +73,7 @@
         <!-- BUSCADOR CON DESPLEGABLE DE COINCIDENCIAS -->
         <div class="search-wrapper">
             <div class="search-container">
-                <input type="text" id="busquedaInput" placeholder="Buscar por ID de Licencia o Nombre de Empresa..." autocomplete="off" style="margin:0;">
+                <input type="text" id="busquedaInput" placeholder="Buscar por ID de Licencia o Nombre de Empresa (ej. Inversiones)..." autocomplete="off" style="margin:0;">
                 <button class="btn-action" id="btnBuscar" style="width: 140px; margin:0;"><i class="fas fa-search"></i> Buscar</button>
             </div>
             <div id="lista-resultados-busqueda"></div>
@@ -198,7 +198,10 @@
         async function cargarCacheEmpresas() {
             try {
                 const snap = await getDocs(collection(db, "empresas_config"));
-                cacheEmpresas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                cacheEmpresas = snap.docs.map(d => ({ 
+                    uid: d.id, 
+                    ...d.data() 
+                }));
             } catch (e) {
                 console.error("Error al precargar empresas:", e);
             }
@@ -251,19 +254,19 @@
                 return;
             }
 
-            // Filtrar coincidencias por nombre o por ID que contengan el texto escrito
+            // Filtrar coincidencias por nombre, RIF o UID
             const filtrados = cacheEmpresas.filter(emp => 
                 (emp.nombre && emp.nombre.toLowerCase().includes(term)) ||
-                (emp.id && emp.id.toLowerCase().includes(term)) ||
+                (emp.uid && emp.uid.toLowerCase().includes(term)) ||
                 (emp.rif && emp.rif.toLowerCase().includes(term))
             );
 
             if (filtrados.length > 0) {
                 listaResultados.style.display = 'block';
                 listaResultados.innerHTML = filtrados.map(emp => `
-                    <div class="item-res-busqueda" onclick="window.seleccionarEmpresaBusqueda('${emp.id}')">
+                    <div class="item-res-busqueda" onclick="window.seleccionarEmpresaBusqueda('${emp.uid}')">
                         <strong>${emp.nombre || 'Sin Nombre'}</strong><br>
-                        <small style="color: #64748B;">ID: ${emp.id} | RIF: ${emp.rif || 'N/A'}</small>
+                        <small style="color: #64748B;">ID: ${emp.uid} | RIF: ${emp.rif || 'N/A'}</small>
                     </div>
                 `).join('');
             } else {
@@ -318,16 +321,22 @@
 
         // Botón Buscar manual
         document.getElementById('btnBuscar').addEventListener('click', async () => {
-            const busqueda = inputBusqueda.value.trim();
+            const busqueda = inputBusqueda.value.toLowerCase().trim();
             if (!busqueda) return alert("Escribe un ID o Nombre de empresa para buscar.");
             
             listaResultados.style.display = 'none';
-            const coincidencia = cacheEmpresas.find(emp => emp.id.toLowerCase() === busqueda.toLowerCase() || (emp.nombre && emp.nombre.toLowerCase().includes(busqueda.toLowerCase())));
+            
+            // Buscar coincidencia en la caché local
+            const coincidencia = cacheEmpresas.find(emp => 
+                emp.uid.toLowerCase() === busqueda || 
+                (emp.nombre && emp.nombre.toLowerCase().includes(busqueda)) ||
+                (emp.rif && emp.rif.toLowerCase().includes(busqueda))
+            );
 
             if (coincidencia) {
-                window.seleccionarEmpresaBusqueda(coincidencia.id);
+                window.seleccionarEmpresaBusqueda(coincidencia.uid);
             } else {
-                alert("No se encontró ninguna empresa con ese criterio exacto. Selecciona una de la lista desplegable.");
+                alert("No se encontró ninguna empresa con ese criterio. Selecciona una de la lista desplegable.");
             }
         });
 
