@@ -77,22 +77,23 @@
                 const hwID = getHardwareID();
                 const activationId = data.activation_id;
 
-                // 1. Consultar primero en la base de datos principal la configuración de la empresa (para ver si tiene Firebase propio)
+                // 1. Consultar en la base de datos principal la configuración de la empresa
                 const empresaRefPrincipal = doc(dbPrincipal, "empresas_config", activationId);
                 const snapEmpresaPrincipal = await getDoc(empresaRefPrincipal);
 
-                let dbObjetivo = dbPrincipal; // Por defecto usa la principal
-
                 if (snapEmpresaPrincipal.exists()) {
                     const datosEmpresaConfig = snapEmpresaPrincipal.data();
-                    if (datosEmpresaConfig.firebaseConfig) {
-                        // Si tiene base de datos independiente configurada, la guardamos en localStorage para el firebase-config.js
-                        localStorage.setItem(`youcontrol_tenant_${activationId}`, JSON.stringify(datosEmpresaConfig));
-                        console.log("🔌 Empresa con Base de Datos Independiente detectada.");
+                    
+                    // Si la empresa tiene configurada una base de datos propia, la guardamos para el firebase-config.js
+                    if (datosEmpresaConfig.firebaseConfig && datosEmpresaConfig.firebaseConfig.apiKey) {
+                        localStorage.setItem(`youcontrol_tenant_config_${activationId}`, JSON.stringify(datosEmpresaConfig.firebaseConfig));
+                        console.log("🔌 Configuración de Base de Datos Independiente guardada localmente.");
+                    } else {
+                        localStorage.removeItem(`youcontrol_tenant_config_${activationId}`);
                     }
                 }
 
-                // Referencias en la base de datos principal (Licencias y Empresas se quedan en la madre)
+                // Referencias en la base de datos principal (Licencias y Empresas se gestionan en la madre)
                 const licenciaRef = doc(dbPrincipal, "licencias", activationId);
                 const snapLicencia = await getDoc(licenciaRef);
 
@@ -165,7 +166,6 @@
             }
         }
 
-        // Vincular el evento directamente al botón de manera segura una vez cargado el módulo
         document.getElementById('btnActivar').addEventListener('click', procesarActivacion);
     </script>
 </body>
