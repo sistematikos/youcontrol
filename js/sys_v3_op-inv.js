@@ -1,10 +1,10 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * Módulo: Operaciones de Inventario unificado con Ficha de Producto
+ * Módulo: Operaciones de Inventario unificado con Ficha de Producto, Bitácora y Correlativo Numérico (00001)
  */
 
 import { db } from './firebase-config.js';
-import { collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, getDocs, doc, setDoc, addDoc, Timestamp, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // Obtenemos el ID de la empresa exactamente igual que en la Ficha de Producto
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
@@ -20,7 +20,6 @@ async function iniciarOperacionesInventario() {
     }
 
     try {
-        // Misma consulta de colección jerárquica usada en Ficha de Producto
         const snapProds = await getDocs(collection(db, "usuarios", USER_ID, "productos"));
         listaProductosGlobal = snapProds.docs.map(d => ({ id: d.id, ...d.data() }));
         console.log("Productos cargados para inventario:", listaProductosGlobal.length);
@@ -112,7 +111,28 @@ window.cargarProductoInv = (id) => {
     if (campoCant) campoCant.focus();
 };
 
-// Procesar Entrada / Salida / Ajuste
+// Obtener correlativo puramente numérico (ej: 00001) para el movimiento
+async function obtenerSiguienteNroMovimiento() {
+    try {
+        const movRef = collection(db, "usuarios", USER_ID, "mov_inventario");
+        const q = query(movRef, orderBy("correlativo", "desc"), limit(1));
+        const querySnapshot = await getDocs(q);
+
+        let siguienteNum = 1;
+        if (!querySnapshot.empty) {
+            const ultimoDoc = querySnapshot.docs[0].data();
+            if (ultimoDoc.correlativo) {
+                siguienteNum = Number(ultimoDoc.correlativo) + 1;
+            }
+        }
+        return siguienteNum;
+    } catch (e) {
+        console.error("Error al calcular correlativo numérico:", e);
+        return 1;
+    }
+}
+
+// Procesar Entrada / Salida / Ajuste y guardar en la bitácora "mov_inventario" con numeración 00001
 window.procesarOperacionInventario = async function() {
     if (!productoSeleccionado) {
         alert("Por favor selecciona un producto registrado.");
@@ -121,7 +141,7 @@ window.procesarOperacionInventario = async function() {
 
     const cantidadInput = document.getElementById('inv-cantidad').value;
     const cantidad = parseFloat(cantidadInput);
-    const tipoOp = document.getElementById('inv-tipo-op').value;
+    const tipoOp = document.getElementById('inv-tipo-op').value; // ENTRADA, SALIDA o AJUSTE
 
     if (isNaN(cantidad) || cantidad <= 0) {
         alert("Ingresa una cantidad válida.");
@@ -136,14 +156,35 @@ window.procesarOperacionInventario = async function() {
     else if (tipoOp === 'AJUSTE') nuevoStock = cantidad;
 
     try {
-        // Actualiza exactamente la misma ruta de Firestore usada en la Ficha de Producto
+        // 1. Obtener el siguiente número correlativo secuencial
+        const correlativoNum = await obtenerSiguienteNroMovimiento();
+        const nroMovimientoStr = String(correlativoNum).padStart(5, '0'); // Formato "00001"
+
+        // 2. Actualizar el stock en la colección de productos
         await setDoc(doc(db, "usuarios", USER_ID, "productos", productoSeleccionado.id), {
             stock: parseInt(nuevoStock)
         }, { merge: true });
 
-        alert("¡Inventario actualizado con éxito!");
+        // 3. Registrar la operación en la colección "mov_inventario" con su correlativo numérico
+        const movimientoData = {
+            correlativo: correlativoNum,
+            nro_movimiento: nroMovimientoStr,
+            producto_id: productoSeleccionado.id,
+            sku: productoSeleccionado.sku || productoSeleccionado.id,
+            nombre_producto: productoSeleccionado.nombre || 'Sin nombre',
+            tipo_operacion: tipoOp, 
+            cantidad: cantidad,
+            stock_anterior: stockActual,
+            stock_nuevo: parseInt(nuevoStock),
+            costo_unitario: Number(productoSeleccionado.costo || 0),
+            fecha: Timestamp.now()
+        };
+
+        await addDoc(collection(db, "usuarios", USER_ID, "mov_inventario"), movimientoData);
+
+        alert(`¡Inventario actualizado con éxito! Nro. de Movimiento asignado: ${nroMovimientoStr}`);
         
-        // Actualizar el valor en memoria local para no requerir recargar la página
+        // Actualizar el valor en memoria local
         productoSeleccionado.stock = nuevoStock;
         
         // Limpieza de campos
