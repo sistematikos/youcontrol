@@ -170,22 +170,10 @@
         </div>
     </main>
 
-   <!-- LÓGICA DE FIREBASE PARA CARGAR DATOS DE LA EMPRESA -->
+   <!-- LÓGICA DE FIREBASE USANDO EL ARCHIVO CENTRALIZADO -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "TU_API_KEY",
-            authDomain: "youcontrol-1d60a.firebaseapp.com",
-            projectId: "youcontrol-1d60a",
-            storageBucket: "youcontrol-1d60a.appspot.com",
-            messagingSenderId: "812100760013",
-            appId: "1:812100760013:web:7574906aa285555faf5484"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        import { db } from './js/firebase-config.js';
+        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         async function cargarDatosEmpresa() {
             const empresaID = (localStorage.getItem('youcontrol_empresa_id') || '').trim();
