@@ -30,6 +30,7 @@
         .form-group { margin-bottom: 8px; }
         .form-label { display: block; font-size: 0.72rem; font-weight: 700; color: #64748B; margin-bottom: 2px; }
         input, select { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; font-family: inherit; font-size: 0.85rem; }
+        input:disabled { background-color: #F8FAFC; color: #475569; font-weight: 600; }
         
         .btn-add { background: var(--text-dark); color: white; padding: 10px; border: none; border-radius: 8px; width: 100%; cursor: pointer; margin-top: 15px; font-weight: 600; transition: 0.2s; }
         .btn-add:hover { background: var(--sky); }
@@ -78,12 +79,12 @@
             </div>
         </section>
 
-        <!-- CARGA DE PRODUCTOS -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-            <section class="card border-sky" style="margin-bottom: 0;">
-                <h3><i class="fas fa-box"></i> Buscar y Agregar Producto</h3>
-                
-                <div class="form-group">
+        <!-- BUSCAR Y AGREGAR PRODUCTO (OCUPA TODO EL ANCHO) -->
+        <section class="card border-emerald">
+            <h3><i class="fas fa-box"></i> Buscar y Cargar Producto</h3>
+            
+            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; align-items: flex-end;">
+                <div class="form-group" style="margin-bottom: 0;">
                     <label class="form-label">BUSCAR PRODUCTO</label>
                     <div class="dropdown-container">
                         <input type="text" id="buscador-prod-inv" placeholder="🔍 Nombre, SKU o Código de Barras..." autocomplete="off">
@@ -91,37 +92,29 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">CÓDIGO SKU / ID</label>
-                    <input type="text" id="inv-sku" disabled placeholder="Automático">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">CÓDIGO SKU</label>
+                    <input type="text" id="inv-sku" disabled placeholder="-">
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">DESCRIPCIÓN DEL PRODUCTO</label>
-                    <input type="text" id="inv-nombre" disabled placeholder="Seleccione un producto">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">STOCK ACTUAL</label>
+                    <input type="number" id="inv-stock-actual" disabled value="0">
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div class="form-group">
-                        <label class="form-label">STOCK ACTUAL</label>
-                        <input type="number" id="inv-stock-actual" disabled value="0">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">CANTIDAD A OPERAR</label>
-                        <input type="number" id="inv-cantidad" min="1" placeholder="0" value="1">
-                    </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">CANTIDAD A OPERAR</label>
+                    <input type="number" id="inv-cantidad" min="1" placeholder="0" value="1">
                 </div>
+            </div>
 
-                <button class="btn-add" onclick="window.agregarAListaInv()">AGREGAR A LA LISTA</button>
-            </section>
+            <div class="form-group" style="margin-top: 10px; margin-bottom: 0;">
+                <label class="form-label">DESCRIPCIÓN DEL PRODUCTO SELECCIONADO</label>
+                <input type="text" id="inv-nombre" disabled placeholder="Ningún producto seleccionado">
+            </div>
 
-            <!-- VISTA PREVIA DEL PRODUCTO SELECCIONADO / INFO RÁPIDA -->
-            <section class="card border-emerald" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: var(--text-muted);">
-                <i class="fas fa-barcode" style="font-size: 3rem; color: #CBD5E1; margin-bottom: 15px;"></i>
-                <p style="font-size: 0.9rem; margin: 0; font-weight: 600;">Utilice el buscador de la izquierda.</p>
-                <p style="font-size: 0.8rem; margin: 5px 0 0 0;">Seleccione el artículo, indique la cantidad y presione "Agregar a la lista" para formar el documento por lotes.</p>
-            </section>
-        </div>
+            <button class="btn-add" onclick="window.agregarAListaInv()">AGREGAR A LA LISTA</button>
+        </section>
 
         <!-- TABLA DE ITEMS PENDIENTES -->
         <section class="card border-amber">
@@ -132,7 +125,7 @@
                         <th style="padding:8px;">SKU</th>
                         <th>Producto</th>
                         <th>Stock Act.</th>
-                        <th>Operación / Cant.</th>
+                        <th>Cantidad Op.</th>
                         <th style="text-align: center;">Acción</th>
                     </tr>
                 </thead>
