@@ -17,6 +17,7 @@
             --sky: #0EA5E9;
             --rose: #F43F5E;
             --purple: #8B5CF6;
+            --teal: #14B8A6;
             --border: #E2E8F0;
         }
 
@@ -24,27 +25,20 @@
         .layout-width { width: 92%; max-width: 1200px; margin: 0 auto; box-sizing: border-box; }
 
         /* HEADER PANEL */
-        .header-panel { background: #ffffff; padding: 0 30px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; height: 80px; box-sizing: border-box; }
+        .header-panel { background: #ffffff; padding: 0 30px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; height: 80px; box-sizing: border-box; }
         .header-left { display: flex; align-items: center; gap: 20px; }
         .btn-back { background: #F1F5F9; color: var(--text-dark); padding: 8px 16px; border-radius: 12px; text-decoration: none; font-size: 0.8rem; font-weight: 700; border: 1px solid var(--border); display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
         .btn-back:hover { background: #E2E8F0; }
         .page-title { font-size: 1.4rem; font-weight: 700; margin: 0; }
         .logo-header { height: 90%; width: auto; object-fit: contain; }
 
-        /* REJILLA DE REPORTES */
-        .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 20px; }
-        .menu-card { background: #ffffff; border-radius: 14px; padding: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); border: 2px solid transparent; text-decoration: none; color: var(--text-dark); transition: 0.2s; }
-        .menu-card:hover { border-color: var(--sky); transform: translateY(-2px); }
-        .menu-card i { font-size: 1.5rem; margin-bottom: 10px; display: block; }
-        .menu-card span { font-weight: 700; display: block; text-transform: uppercase; font-size: 0.8rem; margin-bottom: 4px; }
-        .menu-card p { font-size: 0.7rem; color: var(--text-muted); margin: 0; }
-
-        /* PANEL GERENCIAL */
-        .gerencial-panel { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); border: 1px solid var(--border); }
-        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 15px; }
-        .metric-box { background: #F8FAFC; padding: 15px; border-radius: 10px; border: 1px solid #F1F5F9; }
-        .m-label { font-size: 0.65rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
-        .m-value { font-size: 1.2rem; font-weight: 800; display: block; margin-top: 5px; }
+        /* REJILLA DE REPORTES ORGANIZADA */
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+        .menu-card { background: #ffffff; border-radius: 14px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); border: 2px solid transparent; text-decoration: none; color: var(--text-dark); transition: all 0.2s ease-in-out; display: flex; flex-direction: column; justify-content: center; }
+        .menu-card:hover { border-color: var(--sky); transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.08); }
+        .menu-card i { font-size: 1.8rem; margin-bottom: 12px; display: block; }
+        .menu-card span { font-weight: 700; display: block; text-transform: uppercase; font-size: 0.85rem; margin-bottom: 6px; }
+        .menu-card p { font-size: 0.75rem; color: var(--text-muted); margin: 0; line-height: 1.4; }
     </style>
 
     <!-- Script para limpiar caché al regresar al menú principal -->
@@ -67,49 +61,56 @@
         </header>
 
         <div class="menu-grid">
-            <a href="sys_v4_cuadre.html" class="menu-card" style="border-left: 4px solid var(--sky);">
+            <!-- Cuadre de Caja -->
+            <a href="sys_v4_cuadre.html" class="menu-card" style="border-left: 5px solid var(--sky);">
                 <i class="fas fa-cash-register" style="color: var(--sky);"></i>
                 <span>Cuadre de Caja</span>
                 <p>Auditoría de ingresos por punto, efectivo y divisas.</p>
             </a>
-            <a href="sys_v3_rep_compras.html" class="menu-card" style="border-left: 4px solid var(--emerald);">
+
+            <!-- Reporte de Compras -->
+            <a href="sys_v3_rep_compras.html" class="menu-card" style="border-left: 5px solid var(--emerald);">
                 <i class="fas fa-shopping-cart" style="color: var(--emerald);"></i>
                 <span>Reporte de Compras</span>
                 <p>Histórico de facturas de mercancía e ingresos de mercancía.</p>
             </a>
-            <a href="#" class="menu-card" style="border-left: 4px solid var(--amber); cursor: default; opacity: 0.8;" onclick="event.preventDefault();">
-                <i class="fas fa-fire" style="color: var(--amber);"></i>
-                <span>Top Vendidos</span>
-                <p>Análisis de artículos con mayor rotación.</p>
+
+            <!-- NUEVO: Movimiento de Inventario -->
+            <a href="sys_v3_mov_inv.html" class="menu-card" style="border-left: 5px solid var(--teal);">
+                <i class="fas fa-exchange-alt" style="color: var(--teal);"></i>
+                <span>Movimiento de Inventario</span>
+                <p>Auditoría de entradas, salidas y ajustes manuales.</p>
             </a>
-            <a href="sys_v4_exist.html" class="menu-card" style="border-left: 4px solid var(--indigo);">
-                <i class="fas fa-warehouse" style="color: var(--indigo);"></i>
-                <span>Existencia</span>
-                <p>Stock valorizado y alertas de reposición.</p>
-            </a>
-            <a href="sys_v4_repvt.html" class="menu-card" style="border-left: 4px solid var(--rose);">
+
+            <!-- Reporte de Ventas -->
+            <a href="sys_v4_repvt.html" class="menu-card" style="border-left: 5px solid var(--rose);">
                 <i class="fas fa-chart-bar" style="color: var(--rose);"></i>
                 <span>Reporte de Ventas</span>
                 <p>Histórico detallado y análisis de transacciones.</p>
             </a>
-            <a href="sys_v4_listpro.html" class="menu-card" style="border-left: 4px solid var(--purple);">
+
+            <!-- Existencia -->
+            <a href="sys_v4_exist.html" class="menu-card" style="border-left: 5px solid var(--indigo);">
+                <i class="fas fa-warehouse" style="color: var(--indigo);"></i>
+                <span>Existencia</span>
+                <p>Stock valorizado y alertas de reposición.</p>
+            </a>
+
+            <!-- Info Productos -->
+            <a href="sys_v4_listpro.html" class="menu-card" style="border-left: 5px solid var(--purple);">
                 <i class="fas fa-boxes-stacked" style="color: var(--purple);"></i>
                 <span>Info Productos</span>
                 <p>Listado general y detalles técnicos de inventario.</p>
             </a>
-        </div>
 
-        <div class="gerencial-panel">
-            <h4 style="margin: 0 0 15px 0;"><i class="fas fa-chart-line" style="color:var(--emerald)"></i> Resumen Gerencial</h4>
-            <div class="metrics-grid">
-                <div class="metric-box"><span class="m-label">Inversión</span><span class="m-value" id="total-costo">$ 0.00</span></div>
-                <div class="metric-box"><span class="m-label">Venta Proy.</span><span class="m-value" id="total-venta">$ 0.00</span></div>
-                <div class="metric-box"><span class="m-label">Ganancia</span><span class="m-value" id="total-ganancia">$ 0.00</span></div>
-                <div class="metric-box"><span class="m-label">Items Totales</span><span class="m-value" id="total-items">0</span></div>
-            </div>
+            <!-- Top Vendidos -->
+            <a href="#" class="menu-card" style="border-left: 5px solid var(--amber); cursor: default; opacity: 0.8;" onclick="event.preventDefault();">
+                <i class="fas fa-fire" style="color: var(--amber);"></i>
+                <span>Top Vendidos</span>
+                <p>Análisis de artículos con mayor rotación.</p>
+            </a>
         </div>
     </main>
 
-    <script type="module" src="./js/sys_v4_reportes.js"></script>
 </body>
 </html>
