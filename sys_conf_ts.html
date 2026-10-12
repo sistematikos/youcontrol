@@ -55,7 +55,6 @@
         <div class="card-form">
             <label>Valor actual de la tasa ($):</label>
             <input type="number" id="inputTasa" step="0.01" placeholder="0.00">
-            <!-- Quitamos el onclick inline y dejamos un ID seguro -->
             <button class="btn-act" id="btnGuardarTasa">GUARDAR NUEVA TASA</button>
         </div>
     </main>
@@ -69,13 +68,18 @@
             window.location.href = "index.html";
         }
         
-        const tasaRef = doc(db, "usuarios", USER_ID); 
+        // Apuntamos a la colección centralizada 'empresas_config' que es donde residen los datos de los usuarios/empresas
+        const tasaRef = doc(db, "empresas_config", USER_ID); 
 
         async function cargarTasa() {
             try {
                 const snap = await getDoc(tasaRef);
-                if (snap.exists() && snap.data().tasa_bcv) {
-                    document.getElementById('inputTasa').value = snap.data().tasa_bcv;
+                if (snap.exists()) {
+                    const data = snap.data();
+                    const tasaValor = data.tasa_bcv || data.tasa || "";
+                    if (tasaValor) {
+                        document.getElementById('inputTasa').value = tasaValor;
+                    }
                 }
             } catch (error) {
                 console.error("Error al cargar tasa:", error);
@@ -92,16 +96,16 @@
 
             try {
                 await setDoc(tasaRef, { tasa_bcv: parseFloat(valor) }, { merge: true });
-                alert("Tasa guardada exitosamente.");
+                alert("¡Tasa guardada exitosamente!");
                 window.location.href = "sys_v1_menu.html?refresh=" + new Date().getTime();
             } catch (e) {
-                alert("Error: " + e.message);
+                console.error("Error detallado al guardar:", e);
+                alert("Error al guardar en Firebase: " + e.message);
                 btn.disabled = false;
                 btn.innerText = "GUARDAR NUEVA TASA";
             }
         }
 
-        // Vincular de forma segura el evento al botón
         document.getElementById('btnGuardarTasa').addEventListener('click', guardarTasa);
 
         cargarTasa();
