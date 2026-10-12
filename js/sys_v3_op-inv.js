@@ -1,10 +1,10 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * Módulo: Operaciones de Inventario unificado con Ficha de Producto, Bitácora y Correlativo Numérico (00001)
+ * Módulo: Operaciones de Inventario unificado con ID de documento personalizado (00001)
  */
 
 import { db } from './firebase-config.js';
-import { collection, getDocs, doc, setDoc, addDoc, Timestamp, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, getDocs, doc, setDoc, Timestamp, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // Obtenemos el ID de la empresa
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
@@ -111,7 +111,7 @@ window.cargarProductoInv = (id) => {
     if (campoCant) campoCant.focus();
 };
 
-// Obtener correlativo puramente numérico (ej: 00001) para el movimiento
+// Obtener el siguiente número correlativo secuencial
 async function obtenerSiguienteNroMovimiento() {
     try {
         const movRef = collection(db, "usuarios", USER_ID, "mov_inventario");
@@ -132,7 +132,7 @@ async function obtenerSiguienteNroMovimiento() {
     }
 }
 
-// Procesar Entrada / Salida / Ajuste y guardar en la bitácora "mov_inventario"
+// Procesar Entrada / Salida / Ajuste y guardar usando el número como ID del documento en Firestore
 window.procesarOperacionInventario = async function() {
     if (!productoSeleccionado) {
         alert("Por favor selecciona un producto registrado.");
@@ -157,16 +157,16 @@ window.procesarOperacionInventario = async function() {
     else if (tipoOp === 'AJUSTE') nuevoStock = cantidad;
 
     try {
-        // 1. Obtener correlativo numérico secuencial (ej: 1, 2, 3...)
+        // 1. Obtener correlativo numérico (1, 2, 3...)
         const correlativoNum = await obtenerSiguienteNroMovimiento();
         const nroMovimientoStr = String(correlativoNum).padStart(5, '0'); // Formato "00001"
 
-        // 2. Actualizar stock en productos
+        // 2. Actualizar stock en la colección de productos
         await setDoc(doc(db, "usuarios", USER_ID, "productos", productoSeleccionado.id), {
             stock: parseInt(nuevoStock)
         }, { merge: true });
 
-        // 3. Registrar el movimiento en la colección "mov_inventario"
+        // 3. Guardar el documento en "mov_inventario" usando "nroMovimientoStr" (00001) como ID de Firestore
         const movimientoData = {
             correlativo: correlativoNum,
             nro_movimiento: nroMovimientoStr,
@@ -182,9 +182,11 @@ window.procesarOperacionInventario = async function() {
             fecha: Timestamp.now()
         };
 
-        await addDoc(collection(db, "usuarios", USER_ID, "mov_inventario"), movimientoData);
+        // Usamos setDoc con el ID del documento establecido en "00001"
+        const docMovRef = doc(db, "usuarios", USER_ID, "mov_inventario", nroMovimientoStr);
+        await setDoc(docMovRef, movimientoData);
 
-        alert(`✅ Operación procesada con éxito.\nNro. Movimiento: ${nroMovimientoStr}`);
+        alert(`✅ Operación procesada con éxito.\nID Documento en Firebase: ${nroMovimientoStr}`);
         
         // Actualizar memoria local
         productoSeleccionado.stock = nuevoStock;
