@@ -27,7 +27,34 @@
         .btn-success { background: var(--success); }
         .btn-success:hover { background: #059669; }
         
+        /* BUSCADOR Y DESPLEGABLE FLOTANTE */
+        .search-wrapper { position: relative; width: 100%; }
         .search-container { display: flex; gap: 8px; margin-bottom: 15px; }
+        
+        #lista-resultados-busqueda {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 148px; /* Deja espacio para el botón Buscar */
+            background: white;
+            border: 2px solid #E2E8F0;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            max-height: 220px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .item-res-busqueda {
+            padding: 10px 14px;
+            cursor: pointer;
+            border-bottom: 1px solid #F1F5F9;
+            font-size: 0.85rem;
+        }
+        .item-res-busqueda:hover {
+            background: #F1F5F9;
+        }
         
         .result-box { margin-top: 20px; padding: 15px; background: #FFF; border: 2px dashed #CBD5E1; border-radius: 12px; display: none; position: relative; }
         textarea { width: 100%; height: 90px; border: none; background: #F8FAFC; padding: 8px; font-family: monospace; font-size: 0.75rem; resize: none; color: #475569; border-radius: 6px; box-sizing: border-box; }
@@ -43,13 +70,16 @@
         <h1><i class="fas fa-shield-alt"></i> Panel Maestro</h1>
         <p class="subtitle">Gestión de Empresas y Licencias (Sistematikos)</p>
 
-        <!-- BUSCADOR -->
-        <div class="search-container">
-            <input type="text" id="busquedaInput" placeholder="Buscar por ID de Licencia o Nombre de Empresa..." style="margin:0;">
-            <button class="btn-action" id="btnBuscar" style="width: 140px; margin:0;"><i class="fas fa-search"></i> Buscar</button>
+        <!-- BUSCADOR CON DESPLEGABLE DE COINCIDENCIAS -->
+        <div class="search-wrapper">
+            <div class="search-container">
+                <input type="text" id="busquedaInput" placeholder="Buscar por ID de Licencia o Nombre de Empresa..." autocomplete="off" style="margin:0;">
+                <button class="btn-action" id="btnBuscar" style="width: 140px; margin:0;"><i class="fas fa-search"></i> Buscar</button>
+            </div>
+            <div id="lista-resultados-busqueda"></div>
         </div>
 
-        <div style="text-align: center; margin-bottom: 15px;">
+        <div style="text-align: center; margin-bottom: 15px; margin-top: 10px;">
             <button class="btn-action btn-success" id="btnNuevo" style="display:inline-block; width: auto; padding: 10px 20px;"><i class="fas fa-plus-circle"></i> Generar Nueva Licencia / Empresa</button>
         </div>
 
@@ -106,7 +136,7 @@
             </div>
         </div>
 
-        <!-- NUEVA SECCIÓN: CONFIGURACIÓN FIREBASE INDEPENDIENTE (OPCIONAL) -->
+        <!-- SECCIÓN: CONFIGURACIÓN FIREBASE INDEPENDIENTE (OPCIONAL) -->
         <div class="section-box" style="border: 1px dashed var(--accent);">
             <div class="section-title" style="color: var(--accent);"><i class="fas fa-database"></i> Base de Datos Firebase Independiente (Opcional)</div>
             <p style="font-size: 0.75rem; color: #64748B; margin-top: 0; margin-bottom: 12px;">Si dejas estos campos vacíos, la empresa utilizará la base de datos principal compartida por defecto (ideal para tus 3 empresas actuales).</p>
@@ -148,7 +178,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAMkpj9tFps526mL6hO-ciePWrTdx_NK9Q", 
@@ -161,6 +191,19 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+
+        let cacheEmpresas = [];
+
+        // Cargar todas las empresas al iniciar para agilizar la búsqueda interactiva
+        async function cargarCacheEmpresas() {
+            try {
+                const snap = await getDocs(collection(db, "empresas_config"));
+                cacheEmpresas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            } catch (e) {
+                console.error("Error al precargar empresas:", e);
+            }
+        }
+        cargarCacheEmpresas();
 
         function llenarFormulario(id, data, licenciaData = null) {
             document.getElementById('empresaID').value = id;
@@ -197,6 +240,64 @@
             document.getElementById('status').innerText = "✅ Datos y licencia cargados correctamente.";
         }
 
+        // Evento de escritura en el buscador para desplegar coincidencias en tiempo real
+        const inputBusqueda = document.getElementById('busquedaInput');
+        const listaResultados = document.getElementById('lista-resultados-busqueda');
+
+        inputBusqueda.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase().trim();
+            if (term.length === 0) {
+                listaResultados.style.display = 'none';
+                return;
+            }
+
+            // Filtrar coincidencias por nombre o por ID que contengan el texto escrito
+            const filtrados = cacheEmpresas.filter(emp => 
+                (emp.nombre && emp.nombre.toLowerCase().includes(term)) ||
+                (emp.id && emp.id.toLowerCase().includes(term)) ||
+                (emp.rif && emp.rif.toLowerCase().includes(term))
+            );
+
+            if (filtrados.length > 0) {
+                listaResultados.style.display = 'block';
+                listaResultados.innerHTML = filtrados.map(emp => `
+                    <div class="item-res-busqueda" onclick="window.seleccionarEmpresaBusqueda('${emp.id}')">
+                        <strong>${emp.nombre || 'Sin Nombre'}</strong><br>
+                        <small style="color: #64748B;">ID: ${emp.id} | RIF: ${emp.rif || 'N/A'}</small>
+                    </div>
+                `).join('');
+            } else {
+                listaResultados.style.display = 'block';
+                listaResultados.innerHTML = `<div style="padding: 10px; color: #94A3B8; font-size: 0.85rem;">No se encontraron empresas coincidentes.</div>`;
+            }
+        });
+
+        // Función global para seleccionar una empresa del menú desplegable
+        window.seleccionarEmpresaBusqueda = async (id) => {
+            listaResultados.style.display = 'none';
+            inputBusqueda.value = id;
+
+            try {
+                const docEmpresaSnap = await getDoc(doc(db, "empresas_config", id));
+                const docLicenciaSnap = await getDoc(doc(db, "licencias", id));
+
+                const dataEmpresa = docEmpresaSnap.exists() ? docEmpresaSnap.data() : {};
+                const dataLicencia = docLicenciaSnap.exists() ? docLicenciaSnap.data() : {};
+
+                const dataFinal = { ...dataLicencia, ...dataEmpresa };
+                llenarFormulario(id, dataFinal, dataLicencia);
+            } catch (e) {
+                alert("Error al cargar los datos de la empresa: " + e.message);
+            }
+        };
+
+        // Ocultar desplegable al hacer clic fuera
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.search-wrapper')) {
+                listaResultados.style.display = 'none';
+            }
+        });
+
         // Botón Nuevo Registro
         document.getElementById('btnNuevo').addEventListener('click', () => {
             document.getElementById('empresaID').value = "";
@@ -211,57 +312,22 @@
             document.getElementById('fbAppId').value = "";
             document.getElementById('previewLogo').style.display = 'none';
             document.getElementById('resultBox').style.display = 'none';
+            inputBusqueda.value = "";
             document.getElementById('status').innerText = "✨ Escriba el ID de activación y sus datos.";
         });
 
-        // Botón Buscar (Por UID exacto o por Nombre de Empresa)
+        // Botón Buscar manual
         document.getElementById('btnBuscar').addEventListener('click', async () => {
-            const busqueda = document.getElementById('busquedaInput').value.trim();
+            const busqueda = inputBusqueda.value.trim();
             if (!busqueda) return alert("Escribe un ID o Nombre de empresa para buscar.");
             
-            try {
-                let empresaIdEncontrado = null;
-                let dataEmpresaFinal = null;
-                let dataLicenciaFinal = null;
+            listaResultados.style.display = 'none';
+            const coincidencia = cacheEmpresas.find(emp => emp.id.toLowerCase() === busqueda.toLowerCase() || (emp.nombre && emp.nombre.toLowerCase().includes(busqueda.toLowerCase())));
 
-                // 1. Intentar buscar directamente por ID exacto (UID)
-                const docEmpresaSnap = await getDoc(doc(db, "empresas_config", busqueda));
-
-                if (docEmpresaSnap.exists()) {
-                    empresaIdEncontrado = busqueda;
-                    dataEmpresaFinal = docEmpresaSnap.data();
-                    
-                    const docLicenciaSnap = await getDoc(doc(db, "licencias", busqueda));
-                    if (docLicenciaSnap.exists()) {
-                        dataLicenciaFinal = docLicenciaSnap.data();
-                    }
-                } else {
-                    // 2. Si no existe por UID exacto, buscar por Nombre de Empresa
-                    const empresasRef = collection(db, "empresas_config");
-                    const q = query(empresasRef, where("nombre", ">=", busqueda), where("nombre", "<=", busqueda + "\uf8ff"));
-                    const querySnapshot = await getDocs(q);
-
-                    if (!querySnapshot.empty) {
-                        const primerDoc = querySnapshot.docs[0];
-                        empresaIdEncontrado = primerDoc.id;
-                        dataEmpresaFinal = primerDoc.data();
-
-                        const docLicenciaSnap = await getDoc(doc(db, "licencias", empresaIdEncontrado));
-                        if (docLicenciaSnap.exists()) {
-                            dataLicenciaFinal = docLicenciaSnap.data();
-                        }
-                    }
-                }
-
-                if (empresaIdEncontrado && dataEmpresaFinal) {
-                    const dataFinal = { ...(dataLicenciaFinal || {}), ...dataEmpresaFinal };
-                    llenarFormulario(empresaIdEncontrado, dataFinal, dataLicenciaFinal);
-                } else {
-                    alert("No se encontró ninguna empresa ni licencia con ese ID o Nombre.");
-                }
-
-            } catch (e) {
-                alert("Error en la búsqueda: " + e.message);
+            if (coincidencia) {
+                window.seleccionarEmpresaBusqueda(coincidencia.id);
+            } else {
+                alert("No se encontró ninguna empresa con ese criterio exacto. Selecciona una de la lista desplegable.");
             }
         });
 
@@ -333,6 +399,9 @@
                         limite: limite
                     }, { merge: true });
                 }
+
+                // Actualizar caché local
+                cargarCacheEmpresas();
 
                 document.getElementById('tokenResult').value = tokenBase64;
                 document.getElementById('resultBox').style.display = 'block';
