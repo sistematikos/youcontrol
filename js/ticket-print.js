@@ -1,12 +1,12 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * Módulo de Impresión de Tickets Térmicos Multiconexión (USB / Bluetooth) (ticket-print.js)
+ * Módulo de Impresión de Tickets Térmicos Multiconexión Independiente (ticket-print.js)
  */
 
 import { db } from './firebase-config.js';
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Cache para mantener viva la conexión Bluetooth en Android sin reconectar en cada venta
+// Cache para mantener viva la conexión Bluetooth en este dispositivo Android
 let bluetoothDeviceCache = null;
 let bluetoothServerCache = null;
 
@@ -23,7 +23,6 @@ export async function imprimirTicketVenta(userId, ventaData) {
         
         let configTicket = {
             imprimir_automatico: true,
-            tipo_conexion: "usb", // "usb" o "bluetooth"
             ancho_mm: "80",
             pie_pagina: "¡Gracias por su compra!",
             nombre_negocio: "CARNES TORACA C.A.",
@@ -36,7 +35,6 @@ export async function imprimirTicketVenta(userId, ventaData) {
             if (data.config_ticket) {
                 configTicket = { ...configTicket, ...data.config_ticket };
             }
-            // Respaldo por si los datos están en la raíz del documento del usuario
             if (!configTicket.nombre_negocio && (data.nombre || data.nombre_empresa)) {
                 configTicket.nombre_negocio = data.nombre_empresa || data.nombre;
             }
@@ -50,8 +48,15 @@ export async function imprimirTicketVenta(userId, ventaData) {
 
         if (configTicket.imprimir_automatico === false) return;
 
-        // 2. Evaluar tipo de conexión configurado
-        if (configTicket.tipo_conexion === "bluetooth") {
+        // 2. Determinar el tipo de conexión local de ESTE dispositivo (PC = usb, Android = bluetooth)
+        let tipoConexion = localStorage.getItem('youcontrol_tipo_conexion');
+        if (!tipoConexion && configTicket.tipo_conexion) {
+            tipoConexion = configTicket.tipo_conexion;
+        }
+        tipoConexion = tipoConexion || "usb";
+
+        // 3. Ejecutar según corresponda
+        if (tipoConexion === "bluetooth") {
             await imprimirPorBluetooth(ventaData, configTicket);
         } else {
             imprimirPorUSB(ventaData, configTicket);
@@ -68,7 +73,6 @@ function imprimirPorUSB(ventaData, configTicket) {
     const fechaFormateada = ventaData.fecha?.toDate ? ventaData.fecha.toDate().toLocaleString('es-VE') : new Date().toLocaleString('es-VE');
     const tasa = ventaData.tasa_aplicada || 1;
 
-    // Construir líneas de productos 100% en Bs.
     let htmlItems = '';
     let totalUSD = ventaData.total_usd || 0;
 
@@ -93,7 +97,6 @@ function imprimirPorUSB(ventaData, configTicket) {
 
     const totalBs = totalUSD * tasa;
 
-    // Crear iframe oculto para impresión aislada sin bloquear la cola de Windows
     const iframeId = 'iframe-print-ticket';
     let iframe = document.getElementById(iframeId);
     if (iframe) iframe.remove();
@@ -132,7 +135,6 @@ function imprimirPorUSB(ventaData, configTicket) {
             </style>
         </head>
         <body>
-            <!-- ENCABEZADO -->
             <div class="centro negrita" style="font-size: 11px;">SISTEMA YOU CONTROL</div>
             <div class="centro negrita" style="font-size: 13px; margin-top: 3px;">${(configTicket.nombre_negocio || 'YOU CONTROL').toUpperCase()}</div>
             ${configTicket.telefono ? `<div class="centro">Tel: ${configTicket.telefono}</div>` : ''}
@@ -141,12 +143,11 @@ function imprimirPorUSB(ventaData, configTicket) {
             <div class="linea"></div>
             <div class="centro negrita">FACTURA NRO: ${ventaData.nro_factura}</div>
             <div class="centro">CLIENTE: ${ventaData.nombre_cliente || 'Anónimo'}</div>
-            <div class="centro" style="font-size: 9px;">FECHA: ${ventaData.fecha?.toDate ? ventaData.fecha.toDate().toLocaleString('es-VE') : new Date().toLocaleString('es-VE')}</div>
+            <div class="centro" style="font-size: 9px;">FECHA: ${fechaFormateada}</div>
             
             <div class="centro" style="margin: 4px 0;">&nbsp;</div>
             <div class="centro">--------------------------------</div>
             
-            <!-- DETALLE DE PRODUCTOS 100% EN BS -->
             <table>
                 <thead>
                     <tr>
@@ -160,18 +161,12 @@ function imprimirPorUSB(ventaData, configTicket) {
             </table>
             
             <div class="centro" style="margin: 4px 0;">--------------------------------</div>
-            
-            <!-- TOTAL A PAGAR EN BS -->
             <div class="derecha negrita" style="font-size: 13px; margin-top: 4px;">TOTAL A PAGAR: Bs. ${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-            
             <div class="centro" style="margin: 4px 0;">--------------------------------</div>
             
-            <!-- PIE DE PÁGINA Y MARCA AL FINAL -->
             <div class="centro" style="margin-top: 6px;">${configTicket.pie_pagina || '¡Gracias por su compra!'}</div>
             <div class="centro" style="margin: 6px 0;">&nbsp;</div>
             <div class="centro negrita" style="font-size: 10px;">SISTEMA YOU CONTROL</div>
-            
-            <!-- MARGEN EXTRA AL FINAL -->
             <div style="margin-bottom: 15px;">&nbsp;</div>
         </body>
         </html>
@@ -192,7 +187,6 @@ async function imprimirPorBluetooth(ventaData, configTicket) {
     }
 
     try {
-        // Conectar o reusar conexión Bluetooth
         if (!bluetoothServerCache || !bluetoothDeviceCache?.gatt?.connected) {
             bluetoothDeviceCache = await navigator.bluetooth.requestDevice({
                 acceptAllDevices: true,
@@ -205,7 +199,6 @@ async function imprimirPorBluetooth(ventaData, configTicket) {
             bluetoothServerCache = await bluetoothDeviceCache.gatt.connect();
         }
 
-        // Buscar el servicio de escritura ESC/POS de la impresora
         const serviceUuids = [
             '000018f0-0000-1000-8000-00805f9b34fb', 
             'e7810a71-73ae-499d-8c15-faa9aef0c3f2', 
@@ -219,27 +212,23 @@ async function imprimirPorBluetooth(ventaData, configTicket) {
                 const characteristics = await service.getCharacteristics();
                 targetCharacteristic = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
                 if (targetCharacteristic) break;
-            } catch (err) {
-                // Probar siguiente UUID de servicio estándar
-            }
+            } catch (err) {}
         }
 
         if (!targetCharacteristic) {
             throw new Error("No se encontró una característica de escritura ESC/POS compatible.");
         }
 
-        // Armar flujo de bytes ESC/POS
         const encoder = new TextEncoder();
         let comandos = [];
 
-        comandos.push(27, 64); // Inicializar impresora ESC/POS
-        comandos.push(27, 97, 1); // Centrar alineación
+        comandos.push(27, 64); 
+        comandos.push(27, 97, 1); 
 
-        // Encabezado
         comandos.push(...encoder.encode("SISTEMA YOU CONTROL\n"));
-        comandos.push(27, 33, 8); // Negrita activada
+        comandos.push(27, 33, 8); 
         comandos.push(...encoder.encode(`${(configTicket.nombre_negocio || 'YOU CONTROL').toUpperCase()}\n`));
-        comandos.push(27, 33, 0); // Desactivar negrita
+        comandos.push(27, 33, 0); 
 
         if (configTicket.telefono) comandos.push(...encoder.encode(`Tel: ${configTicket.telefono}\n`));
         if (configTicket.direccion) comandos.push(...encoder.encode(`${configTicket.direccion}\n`));
@@ -251,7 +240,6 @@ async function imprimirPorBluetooth(ventaData, configTicket) {
         comandos.push(...encoder.encode(`FECHA: ${fechaStr}\n`));
         comandos.push(...encoder.encode("--------------------------------\n"));
 
-        // Productos
         const tasa = ventaData.tasa_aplicada || 1;
         let totalUSD = ventaData.total_usd || 0;
 
@@ -272,18 +260,16 @@ async function imprimirPorBluetooth(ventaData, configTicket) {
 
         comandos.push(...encoder.encode("--------------------------------\n"));
 
-        // Total
         const totalBs = totalUSD * tasa;
-        comandos.push(27, 33, 16); // Texto doble alto / ancho
+        comandos.push(27, 33, 16); 
         comandos.push(...encoder.encode(`TOTAL: Bs.${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2})}\n`));
         comandos.push(27, 33, 0);
 
         comandos.push(...encoder.encode("--------------------------------\n"));
-        comandos.push(27, 97, 1); // Centrar
+        comandos.push(27, 97, 1); 
         comandos.push(...encoder.encode(`${configTicket.pie_pagina || '¡Gracias por su compra!'}\n\n`));
-        comandos.push(...encoder.encode("SISTEMA YOU CONTROL\n\n\n")); // Salto de margen final
+        comandos.push(...encoder.encode("SISTEMA YOU CONTROL\n\n\n")); 
 
-        // Enviar datos en fragmentos para evitar saturación de buffer Bluetooth
         const byteArray = new Uint8Array(comandos);
         const chunkSize = 512;
         for (let i = 0; i < byteArray.length; i += chunkSize) {
