@@ -108,8 +108,6 @@ async function verificarEImprimirTicket(nroFactura, ventaData) {
             const userData = userDoc.data();
             configTicket = userData.config_ticket || {};
             
-            // Tomamos los datos personalizados de la configuración del ticket, 
-            // con respaldo a los datos generales del usuario si estuvieran ahí
             empresaNombre = configTicket.nombre_negocio || userData.nombre || "YOU CONTROL";
             empresaTelefono = configTicket.telefono || userData.telefono || "";
             empresaDireccion = configTicket.direccion || userData.direccion || "";
@@ -175,7 +173,6 @@ async function verificarEImprimirTicket(nroFactura, ventaData) {
                 </style>
             </head>
             <body>
-                <!-- ENCABEZADO PERSONALIZADO -->
                 <div class="text-center bold" style="font-size: 13px;">${empresaNombre.toUpperCase()}</div>
                 ${empresaTelefono ? `<div class="text-center">Tel: ${empresaTelefono}</div>` : ''}
                 ${empresaDireccion ? `<div class="text-center" style="font-size: 9px; margin-top: 2px;">${empresaDireccion}</div>` : ''}
@@ -187,7 +184,6 @@ async function verificarEImprimirTicket(nroFactura, ventaData) {
                 <div class="text-center" style="margin: 4px 0;">&nbsp;</div>
                 <div class="text-center">--------------------------------</div>
                 
-                <!-- DETALLE DE PRODUCTOS -->
                 <table>
                     <thead>
                         <tr>
@@ -202,17 +198,14 @@ async function verificarEImprimirTicket(nroFactura, ventaData) {
                 
                 <div class="text-center" style="margin: 4px 0;">--------------------------------</div>
                 
-                <!-- TOTAL A PAGAR -->
                 <div class="text-right bold" style="font-size: 13px; margin-top: 4px;">TOTAL A PAGAR: Bs. ${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                 
                 <div class="text-center" style="margin: 4px 0;">--------------------------------</div>
                 
-                <!-- PIE DE PÁGINA Y MARCA -->
                 <div class="text-center" style="margin-top: 6px;">${piePag}</div>
                 <div class="text-center" style="margin: 6px 0;">&nbsp;</div>
                 <div class="text-center bold" style="font-size: 10px;">SISTEMA YOU CONTROL</div>
                 
-                <!-- MARGEN EXTRA AL FINAL -->
                 <div style="margin-bottom: 15px;">&nbsp;</div>
             </body>
             </html>
@@ -231,6 +224,85 @@ async function verificarEImprimirTicket(nroFactura, ventaData) {
     }
 }
 
+// --- FUNCIÓN DE REGISTRO DE VENTA Y COBRO ---
+async function registrarVenta() {
+    if (!window.carrito || window.carrito.length === 0) {
+        alert("El carrito está vacío. Agregue productos antes de cobrar.");
+        return;
+    }
+
+    const btnConfirmar = document.getElementById('btn-confirmar-venta');
+    if (btnConfirmar) {
+        btnConfirmar.disabled = true;
+        btnConfirmar.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Procesando...`;
+    }
+
+    try {
+        const nroFactura = await obtenerSiguienteNumero(USER_ID);
+
+        const pagoPunto = parseFloat(document.getElementById('in-punto-bs')?.value) || 0;
+        const pagoMovil = parseFloat(document.getElementById('in-pagomovil-bs')?.value) || 0;
+        const pagoEfectivoBs = parseFloat(document.getElementById('in-efectivo-bs')?.value) || 0;
+        const pagoDivisas = parseFloat(document.getElementById('in-divisas-usd')?.value) || 0;
+        const pagoCredito = parseFloat(document.getElementById('in-credito-usd')?.value) || 0;
+
+        const totalUSD = window.totalVentaUSD || 0;
+
+        const ventaData = {
+            nro_factura: nroFactura,
+            cliente_id: window.clienteSeleccionadoID || "general",
+            nombre_cliente: window.nombreClienteSeleccionado || "Cliente General",
+            items: window.carrito.map(i => ({
+                id: i.id,
+                nombre: i.nombre,
+                cantidad: i.cantidad,
+                precio: i.precio || 0
+            })),
+            total_usd: totalUSD,
+            tasa_aplicada: tasaActual,
+            pagos: {
+                punto_bs: pagoPunto,
+                pagomovil_bs: pagoMovil,
+                efectivo_bs: pagoEfectivoBs,
+                divisas_usd: pagoDivisas,
+                credito_usd: pagoCredito
+            },
+            fecha: serverTimestamp()
+        };
+
+        await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
+
+        const modalPago = document.getElementById('modalPago');
+        if (modalPago) modalPago.style.display = 'none';
+
+        window.carrito = [];
+        if (typeof window.actualizarCarritoUI === 'function') {
+            window.actualizarCarritoUI();
+        }
+
+        ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd', 'in-credito-usd'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = 0;
+        });
+
+        alert(`¡Venta registrada con éxito! Factura #${nroFactura}`);
+
+        await verificarEImprimirTicket(nroFactura, ventaData);
+
+    } catch (e) {
+        console.error("Error al registrar la venta:", e);
+        alert("Hubo un error al procesar la venta: " + e.message);
+    } finally {
+        if (btnConfirmar) {
+            btnConfirmar.disabled = false;
+            btnConfirmar.innerHTML = `CONFIRMAR VENTA`;
+        }
+    }
+}
+
+// EXPONER LA FUNCIÓN GLOBALMENTE PARA QUE EL BOTÓN HTML Y F9 LA RECONOZCAN
+window.registrarVenta = registrarVenta;
+
 window.abrirModalReimpresion = async () => {
     const modal = document.getElementById('modalBuscarFactura');
     if (modal) modal.style.display = 'flex';
@@ -244,7 +316,6 @@ async function cargarFacturasDelDia() {
     contenedor.innerHTML = `<div style="text-align:center; padding:20px; color:#64748b;">Cargando facturas...</div>`;
 
     try {
-        // Obtenemos las ventas (puedes filtrar por fecha o traer las últimas 50 del día)
         const ventasRef = collection(db, "usuarios", USER_ID, "ventas");
         const q = query(ventasRef, orderBy("fecha", "desc"), limit(50));
         const snapshot = await getDocs(q);
@@ -261,7 +332,6 @@ async function cargarFacturasDelDia() {
 
         renderizarListaFacturas(ventasList);
 
-        // Configurar buscador en tiempo real dentro del modal
         const inputBuscar = document.getElementById('input-buscar-factura');
         inputBuscar.oninput = (e) => {
             const texto = e.target.value.toLowerCase().trim();
@@ -316,7 +386,6 @@ window.reimprimirFacturaSeleccionada = async (ventaId) => {
         const ventaData = ventaSnap.data();
         await verificarEImprimirTicket(ventaData.nro_factura, ventaData);
         
-        // Opcional: cerrar modal al imprimir
         document.getElementById('modalBuscarFactura').style.display = 'none';
 
     } catch (err) {
@@ -476,99 +545,6 @@ function initLogicaPagos() {
     });
 }
 
-// --- FUNCIÓN DE REGISTRO DE VENTA Y COBRO ---
-async function registrarVenta() {
-    if (!window.carrito || window.carrito.length === 0) {
-        alert("El carrito está vacío. Agregue productos antes de cobrar.");
-        return;
-    }
-
-    const btnConfirmar = document.getElementById('btn-confirmar-venta');
-    if (btnConfirmar) {
-        btnConfirmar.disabled = true;
-        btnConfirmar.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Procesando...`;
-    }
-
-    try {
-        // 1. Obtener siguiente número de factura correlativo
-        const contadorRef = doc(db, "usuarios", USER_ID, "config", "contador_facturas");
-        const nroFactura = await runTransaction(db, async (transaction) => {
-            const sfDoc = await transaction.get(contadorRef);
-            let nuevoValor = sfDoc.exists() ? sfDoc.data().ultimo + 1 : 1;
-            transaction.set(contadorRef, { ultimo: nuevoValor });
-            return nuevoValor.toString().padStart(6, '0');
-        });
-
-        // 2. Recolectar montos de pago del modal
-        const pagoPunto = parseFloat(document.getElementById('in-punto-bs')?.value) || 0;
-        const pagoMovil = parseFloat(document.getElementById('in-pagomovil-bs')?.value) || 0;
-        const pagoEfectivoBs = parseFloat(document.getElementById('in-efectivo-bs')?.value) || 0;
-        const pagoDivisas = parseFloat(document.getElementById('in-divisas-usd')?.value) || 0;
-        const pagoCredito = parseFloat(document.getElementById('in-credito-usd')?.value) || 0;
-
-        const totalUSD = window.totalVentaUSD || 0;
-
-        // 3. Estructurar el objeto de la venta
-        const ventaData = {
-            nro_factura: nroFactura,
-            cliente_id: window.clienteSeleccionadoID || "general",
-            nombre_cliente: window.nombreClienteSeleccionado || "Cliente General",
-            items: window.carrito.map(i => ({
-                id: i.id,
-                nombre: i.nombre,
-                cantidad: i.cantidad,
-                precio: i.precio || 0
-            })),
-            total_usd: totalUSD,
-            tasa_aplicada: tasaActual,
-            pagos: {
-                punto_bs: pagoPunto,
-                pagomovil_bs: pagoMovil,
-                efectivo_bs: pagoEfectivoBs,
-                divisas_usd: pagoDivisas,
-                credito_usd: pagoCredito
-            },
-            fecha: serverTimestamp()
-        };
-
-        // 4. Guardar venta en Firestore
-        await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
-
-        // 5. Cerrar modal de pago y limpiar carrito
-        const modalPago = document.getElementById('modalPago');
-        if (modalPago) modalPago.style.display = 'none';
-
-        window.carrito = [];
-        if (typeof window.actualizarCarritoUI === 'function') {
-            window.actualizarCarritoUI();
-        }
-
-        // Resentir campos del modal
-        ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd', 'in-credito-usd'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.value = 0;
-        });
-
-        alert(`¡Venta registrada con éxito! Factura #${nroFactura}`);
-
-        // 6. Invocar la impresión automática (Soporta USB y Bluetooth según el dispositivo)
-        await verificarEImprimirTicket(nroFactura, ventaData);
-
-    } catch (e) {
-        console.error("Error al registrar la venta:", e);
-        alert("Hubo un error al procesar la venta: " + e.message);
-    } finally {
-        if (btnConfirmar) {
-            btnConfirmar.disabled = false;
-            btnConfirmar.innerHTML = `CONFIRMAR VENTA`;
-        }
-    }
-}
-
-// EXPONER LA FUNCIÓN GLOBALMENTE PARA QUE EL BOTÓN HTML Y F9 LA RECONOZCAN
-window.registrarVenta = registrarVenta;
-
-// --- ACTUALIZAR CARRITO UI EN UNA SOLA LÍNEA CON PRECIO EN BS ---
 window.actualizarCarritoUI = () => {
     const contenedor = document.getElementById('lista-carrito');
     if (!contenedor) return;
