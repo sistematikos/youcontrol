@@ -1,23 +1,16 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * Módulo de Impresión de Tickets Térmicos Multiconexión Independiente (ticket-print.js)
+ * Módulo de Impresión de Tickets Térmicos (ticket-print.js)
  */
 
 import { db } from './firebase-config.js';
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Cache para mantener viva la conexión Bluetooth en este dispositivo Android
 let bluetoothDeviceCache = null;
 let bluetoothServerCache = null;
 
-/**
- * Genera e imprime el ticket de venta adaptado a 80mm o 58mm 100% en Bolívares
- * @param {string} userId ID del usuario/empresa
- * @param {Object} ventaData Datos completos de la venta recién registrada
- */
 export async function imprimirTicketVenta(userId, ventaData) {
     try {
-        // 1. Obtener datos de la empresa y configuración de la tickera desde Firebase
         const userDocRef = doc(db, "usuarios", userId);
         const userSnap = await getDoc(userDocRef);
         
@@ -48,14 +41,9 @@ export async function imprimirTicketVenta(userId, ventaData) {
 
         if (configTicket.imprimir_automatico === false) return;
 
-        // 2. Determinar el tipo de conexión local de ESTE dispositivo (PC = usb, Android = bluetooth)
-        let tipoConexion = localStorage.getItem('youcontrol_tipo_conexion');
-        if (!tipoConexion && configTicket.tipo_conexion) {
-            tipoConexion = configTicket.tipo_conexion;
-        }
-        tipoConexion = tipoConexion || "usb";
+        // Forzar lectura robusta de la conexión desde localStorage o Firebase
+        const tipoConexion = localStorage.getItem('youcontrol_tipo_conexion') || configTicket.tipo_conexion || "usb";
 
-        // 3. Ejecutar según corresponda
         if (tipoConexion === "bluetooth") {
             await imprimirPorBluetooth(ventaData, configTicket);
         } else {
@@ -67,12 +55,11 @@ export async function imprimirTicketVenta(userId, ventaData) {
     }
 }
 
-// --- MÉTODO A: IMPRESIÓN VÍA IFRAME PARA USB / PC ---
+// --- IMPRESIÓN USB (PC) ---
 function imprimirPorUSB(ventaData, configTicket) {
-    const anchoMM = configTicket.ancho_mm || "80"; // "58" o "80"
+    const anchoMM = configTicket.ancho_mm || "80";
     const fechaFormateada = ventaData.fecha?.toDate ? ventaData.fecha.toDate().toLocaleString('es-VE') : new Date().toLocaleString('es-VE');
     const tasa = ventaData.tasa_aplicada || 1;
-
     let htmlItems = '';
     let totalUSD = ventaData.total_usd || 0;
 
@@ -82,7 +69,6 @@ function imprimirPorUSB(ventaData, configTicket) {
             const precioUSD = item.precio || 0;
             const precioBs = precioUSD * tasa;
             const subtotalBs = cant * precioBs;
-
             htmlItems += `
                 <tr>
                     <td colspan="2" style="font-weight: bold; padding-top: 3px;">${item.nombre || 'Producto'}</td>
@@ -96,7 +82,6 @@ function imprimirPorUSB(ventaData, configTicket) {
     }
 
     const totalBs = totalUSD * tasa;
-
     const iframeId = 'iframe-print-ticket';
     let iframe = document.getElementById(iframeId);
     if (iframe) iframe.remove();
@@ -120,10 +105,7 @@ function imprimirPorUSB(ventaData, configTicket) {
             <meta charset="UTF-8">
             <title>Ticket #${ventaData.nro_factura}</title>
             <style>
-                @page {
-                    size: ${anchoMM === '58' ? '58mm auto' : '80mm auto'};
-                    margin: 0;
-                }
+                @page { size: ${anchoMM === '58' ? '58mm auto' : '80mm auto'}; margin: 0; }
                 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; }
                 body { background: #fff; color: #000; font-size: ${anchoMM === '58' ? '10px' : '12px'}; line-height: 1.2; width: ${anchoMM === '58' ? '58mm' : '80mm'}; margin: 0; padding: 4px; }
                 .centro { text-align: center; }
@@ -179,15 +161,16 @@ function imprimirPorUSB(ventaData, configTicket) {
     }, 400);
 }
 
-// --- MÉTODO B: IMPRESIÓN POR WEB BLUETOOTH API PARA ANDROID ---
-async function imprimirPorBluetooth(ventaData, configTicket) {
+// --- IMPRESIÓN BLUETOOTH (ANDROID) ---
+export async function imprimirPorBluetooth(ventaData = null, configTicket = null) {
     if (!navigator.bluetooth) {
-        alert("Tu navegador no soporta la Web Bluetooth API. Asegúrate de usar Google Chrome en Android.");
+        alert("Tu navegador no soporta Bluetooth Web. Usa Google Chrome actualizado en Android.");
         return;
     }
 
     try {
         if (!bluetoothServerCache || !bluetoothDeviceCache?.gatt?.connected) {
+            // Se abre la ventana nativa de Android para buscar dispositivos Bluetooth cercanos
             bluetoothDeviceCache = await navigator.bluetooth.requestDevice({
                 acceptAllDevices: true,
                 optionalServices: [
@@ -216,7 +199,13 @@ async function imprimirPorBluetooth(ventaData, configTicket) {
         }
 
         if (!targetCharacteristic) {
-            throw new Error("No se encontró una característica de escritura ESC/POS compatible.");
+            throw new Error("No se encontró la característica de escritura ESC/POS en esta impresora.");
+        }
+
+        // Si se llama solo para probar conexión sin datos de venta
+        if (!ventaData) {
+            alert("¡Impresora Bluetooth conectada y vinculada exitosamente!");
+            return;
         }
 
         const encoder = new TextEncoder();
@@ -227,11 +216,11 @@ async function imprimirPorBluetooth(ventaData, configTicket) {
 
         comandos.push(...encoder.encode("SISTEMA YOU CONTROL\n"));
         comandos.push(27, 33, 8); 
-        comandos.push(...encoder.encode(`${(configTicket.nombre_negocio || 'YOU CONTROL').toUpperCase()}\n`));
+        comandos.push(...encoder.encode(`${(configTicket?.nombre_negocio || 'YOU CONTROL').toUpperCase()}\n`));
         comandos.push(27, 33, 0); 
 
-        if (configTicket.telefono) comandos.push(...encoder.encode(`Tel: ${configTicket.telefono}\n`));
-        if (configTicket.direccion) comandos.push(...encoder.encode(`${configTicket.direccion}\n`));
+        if (configTicket?.telefono) comandos.push(...encoder.encode(`Tel: ${configTicket.telefono}\n`));
+        if (configTicket?.direccion) comandos.push(...encoder.encode(`${configTicket.direccion}\n`));
 
         comandos.push(...encoder.encode("--------------------------------\n"));
         comandos.push(...encoder.encode(`FACTURA NRO: ${ventaData.nro_factura}\n`));
@@ -267,7 +256,7 @@ async function imprimirPorBluetooth(ventaData, configTicket) {
 
         comandos.push(...encoder.encode("--------------------------------\n"));
         comandos.push(27, 97, 1); 
-        comandos.push(...encoder.encode(`${configTicket.pie_pagina || '¡Gracias por su compra!'}\n\n`));
+        comandos.push(...encoder.encode(`${configTicket?.pie_pagina || '¡Gracias por su compra!'}\n\n`));
         comandos.push(...encoder.encode("SISTEMA YOU CONTROL\n\n\n")); 
 
         const byteArray = new Uint8Array(comandos);
@@ -279,6 +268,6 @@ async function imprimirPorBluetooth(ventaData, configTicket) {
 
     } catch (err) {
         console.error("Error al imprimir por Bluetooth:", err);
-        alert("No se pudo enviar la orden a la impresora Bluetooth: " + err.message);
+        alert("Error Bluetooth: " + err.message);
     }
 }
