@@ -218,13 +218,20 @@
             </div>
             <div class="config-body">
                 
-                <!-- Activar Impresión Automática -->
-                <div class="checkbox-group" onclick="document.getElementById('chk-imprimir-auto').click()">
-                    <input type="checkbox" id="chk-imprimir-auto" onclick="event.stopPropagation()">
-                    <div>
-                        <label for="chk-imprimir-auto">Imprimir ticket automáticamente al cobrar</label>
-                        <p style="font-size: 12px; color: var(--text-muted); font-weight: normal; margin-top: 2px;">Se abrirá el diálogo de impresión del navegador de forma directa al registrar la venta.</p>
-                    </div>
+                <!-- Datos del Negocio para el Ticket -->
+                <div class="form-group">
+                    <label><i class="fas fa-store"></i> Nombre del Negocio (Encabezado)</label>
+                    <input type="text" id="txt-nombre-negocio" placeholder="Ej: CARNES TORACA C.A.">
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-phone"></i> Teléfono del Negocio</label>
+                    <input type="text" id="txt-telefono-negocio" placeholder="Ej: 0414-5010612">
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-map-marker-alt"></i> Dirección del Negocio</label>
+                    <textarea id="txt-direccion-negocio" rows="2" placeholder="Ej: Av. San Vicente entre calles 56..."></textarea>
                 </div>
 
                 <!-- Ancho de Papel -->
@@ -239,7 +246,16 @@
                 <!-- Pie de Página del Ticket -->
                 <div class="form-group">
                     <label><i class="fas fa-comment-alt"></i> Mensaje de Pie de Página (Despedida)</label>
-                    <textarea id="txt-pie-pagina" rows="3" placeholder="Ej: ¡Gracias por su compra! / No se aceptan devoluciones sin factura."></textarea>
+                    <textarea id="txt-pie-pagina" rows="2" placeholder="Ej: ¡Gracias por su compra!"></textarea>
+                </div>
+
+                <!-- Activar Impresión Automática -->
+                <div class="checkbox-group" onclick="document.getElementById('chk-imprimir-auto').click()">
+                    <input type="checkbox" id="chk-imprimir-auto" onclick="event.stopPropagation()">
+                    <div>
+                        <label for="chk-imprimir-auto">Imprimir ticket automáticamente al cobrar</label>
+                        <p style="font-size: 12px; color: var(--text-muted); font-weight: normal; margin-top: 2px;">Se abrirá el diálogo de impresión del navegador de forma directa al registrar la venta.</p>
+                    </div>
                 </div>
 
                 <!-- Botón Guardar -->
@@ -251,7 +267,7 @@
         </div>
     </main>
 
-    <!-- Lógica de Firebase conectada correctamente a ./js/firebase-config.js -->
+    <!-- Lógica de Firebase conectada correctamente -->
     <script type="module">
         import { db } from './js/firebase-config.js';
         import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -265,11 +281,14 @@
                 const snap = await getDoc(docRef);
                 if (snap.exists()) {
                     const data = snap.data();
-                    if (data.config_ticket) {
-                        document.getElementById('chk-imprimir-auto').checked = !!data.config_ticket.imprimir_automatico;
-                        document.getElementById('sel-ancho-papel').value = data.config_ticket.ancho_mm || "80";
-                        document.getElementById('txt-pie-pagina').value = data.config_ticket.pie_pagina || "";
-                    }
+                    
+                    // Cargar datos de la empresa o respaldo general si existen
+                    document.getElementById('txt-nombre-negocio').value = data.config_ticket?.nombre_negocio || data.nombre || "";
+                    document.getElementById('txt-telefono-negocio').value = data.config_ticket?.telefono || data.telefono || "";
+                    document.getElementById('txt-direccion-negocio').value = data.config_ticket?.direccion || data.direccion || "";
+                    document.getElementById('sel-ancho-papel').value = data.config_ticket?.ancho_mm || "80";
+                    document.getElementById('txt-pie-pagina').value = data.config_ticket?.pie_pagina || "¡Gracias por su compra!";
+                    document.getElementById('chk-imprimir-auto').checked = data.config_ticket?.imprimir_automatico !== false;
                 }
             } catch (err) {
                 console.error("Error al cargar la configuración de ticket:", err);
@@ -282,9 +301,12 @@
                 return;
             }
 
-            const imprimirAuto = document.getElementById('chk-imprimir-auto').checked;
+            const nombreNegocio = document.getElementById('txt-nombre-negocio').value.trim();
+            const telefonoNegocio = document.getElementById('txt-telefono-negocio').value.trim();
+            const direccionNegocio = document.getElementById('txt-direccion-negocio').value.trim();
             const anchoPapel = document.getElementById('sel-ancho-papel').value;
             const piePagina = document.getElementById('txt-pie-pagina').value.trim();
+            const imprimirAuto = document.getElementById('chk-imprimir-auto').checked;
 
             const btn = document.getElementById('btn-guardar-config');
             btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Guardando...`;
@@ -294,9 +316,12 @@
                 const docRef = doc(db, "usuarios", USER_ID);
                 await updateDoc(docRef, {
                     config_ticket: {
-                        imprimir_automatico: imprimirAuto,
+                        nombre_negocio: nombreNegocio,
+                        telefono: telefonoNegocio,
+                        direccion: direccionNegocio,
                         ancho_mm: anchoPapel,
-                        pie_pagina: piePagina
+                        pie_pagina: piePagina,
+                        imprimir_automatico: imprimirAuto
                     }
                 });
                 alert("¡Configuración de tickera guardada exitosamente!");
