@@ -16,6 +16,7 @@
             --sky: #0EA5E9;
             --indigo: #6366F1;
             --purple: #a855f7;
+            --amber: #f59e0b;
         }
 
         body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 20px 0; min-height: 100vh; color: var(--text-dark); user-select: none; }
@@ -38,6 +39,7 @@
         .card-efec-bs { border-left-color: var(--sky); }
         .card-punto { border-left-color: var(--indigo); }
         .card-pago-movil { border-left-color: var(--purple); }
+        .card-credito { border-left-color: var(--amber); }
         .pay-info .p-label { font-size: 0.65rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
         .pay-info .p-val { font-size: 1.2rem; font-weight: 800; color: var(--text-dark); }
 
@@ -75,6 +77,9 @@
             </div>
             <div class="pay-card card-pago-movil">
                 <div class="pay-info"><span class="p-label">Pago Móvil</span><span class="p-val" id="tot-pmovil">Bs. 0,00</span></div>
+            </div>
+            <div class="pay-card card-credito">
+                <div class="pay-info"><span class="p-label">Crédito USD</span><span class="p-val" id="tot-credito">$ 0.00</span></div>
             </div>
         </div>
 
