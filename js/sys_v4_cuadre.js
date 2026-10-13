@@ -1,6 +1,6 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * sys_v4_cuadre.js - Versión con totalizador de ventas a crédito
+ * sys_v4_cuadre.js - Módulo de Cuadre de Caja con totales de crédito
  */
 
 import { db } from './firebase-config.js';
@@ -89,10 +89,7 @@ function procesarYMostrarCuadre(fechaSeleccionada) {
     if(document.getElementById('tot-efec-bs')) document.getElementById('tot-efec-bs').innerText = `Bs. ${t.efecBs.toFixed(2)}`;
     if(document.getElementById('tot-punto')) document.getElementById('tot-punto').innerText = `Bs. ${t.punto.toFixed(2)}`;
     if(document.getElementById('tot-pmovil')) document.getElementById('tot-pmovil').innerText = `Bs. ${t.pmovil.toFixed(2)}`;
-    
-    // Si agregaste el elemento con ID 'tot-credito' en tu HTML, lo actualizamos aquí:
     if(document.getElementById('tot-credito')) document.getElementById('tot-credito').innerText = `$ ${t.creditoUSD.toFixed(2)}`;
-
     if(document.getElementById('tot-venta-dia')) document.getElementById('tot-venta-dia').innerText = `Venta Total: $ ${t.global.toFixed(2)}`;
 }
 
