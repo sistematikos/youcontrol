@@ -95,7 +95,7 @@ window.agregarCarrito = (id) => {
     window.actualizarCarritoUI();
 };
 
-// --- FUNCIÓN DE IMPRESIÓN TÉRMICA 100% EN BOLÍVARES (BS) ---
+// --- FUNCIÓN DE IMPRESIÓN TÉRMICA 100% EN BS CON FORMATO PERSONALIZADO ---
 async function verificarEImprimirTicket(nroFactura, ventaData) {
     try {
         const userDoc = await getDoc(doc(db, "usuarios", USER_ID));
@@ -110,7 +110,7 @@ async function verificarEImprimirTicket(nroFactura, ventaData) {
         const piePag = configTicket.pie_pagina || "¡Gracias por su compra!";
         
         // Datos de la empresa guardados en Firebase
-        const empresaNombre = userData.nombre || "YOU CONTROL";
+        const empresaNombre = userData.nombre || "Carnes Toruca";
         const empresaRif = userData.rif || userData.identificacion || "RIF: J-00000000-0";
         const empresaTelefono = userData.telefono || userData.tlf || "Tel: 0412-0000000";
         const empresaDireccion = userData.direccion || "Dirección Comercial";
@@ -172,7 +172,8 @@ async function verificarEImprimirTicket(nroFactura, ventaData) {
             </head>
             <body>
                 <!-- ENCABEZADO DE LA EMPRESA -->
-                <div class="text-center bold" style="font-size: 13px;">${empresaNombre.toUpperCase()}</div>
+                <div class="text-center bold" style="font-size: 11px;">SISTEMA YOU CONTROL</div>
+                <div class="text-center bold" style="font-size: 13px; margin-top: 2px;">${empresaNombre.toUpperCase()}</div>
                 <div class="text-center">${empresaRif}</div>
                 <div class="text-center">${empresaTelefono}</div>
                 <div class="text-center" style="font-size: 9px;">${empresaDireccion}</div>
@@ -180,9 +181,10 @@ async function verificarEImprimirTicket(nroFactura, ventaData) {
                 <div class="line"></div>
                 <div class="text-center bold">FACTURA NRO: ${nroFactura}</div>
                 <div class="text-center">CLIENTE: ${ventaData.nombre_cliente}</div>
-                <div class="text-center" style="font-size: 9px;">Tasa BCV: Bs. ${tasa.toLocaleString('es-VE', {minimumFractionDigits: 2})}</div>
                 
-                <div class="line"></div>
+                <!-- LÍNEA EN BLANCO / SEPARADOR DE CABECERA -->
+                <div class="text-center" style="margin: 4px 0;">&nbsp;</div>
+                <div class="text-center">--------------------------------</div>
                 
                 <!-- DETALLE DE PRODUCTOS EN BS -->
                 <table>
@@ -197,12 +199,12 @@ async function verificarEImprimirTicket(nroFactura, ventaData) {
                     </tbody>
                 </table>
                 
-                <div class="line"></div>
+                <div class="text-center" style="margin: 4px 0;">--------------------------------</div>
                 
-                <!-- TOTALES GENERALES EN BS -->
-                <div class="text-right bold" style="font-size: 13px;">TOTAL A PAGAR: Bs. ${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                <!-- TOTAL A PAGAR CON ESPACIO PREVIO -->
+                <div class="text-right bold" style="font-size: 13px; margin-top: 4px;">TOTAL A PAGAR: Bs. ${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                 
-                <div class="line"></div>
+                <div class="text-center" style="margin: 4px 0;">--------------------------------</div>
                 <div class="text-center" style="margin-top: 6px;">${piePag}</div>
             </body>
             </html>
