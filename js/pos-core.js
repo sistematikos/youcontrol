@@ -267,13 +267,17 @@ window.reimprimirFacturaSeleccionada = async (ventaId) => {
         }
 
         const ventaData = ventaSnap.data();
-        await verificarEImprimirTicket(ventaData.nro_factura, ventaData);
         
-        document.getElementById('modalBuscarFactura').style.display = 'none';
+        // --- AQUÍ ESTABA EL ERROR: Llamamos al módulo inteligente unificado (USB / Bluetooth) ---
+        await imprimirTicketVenta(USER_ID, ventaData);
+        
+        // Cerrar modal al imprimir
+        const modal = document.getElementById('modalBuscarFactura');
+        if (modal) modal.style.display = 'none';
 
     } catch (err) {
         console.error("Error al reimprimir:", err);
-        alert("Hubo un error al intentar reimprimir.");
+        alert("Hubo un error al intentar reimprimir: " + err.message);
     }
 };
 
