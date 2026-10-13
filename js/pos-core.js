@@ -95,12 +95,12 @@ window.agregarCarrito = (id) => {
     window.actualizarCarritoUI();
 };
 
-// --- FUNCIÓN DE IMPRESIÓN TÉRMICA CON MARGEN EXTRA AL FINAL ---
+// --- FUNCIÓN DE IMPRESIÓN TÉRMICA DINÁMICA DESDE CONFIGURACIÓN DE TICKET ---
 async function verificarEImprimirTicket(nroFactura, ventaData) {
     try {
-        let empresaNombre = "CARNES TORACA C.A.";
-        let empresaTelefono = "0414-5010612";
-        let empresaDireccion = "Dirección Comercial";
+        let empresaNombre = "YOU CONTROL";
+        let empresaTelefono = "";
+        let empresaDireccion = "";
         let configTicket = {};
 
         const userDoc = await getDoc(doc(db, "usuarios", USER_ID));
@@ -108,9 +108,11 @@ async function verificarEImprimirTicket(nroFactura, ventaData) {
             const userData = userDoc.data();
             configTicket = userData.config_ticket || {};
             
-            if (userData.nombre) empresaNombre = userData.nombre;
-            if (userData.telefono) empresaTelefono = userData.telefono;
-            if (userData.direccion) empresaDireccion = userData.direccion;
+            // Tomamos los datos personalizados de la configuración del ticket, 
+            // con respaldo a los datos generales del usuario si estuvieran ahí
+            empresaNombre = configTicket.nombre_negocio || userData.nombre || "YOU CONTROL";
+            empresaTelefono = configTicket.telefono || userData.telefono || "";
+            empresaDireccion = configTicket.direccion || userData.direccion || "";
         }
 
         if (configTicket.imprimir_automatico === false) return;
@@ -173,11 +175,10 @@ async function verificarEImprimirTicket(nroFactura, ventaData) {
                 </style>
             </head>
             <body>
-                <!-- ENCABEZADO -->
-                <div class="text-center bold" style="font-size: 11px;">SISTEMA YOU CONTROL</div>
-                <div class="text-center bold" style="font-size: 13px; margin-top: 3px;">${empresaNombre.toUpperCase()}</div>
-                <div class="text-center">Teléfono: ${empresaTelefono}</div>
-                ${empresaDireccion ? `<div class="text-center" style="font-size: 9px;">${empresaDireccion}</div>` : ''}
+                <!-- ENCABEZADO PERSONALIZADO -->
+                <div class="text-center bold" style="font-size: 13px;">${empresaNombre.toUpperCase()}</div>
+                ${empresaTelefono ? `<div class="text-center">Tel: ${empresaTelefono}</div>` : ''}
+                ${empresaDireccion ? `<div class="text-center" style="font-size: 9px; margin-top: 2px;">${empresaDireccion}</div>` : ''}
                 
                 <div class="line"></div>
                 <div class="text-center bold">FACTURA NRO: ${nroFactura}</div>
@@ -205,9 +206,13 @@ async function verificarEImprimirTicket(nroFactura, ventaData) {
                 <div class="text-right bold" style="font-size: 13px; margin-top: 4px;">TOTAL A PAGAR: Bs. ${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                 
                 <div class="text-center" style="margin: 4px 0;">--------------------------------</div>
-                <div class="text-center" style="margin-top: 6px;">${piePag}</div>
                 
-                <!-- LÍNEA EXTRA DE MARGEN AL FINAL -->
+                <!-- PIE DE PÁGINA Y MARCA -->
+                <div class="text-center" style="margin-top: 6px;">${piePag}</div>
+                <div class="text-center" style="margin: 6px 0;">&nbsp;</div>
+                <div class="text-center bold" style="font-size: 10px;">SISTEMA YOU CONTROL</div>
+                
+                <!-- MARGEN EXTRA AL FINAL -->
                 <div style="margin-bottom: 15px;">&nbsp;</div>
             </body>
             </html>
