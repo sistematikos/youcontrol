@@ -41,7 +41,6 @@ export async function imprimirTicketVenta(userId, ventaData) {
 
         if (configTicket.imprimir_automatico === false) return;
 
-        // Forzar lectura robusta de la conexión desde localStorage o Firebase
         const tipoConexion = localStorage.getItem('youcontrol_tipo_conexion') || configTicket.tipo_conexion || "usb";
 
         if (tipoConexion === "bluetooth") {
@@ -170,7 +169,6 @@ export async function imprimirPorBluetooth(ventaData = null, configTicket = null
 
     try {
         if (!bluetoothServerCache || !bluetoothDeviceCache?.gatt?.connected) {
-            // Se abre la ventana nativa de Android para buscar dispositivos Bluetooth cercanos
             bluetoothDeviceCache = await navigator.bluetooth.requestDevice({
                 acceptAllDevices: true,
                 optionalServices: [
@@ -202,7 +200,6 @@ export async function imprimirPorBluetooth(ventaData = null, configTicket = null
             throw new Error("No se encontró la característica de escritura ESC/POS en esta impresora.");
         }
 
-        // Si se llama solo para probar conexión sin datos de venta
         if (!ventaData) {
             alert("¡Impresora Bluetooth conectada y vinculada exitosamente!");
             return;
@@ -211,13 +208,15 @@ export async function imprimirPorBluetooth(ventaData = null, configTicket = null
         const encoder = new TextEncoder();
         let comandos = [];
 
+        // Inicializar impresora y centrar
         comandos.push(27, 64); 
         comandos.push(27, 97, 1); 
 
+        // Encabezado alineado al centro
         comandos.push(...encoder.encode("SISTEMA YOU CONTROL\n"));
-        comandos.push(27, 33, 8); 
+        comandos.push(27, 33, 8); // Texto negrita/mediano
         comandos.push(...encoder.encode(`${(configTicket?.nombre_negocio || 'YOU CONTROL').toUpperCase()}\n`));
-        comandos.push(27, 33, 0); 
+        comandos.push(27, 33, 0); // Apagar negrita
 
         if (configTicket?.telefono) comandos.push(...encoder.encode(`Tel: ${configTicket.telefono}\n`));
         if (configTicket?.direccion) comandos.push(...encoder.encode(`${configTicket.direccion}\n`));
@@ -229,6 +228,9 @@ export async function imprimirPorBluetooth(ventaData = null, configTicket = null
         comandos.push(...encoder.encode(`FECHA: ${fechaStr}\n`));
         comandos.push(...encoder.encode("--------------------------------\n"));
 
+        // Alineación izquierda para los productos (idéntico al formato USB)
+        comandos.push(27, 97, 0);
+
         const tasa = ventaData.tasa_aplicada || 1;
         let totalUSD = ventaData.total_usd || 0;
 
@@ -239,23 +241,31 @@ export async function imprimirPorBluetooth(ventaData = null, configTicket = null
                 const precioBs = precioUSD * tasa;
                 const subtotalBs = cant * precioBs;
 
+                // Nombre del producto en negrita
                 comandos.push(27, 33, 8);
                 comandos.push(...encoder.encode(`${item.nombre || 'Producto'}\n`));
                 comandos.push(27, 33, 0);
-                const lineaItem = `${cant} x Bs.${precioBs.toFixed(2)}`.padEnd(18) + `Bs.${subtotalBs.toFixed(2)}\n`;
+
+                // Detalle de cantidad x precio y subtotal alineado
+                const detallePrecio = `${cant} x Bs. ${precioBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                const subtotalStr = `Bs. ${subtotalBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                const espacios = Math.max(1, 32 - detallePrecio.length - subtotalStr.length);
+                const lineaItem = detallePrecio + " ".repeat(espacios) + subtotalStr + "\n";
+                
                 comandos.push(...encoder.encode(lineaItem));
             });
         }
 
+        // Línea divisoria y total centrados/derecha
+        comandos.push(27, 97, 1);
         comandos.push(...encoder.encode("--------------------------------\n"));
 
         const totalBs = totalUSD * tasa;
-        comandos.push(27, 33, 16); 
-        comandos.push(...encoder.encode(`TOTAL: Bs.${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2})}\n`));
+        comandos.push(27, 33, 16); // Doble alto/ancho para el total
+        comandos.push(...encoder.encode(`TOTAL A PAGAR:\nBs. ${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}\n`));
         comandos.push(27, 33, 0);
 
         comandos.push(...encoder.encode("--------------------------------\n"));
-        comandos.push(27, 97, 1); 
         comandos.push(...encoder.encode(`${configTicket?.pie_pagina || '¡Gracias por su compra!'}\n\n`));
         comandos.push(...encoder.encode("SISTEMA YOU CONTROL\n\n\n")); 
 
