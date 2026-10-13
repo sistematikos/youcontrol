@@ -234,6 +234,15 @@
                     <textarea id="txt-direccion-negocio" rows="2" placeholder="Ej: Av. San Vicente entre calles 56..."></textarea>
                 </div>
 
+                <!-- Tipo de Conexión de Impresora -->
+                <div class="form-group">
+                    <label><i class="fas fa-network-wired"></i> Tipo de Conexión de la Impresora</label>
+                    <select id="sel-tipo-conexion">
+                        <option value="usb">USB / Escritorio (PC con Diálogo de Impresión)</option>
+                        <option value="bluetooth">Bluetooth (Android / Móvil Inalámbrica)</option>
+                    </select>
+                </div>
+
                 <!-- Ancho de Papel -->
                 <div class="form-group">
                     <label><i class="fas fa-ruler-horizontal"></i> Ancho del Papel de la Impresora</label>
@@ -254,7 +263,7 @@
                     <input type="checkbox" id="chk-imprimir-auto" onclick="event.stopPropagation()">
                     <div>
                         <label for="chk-imprimir-auto">Imprimir ticket automáticamente al cobrar</label>
-                        <p style="font-size: 12px; color: var(--text-muted); font-weight: normal; margin-top: 2px;">Se abrirá el diálogo de impresión del navegador de forma directa al registrar la venta.</p>
+                        <p style="font-size: 12px; color: var(--text-muted); font-weight: normal; margin-top: 2px;">Se enviará o abrirá la impresión al registrar la venta.</p>
                     </div>
                 </div>
 
@@ -286,6 +295,7 @@
                     document.getElementById('txt-nombre-negocio').value = data.config_ticket?.nombre_negocio || data.nombre || "";
                     document.getElementById('txt-telefono-negocio').value = data.config_ticket?.telefono || data.telefono || "";
                     document.getElementById('txt-direccion-negocio').value = data.config_ticket?.direccion || data.direccion || "";
+                    document.getElementById('sel-tipo-conexion').value = data.config_ticket?.tipo_conexion || "usb";
                     document.getElementById('sel-ancho-papel').value = data.config_ticket?.ancho_mm || "80";
                     document.getElementById('txt-pie-pagina').value = data.config_ticket?.pie_pagina || "¡Gracias por su compra!";
                     document.getElementById('chk-imprimir-auto').checked = data.config_ticket?.imprimir_automatico !== false;
@@ -304,6 +314,7 @@
             const nombreNegocio = document.getElementById('txt-nombre-negocio').value.trim();
             const telefonoNegocio = document.getElementById('txt-telefono-negocio').value.trim();
             const direccionNegocio = document.getElementById('txt-direccion-negocio').value.trim();
+            const tipoConexion = document.getElementById('sel-tipo-conexion').value;
             const anchoPapel = document.getElementById('sel-ancho-papel').value;
             const piePagina = document.getElementById('txt-pie-pagina').value.trim();
             const imprimirAuto = document.getElementById('chk-imprimir-auto').checked;
@@ -319,6 +330,7 @@
                         nombre_negocio: nombreNegocio,
                         telefono: telefonoNegocio,
                         direccion: direccionNegocio,
+                        tipo_conexion: tipoConexion,
                         ancho_mm: anchoPapel,
                         pie_pagina: piePagina,
                         imprimir_automatico: imprimirAuto
