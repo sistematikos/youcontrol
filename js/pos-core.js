@@ -156,13 +156,13 @@ window.registrarVenta = async () => {
             await updateDoc(productoRef, { stock: increment(-item.cantidad) });
         }
 
-        // --- IMPRESIÓN TÉRMICA DIRECTA (SIN POP-UPS) ---
+        // --- IMPRESIÓN TÉRMICA DIRECTA (FORMATO TÉRMICO COMPACTO) ---
         try {
             const userDoc = await getDoc(doc(db, "usuarios", USER_ID));
             if (userDoc.exists()) {
                 const configTicket = userDoc.data().config_ticket || {};
                 if (configTicket.imprimir_automatico) {
-                    const anchoMM = configTicket.ancho_mm || "80";
+                    const anchoMM = configTicket.ancho_mm || "80"; // "58" o "80"
                     const piePag = configTicket.pie_pagina || "¡Gracias por su compra!";
                     const empresaNombre = userDoc.data().nombre || "YOU CONTROL";
 
@@ -184,39 +184,44 @@ window.registrarVenta = async () => {
                     `).join('');
 
                     divPrint.innerHTML = `
-                        <div id="ticket-impresion" style="font-family: 'Courier New', Courier, monospace; font-size: ${anchoMM === '58' ? '11px' : '13px'}; width: ${anchoMM === '58' ? '58mm' : '80mm'}; padding: 5px; color: #000;">
-                            <div style="text-align: center; font-weight: bold; font-size: 14px;">${empresaNombre.toUpperCase()}</div>
+                        <div id="ticket-impresion" style="font-family: 'Courier New', Courier, monospace; font-size: ${anchoMM === '58' ? '10px' : '12px'}; width: ${anchoMM === '58' ? '58mm' : '80mm'}; padding: 2px; color: #000;">
+                            <div style="text-align: center; font-weight: bold; font-size: 13px;">${empresaNombre.toUpperCase()}</div>
                             <div style="text-align: center;">Factura Nro: ${nroFactura}</div>
                             <div style="text-align: center;">Cliente: ${ventaData.nombre_cliente}</div>
-                            <div style="border-bottom: 1px dashed #000; margin: 5px 0;"></div>
+                            <div style="border-bottom: 1px dashed #000; margin: 4px 0;"></div>
                             <table style="width: 100%; border-collapse: collapse;">
                                 <tr>
-                                    <th style="text-align:left; font-size: ${anchoMM === '58' ? '10px' : '12px'};">DESC</th>
-                                    <th style="text-align:center; font-size: ${anchoMM === '58' ? '10px' : '12px'};">CANT</th>
-                                    <th style="text-align:right; font-size: ${anchoMM === '58' ? '10px' : '12px'};">TOTAL</th>
+                                    <th style="text-align:left; font-size: ${anchoMM === '58' ? '9px' : '11px'};">DESC</th>
+                                    <th style="text-align:center; font-size: ${anchoMM === '58' ? '9px' : '11px'};">CANT</th>
+                                    <th style="text-align:right; font-size: ${anchoMM === '58' ? '9px' : '11px'};">TOTAL</th>
                                 </tr>
                                 ${itemsHtml}
                             </table>
-                            <div style="border-bottom: 1px dashed #000; margin: 5px 0;"></div>
+                            <div style="border-bottom: 1px dashed #000; margin: 4px 0;"></div>
                             <div style="text-align:right; font-weight: bold;">TOTAL: $${ventaData.total_usd.toFixed(2)}</div>
-                            <div style="text-align: center; margin-top: 10px;">${piePag}</div>
+                            <div style="text-align: center; margin-top: 8px;">${piePag}</div>
                         </div>
                     `;
 
-                    // Inyectar estilo temporal de impresión para ocultar todo lo demás en la página
+                    // Estilo de impresión optimizado para rollos térmicos sin espacios en blanco
                     let stylePrint = document.getElementById('dynamic-print-style');
                     if (!stylePrint) {
                         stylePrint = document.createElement('style');
                         stylePrint.id = 'dynamic-print-style';
-                        stylePrint.innerHTML = `
-                            @media print {
-                                body * { visibility: hidden; }
-                                #print-ticket-container, #print-ticket-container * { visibility: visible; }
-                                #print-ticket-container { display: block !important; position: absolute; left: 0; top: 0; width: 100%; }
-                            }
-                        `;
                         document.head.appendChild(stylePrint);
                     }
+                    
+                    stylePrint.innerHTML = `
+                        @page {
+                            size: ${anchoMM === '58' ? '58mm auto' : '80mm auto'};
+                            margin: 0mm;
+                        }
+                        @media print {
+                            body * { visibility: hidden; }
+                            #print-ticket-container, #print-ticket-container * { visibility: visible; }
+                            #print-ticket-container { display: block !important; position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; }
+                        }
+                    `;
 
                     // Lanzar impresión directa
                     setTimeout(() => {
