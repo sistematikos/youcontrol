@@ -315,6 +315,100 @@ window.registrarVenta = async () => {
     }
 };
 
+window.abrirModalReimpresion = async () => {
+    const modal = document.getElementById('modalBuscarFactura');
+    if (modal) modal.style.display = 'flex';
+    await cargarFacturasDelDia();
+};
+
+async function cargarFacturasDelDia() {
+    const contenedor = document.getElementById('lista-facturas-dia');
+    if (!contenedor) return;
+    
+    contenedor.innerHTML = `<div style="text-align:center; padding:20px; color:#64748b;">Cargando facturas...</div>`;
+
+    try {
+        // Obtenemos las ventas (puedes filtrar por fecha o traer las últimas 50 del día)
+        const ventasRef = collection(db, "usuarios", USER_ID, "ventas");
+        const q = query(ventasRef, orderBy("fecha", "desc"), limit(50));
+        const snapshot = await getDocs(q);
+
+        let ventasList = [];
+        snapshot.forEach(docSnap => {
+            ventasList.push({ id: docSnap.id, ...docSnap.data() });
+        });
+
+        if (ventasList.length === 0) {
+            contenedor.innerHTML = `<div style="text-align:center; padding:20px; color:#64748b;">No hay facturas registradas.</div>`;
+            return;
+        }
+
+        renderizarListaFacturas(ventasList);
+
+        // Configurar buscador en tiempo real dentro del modal
+        const inputBuscar = document.getElementById('input-buscar-factura');
+        inputBuscar.oninput = (e) => {
+            const texto = e.target.value.toLowerCase().trim();
+            const filtradas = ventasList.filter(v => 
+                (v.nro_factura || '').toLowerCase().includes(texto) || 
+                (v.nombre_cliente || '').toLowerCase().includes(texto)
+            );
+            renderizarListaFacturas(filtradas);
+        };
+
+    } catch (err) {
+        console.error("Error al cargar ventas:", err);
+        contenedor.innerHTML = `<div style="text-align:center; padding:20px; color:red;">Error al cargar las facturas.</div>`;
+    }
+}
+
+function renderizarListaFacturas(ventas) {
+    const contenedor = document.getElementById('lista-facturas-dia');
+    if (!contenedor) return;
+
+    if (ventas.length === 0) {
+        contenedor.innerHTML = `<div style="text-align:center; padding:15px; color:#64748b;">Sin coincidencias</div>`;
+        return;
+    }
+
+    contenedor.innerHTML = ventas.map(v => {
+        const total = v.total_usd || 0;
+        return `
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid #e2e8f0; padding:10px 12px; border-radius:8px; font-size:13px;">
+                <div>
+                    <strong style="color:#006aff;">Nro: ${v.nro_factura}</strong> - ${v.nombre_cliente || 'Anónimo'}
+                    <div style="font-size:11px; color:#64748b;">Total: $${total.toFixed(2)}</div>
+                </div>
+                <button onclick="window.reimprimirFacturaSeleccionada('${v.id}')" style="background:#0ea5e9; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:600; font-size:12px;">
+                    <i class="fas fa-print"></i> Imprimir
+                </button>
+            </div>
+        `;
+    }).join('');
+}
+
+window.reimprimirFacturaSeleccionada = async (ventaId) => {
+    try {
+        const ventaRef = doc(db, "usuarios", USER_ID, "ventas", ventaId);
+        const ventaSnap = await getDoc(ventaRef);
+        
+        if (!ventaSnap.exists()) {
+            alert("No se encontró la venta.");
+            return;
+        }
+
+        const ventaData = ventaSnap.data();
+        await verificarEImprimirTicket(ventaData.nro_factura, ventaData);
+        
+        // Opcional: cerrar modal al imprimir
+        document.getElementById('modalBuscarFactura').style.display = 'none';
+
+    } catch (err) {
+        console.error("Error al reimprimir:", err);
+        alert("Hubo un error al intentar reimprimir.");
+    }
+};
+
 window.seleccionarCliente = (id, nombre) => {
     const inputCliente = document.getElementById('buscar-cliente-pos');
     if (inputCliente) inputCliente.value = nombre;
