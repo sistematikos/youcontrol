@@ -95,6 +95,91 @@ window.agregarCarrito = (id) => {
     window.actualizarCarritoUI();
 };
 
+// --- FUNCIÓN DE IMPRESIÓN TÉRMICA AISLADA (EVITA COLA DE IMPRESIÓN) ---
+async function verificarEImprimirTicket(nroFactura, ventaData) {
+    try {
+        const userDoc = await getDoc(doc(db, "usuarios", USER_ID));
+        if (!userDoc.exists()) return;
+        
+        const configTicket = userDoc.data().config_ticket || {};
+        if (!configTicket.imprimir_automatico) return;
+
+        const anchoMM = configTicket.ancho_mm || "80"; // "58" o "80"
+        const piePag = configTicket.pie_pagina || "¡Gracias por su compra!";
+        const empresaNombre = userDoc.data().nombre || "YOU CONTROL";
+
+        const ventanaPrint = window.open('', '_blank', 'width=350,height=500');
+        if (!ventanaPrint) {
+            console.warn("El navegador bloqueó la ventana emergente de impresión.");
+            return;
+        }
+
+        let itemsHtml = (ventaData.items || []).map(i => `
+            <tr>
+                <td style="text-align:left; word-break: break-all;">${i.nombre || 'Art'}</td>
+                <td style="text-align:center;">${i.cantidad}</td>
+                <td style="text-align:right;">$${((i.precio || 0) * i.cantidad).toFixed(2)}</td>
+            </tr>
+        `).join('');
+
+        ventanaPrint.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Ticket #${nroFactura}</title>
+                <style>
+                    @page {
+                        size: ${anchoMM === '58' ? '58mm auto' : '80mm auto'};
+                        margin: 0;
+                    }
+                    body {
+                        font-family: 'Courier New', Courier, monospace;
+                        font-size: ${anchoMM === '58' ? '10px' : '12px'};
+                        width: ${anchoMM === '58' ? '58mm' : '80mm'};
+                        margin: 0;
+                        padding: 4px;
+                        color: #000;
+                    }
+                    .text-center { text-align: center; }
+                    .bold { font-weight: bold; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+                    th, td { font-size: ${anchoMM === '58' ? '9px' : '11px'}; padding: 2px 0; }
+                    .line { border-bottom: 1px dashed #000; margin: 4px 0; }
+                </style>
+            </head>
+            <body>
+                <div class="text-center bold" style="font-size: 13px;">${empresaNombre.toUpperCase()}</div>
+                <div class="text-center">Factura Nro: ${nroFactura}</div>
+                <div class="text-center">Cliente: ${ventaData.nombre_cliente}</div>
+                <div class="line"></div>
+                <table>
+                    <tr>
+                        <th style="text-align:left;">DESC</th>
+                        <th style="text-align:center;">CANT</th>
+                        <th style="text-align:right;">TOTAL</th>
+                    </tr>
+                    ${itemsHtml}
+                </table>
+                <div class="line"></div>
+                <div style="text-align:right;" class="bold">TOTAL: $${ventaData.total_usd.toFixed(2)}</div>
+                <div class="text-center" style="margin-top: 8px;">${piePag}</div>
+            </body>
+            </html>
+        `);
+
+        ventanaPrint.document.close();
+        ventanaPrint.focus();
+        
+        setTimeout(() => {
+            ventanaPrint.print();
+            ventanaPrint.close();
+        }, 400);
+
+    } catch (e) {
+        console.error("Error al intentar imprimir el ticket automático:", e);
+    }
+}
+
 // Variable global de bloqueo para evitar clics múltiples
 window.procesandoVenta = false;
 
@@ -156,86 +241,8 @@ window.registrarVenta = async () => {
             await updateDoc(productoRef, { stock: increment(-item.cantidad) });
         }
 
-        // --- IMPRESIÓN AISLADA (EVITA QUE SE QUEDE EN COLA) ---
-        try {
-            const userDoc = await getDoc(doc(db, "usuarios", USER_ID));
-            if (userDoc.exists()) {
-                const configTicket = userDoc.data().config_ticket || {};
-                if (configTicket.imprimir_automatico) {
-                    const anchoMM = configTicket.ancho_mm || "80"; // "58" o "80"
-                    const piePag = configTicket.pie_pagina || "¡Gracias por su compra!";
-                    const empresaNombre = userDoc.data().nombre || "YOU CONTROL";
-
-                    // Abrir una ventana limpia y dedicada exclusivamente al ticket térmico
-                    const ventanaPrint = window.open('', '_blank', 'width=350,height=500');
-                    if (ventanaPrint) {
-                        let itemsHtml = (ventaData.items || []).map(i => `
-                            <tr>
-                                <td style="text-align:left; word-break: break-all;">${i.nombre || 'Art'}</td>
-                                <td style="text-align:center;">${i.cantidad}</td>
-                                <td style="text-align:right;">$${((i.precio || 0) * i.cantidad).toFixed(2)}</td>
-                            </tr>
-                        `).join('');
-
-                        ventanaPrint.document.write(`
-                            <!DOCTYPE html>
-                            <html>
-                            <head>
-                                <title>Ticket #${nroFactura}</title>
-                                <style>
-                                    @page {
-                                        size: ${anchoMM === '58' ? '58mm auto' : '80mm auto'};
-                                        margin: 0;
-                                    }
-                                    body {
-                                        font-family: 'Courier New', Courier, monospace;
-                                        font-size: ${anchoMM === '58' ? '10px' : '12px'};
-                                        width: ${anchoMM === '58' ? '58mm' : '80mm'};
-                                        margin: 0;
-                                        padding: 4px;
-                                        color: #000;
-                                    }
-                                    .text-center { text-align: center; }
-                                    .bold { font-weight: bold; }
-                                    table { width: 100%; border-collapse: collapse; margin-top: 4px; }
-                                    th, td { font-size: ${anchoMM === '58' ? '9px' : '11px'}; padding: 2px 0; }
-                                    .line { border-bottom: 1px dashed #000; margin: 4px 0; }
-                                </style>
-                            </head>
-                            <body>
-                                <div class="text-center bold" style="font-size: 13px;">${empresaNombre.toUpperCase()}</div>
-                                <div class="text-center">Factura Nro: ${nroFactura}</div>
-                                <div class="text-center">Cliente: ${ventaData.nombre_cliente}</div>
-                                <div class="line"></div>
-                                <table>
-                                    <tr>
-                                        <th style="text-align:left;">DESC</th>
-                                        <th style="text-align:center;">CANT</th>
-                                        <th style="text-align:right;">TOTAL</th>
-                                    </tr>
-                                    ${itemsHtml}
-                                </table>
-                                <div class="line"></div>
-                                <div style="text-align:right;" class="bold">TOTAL: $${ventaData.total_usd.toFixed(2)}</div>
-                                <div class="text-center" style="margin-top: 8px;">${piePag}</div>
-                            </body>
-                            </html>
-                        `);
-
-                        ventanaPrint.document.close();
-                        ventanaPrint.focus();
-                        
-                        // Lanzar impresión y cerrar la ventana automáticamente tras completarse
-                        setTimeout(() => {
-                            ventanaPrint.print();
-                            ventanaPrint.close();
-                        }, 400);
-                    }
-                }
-            }
-        } catch (printErr) {
-            console.error("Error al disparar impresión automática:", printErr);
-        }
+        // --- DISPARAR IMPRESIÓN AUTOMÁTICA ---
+        await verificarEImprimirTicket(nroFactura, ventaData);
 
         alert("✅ Venta registrada: " + nroFactura);
         
@@ -413,91 +420,6 @@ function initLogicaPagos() {
 
         inputCredito.value = (pendienteUSD > 0 ? pendienteUSD : 0).toFixed(2);
     });
-}
-
-// Función para disparar la impresión automática al cobrar
-async function verificarEImprimirTicket(nroFactura, ventaData) {
-    try {
-        // Consultamos la configuración del ticket en el documento del usuario
-        const userDoc = await getDoc(doc(db, "usuarios", USER_ID));
-        if (!userDoc.exists()) return;
-        
-        const configTicket = userDoc.data().config_ticket || {};
-        
-        // Si no está marcada la impresión automática, salimos
-        if (!configTicket.imprimir_automatico) return;
-
-        const anchoMM = configTicket.ancho_mm || "80"; // "58" o "80"
-        const piePag = configTicket.pie_pagina || "¡Gracias por su compra!";
-        const empresaNombre = userDoc.data().nombre || "YOU CONTROL";
-
-        // Creamos una ventana oculta o iframe temporal para generar el ticket térmico
-        const ventanaPrint = window.open('', '_blank', 'width=400,height=600');
-        if (!ventanaPrint) {
-            console.warn("El navegador bloqueó la ventana emergente de impresión.");
-            return;
-        }
-
-        let itemsHtml = (ventaData.items || []).map(i => `
-            <tr>
-                <td style="text-align:left;">${i.nombre || 'Art'}</td>
-                <td style="text-align:center;">${i.cantidad}</td>
-                <td style="text-align:right;">$${(i.precio || 0).toFixed(2)}</td>
-            </tr>
-        `).join('');
-
-        ventanaPrint.document.write(`
-            <html>
-            <head>
-                <title>Ticket #${nroFactura}</title>
-                <style>
-                    body {
-                        font-family: 'Courier New', Courier, monospace;
-                        font-size: ${anchoMM === '58' ? '11px' : '13px'};
-                        width: ${anchoMM === '58' ? '58mm' : '80mm'};
-                        margin: 0;
-                        padding: 5px;
-                        color: #000;
-                    }
-                    .text-center { text-align: center; }
-                    .bold { font-weight: bold; }
-                    table { width: 100%; border-collapse: collapse; margin-top: 5px; }
-                    th, td { font-size: ${anchoMM === '58' ? '10px' : '12px'}; padding: 2px 0; }
-                    .line { border-bottom: 1px dashed #000; margin: 5px 0; }
-                </style>
-            </head>
-            <body>
-                <div class="text-center bold" style="font-size: 14px;">${empresaNombre.toUpperCase()}</div>
-                <div class="text-center">Factura Nro: ${nroFactura}</div>
-                <div class="text-center">Cliente: ${ventaData.nombre_cliente}</div>
-                <div class="line"></div>
-                <table>
-                    <tr>
-                        <th style="text-align:left;">DESCRIPCIÓN</th>
-                        <th style="text-align:center;">CANT</th>
-                        <th style="text-align:right;">TOTAL</th>
-                    </tr>
-                    ${itemsHtml}
-                </table>
-                <div class="line"></div>
-                <div style="text-align:right;" class="bold">TOTAL USD: $${ventaData.total_usd.toFixed(2)}</div>
-                <div class="text-align:center; margin-top: 10px;">${piePag}</div>
-            </body>
-            </html>
-        `);
-
-        ventanaPrint.document.close();
-        ventanaPrint.focus();
-        
-        // Esperamos un momento a que renderice y lanzamos la impresión
-        setTimeout(() => {
-            ventanaPrint.print();
-            ventanaPrint.close();
-        }, 300);
-
-    } catch (e) {
-        console.error("Error al intentar imprimir el ticket automático:", e);
-    }
 }
 
 // --- ACTUALIZAR CARRITO UI EN UNA SOLA LÍNEA CON PRECIO EN BS ---
