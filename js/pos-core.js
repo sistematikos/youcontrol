@@ -95,24 +95,28 @@ window.agregarCarrito = (id) => {
     window.actualizarCarritoUI();
 };
 
-// --- FUNCIÓN DE IMPRESIÓN TÉRMICA DINÁMICA (SIN RIF) ---
+// --- FUNCIÓN DE IMPRESIÓN TÉRMICA CON MARGEN EXTRA AL FINAL ---
 async function verificarEImprimirTicket(nroFactura, ventaData) {
     try {
+        let empresaNombre = "CARNES TORACA C.A.";
+        let empresaTelefono = "0414-5010612";
+        let empresaDireccion = "Dirección Comercial";
+        let configTicket = {};
+
         const userDoc = await getDoc(doc(db, "usuarios", USER_ID));
-        if (!userDoc.exists()) return;
-        
-        const userData = userDoc.data();
-        const configTicket = userData.config_ticket || {};
-        
-        if (!configTicket.imprimir_automatico) return;
+        if (userDoc.exists()) {
+            const userData = userDoc.data();
+            configTicket = userData.config_ticket || {};
+            
+            if (userData.nombre) empresaNombre = userData.nombre;
+            if (userData.telefono) empresaTelefono = userData.telefono;
+            if (userData.direccion) empresaDireccion = userData.direccion;
+        }
+
+        if (configTicket.imprimir_automatico === false) return;
 
         const anchoMM = configTicket.ancho_mm || "58"; // "58" o "80"
         const piePag = configTicket.pie_pagina || "¡Gracias por su compra!";
-        
-        // Datos dinámicos tomados directamente del perfil de la empresa en Firebase (sin RIF)
-        const empresaNombre = userData.nombre || userData.empresa || "YOU CONTROL";
-        const empresaTelefono = userData.telefono || userData.tlf || userData.celular || "";
-        const empresaDireccion = userData.direccion || userData.dir || "";
         
         const tasa = ventaData.tasa_aplicada || tasaActual || 1.0;
 
@@ -122,7 +126,6 @@ async function verificarEImprimirTicket(nroFactura, ventaData) {
             return;
         }
 
-        // Construir la lista de productos reflejando precio unitario y subtotal en Bs.
         let itemsHtml = (ventaData.items || []).map(i => {
             const cant = i.cantidad || 1;
             const precioUSD = i.precio || 0;
@@ -170,21 +173,20 @@ async function verificarEImprimirTicket(nroFactura, ventaData) {
                 </style>
             </head>
             <body>
-                <!-- ENCABEZADO DINÁMICO DE LA EMPRESA -->
+                <!-- ENCABEZADO -->
                 <div class="text-center bold" style="font-size: 11px;">SISTEMA YOU CONTROL</div>
-                <div class="text-center bold" style="font-size: 13px; margin-top: 2px;">${empresaNombre.toUpperCase()}</div>
-                ${empresaTelefono ? `<div class="text-center">${empresaTelefono}</div>` : ''}
+                <div class="text-center bold" style="font-size: 13px; margin-top: 3px;">${empresaNombre.toUpperCase()}</div>
+                <div class="text-center">Teléfono: ${empresaTelefono}</div>
                 ${empresaDireccion ? `<div class="text-center" style="font-size: 9px;">${empresaDireccion}</div>` : ''}
                 
                 <div class="line"></div>
                 <div class="text-center bold">FACTURA NRO: ${nroFactura}</div>
                 <div class="text-center">CLIENTE: ${ventaData.nombre_cliente}</div>
                 
-                <!-- LÍNEA EN BLANCO / SEPARADOR DE CABECERA -->
                 <div class="text-center" style="margin: 4px 0;">&nbsp;</div>
                 <div class="text-center">--------------------------------</div>
                 
-                <!-- DETALLE DE PRODUCTOS EN BS -->
+                <!-- DETALLE DE PRODUCTOS -->
                 <table>
                     <thead>
                         <tr>
@@ -199,11 +201,14 @@ async function verificarEImprimirTicket(nroFactura, ventaData) {
                 
                 <div class="text-center" style="margin: 4px 0;">--------------------------------</div>
                 
-                <!-- TOTAL A PAGAR CON ESPACIO PREVIO -->
+                <!-- TOTAL A PAGAR -->
                 <div class="text-right bold" style="font-size: 13px; margin-top: 4px;">TOTAL A PAGAR: Bs. ${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                 
                 <div class="text-center" style="margin: 4px 0;">--------------------------------</div>
                 <div class="text-center" style="margin-top: 6px;">${piePag}</div>
+                
+                <!-- LÍNEA EXTRA DE MARGEN AL FINAL -->
+                <div style="margin-bottom: 15px;">&nbsp;</div>
             </body>
             </html>
         `);
