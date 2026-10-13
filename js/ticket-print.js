@@ -7,86 +7,75 @@ import { db } from './firebase-config.js';
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 /**
- * Genera e imprime el ticket de venta adaptado a 80mm o 58mm
+ * Genera e imprime el ticket de venta adaptado a 80mm o 58mm 100% en Bolívares
  * @param {string} userId ID del usuario/empresa
  * @param {Object} ventaData Datos completos de la venta recién registrada
  */
 export async function imprimirTicketVenta(userId, ventaData) {
     try {
-        // 1. Obtener datos de la empresa y configuración de la tickera
+        // 1. Obtener datos de la empresa y configuración de la tickera desde Firebase
         const userDocRef = doc(db, "usuarios", userId);
         const userSnap = await getDoc(userDocRef);
         
-        let empresaInfo = {
-            nombre: "YOU CONTROL",
-            rif: "J-00000000-0",
-            direccion: "Lara, Venezuela",
-            telefono: ""
-        };
-
         let configTicket = {
             imprimir_automatico: true,
             ancho_mm: "80",
-            pie_pagina: "¡Gracias por su compra!"
+            pie_pagina: "¡Gracias por su compra!",
+            nombre_negocio: "CARNES TORACA C.A.",
+            telefono: "",
+            direccion: ""
         };
 
         if (userSnap.exists()) {
             const data = userSnap.data();
-            empresaInfo = {
-                nombre: data.nombre_empresa || data.nombre || "YOU CONTROL",
-                rif: data.rif || data.documento || "",
-                direccion: data.direccion || "",
-                telefono: data.telefono || ""
-            };
             if (data.config_ticket) {
                 configTicket = { ...configTicket, ...data.config_ticket };
             }
+            // Respaldo por si los datos están en la raíz del documento del usuario
+            if (!configTicket.nombre_negocio && (data.nombre || data.nombre_empresa)) {
+                configTicket.nombre_negocio = data.nombre_empresa || data.nombre;
+            }
+            if (!configTicket.telefono && data.telefono) {
+                configTicket.telefono = data.telefono;
+            }
+            if (!configTicket.direccion && data.direccion) {
+                configTicket.direccion = data.direccion;
+            }
         }
 
-        // Si el usuario configuró no imprimir automáticamente, puedes decidir omitirlo o permitir reimpresión manual
-        // Aquí generamos el HTML oculto para la impresión
-        const anchoClase = configTicket.ancho_mm === "58" ? "ticket-58mm" : "ticket-80mm";
-        
-        const fechaFormateada = ventaData.fecha?.toDate ? ventaData.fecha.toDate().toLocaleString('es-VE') : new Date().toLocaleString('es-VE');
+        if (configTicket.imprimir_automatico === false) return;
 
-        // Construir líneas de productos
+        const anchoMM = configTicket.ancho_mm || "80"; // "58" o "80"
+        const anchoClase = anchoMM === "58" ? "ticket-58mm" : "ticket-80mm";
+        const fechaFormateada = ventaData.fecha?.toDate ? ventaData.fecha.toDate().toLocaleString('es-VE') : new Date().toLocaleString('es-VE');
+        const tasa = ventaData.tasa_aplicada || 1;
+
+        // Construir líneas de productos 100% en Bs.
         let htmlItems = '';
-        let subtotalCalculadoUSD = 0;
+        let totalUSD = ventaData.total_usd || 0;
 
         if (ventaData.items && Array.isArray(ventaData.items)) {
             ventaData.items.forEach(item => {
-                const sub = item.cantidad * (item.precio || 0);
-                subtotalCalculadoUSD += sub;
+                const cant = item.cantidad || 1;
+                const precioUSD = item.precio || 0;
+                const precioBs = precioUSD * tasa;
+                const subtotalBs = cant * precioBs;
+
                 htmlItems += `
-                    <div class="item-fila">
-                        <div class="item-descripcion">${item.cantidad}x ${item.nombre}</div>
-                        <div class="item-precios">
-                            <span>$${sub.toFixed(2)}</span>
-                        </div>
-                    </div>
-                    <div class="item-detalle-chico">($${(item.precio || 0).toFixed(2)} c/u)</div>
+                    <tr>
+                        <td colspan="2" style="font-weight: bold; padding-top: 3px;">${item.nombre || 'Producto'}</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align:left; font-size: ${anchoMM === '58' ? '9px' : '11px'};">${cant} x Bs. ${precioBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                        <td style="text-align:right; font-size: ${anchoMM === '58' ? '9px' : '11px'};">Bs. ${subtotalBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    </tr>
                 `;
             });
         }
 
-        // Construir desglose de pagos
-        let htmlPagos = '';
-        const pagos = ventaData.pagos || {};
-        const tasa = ventaData.tasa_aplicada || 1;
+        const totalBs = totalUSD * tasa;
 
-        if (pagos.punto_bs > 0) htmlItemsPagos('Punto (Bs)', pagos.punto_bs, 'Bs');
-        if (pagos.pago_movil_bs > 0) htmlItemsPagos('Pago Móvil (Bs)', pagos.pago_movil_bs, 'Bs');
-        if (pagos.efectivo_bs > 0) htmlItemsPagos('Efectivo (Bs)', pagos.efectivo_bs, 'Bs');
-        if (pagos.divisas_usd > 0) htmlItemsPagos('Divisas ($)', pagos.divisas_usd, '$');
-        if (pagos.credito_usd > 0) htmlItemsPagos('Crédito ($)', pagos.credito_usd, '$');
-
-        function htmlItemsPagos(label, valor, tipo) {
-            htmlPagos += `<div class="pago-fila"><span>${label}:</span> <span>${tipo === 'Bs' ? valor.toLocaleString('es-VE', {minimumFractionDigits: 2}) + ' Bs' : '$' + valor.toFixed(2)}</span></div>`;
-        }
-
-        const totalBs = subtotalCalculadoUSD * tasa;
-
-        // Crear contenedor iframe o ventana flotante de impresión
+        // Crear iframe oculto para impresión aislada sin bloquear la cola de Windows
         const iframeId = 'iframe-print-ticket';
         let iframe = document.getElementById(iframeId);
         if (iframe) iframe.remove();
@@ -110,98 +99,71 @@ export async function imprimirTicketVenta(userId, ventaData) {
                 <meta charset="UTF-8">
                 <title>Ticket #${ventaData.nro_factura}</title>
                 <style>
-                    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; }
-                    body { background: #fff; color: #000; font-size: ${configTicket.ancho_mm === "58" ? "10px" : "12px"}; line-height: 1.2; }
-                    .ticket-80mm { width: 72mm; margin: 0 auto; padding: 5px; }
-                    .ticket-58mm { width: 48mm; margin: 0 auto; padding: 2px; }
-                    
-                    .centro { text-align: center; }
-                    .negrita { font-weight: bold; }
-                    .linea-punteada { border-top: 1px dashed #000; margin: 6px 0; }
-                    
-                    .header-empresa h1 { font-size: ${configTicket.ancho_mm === "58" ? "13px" : "15px"}; margin-bottom: 2px; }
-                    .header-empresa p { font-size: ${configTicket.ancho_mm === "58" ? "9px" : "11px"}; }
-
-                    .info-venta { margin: 6px 0; font-size: ${configTicket.ancho_mm === "58" ? "9px" : "11px"}; }
-                    
-                    .item-fila { display: flex; justify-content: space-between; align-items: flex-start; margin-top: 4px; gap: 5px; }
-                    .item-descripcion { flex: 1; word-break: break-all; }
-                    .item-precios { text-align: right; white-space: nowrap; font-weight: bold; }
-                    .item-detalle-chico { font-size: 9px; color: #333; margin-bottom: 2px; }
-
-                    .totales-seccion { margin-top: 6px; }
-                    .total-fila { display: flex; justify-content: space-between; font-weight: bold; font-size: ${configTicket.ancho_mm === "58" ? "11px" : "13px"}; margin-top: 3px; }
-                    .pago-fila { display: flex; justify-content: space-between; font-size: 10px; color: #222; }
-
-                    .footer-ticket { text-align: center; margin-top: 10px; font-size: 10px; }
-
-                    @media print {
-                        body { width: 100%; }
+                    @page {
+                        size: ${anchoMM === '58' ? '58mm auto' : '80mm auto'};
+                        margin: 0;
                     }
+                    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; }
+                    body { background: #fff; color: #000; font-size: ${anchoMM === '58' ? '10px' : '12px'}; line-height: 1.2; width: ${anchoMM === '58' ? '58mm' : '80mm'}; margin: 0; padding: 4px; }
+                    .centro { text-align: center; }
+                    .derecha { text-align: right; }
+                    .negrita { font-weight: bold; }
+                    .linea { border-bottom: 1px dashed #000; margin: 4px 0; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+                    th, td { font-size: ${anchoMM === '58' ? '9px' : '11px'}; padding: 1px 0; }
                 </style>
             </head>
             <body>
-                <div class="${anchoClase}">
-                    <div class="centro header-empresa">
-                        <h1>${empresaInfo.nombre}</h1>
-                        ${empresaInfo.rif ? `<p>RIF: ${empresaInfo.rif}</p>` : ''}
-                        ${empresaInfo.direccion ? `<p>${empresaInfo.direccion}</p>` : ''}
-                        ${empresaInfo.telefono ? `<p>Telf: ${empresaInfo.telefono}</p>` : ''}
-                    </div>
-
-                    <div class="linea-punteada"></div>
-
-                    <div class="info-venta">
-                        <p><strong>Nro Factura:</strong> ${ventaData.nro_factura}</p>
-                        <p><strong>Fecha:</strong> ${fechaFormateada}</p>
-                        <p><strong>Cliente:</strong> ${ventaData.nombre_cliente || 'Anónimo'}</p>
-                        <p><strong>Tasa BCV:</strong> ${tasa.toLocaleString('es-VE', {minimumFractionDigits: 2})} Bs/$</p>
-                    </div>
-
-                    <div class="linea-punteada"></div>
-
-                    <div class="items-seccion">
+                <!-- ENCABEZADO -->
+                <div class="centro negrita" style="font-size: 11px;">SISTEMA YOU CONTROL</div>
+                <div class="centro negrita" style="font-size: 13px; margin-top: 3px;">${(configTicket.nombre_negocio || 'YOU CONTROL').toUpperCase()}</div>
+                ${configTicket.telefono ? `<div class="centro">Tel: ${configTicket.telefono}</div>` : ''}
+                ${configTicket.direccion ? `<div class="centro" style="font-size: 9px; margin-top: 2px;">${configTicket.direccion}</div>` : ''}
+                
+                <div class="linea"></div>
+                <div class="centro negrita">FACTURA NRO: ${ventaData.nro_factura}</div>
+                <div class="centro">CLIENTE: ${ventaData.nombre_cliente || 'Anónimo'}</div>
+                <div class="centro" style="font-size: 9px;">FECHA: ${fechaFormateada}</div>
+                
+                <div class="centro" style="margin: 4px 0;">&nbsp;</div>
+                <div class="centro">--------------------------------</div>
+                
+                <!-- DETALLE DE PRODUCTOS 100% EN BS -->
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="text-align:left;">CANT x PRECIO (Bs.)</th>
+                            <th style="text-align:right;">TOTAL (Bs.)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
                         ${htmlItems}
-                    </div>
-
-                    <div class="linea-punteada"></div>
-
-                    <div class="totales-seccion">
-                        <div class="total-fila">
-                            <span>TOTAL USD:</span>
-                            <span>$ ${subtotalCalculadoUSD.toFixed(2)}</span>
-                        </div>
-                        <div class="total-fila">
-                            <span>TOTAL BS:</span>
-                            <span>${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2})} Bs</span>
-                        </div>
-                    </div>
-
-                    <div class="linea-punteada"></div>
-
-                    <div class="pagos-seccion">
-                        <p class="negrita" style="font-size: 10px; margin-bottom: 2px;">MÉTODOS DE PAGO:</p>
-                        ${htmlPagos}
-                    </div>
-
-                    <div class="linea-punteada"></div>
-
-                    <div class="footer-ticket">
-                        <p>${configTicket.pie_pagina || '¡Gracias por su compra!'}</p>
-                        <p style="margin-top: 4px; font-size: 8px;">Powered by YOU CONTROL</p>
-                    </div>
-                </div>
-
-                <script>
-                    window.onload = function() {
-                        window.focus();
-                        window.print();
-                    }
-                <\/script>
+                    </tbody>
+                </table>
+                
+                <div class="centro" style="margin: 4px 0;">--------------------------------</div>
+                
+                <!-- TOTAL A PAGAR EN BS -->
+                <div class="derecha negrita" style="font-size: 13px; margin-top: 4px;">TOTAL A PAGAR: Bs. ${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                
+                <div class="centro" style="margin: 4px 0;">--------------------------------</div>
+                
+                <!-- PIE DE PÁGINA Y MARCA AL FINAL -->
+                <div class="centro" style="margin-top: 6px;">${configTicket.pie_pagina || '¡Gracias por su compra!'}</div>
+                <div class="centro" style="margin: 6px 0;">&nbsp;</div>
+                <div class="centro negrita" style="font-size: 10px;">SISTEMA YOU CONTROL</div>
+                
+                <!-- MARGEN EXTRA AL FINAL -->
+                <div style="margin-bottom: 15px;">&nbsp;</div>
             </body>
             </html>
         `);
         docPrint.close();
+
+        setTimeout(() => {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+        }, 400);
 
     } catch (e) {
         console.error("Error al generar o imprimir el ticket:", e);
