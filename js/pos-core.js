@@ -95,8 +95,23 @@ window.agregarCarrito = (id) => {
     window.actualizarCarritoUI();
 };
 
+// Variable global de bloqueo para evitar clics múltiples
+window.procesandoVenta = false;
+
 window.registrarVenta = async () => {
+    if (window.procesandoVenta) return; // Si ya se está procesando, bloqueamos nuevos clics
     if (carrito.length === 0) return alert("El carrito está vacío.");
+
+    const btnConfirmar = document.getElementById('btn-confirmar-venta');
+    
+    // Activamos el bloqueo inmediatamente
+    window.procesandoVenta = true;
+    if (btnConfirmar) {
+        btnConfirmar.disabled = true;
+        btnConfirmar.style.opacity = "0.6";
+        btnConfirmar.innerText = "REGISTRANDO...";
+    }
+
     try {
         const nroFactura = await obtenerSiguienteNumero(USER_ID);
         const nombreParaGuardar = window.nombreClienteSeleccionado || document.getElementById('buscar-cliente-pos')?.value || "Anónimo";
@@ -157,6 +172,14 @@ window.registrarVenta = async () => {
     } catch (error) {
         console.error("Error al guardar:", error);
         alert("Error al guardar: " + error.message);
+    } finally {
+        // Liberamos el bloqueo y restauramos el botón de forma segura al finalizar o si ocurre un error
+        window.procesandoVenta = false;
+        if (btnConfirmar) {
+            btnConfirmar.disabled = false;
+            btnConfirmar.style.opacity = "1";
+            btnConfirmar.innerText = "CONFIRMAR VENTA";
+        }
     }
 };
 
