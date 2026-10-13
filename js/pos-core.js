@@ -95,18 +95,27 @@ window.agregarCarrito = (id) => {
     window.actualizarCarritoUI();
 };
 
-// --- FUNCIÓN DE IMPRESIÓN TÉRMICA AISLADA (EVITA COLA DE IMPRESIÓN) ---
+// --- FUNCIÓN DE IMPRESIÓN TÉRMICA DETALLADA CON BS Y DATOS DE LA EMPRESA ---
 async function verificarEImprimirTicket(nroFactura, ventaData) {
     try {
         const userDoc = await getDoc(doc(db, "usuarios", USER_ID));
         if (!userDoc.exists()) return;
         
-        const configTicket = userDoc.data().config_ticket || {};
+        const userData = userDoc.data();
+        const configTicket = userData.config_ticket || {};
+        
         if (!configTicket.imprimir_automatico) return;
 
-        const anchoMM = configTicket.ancho_mm || "80"; // "58" o "80"
+        const anchoMM = configTicket.ancho_mm || "58"; // "58" o "80"
         const piePag = configTicket.pie_pagina || "¡Gracias por su compra!";
-        const empresaNombre = userDoc.data().nombre || "YOU CONTROL";
+        
+        // Datos extendidos de la empresa guardados en Firebase
+        const empresaNombre = userData.nombre || "YOU CONTROL";
+        const empresaRif = userData.rif || userData.identificacion || "RIF: J-00000000-0";
+        const empresaTelefono = userData.telefono || userData.tlf || "Tel: 0412-0000000";
+        const empresaDireccion = userData.direccion || "Dirección Comercial";
+        
+        const tasa = ventaData.tasa_aplicada || tasaActual || 1.0;
 
         const ventanaPrint = window.open('', '_blank', 'width=350,height=500');
         if (!ventanaPrint) {
@@ -114,13 +123,27 @@ async function verificarEImprimirTicket(nroFactura, ventaData) {
             return;
         }
 
-        let itemsHtml = (ventaData.items || []).map(i => `
-            <tr>
-                <td style="text-align:left; word-break: break-all;">${i.nombre || 'Art'}</td>
-                <td style="text-align:center;">${i.cantidad}</td>
-                <td style="text-align:right;">$${((i.precio || 0) * i.cantidad).toFixed(2)}</td>
-            </tr>
-        `).join('');
+        // Construir la lista de productos con precio unitario y subtotal en USD y Bs
+        let itemsHtml = (ventaData.items || []).map(i => {
+            const cant = i.cantidad || 1;
+            const precioUSD = i.precio || 0;
+            const subtotalUSD = cant * precioUSD;
+            const subtotalBs = subtotalUSD * tasa;
+
+            return `
+                <tr>
+                    <td colspan="3" style="font-weight: bold; padding-top: 3px;">${i.nombre || 'Producto'}</td>
+                </tr>
+                <tr>
+                    <td style="text-align:left; font-size: ${anchoMM === '58' ? '9px' : '11px'};">${cant} x $${precioUSD.toFixed(2)}</td>
+                    <td style="text-align:right; font-size: ${anchoMM === '58' ? '9px' : '11px'};">$${subtotalUSD.toFixed(2)}</td>
+                    <td style="text-align:right; font-size: ${anchoMM === '58' ? '9px' : '11px'};">Bs. ${subtotalBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                </tr>
+            `;
+        }).join('');
+
+        const totalUSD = ventaData.total_usd || 0;
+        const totalBs = totalUSD * tasa;
 
         ventanaPrint.document.write(`
             <!DOCTYPE html>
@@ -141,28 +164,49 @@ async function verificarEImprimirTicket(nroFactura, ventaData) {
                         color: #000;
                     }
                     .text-center { text-align: center; }
+                    .text-right { text-align: right; }
                     .bold { font-weight: bold; }
                     table { width: 100%; border-collapse: collapse; margin-top: 4px; }
-                    th, td { font-size: ${anchoMM === '58' ? '9px' : '11px'}; padding: 2px 0; }
+                    th, td { font-size: ${anchoMM === '58' ? '9px' : '11px'}; padding: 1px 0; }
                     .line { border-bottom: 1px dashed #000; margin: 4px 0; }
                 </style>
             </head>
             <body>
+                <!-- ENCABEZADO DE LA EMPRESA -->
                 <div class="text-center bold" style="font-size: 13px;">${empresaNombre.toUpperCase()}</div>
-                <div class="text-center">Factura Nro: ${nroFactura}</div>
-                <div class="text-center">Cliente: ${ventaData.nombre_cliente}</div>
+                <div class="text-center">${empresaRif}</div>
+                <div class="text-center">${empresaTelefono}</div>
+                <div class="text-center" style="font-size: 9px;">${empresaDireccion}</div>
+                
                 <div class="line"></div>
+                <div class="text-center bold">FACTURA NRO: ${nroFactura}</div>
+                <div class="text-center">CLIENTE: ${ventaData.nombre_cliente}</div>
+                <div class="text-center" style="font-size: 9px;">Tasa BCV: Bs. ${tasa.toLocaleString('es-VE', {minimumFractionDigits: 2})}</div>
+                
+                <div class="line"></div>
+                
+                <!-- DETALLE DE PRODUCTOS -->
                 <table>
-                    <tr>
-                        <th style="text-align:left;">DESC</th>
-                        <th style="text-align:center;">CANT</th>
-                        <th style="text-align:right;">TOTAL</th>
-                    </tr>
-                    ${itemsHtml}
+                    <thead>
+                        <tr>
+                            <th style="text-align:left;">CANT x PRECIO</th>
+                            <th style="text-align:right;">TOTAL ($)</th>
+                            <th style="text-align:right;">TOTAL (Bs)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${itemsHtml}
+                    </tbody>
                 </table>
+                
                 <div class="line"></div>
-                <div style="text-align:right;" class="bold">TOTAL: $${ventaData.total_usd.toFixed(2)}</div>
-                <div class="text-center" style="margin-top: 8px;">${piePag}</div>
+                
+                <!-- TOTALES GENERALES -->
+                <div class="text-right bold" style="font-size: 11px;">TOTAL USD: $${totalUSD.toFixed(2)}</div>
+                <div class="text-right bold" style="font-size: 12px;">TOTAL Bs.: ${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                
+                <div class="line"></div>
+                <div class="text-center" style="margin-top: 6px;">${piePag}</div>
             </body>
             </html>
         `);
