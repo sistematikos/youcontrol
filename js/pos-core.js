@@ -156,7 +156,7 @@ window.registrarVenta = async () => {
             await updateDoc(productoRef, { stock: increment(-item.cantidad) });
         }
 
-        // --- IMPRESIÓN TÉRMICA AUTOMÁTICA (58mm / 80mm) ---
+        // --- IMPRESIÓN TÉRMICA DIRECTA (SIN POP-UPS) ---
         try {
             const userDoc = await getDoc(doc(db, "usuarios", USER_ID));
             if (userDoc.exists()) {
@@ -166,62 +166,62 @@ window.registrarVenta = async () => {
                     const piePag = configTicket.pie_pagina || "¡Gracias por su compra!";
                     const empresaNombre = userDoc.data().nombre || "YOU CONTROL";
 
-                    const ventanaPrint = window.open('', '_blank', 'width=400,height=600');
-                    if (ventanaPrint) {
-                        let itemsHtml = (ventaData.items || []).map(i => `
-                            <tr>
-                                <td style="text-align:left;">${i.nombre || 'Art'}</td>
-                                <td style="text-align:center;">${i.cantidad}</td>
-                                <td style="text-align:right;">$${((i.precio || 0) * i.cantidad).toFixed(2)}</td>
-                            </tr>
-                        `).join('');
-
-                        ventanaPrint.document.write(`
-                            <html>
-                            <head>
-                                <title>Ticket #${nroFactura}</title>
-                                <style>
-                                    body {
-                                        font-family: 'Courier New', Courier, monospace;
-                                        font-size: ${anchoMM === '58' ? '11px' : '13px'};
-                                        width: ${anchoMM === '58' ? '58mm' : '80mm'};
-                                        margin: 0;
-                                        padding: 5px;
-                                        color: #000;
-                                    }
-                                    .text-center { text-align: center; }
-                                    .bold { font-weight: bold; }
-                                    table { width: 100%; border-collapse: collapse; margin-top: 5px; }
-                                    th, td { font-size: ${anchoMM === '58' ? '10px' : '12px'}; padding: 2px 0; }
-                                    .line { border-bottom: 1px dashed #000; margin: 5px 0; }
-                                </style>
-                            </head>
-                            <body>
-                                <div class="text-center bold" style="font-size: 14px;">${empresaNombre.toUpperCase()}</div>
-                                <div class="text-center">Factura Nro: ${nroFactura}</div>
-                                <div class="text-center">Cliente: ${ventaData.nombre_cliente}</div>
-                                <div class="line"></div>
-                                <table>
-                                    <tr>
-                                        <th style="text-align:left;">DESC</th>
-                                        <th style="text-align:center;">CANT</th>
-                                        <th style="text-align:right;">TOTAL</th>
-                                    </tr>
-                                    ${itemsHtml}
-                                </table>
-                                <div class="line"></div>
-                                <div style="text-align:right;" class="bold">TOTAL: $${ventaData.total_usd.toFixed(2)}</div>
-                                <div class="text-align:center; margin-top: 10px;">${piePag}</div>
-                            </body>
-                            </html>
-                        `);
-                        ventanaPrint.document.close();
-                        ventanaPrint.focus();
-                        setTimeout(() => {
-                            ventanaPrint.print();
-                            ventanaPrint.close();
-                        }, 300);
+                    // Crear o reutilizar un contenedor oculto para imprimir
+                    let divPrint = document.getElementById('print-ticket-container');
+                    if (!divPrint) {
+                        divPrint = document.createElement('div');
+                        divPrint.id = 'print-ticket-container';
+                        divPrint.style.display = 'none';
+                        document.body.appendChild(divPrint);
                     }
+
+                    let itemsHtml = (ventaData.items || []).map(i => `
+                        <tr>
+                            <td style="text-align:left;">${i.nombre || 'Art'}</td>
+                            <td style="text-align:center;">${i.cantidad}</td>
+                            <td style="text-align:right;">$${((i.precio || 0) * i.cantidad).toFixed(2)}</td>
+                        </tr>
+                    `).join('');
+
+                    divPrint.innerHTML = `
+                        <div id="ticket-impresion" style="font-family: 'Courier New', Courier, monospace; font-size: ${anchoMM === '58' ? '11px' : '13px'}; width: ${anchoMM === '58' ? '58mm' : '80mm'}; padding: 5px; color: #000;">
+                            <div style="text-align: center; font-weight: bold; font-size: 14px;">${empresaNombre.toUpperCase()}</div>
+                            <div style="text-align: center;">Factura Nro: ${nroFactura}</div>
+                            <div style="text-align: center;">Cliente: ${ventaData.nombre_cliente}</div>
+                            <div style="border-bottom: 1px dashed #000; margin: 5px 0;"></div>
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <tr>
+                                    <th style="text-align:left; font-size: ${anchoMM === '58' ? '10px' : '12px'};">DESC</th>
+                                    <th style="text-align:center; font-size: ${anchoMM === '58' ? '10px' : '12px'};">CANT</th>
+                                    <th style="text-align:right; font-size: ${anchoMM === '58' ? '10px' : '12px'};">TOTAL</th>
+                                </tr>
+                                ${itemsHtml}
+                            </table>
+                            <div style="border-bottom: 1px dashed #000; margin: 5px 0;"></div>
+                            <div style="text-align:right; font-weight: bold;">TOTAL: $${ventaData.total_usd.toFixed(2)}</div>
+                            <div style="text-align: center; margin-top: 10px;">${piePag}</div>
+                        </div>
+                    `;
+
+                    // Inyectar estilo temporal de impresión para ocultar todo lo demás en la página
+                    let stylePrint = document.getElementById('dynamic-print-style');
+                    if (!stylePrint) {
+                        stylePrint = document.createElement('style');
+                        stylePrint.id = 'dynamic-print-style';
+                        stylePrint.innerHTML = `
+                            @media print {
+                                body * { visibility: hidden; }
+                                #print-ticket-container, #print-ticket-container * { visibility: visible; }
+                                #print-ticket-container { display: block !important; position: absolute; left: 0; top: 0; width: 100%; }
+                            }
+                        `;
+                        document.head.appendChild(stylePrint);
+                    }
+
+                    // Lanzar impresión directa
+                    setTimeout(() => {
+                        window.print();
+                    }, 200);
                 }
             }
         } catch (printErr) {
@@ -245,7 +245,7 @@ window.registrarVenta = async () => {
         console.error("Error al guardar:", error);
         alert("Error al guardar: " + error.message);
     } finally {
-        // Liberamos el bloqueo y restauramos el botón de forma segura al finalizar o si ocurre un error
+        // Liberamos el bloqueo y restauramos el botón de forma segura
         window.procesandoVenta = false;
         if (btnConfirmar) {
             btnConfirmar.disabled = false;
