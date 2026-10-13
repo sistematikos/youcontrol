@@ -251,9 +251,9 @@
         </div>
     </main>
 
-    <!-- Lógica de Firebase para Cargar y Guardar -->
+    <!-- Lógica de Firebase unificada (usando './firebase-config.js') -->
     <script type="module">
-        import { db } from './js/firebase-config.js';
+        import { db } from './firebase-config.js';
         import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const USER_ID = localStorage.getItem('youcontrol_empresa_id');
