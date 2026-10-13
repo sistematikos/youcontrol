@@ -476,6 +476,98 @@ function initLogicaPagos() {
     });
 }
 
+// --- FUNCIÓN DE REGISTRO DE VENTA Y COBRO ---
+async function registrarVenta() {
+    if (!window.carrito || window.carrito.length === 0) {
+        alert("El carrito está vacío. Agregue productos antes de cobrar.");
+        return;
+    }
+
+    const btnConfirmar = document.getElementById('btn-confirmar-venta');
+    if (btnConfirmar) {
+        btnConfirmar.disabled = true;
+        btnConfirmar.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Procesando...`;
+    }
+
+    try {
+        // 1. Obtener siguiente número de factura correlativo
+        const contadorRef = doc(db, "usuarios", USER_ID, "config", "contador_facturas");
+        const nroFactura = await runTransaction(db, async (transaction) => {
+            const sfDoc = await transaction.get(contadorRef);
+            let nuevoValor = sfDoc.exists() ? sfDoc.data().ultimo + 1 : 1;
+            transaction.set(contadorRef, { ultimo: nuevoValor });
+            return nuevoValor.toString().padStart(6, '0');
+        });
+
+        // 2. Recolectar montos de pago del modal
+        const pagoPunto = parseFloat(document.getElementById('in-punto-bs')?.value) || 0;
+        const pagoMovil = parseFloat(document.getElementById('in-pagomovil-bs')?.value) || 0;
+        const pagoEfectivoBs = parseFloat(document.getElementById('in-efectivo-bs')?.value) || 0;
+        const pagoDivisas = parseFloat(document.getElementById('in-divisas-usd')?.value) || 0;
+        const pagoCredito = parseFloat(document.getElementById('in-credito-usd')?.value) || 0;
+
+        const totalUSD = window.totalVentaUSD || 0;
+
+        // 3. Estructurar el objeto de la venta
+        const ventaData = {
+            nro_factura: nroFactura,
+            cliente_id: window.clienteSeleccionadoID || "general",
+            nombre_cliente: window.nombreClienteSeleccionado || "Cliente General",
+            items: window.carrito.map(i => ({
+                id: i.id,
+                nombre: i.nombre,
+                cantidad: i.cantidad,
+                precio: i.precio || 0
+            })),
+            total_usd: totalUSD,
+            tasa_aplicada: tasaActual,
+            pagos: {
+                punto_bs: pagoPunto,
+                pagomovil_bs: pagoMovil,
+                efectivo_bs: pagoEfectivoBs,
+                divisas_usd: pagoDivisas,
+                credito_usd: pagoCredito
+            },
+            fecha: serverTimestamp()
+        };
+
+        // 4. Guardar venta en Firestore
+        await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
+
+        // 5. Cerrar modal de pago y limpiar carrito
+        const modalPago = document.getElementById('modalPago');
+        if (modalPago) modalPago.style.display = 'none';
+
+        window.carrito = [];
+        if (typeof window.actualizarCarritoUI === 'function') {
+            window.actualizarCarritoUI();
+        }
+
+        // Resentir campos del modal
+        ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd', 'in-credito-usd'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = 0;
+        });
+
+        alert(`¡Venta registrada con éxito! Factura #${nroFactura}`);
+
+        // 6. Invocar la impresión automática (Soporta USB y Bluetooth según el dispositivo)
+        await verificarEImprimirTicket(nroFactura, ventaData);
+
+    } catch (e) {
+        console.error("Error al registrar la venta:", e);
+        alert("Hubo un error al procesar la venta: " + e.message);
+    } finally {
+        if (btnConfirmar) {
+            btnConfirmar.disabled = false;
+            btnConfirmar.innerHTML = `CONFIRMAR VENTA`;
+        }
+    }
+}
+
+// EXPONER LA FUNCIÓN GLOBALMENTE PARA QUE EL BOTÓN HTML Y F9 LA RECONOZCAN
+window.registrarVenta = registrarVenta;
+
 // --- ACTUALIZAR CARRITO UI EN UNA SOLA LÍNEA CON PRECIO EN BS ---
 window.actualizarCarritoUI = () => {
     const contenedor = document.getElementById('lista-carrito');
