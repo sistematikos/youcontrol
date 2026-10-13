@@ -13,6 +13,7 @@
             --text-dark: #1e293b;
             --text-muted: #64748b;
             --border-color: #e2e8f0;
+            --success-color: #10b981;
         }
 
         * {
@@ -183,11 +184,30 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            margin-top: 10px;
         }
 
         .btn-save:hover {
             background: var(--primary-hover);
+        }
+
+        .btn-bt-test {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+
+        .btn-bt-test:hover {
+            background: #059669;
         }
     </style>
 
@@ -212,11 +232,10 @@
     <main class="main-layout">
         <div class="config-card">
             <div class="config-header">
-                <i class="fas fa-print"></i> Parámetros de Impresión Térmica (Este Dispositivo)
+                <i class="fas fa-print"></i> Parámetros de Impresión Térmica
             </div>
             <div class="config-body">
                 
-                <!-- Datos del Negocio para el Ticket -->
                 <div class="form-group">
                     <label><i class="fas fa-store"></i> Nombre del Negocio (Encabezado)</label>
                     <input type="text" id="txt-nombre-negocio" placeholder="Ej: CARNES TORACA C.A.">
@@ -232,7 +251,6 @@
                     <textarea id="txt-direccion-negocio" rows="2" placeholder="Ej: Av. San Vicente entre calles 56..."></textarea>
                 </div>
 
-                <!-- Tipo de Conexión de Impresora para ESTE equipo -->
                 <div class="form-group">
                     <label><i class="fas fa-network-wired"></i> Tipo de Conexión en ESTE Equipo</label>
                     <select id="sel-tipo-conexion">
@@ -241,7 +259,11 @@
                     </select>
                 </div>
 
-                <!-- Ancho de Papel -->
+                <!-- Botón especial para probar Bluetooth directamente en la tablet -->
+                <button type="button" class="btn-bt-test" id="btn-probar-bt">
+                    <i class="fab fa-bluetooth-b"></i> Vincular / Probar Impresora Bluetooth
+                </button>
+
                 <div class="form-group">
                     <label><i class="fas fa-ruler-horizontal"></i> Ancho del Papel de la Impresora</label>
                     <select id="sel-ancho-papel">
@@ -250,22 +272,19 @@
                     </select>
                 </div>
 
-                <!-- Pie de Página del Ticket -->
                 <div class="form-group">
                     <label><i class="fas fa-comment-alt"></i> Mensaje de Pie de Página (Despedida)</label>
                     <textarea id="txt-pie-pagina" rows="2" placeholder="Ej: ¡Gracias por su compra!"></textarea>
                 </div>
 
-                <!-- Activar Impresión Automática -->
                 <div class="checkbox-group" onclick="document.getElementById('chk-imprimir-auto').click()">
                     <input type="checkbox" id="chk-imprimir-auto" onclick="event.stopPropagation()">
                     <div>
                         <label for="chk-imprimir-auto">Imprimir ticket automáticamente al cobrar</label>
-                        <p style="font-size: 12px; color: var(--text-muted); font-weight: normal; margin-top: 2px;">Se enviará o abrirá la impresión al registrar la venta.</p>
+                        <p style="font-size: 12px; color: var(--text-muted); font-weight: normal; margin-top: 2px;">Se enviará la orden directa según el tipo de conexión.</p>
                     </div>
                 </div>
 
-                <!-- Botón Guardar -->
                 <button class="btn-save" id="btn-guardar-config">
                     <i class="fas fa-save"></i> Guardar Configuración
                 </button>
@@ -277,13 +296,13 @@
     <script type="module">
         import { db } from './js/firebase-config.js';
         import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { imprimirPorBluetooth } from './ticket-print.js';
 
         const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 
         async function cargarConfiguracion() {
             if (!USER_ID) return;
             try {
-                // Cargar tipo de conexión guardado localmente en este equipo
                 const tipoLocal = localStorage.getItem('youcontrol_tipo_conexion') || "usb";
                 document.getElementById('sel-tipo-conexion').value = tipoLocal;
 
@@ -302,6 +321,13 @@
                 console.error("Error al cargar la configuración de ticket:", err);
             }
         }
+
+        // Botón para probar la conexión Bluetooth de inmediato en la tablet
+        document.getElementById('btn-probar-bt').addEventListener('click', async () => {
+            localStorage.setItem('youcontrol_tipo_conexion', 'bluetooth');
+            document.getElementById('sel-tipo-conexion').value = 'bluetooth';
+            await imprimirPorBluetooth();
+        });
 
         document.getElementById('btn-guardar-config').addEventListener('click', async () => {
             if (!USER_ID) {
@@ -322,10 +348,8 @@
             btn.disabled = true;
 
             try {
-                // 1. Guardar tipo de conexión en este dispositivo localmente
                 localStorage.setItem('youcontrol_tipo_conexion', tipoConexion);
 
-                // 2. Guardar datos generales del negocio en Firebase
                 const docRef = doc(db, "usuarios", USER_ID);
                 await updateDoc(docRef, {
                     config_ticket: {
@@ -337,10 +361,10 @@
                         imprimir_automatico: imprimirAuto
                     }
                 });
-                alert("¡Configuración de tickera guardada con éxito!");
+                alert("¡Configuración guardada y establecida para este equipo!");
             } catch (err) {
                 console.error("Error al guardar:", err);
-                alert("Hubo un error al guardar la configuración: " + err.message);
+                alert("Hubo un error al guardar: " + err.message);
             } finally {
                 btn.innerHTML = `<i class="fas fa-save"></i> Guardar Configuración`;
                 btn.disabled = false;
