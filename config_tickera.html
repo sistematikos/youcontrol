@@ -31,7 +31,6 @@
             overflow: hidden;
         }
 
-        /* NAVBAR SUPERIOR */
         .navbar {
             background-color: var(--primary-color);
             color: white;
@@ -71,7 +70,6 @@
             background: rgba(255, 255, 255, 0.3);
         }
 
-        /* CONTENIDO PRINCIPAL */
         .main-layout {
             flex: 1;
             display: flex;
@@ -214,7 +212,7 @@
     <main class="main-layout">
         <div class="config-card">
             <div class="config-header">
-                <i class="fas fa-print"></i> Parámetros de Impresión Térmica
+                <i class="fas fa-print"></i> Parámetros de Impresión Térmica (Este Dispositivo)
             </div>
             <div class="config-body">
                 
@@ -234,9 +232,9 @@
                     <textarea id="txt-direccion-negocio" rows="2" placeholder="Ej: Av. San Vicente entre calles 56..."></textarea>
                 </div>
 
-                <!-- Tipo de Conexión de Impresora -->
+                <!-- Tipo de Conexión de Impresora para ESTE equipo -->
                 <div class="form-group">
-                    <label><i class="fas fa-network-wired"></i> Tipo de Conexión de la Impresora</label>
+                    <label><i class="fas fa-network-wired"></i> Tipo de Conexión en ESTE Equipo</label>
                     <select id="sel-tipo-conexion">
                         <option value="usb">USB / Escritorio (PC con Diálogo de Impresión)</option>
                         <option value="bluetooth">Bluetooth (Android / Móvil Inalámbrica)</option>
@@ -276,7 +274,6 @@
         </div>
     </main>
 
-    <!-- Lógica de Firebase conectada correctamente -->
     <script type="module">
         import { db } from './js/firebase-config.js';
         import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -286,16 +283,17 @@
         async function cargarConfiguracion() {
             if (!USER_ID) return;
             try {
+                // Cargar tipo de conexión guardado localmente en este equipo
+                const tipoLocal = localStorage.getItem('youcontrol_tipo_conexion') || "usb";
+                document.getElementById('sel-tipo-conexion').value = tipoLocal;
+
                 const docRef = doc(db, "usuarios", USER_ID);
                 const snap = await getDoc(docRef);
                 if (snap.exists()) {
                     const data = snap.data();
-                    
-                    // Cargar datos de la empresa o respaldo general si existen
                     document.getElementById('txt-nombre-negocio').value = data.config_ticket?.nombre_negocio || data.nombre || "";
                     document.getElementById('txt-telefono-negocio').value = data.config_ticket?.telefono || data.telefono || "";
                     document.getElementById('txt-direccion-negocio').value = data.config_ticket?.direccion || data.direccion || "";
-                    document.getElementById('sel-tipo-conexion').value = data.config_ticket?.tipo_conexion || "usb";
                     document.getElementById('sel-ancho-papel').value = data.config_ticket?.ancho_mm || "80";
                     document.getElementById('txt-pie-pagina').value = data.config_ticket?.pie_pagina || "¡Gracias por su compra!";
                     document.getElementById('chk-imprimir-auto').checked = data.config_ticket?.imprimir_automatico !== false;
@@ -324,19 +322,22 @@
             btn.disabled = true;
 
             try {
+                // 1. Guardar tipo de conexión en este dispositivo localmente
+                localStorage.setItem('youcontrol_tipo_conexion', tipoConexion);
+
+                // 2. Guardar datos generales del negocio en Firebase
                 const docRef = doc(db, "usuarios", USER_ID);
                 await updateDoc(docRef, {
                     config_ticket: {
                         nombre_negocio: nombreNegocio,
                         telefono: telefonoNegocio,
                         direccion: direccionNegocio,
-                        tipo_conexion: tipoConexion,
                         ancho_mm: anchoPapel,
                         pie_pagina: piePagina,
                         imprimir_automatico: imprimirAuto
                     }
                 });
-                alert("¡Configuración de tickera guardada exitosamente!");
+                alert("¡Configuración de tickera guardada con éxito!");
             } catch (err) {
                 console.error("Error al guardar:", err);
                 alert("Hubo un error al guardar la configuración: " + err.message);
@@ -346,7 +347,6 @@
             }
         });
 
-        // Ejecutar carga al iniciar
         cargarConfiguracion();
     </script>
 </body>
