@@ -95,7 +95,7 @@ window.agregarCarrito = (id) => {
     window.actualizarCarritoUI();
 };
 
-// --- FUNCIÓN DE IMPRESIÓN TÉRMICA 100% EN BS CON FORMATO PERSONALIZADO ---
+// --- FUNCIÓN DE IMPRESIÓN TÉRMICA DINÁMICA (SIN RIF) ---
 async function verificarEImprimirTicket(nroFactura, ventaData) {
     try {
         const userDoc = await getDoc(doc(db, "usuarios", USER_ID));
@@ -109,11 +109,10 @@ async function verificarEImprimirTicket(nroFactura, ventaData) {
         const anchoMM = configTicket.ancho_mm || "58"; // "58" o "80"
         const piePag = configTicket.pie_pagina || "¡Gracias por su compra!";
         
-        // Datos de la empresa guardados en Firebase
-        const empresaNombre = userData.nombre || "Carnes Toruca";
-        const empresaRif = userData.rif || userData.identificacion || "RIF: J-00000000-0";
-        const empresaTelefono = userData.telefono || userData.tlf || "Tel: 0412-0000000";
-        const empresaDireccion = userData.direccion || "Dirección Comercial";
+        // Datos dinámicos tomados directamente del perfil de la empresa en Firebase (sin RIF)
+        const empresaNombre = userData.nombre || userData.empresa || "YOU CONTROL";
+        const empresaTelefono = userData.telefono || userData.tlf || userData.celular || "";
+        const empresaDireccion = userData.direccion || userData.dir || "";
         
         const tasa = ventaData.tasa_aplicada || tasaActual || 1.0;
 
@@ -171,12 +170,11 @@ async function verificarEImprimirTicket(nroFactura, ventaData) {
                 </style>
             </head>
             <body>
-                <!-- ENCABEZADO DE LA EMPRESA -->
+                <!-- ENCABEZADO DINÁMICO DE LA EMPRESA -->
                 <div class="text-center bold" style="font-size: 11px;">SISTEMA YOU CONTROL</div>
                 <div class="text-center bold" style="font-size: 13px; margin-top: 2px;">${empresaNombre.toUpperCase()}</div>
-                <div class="text-center">${empresaRif}</div>
-                <div class="text-center">${empresaTelefono}</div>
-                <div class="text-center" style="font-size: 9px;">${empresaDireccion}</div>
+                ${empresaTelefono ? `<div class="text-center">${empresaTelefono}</div>` : ''}
+                ${empresaDireccion ? `<div class="text-center" style="font-size: 9px;">${empresaDireccion}</div>` : ''}
                 
                 <div class="line"></div>
                 <div class="text-center bold">FACTURA NRO: ${nroFactura}</div>
@@ -222,97 +220,6 @@ async function verificarEImprimirTicket(nroFactura, ventaData) {
         console.error("Error al intentar imprimir el ticket automático:", e);
     }
 }
-
-// Variable global de bloqueo para evitar clics múltiples
-window.procesandoVenta = false;
-
-window.registrarVenta = async () => {
-    if (window.procesandoVenta) return; // Si ya se está procesando, bloqueamos nuevos clics
-    if (carrito.length === 0) return alert("El carrito está vacío.");
-
-    const btnConfirmar = document.getElementById('btn-confirmar-venta');
-    
-    // Activamos el bloqueo inmediatamente
-    window.procesandoVenta = true;
-    if (btnConfirmar) {
-        btnConfirmar.disabled = true;
-        btnConfirmar.style.opacity = "0.6";
-        btnConfirmar.innerText = "REGISTRANDO...";
-    }
-
-    try {
-        const nroFactura = await obtenerSiguienteNumero(USER_ID);
-        const nombreParaGuardar = window.nombreClienteSeleccionado || document.getElementById('buscar-cliente-pos')?.value || "Anónimo";
-        const montoCreditoUSD = parseFloat(document.getElementById('in-credito-usd')?.value) || 0;
-        const totalVenta = window.totalVentaUSD || 0;
-
-        const ventaData = {
-            cliente_id: window.clienteSeleccionadoID || "anonimo",
-            nombre_cliente: nombreParaGuardar,
-            items: carrito,
-            total_usd: totalVenta,
-            tasa_aplicada: tasaActual,
-            pagos: {
-                punto_bs: parseFloat(document.getElementById('in-punto-bs')?.value) || 0,
-                pago_movil_bs: parseFloat(document.getElementById('in-pagomovil-bs')?.value) || 0,
-                efectivo_bs: parseFloat(document.getElementById('in-efectivo-bs')?.value) || 0,
-                divisas_usd: parseFloat(document.getElementById('in-divisas-usd')?.value) || 0,
-                credito_usd: montoCreditoUSD
-            },
-            fecha: serverTimestamp(),
-            nro_factura: nroFactura
-        };
-
-        await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
-
-        if (montoCreditoUSD > 0 && ventaData.cliente_id !== "anonimo") {
-            await addDoc(collection(db, "usuarios", USER_ID, "cuentas_por_cobrar"), {
-                cliente_id: ventaData.cliente_id,
-                nombre_cliente: nombreParaGuardar,
-                nro_factura: nroFactura,
-                monto_total_usd: totalVenta,
-                monto_credito_usd: montoCreditoUSD,
-                abonado: 0,
-                pendiente: montoCreditoUSD,
-                estado: "pendiente",
-                fecha: serverTimestamp()
-            });
-        }
-
-        for (const item of carrito) {
-            const productoRef = doc(db, "usuarios", USER_ID, "productos", item.id);
-            await updateDoc(productoRef, { stock: increment(-item.cantidad) });
-        }
-
-        // --- DISPARAR IMPRESIÓN AUTOMÁTICA ---
-        await verificarEImprimirTicket(nroFactura, ventaData);
-
-        alert("✅ Venta registrada: " + nroFactura);
-        
-        carrito = [];
-        window.clienteSeleccionadoID = null;
-        window.nombreClienteSeleccionado = null;
-        const modalPago = document.getElementById('modalPago');
-        if (modalPago) modalPago.style.display = 'none';
-        window.actualizarCarritoUI();
-        
-        const siguiente = (parseInt(nroFactura) + 1).toString().padStart(6, '0');
-        const facturaDisplay = document.getElementById('factura-display');
-        if (facturaDisplay) facturaDisplay.innerText = `FACTURA: ${siguiente}`;
-
-    } catch (error) {
-        console.error("Error al guardar:", error);
-        alert("Error al guardar: " + error.message);
-    } finally {
-        // Liberamos el bloqueo y restauramos el botón de forma segura
-        window.procesandoVenta = false;
-        if (btnConfirmar) {
-            btnConfirmar.disabled = false;
-            btnConfirmar.style.opacity = "1";
-            btnConfirmar.innerText = "CONFIRMAR VENTA";
-        }
-    }
-};
 
 window.abrirModalReimpresion = async () => {
     const modal = document.getElementById('modalBuscarFactura');
