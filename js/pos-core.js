@@ -6,6 +6,7 @@
 import { db } from './firebase-config.js'; 
 import { collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc, updateDoc, increment, runTransaction, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { ejecutarF4, ejecutarF5, ejecutarF6, abrirModalCobro } from './pos-core-teclas.js';
+import { imprimirTicketVenta } from './ticket-print.js';
 
 // --- VALIDACIÓN DE SESIÓN ---
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
@@ -95,132 +96,14 @@ window.agregarCarrito = (id) => {
     window.actualizarCarritoUI();
 };
 
-// --- FUNCIÓN DE IMPRESIÓN TÉRMICA DINÁMICA DESDE CONFIGURACIÓN DE TICKET ---
+// --- FUNCIÓN DE IMPRESIÓN TÉRMICA DINÁMICA ---
 async function verificarEImprimirTicket(nroFactura, ventaData) {
     try {
-        let empresaNombre = "YOU CONTROL";
-        let empresaTelefono = "";
-        let empresaDireccion = "";
-        let configTicket = {};
-
-        const userDoc = await getDoc(doc(db, "usuarios", USER_ID));
-        if (userDoc.exists()) {
-            const userData = userDoc.data();
-            configTicket = userData.config_ticket || {};
-            
-            empresaNombre = configTicket.nombre_negocio || userData.nombre || "YOU CONTROL";
-            empresaTelefono = configTicket.telefono || userData.telefono || "";
-            empresaDireccion = configTicket.direccion || userData.direccion || "";
-        }
-
-        if (configTicket.imprimir_automatico === false) return;
-
-        const anchoMM = configTicket.ancho_mm || "58"; // "58" o "80"
-        const piePag = configTicket.pie_pagina || "¡Gracias por su compra!";
-        
-        const tasa = ventaData.tasa_aplicada || tasaActual || 1.0;
-
-        const ventanaPrint = window.open('', '_blank', 'width=350,height=500');
-        if (!ventanaPrint) {
-            console.warn("El navegador bloqueó la ventana emergente de impresión.");
-            return;
-        }
-
-        let itemsHtml = (ventaData.items || []).map(i => {
-            const cant = i.cantidad || 1;
-            const precioUSD = i.precio || 0;
-            const precioBs = precioUSD * tasa;
-            const subtotalBs = cant * precioBs;
-
-            return `
-                <tr>
-                    <td colspan="2" style="font-weight: bold; padding-top: 3px;">${i.nombre || 'Producto'}</td>
-                </tr>
-                <tr>
-                    <td style="text-align:left; font-size: ${anchoMM === '58' ? '9px' : '11px'};">${cant} x Bs. ${precioBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                    <td style="text-align:right; font-size: ${anchoMM === '58' ? '9px' : '11px'};">Bs. ${subtotalBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                </tr>
-            `;
-        }).join('');
-
-        const totalUSD = ventaData.total_usd || 0;
-        const totalBs = totalUSD * tasa;
-
-        ventanaPrint.document.write(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Ticket #${nroFactura}</title>
-                <style>
-                    @page {
-                        size: ${anchoMM === '58' ? '58mm auto' : '80mm auto'};
-                        margin: 0;
-                    }
-                    body {
-                        font-family: 'Courier New', Courier, monospace;
-                        font-size: ${anchoMM === '58' ? '10px' : '12px'};
-                        width: ${anchoMM === '58' ? '58mm' : '80mm'};
-                        margin: 0;
-                        padding: 4px;
-                        color: #000;
-                    }
-                    .text-center { text-align: center; }
-                    .text-right { text-align: right; }
-                    .bold { font-weight: bold; }
-                    table { width: 100%; border-collapse: collapse; margin-top: 4px; }
-                    th, td { font-size: ${anchoMM === '58' ? '9px' : '11px'}; padding: 1px 0; }
-                    .line { border-bottom: 1px dashed #000; margin: 4px 0; }
-                </style>
-            </head>
-            <body>
-                <div class="text-center bold" style="font-size: 13px;">${empresaNombre.toUpperCase()}</div>
-                ${empresaTelefono ? `<div class="text-center">Tel: ${empresaTelefono}</div>` : ''}
-                ${empresaDireccion ? `<div class="text-center" style="font-size: 9px; margin-top: 2px;">${empresaDireccion}</div>` : ''}
-                
-                <div class="line"></div>
-                <div class="text-center bold">FACTURA NRO: ${nroFactura}</div>
-                <div class="text-center">CLIENTE: ${ventaData.nombre_cliente}</div>
-                
-                <div class="text-center" style="margin: 4px 0;">&nbsp;</div>
-                <div class="text-center">--------------------------------</div>
-                
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="text-align:left;">CANT x PRECIO (Bs.)</th>
-                            <th style="text-align:right;">TOTAL (Bs.)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${itemsHtml}
-                    </tbody>
-                </table>
-                
-                <div class="text-center" style="margin: 4px 0;">--------------------------------</div>
-                
-                <div class="text-right bold" style="font-size: 13px; margin-top: 4px;">TOTAL A PAGAR: Bs. ${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-                
-                <div class="text-center" style="margin: 4px 0;">--------------------------------</div>
-                
-                <div class="text-center" style="margin-top: 6px;">${piePag}</div>
-                <div class="text-center" style="margin: 6px 0;">&nbsp;</div>
-                <div class="text-center bold" style="font-size: 10px;">SISTEMA YOU CONTROL</div>
-                
-                <div style="margin-bottom: 15px;">&nbsp;</div>
-            </body>
-            </html>
-        `);
-
-        ventanaPrint.document.close();
-        ventanaPrint.focus();
-        
-        setTimeout(() => {
-            ventanaPrint.print();
-            ventanaPrint.close();
-        }, 400);
-
+        // En vez de abrir una ventana PDF, llamamos al módulo unificado que detecta USB o Bluetooth automáticamente
+        await imprimirTicketVenta(USER_ID, ventaData);
     } catch (e) {
-        console.error("Error al intentar imprimir el ticket automático:", e);
+        console.error("Error al intentar imprimir el ticket:", e);
+        alert("Error al imprimir: " + e.message);
     }
 }
 
