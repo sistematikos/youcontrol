@@ -285,7 +285,7 @@
             margin: 0 !important;
         }
 
-        /* TOTALES DE VENTA Y BOTÓN DE PAGO (BOTÓN IZQUIERDA, TOTALES DERECHA) */
+        /* TOTALES DE VENTA Y BOTÓN DE PAGO */
         .cart-bottom-horizontal {
             display: flex;
             background: #f8fafc;
@@ -296,7 +296,7 @@
 
         .totals-section {
             padding: 15px 25px;
-            text-align: right; /* Alineado a la derecha para mejor estética */
+            text-align: right;
             background: transparent;
             border-top: none;
             display: flex;
@@ -422,6 +422,8 @@
             <button class="btn-shortcut" onclick="window.ejecutarF5()">F5 PRECIO</button>
             <button class="btn-shortcut" onclick="window.ejecutarF6()">F6 ELIMINAR</button>
             <button class="btn-shortcut" onclick="window.abrirModalCobro()">F9 COBRAR</button>
+            <!-- Botón de Búsqueda y Reimpresión Rápida -->
+            <button class="btn-shortcut" style="background:#0ea5e9; color:white;" onclick="window.abrirModalReimpresion()"><i class="fas fa-receipt"></i> Buscar / Reimprimir</button>
             <div class="tasa-bcv-badge">BCV: <span id="txt-tasa">0.00</span> Bs.</div>
         </div>
     </header>
@@ -453,7 +455,7 @@
             <div class="grid-productos-view" id="grid-productos"></div>
         </section>
 
-        <!-- SECCIÓN INFERIOR: CARRITO HORIZONTAL (BOTÓN IZQUIERDA, TOTALES DERECHA) -->
+        <!-- SECCIÓN INFERIOR: CARRITO -->
         <section class="right-panel">
             <div class="panel-section-header">
                 <div class="input-group-title" style="margin: 0;"><i class="fas fa-shopping-cart"></i> Artículos en Carro</div>
@@ -464,10 +466,7 @@
             <div class="cart-items-container" id="lista-carrito"></div>
             
             <div class="cart-bottom-horizontal">
-                <!-- Botón de Pagar movido a la Izquierda -->
                 <button class="btn-pay-action" onclick="window.abrirModalCobro()">PAGAR [F9]</button>
-                
-                <!-- Totales movidos a la Derecha -->
                 <div class="totals-section">
                     <div>
                         <h2 id="total-usd">$ 0.00</h2>
@@ -478,6 +477,7 @@
         </section>
     </main>
 
+    <!-- MODAL DE PAGO -->
     <div class="modal-overlay" id="modalPago">
         <div class="modal-card">
             <div class="modal-header">
@@ -498,6 +498,22 @@
                     <div class="form-group" style="grid-column: span 2;"><label style="color: #d97706;">Crédito ($)</label><input type="number" id="in-credito-usd" value="0" step="any" style="border-color: #f59e0b;"></div>
                 </div>
                 <button id="btn-confirmar-venta" class="btn-pay-action" style="margin-top: 25px; border-radius: 8px; width: 100%; min-height: unset; padding: 16px;" onclick="window.registrarVenta()">CONFIRMAR VENTA</button>            
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE BÚSQUEDA Y REIMPRESIÓN DE FACTURAS -->
+    <div class="modal-overlay" id="modalBuscarFactura">
+        <div class="modal-card" style="width: 550px;">
+            <div class="modal-header">
+                <span style="font-weight: 700; font-size: 15px;"><i class="fas fa-receipt"></i> Buscar y Reimprimir Factura</span>
+                <i class="fas fa-times" style="cursor: pointer;" onclick="document.getElementById('modalBuscarFactura').style.display='none'"></i>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="input-buscar-factura" placeholder="Filtrar por Nro de Factura o Nombre de Cliente..." style="width:100%; padding:11px; border:1.5px solid var(--border-color); border-radius:8px; font-size:14px; margin-bottom:15px; outline:none;">
+                <div id="lista-facturas-dia" style="max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+                    <!-- Listado dinámico -->
+                </div>
             </div>
         </div>
     </div>
