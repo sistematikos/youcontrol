@@ -259,7 +259,7 @@
                     </select>
                 </div>
 
-                <!-- Botón especial para probar Bluetooth directamente en la tablet -->
+                <!-- Botón especial para probar Bluetooth directamente -->
                 <button type="button" class="btn-bt-test" id="btn-probar-bt">
                     <i class="fab fa-bluetooth-b"></i> Vincular / Probar Impresora Bluetooth
                 </button>
@@ -296,7 +296,8 @@
     <script type="module">
         import { db } from './js/firebase-config.js';
         import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        import { imprimirPorBluetooth } from './ticket-print.js';
+        // Ruta corregida apuntando a la carpeta js/
+        import { imprimirPorBluetooth } from './js/ticket-print.js';
 
         const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 
@@ -323,13 +324,13 @@
         }
 
         // Botón para probar la conexión Bluetooth de inmediato en la tablet
-        document.getElementById('btn-probar-bt').addEventListener('click', async () => {
+        document.getElementById('btn-probar-bt')?.addEventListener('click', async () => {
             localStorage.setItem('youcontrol_tipo_conexion', 'bluetooth');
             document.getElementById('sel-tipo-conexion').value = 'bluetooth';
             await imprimirPorBluetooth();
         });
 
-        document.getElementById('btn-guardar-config').addEventListener('click', async () => {
+        document.getElementById('btn-guardar-config')?.addEventListener('click', async () => {
             if (!USER_ID) {
                 alert("Error: No se encontró el ID de la empresa en la sesión.");
                 return;
