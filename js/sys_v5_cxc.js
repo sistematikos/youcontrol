@@ -1,6 +1,6 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * Módulo de Cuentas por Cobrar (sys_v5_cxc.js)
+ * Módulo de Cuentas por Cobrar agrupadas por cliente (sys_v5_cxc.js)
  */
 
 import { db } from './firebase-config.js';
@@ -33,7 +33,7 @@ function cargarCuentasPorCobrar() {
             listaCuentasGlobal.push({ id: docSnap.id, ...docSnap.data() });
         });
 
-        renderizarTabla(listaCuentasGlobal);
+        renderizarTablaAgrupada(listaCuentasGlobal);
         calcularKPIs(listaCuentasGlobal);
     }, (error) => {
         console.error("Error al cargar cuentas por cobrar:", error);
@@ -41,7 +41,7 @@ function cargarCuentasPorCobrar() {
     });
 }
 
-function renderizarTabla(datos) {
+function renderizarTablaAgrupada(datos) {
     const tbody = document.getElementById('tabla-cxc');
     if (!tbody) return;
 
@@ -50,46 +50,95 @@ function renderizarTabla(datos) {
         return;
     }
 
-    tbody.innerHTML = datos.map(item => {
-        let fechaStr = "N/D";
-        if (item.fecha && item.fecha.toDate) {
-            fechaStr = item.fecha.toDate().toLocaleString('es-VE', { 
-                day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' 
-            });
+    // --- AGRUPAR POR CLIENTE ---
+    const agrupadoPorCliente = {};
+
+    datos.forEach(item => {
+        // Usamos el cliente_id o el nombre como clave de agrupación
+        const clienteKey = item.cliente_id || item.nombre_cliente || "Sin Nombre";
+        const nombreCliente = item.nombre_cliente || 'Sin Nombre';
+
+        if (!agrupadoPorCliente[clienteKey]) {
+            agrupadoPorCliente[clienteKey] = {
+                nombre: nombreCliente,
+                totalDeudaCliente: 0,
+                facturas: []
+            };
         }
 
         const montoVal = item.monto !== undefined ? item.monto : (item.monto_credito_usd || item.monto_total || item.monto_total_usd || 0);
         const abonadoVal = item.abonado !== undefined ? item.abonado : (item.monto_abonado_usd || 0);
         const pendienteVal = item.pendiente !== undefined ? item.pendiente : (item.saldo_pendiente_usd || montoVal);
 
-        let estadoClase = "status-pendiente";
-        let estadoTexto = "Pendiente";
-
-        if (pendienteVal <= 0.01) {
-            estadoClase = "status-pagado";
-            estadoTexto = "Pagado";
-        } else if (abonadoVal > 0) {
-            estadoClase = "status-parcial";
-            estadoTexto = "Parcial";
+        // Sumar solo si tiene deuda pendiente relevante
+        if (pendienteVal > 0.01) {
+            agrupadoPorCliente[clienteKey].totalDeudaCliente += pendienteVal;
         }
 
-        return `
-            <tr>
-                <td>${fechaStr}</td>
-                <td><strong>${item.nombre_cliente || 'Sin Nombre'}</strong></td>
-                <td>${item.detalle || 'Venta a crédito'}</td>
-                <td class="text-right"><strong>$ ${montoVal.toFixed(2)}</strong></td>
-                <td class="text-right" style="color: var(--emerald);">$ ${abonadoVal.toFixed(2)}</td>
-                <td class="text-right" style="color: var(--rose);"><strong>$ ${pendienteVal.toFixed(2)}</strong></td>
-                <td class="text-center"><span class="badge-status ${estadoClase}">${estadoTexto}</span></td>
-                <td class="text-center">
-                    <button class="btn-accion" onclick="window.abrirAbono('${item.id}')">
-                        <i class="fas fa-cash-register"></i> Abonar
-                    </button>
-                </td>
+        agrupadoPorCliente[clienteKey].facturas.push({
+            ...item,
+            montoVal,
+            abonadoVal,
+            pendienteVal
+        });
+    });
+
+    let htmlFinal = "";
+
+    // Construir filas agrupadas
+    Object.keys(agrupadoPorCliente).forEach(key => {
+        const grupo = agrupadoPorCliente[key];
+        
+        // Fila de Cabecera del Cliente con la suma total que debe
+        htmlFinal += `
+            <tr style="background-color: #f1f5f9; border-top: 2px solid #cbd5e1;">
+                <td colspan="3"><strong>👤 CLIENTE: ${grupo.nombre.toUpperCase()}</strong></td>
+                <td colspan="2" class="text-right"><strong>TOTAL GENERAL DEL CLIENTE:</strong></td>
+                <td class="text-right" style="color: var(--rose); font-size: 1.05rem;"><strong>$ ${grupo.totalDeudaCliente.toFixed(2)}</strong></td>
+                <td colspan="2"></td>
             </tr>
         `;
-    }).join('');
+
+        // Filas de cada factura de ese cliente
+        grupo.facturas.forEach(item => {
+            let fechaStr = "N/D";
+            if (item.fecha && item.fecha.toDate) {
+                fechaStr = item.fecha.toDate().toLocaleString('es-VE', { 
+                    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' 
+                });
+            }
+
+            let estadoClase = "status-pendiente";
+            let estadoTexto = "Pendiente";
+
+            if (item.pendienteVal <= 0.01) {
+                estadoClase = "status-pagado";
+                estadoTexto = "Pagado";
+            } else if (item.abonadoVal > 0) {
+                estadoClase = "status-parcial";
+                estadoTexto = "Parcial";
+            }
+
+            htmlFinal += `
+                <tr>
+                    <td style="padding-left: 25px;">${fechaStr}</td>
+                    <td>Factura: <strong>${item.nro_factura || 'N/D'}</strong></td>
+                    <td>${item.detalle || 'Venta a crédito'}</td>
+                    <td class="text-right"><strong>$ ${item.montoVal.toFixed(2)}</strong></td>
+                    <td class="text-right" style="color: var(--emerald);">$ ${item.abonadoVal.toFixed(2)}</td>
+                    <td class="text-right" style="color: var(--rose);"><strong>$ ${item.pendienteVal.toFixed(2)}</strong></td>
+                    <td class="text-center"><span class="badge-status ${estadoClase}">${estadoTexto}</span></td>
+                    <td class="text-center">
+                        <button class="btn-accion" onclick="window.abrirAbono('${item.id}')">
+                            <i class="fas fa-cash-register"></i> Abonar
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+    });
+
+    tbody.innerHTML = htmlFinal;
 }
 
 function calcularKPIs(datos) {
@@ -108,6 +157,7 @@ function calcularKPIs(datos) {
             totalDeuda += pendiente;
             creditosPendientes++;
             if (item.cliente_id) clientesSet.add(item.cliente_id);
+            else if (item.nombre_cliente) clientesSet.add(item.nombre_cliente);
         }
     });
 
@@ -131,7 +181,7 @@ function initBuscador() {
             (item.detalle || '').toLowerCase().includes(criterio) ||
             (item.nro_factura || '').toLowerCase().includes(criterio)
         );
-        renderizarTabla(filtrados);
+        renderizarTablaAgrupada(filtrados);
     });
 }
 
@@ -161,12 +211,9 @@ window.abrirAbono = async (id) => {
     try {
         let itemsFactura = [];
 
-        // 1. Si la cuenta ya trae ítems cargados localmente
         if (cuentaActualSeleccionada.items && cuentaActualSeleccionada.items.length > 0) {
             itemsFactura = cuentaActualSeleccionada.items;
-        } 
-        // 2. Si tiene número de factura, los buscamos directamente en la colección 'ventas'
-        else if (cuentaActualSeleccionada.nro_factura) {
+        } else if (cuentaActualSeleccionada.nro_factura) {
             const ventasRef = collection(db, "usuarios", USER_ID, "ventas");
             const q = query(ventasRef, where("nro_factura", "==", cuentaActualSeleccionada.nro_factura));
             const querySnapshot = await getDocs(q);
@@ -174,7 +221,6 @@ window.abrirAbono = async (id) => {
             if (!querySnapshot.empty) {
                 itemsFactura = querySnapshot.docs[0].data().items || [];
             } else {
-                // Búsqueda alternativa por ID de documento de venta
                 const ventaDocRef = doc(db, "usuarios", USER_ID, "ventas", cuentaActualSeleccionada.nro_factura);
                 const ventaDocSnap = await getDoc(ventaDocRef);
                 if (ventaDocSnap.exists()) {
@@ -183,7 +229,6 @@ window.abrirAbono = async (id) => {
             }
         }
 
-        // Renderizar los productos encontrados en el contenedor del modal
         if (contenedorProductos) {
             if (itemsFactura.length > 0) {
                 contenedorProductos.innerHTML = itemsFactura.map(item => {
