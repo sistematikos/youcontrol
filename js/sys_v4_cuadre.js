@@ -1,6 +1,6 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * sys_v4_cuadre.js - Versión corregida para zona horaria y extracción de hora de factura
+ * sys_v4_cuadre.js - Versión con totalizador de ventas a crédito
  */
 
 import { db } from './firebase-config.js';
@@ -35,7 +35,7 @@ function extraerFechaLocal(campoFecha) {
 
 // Renderizar los datos según la fecha elegida
 function procesarYMostrarCuadre(fechaSeleccionada) {
-    let t = { usd: 0, efecBs: 0, punto: 0, pmovil: 0, global: 0 };
+    let t = { usd: 0, efecBs: 0, punto: 0, pmovil: 0, creditoUSD: 0, global: 0 };
     tablaCuerpo.innerHTML = "";
 
     const ventasFiltradas = todasLasVentas.filter(v => v.fechaLocal === fechaSeleccionada);
@@ -44,11 +44,12 @@ function procesarYMostrarCuadre(fechaSeleccionada) {
         const p = data.pagos || {};
         const nombreCliente = data.nombre_cliente || "Anónimo";
         
-        // Acumular totales
+        // Acumular totales (incluyendo crédito)
         t.usd += parseFloat(p.divisas_usd || 0);
         t.efecBs += parseFloat(p.efectivo_bs || 0);
         t.punto += parseFloat(p.punto_bs || 0);
         t.pmovil += parseFloat(p.pago_movil_bs || 0);
+        t.creditoUSD += parseFloat(p.credito_usd || 0);
         t.global += parseFloat(data.total_usd || 0);
 
         // Obtener la hora de forma segura (si data.hora no existe, la saca de la fecha)
@@ -83,12 +84,16 @@ function procesarYMostrarCuadre(fechaSeleccionada) {
         tablaCuerpo.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#64748B;">No hay ventas registradas para la fecha ${fechaSeleccionada}</td></tr>`;
     }
 
-    // Actualizar UI de tarjetas y totales
-    document.getElementById('tot-dolar').innerText = `$ ${t.usd.toFixed(2)}`;
-    document.getElementById('tot-efec-bs').innerText = `Bs. ${t.efecBs.toFixed(2)}`;
-    document.getElementById('tot-punto').innerText = `Bs. ${t.punto.toFixed(2)}`;
-    document.getElementById('tot-pmovil').innerText = `Bs. ${t.pmovil.toFixed(2)}`;
-    document.getElementById('tot-venta-dia').innerText = `Venta Total: $ ${t.global.toFixed(2)}`;
+    // Actualizar UI de tarjetas y totales (incluyendo la tarjeta de crédito)
+    if(document.getElementById('tot-dolar')) document.getElementById('tot-dolar').innerText = `$ ${t.usd.toFixed(2)}`;
+    if(document.getElementById('tot-efec-bs')) document.getElementById('tot-efec-bs').innerText = `Bs. ${t.efecBs.toFixed(2)}`;
+    if(document.getElementById('tot-punto')) document.getElementById('tot-punto').innerText = `Bs. ${t.punto.toFixed(2)}`;
+    if(document.getElementById('tot-pmovil')) document.getElementById('tot-pmovil').innerText = `Bs. ${t.pmovil.toFixed(2)}`;
+    
+    // Si agregaste el elemento con ID 'tot-credito' en tu HTML, lo actualizamos aquí:
+    if(document.getElementById('tot-credito')) document.getElementById('tot-credito').innerText = `$ ${t.creditoUSD.toFixed(2)}`;
+
+    if(document.getElementById('tot-venta-dia')) document.getElementById('tot-venta-dia').innerText = `Venta Total: $ ${t.global.toFixed(2)}`;
 }
 
 // Inicialización y escucha en tiempo real única
