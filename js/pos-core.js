@@ -156,7 +156,7 @@ window.registrarVenta = async () => {
             await updateDoc(productoRef, { stock: increment(-item.cantidad) });
         }
 
-        // --- IMPRESIÓN TÉRMICA DIRECTA (FORMATO TÉRMICO COMPACTO) ---
+        // --- IMPRESIÓN AISLADA (EVITA QUE SE QUEDE EN COLA) ---
         try {
             const userDoc = await getDoc(doc(db, "usuarios", USER_ID));
             if (userDoc.exists()) {
@@ -166,67 +166,71 @@ window.registrarVenta = async () => {
                     const piePag = configTicket.pie_pagina || "¡Gracias por su compra!";
                     const empresaNombre = userDoc.data().nombre || "YOU CONTROL";
 
-                    // Crear o reutilizar un contenedor oculto para imprimir
-                    let divPrint = document.getElementById('print-ticket-container');
-                    if (!divPrint) {
-                        divPrint = document.createElement('div');
-                        divPrint.id = 'print-ticket-container';
-                        divPrint.style.display = 'none';
-                        document.body.appendChild(divPrint);
+                    // Abrir una ventana limpia y dedicada exclusivamente al ticket térmico
+                    const ventanaPrint = window.open('', '_blank', 'width=350,height=500');
+                    if (ventanaPrint) {
+                        let itemsHtml = (ventaData.items || []).map(i => `
+                            <tr>
+                                <td style="text-align:left; word-break: break-all;">${i.nombre || 'Art'}</td>
+                                <td style="text-align:center;">${i.cantidad}</td>
+                                <td style="text-align:right;">$${((i.precio || 0) * i.cantidad).toFixed(2)}</td>
+                            </tr>
+                        `).join('');
+
+                        ventanaPrint.document.write(`
+                            <!DOCTYPE html>
+                            <html>
+                            <head>
+                                <title>Ticket #${nroFactura}</title>
+                                <style>
+                                    @page {
+                                        size: ${anchoMM === '58' ? '58mm auto' : '80mm auto'};
+                                        margin: 0;
+                                    }
+                                    body {
+                                        font-family: 'Courier New', Courier, monospace;
+                                        font-size: ${anchoMM === '58' ? '10px' : '12px'};
+                                        width: ${anchoMM === '58' ? '58mm' : '80mm'};
+                                        margin: 0;
+                                        padding: 4px;
+                                        color: #000;
+                                    }
+                                    .text-center { text-align: center; }
+                                    .bold { font-weight: bold; }
+                                    table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+                                    th, td { font-size: ${anchoMM === '58' ? '9px' : '11px'}; padding: 2px 0; }
+                                    .line { border-bottom: 1px dashed #000; margin: 4px 0; }
+                                </style>
+                            </head>
+                            <body>
+                                <div class="text-center bold" style="font-size: 13px;">${empresaNombre.toUpperCase()}</div>
+                                <div class="text-center">Factura Nro: ${nroFactura}</div>
+                                <div class="text-center">Cliente: ${ventaData.nombre_cliente}</div>
+                                <div class="line"></div>
+                                <table>
+                                    <tr>
+                                        <th style="text-align:left;">DESC</th>
+                                        <th style="text-align:center;">CANT</th>
+                                        <th style="text-align:right;">TOTAL</th>
+                                    </tr>
+                                    ${itemsHtml}
+                                </table>
+                                <div class="line"></div>
+                                <div style="text-align:right;" class="bold">TOTAL: $${ventaData.total_usd.toFixed(2)}</div>
+                                <div class="text-center" style="margin-top: 8px;">${piePag}</div>
+                            </body>
+                            </html>
+                        `);
+
+                        ventanaPrint.document.close();
+                        ventanaPrint.focus();
+                        
+                        // Lanzar impresión y cerrar la ventana automáticamente tras completarse
+                        setTimeout(() => {
+                            ventanaPrint.print();
+                            ventanaPrint.close();
+                        }, 400);
                     }
-
-                    let itemsHtml = (ventaData.items || []).map(i => `
-                        <tr>
-                            <td style="text-align:left;">${i.nombre || 'Art'}</td>
-                            <td style="text-align:center;">${i.cantidad}</td>
-                            <td style="text-align:right;">$${((i.precio || 0) * i.cantidad).toFixed(2)}</td>
-                        </tr>
-                    `).join('');
-
-                    divPrint.innerHTML = `
-                        <div id="ticket-impresion" style="font-family: 'Courier New', Courier, monospace; font-size: ${anchoMM === '58' ? '10px' : '12px'}; width: ${anchoMM === '58' ? '58mm' : '80mm'}; padding: 2px; color: #000;">
-                            <div style="text-align: center; font-weight: bold; font-size: 13px;">${empresaNombre.toUpperCase()}</div>
-                            <div style="text-align: center;">Factura Nro: ${nroFactura}</div>
-                            <div style="text-align: center;">Cliente: ${ventaData.nombre_cliente}</div>
-                            <div style="border-bottom: 1px dashed #000; margin: 4px 0;"></div>
-                            <table style="width: 100%; border-collapse: collapse;">
-                                <tr>
-                                    <th style="text-align:left; font-size: ${anchoMM === '58' ? '9px' : '11px'};">DESC</th>
-                                    <th style="text-align:center; font-size: ${anchoMM === '58' ? '9px' : '11px'};">CANT</th>
-                                    <th style="text-align:right; font-size: ${anchoMM === '58' ? '9px' : '11px'};">TOTAL</th>
-                                </tr>
-                                ${itemsHtml}
-                            </table>
-                            <div style="border-bottom: 1px dashed #000; margin: 4px 0;"></div>
-                            <div style="text-align:right; font-weight: bold;">TOTAL: $${ventaData.total_usd.toFixed(2)}</div>
-                            <div style="text-align: center; margin-top: 8px;">${piePag}</div>
-                        </div>
-                    `;
-
-                    // Estilo de impresión optimizado para rollos térmicos sin espacios en blanco
-                    let stylePrint = document.getElementById('dynamic-print-style');
-                    if (!stylePrint) {
-                        stylePrint = document.createElement('style');
-                        stylePrint.id = 'dynamic-print-style';
-                        document.head.appendChild(stylePrint);
-                    }
-                    
-                    stylePrint.innerHTML = `
-                        @page {
-                            size: ${anchoMM === '58' ? '58mm auto' : '80mm auto'};
-                            margin: 0mm;
-                        }
-                        @media print {
-                            body * { visibility: hidden; }
-                            #print-ticket-container, #print-ticket-container * { visibility: visible; }
-                            #print-ticket-container { display: block !important; position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; }
-                        }
-                    `;
-
-                    // Lanzar impresión directa
-                    setTimeout(() => {
-                        window.print();
-                    }, 200);
                 }
             }
         } catch (printErr) {
