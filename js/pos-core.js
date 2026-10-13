@@ -95,7 +95,7 @@ window.agregarCarrito = (id) => {
     window.actualizarCarritoUI();
 };
 
-// --- FUNCIÓN DE IMPRESIÓN TÉRMICA DETALLADA CON BS Y DATOS DE LA EMPRESA ---
+// --- FUNCIÓN DE IMPRESIÓN TÉRMICA 100% EN BOLÍVARES (BS) ---
 async function verificarEImprimirTicket(nroFactura, ventaData) {
     try {
         const userDoc = await getDoc(doc(db, "usuarios", USER_ID));
@@ -109,7 +109,7 @@ async function verificarEImprimirTicket(nroFactura, ventaData) {
         const anchoMM = configTicket.ancho_mm || "58"; // "58" o "80"
         const piePag = configTicket.pie_pagina || "¡Gracias por su compra!";
         
-        // Datos extendidos de la empresa guardados en Firebase
+        // Datos de la empresa guardados en Firebase
         const empresaNombre = userData.nombre || "YOU CONTROL";
         const empresaRif = userData.rif || userData.identificacion || "RIF: J-00000000-0";
         const empresaTelefono = userData.telefono || userData.tlf || "Tel: 0412-0000000";
@@ -123,20 +123,19 @@ async function verificarEImprimirTicket(nroFactura, ventaData) {
             return;
         }
 
-        // Construir la lista de productos con precio unitario y subtotal en USD y Bs
+        // Construir la lista de productos reflejando precio unitario y subtotal en Bs.
         let itemsHtml = (ventaData.items || []).map(i => {
             const cant = i.cantidad || 1;
             const precioUSD = i.precio || 0;
-            const subtotalUSD = cant * precioUSD;
-            const subtotalBs = subtotalUSD * tasa;
+            const precioBs = precioUSD * tasa;
+            const subtotalBs = cant * precioBs;
 
             return `
                 <tr>
-                    <td colspan="3" style="font-weight: bold; padding-top: 3px;">${i.nombre || 'Producto'}</td>
+                    <td colspan="2" style="font-weight: bold; padding-top: 3px;">${i.nombre || 'Producto'}</td>
                 </tr>
                 <tr>
-                    <td style="text-align:left; font-size: ${anchoMM === '58' ? '9px' : '11px'};">${cant} x $${precioUSD.toFixed(2)}</td>
-                    <td style="text-align:right; font-size: ${anchoMM === '58' ? '9px' : '11px'};">$${subtotalUSD.toFixed(2)}</td>
+                    <td style="text-align:left; font-size: ${anchoMM === '58' ? '9px' : '11px'};">${cant} x Bs. ${precioBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                     <td style="text-align:right; font-size: ${anchoMM === '58' ? '9px' : '11px'};">Bs. ${subtotalBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                 </tr>
             `;
@@ -185,13 +184,12 @@ async function verificarEImprimirTicket(nroFactura, ventaData) {
                 
                 <div class="line"></div>
                 
-                <!-- DETALLE DE PRODUCTOS -->
+                <!-- DETALLE DE PRODUCTOS EN BS -->
                 <table>
                     <thead>
                         <tr>
-                            <th style="text-align:left;">CANT x PRECIO</th>
-                            <th style="text-align:right;">TOTAL ($)</th>
-                            <th style="text-align:right;">TOTAL (Bs)</th>
+                            <th style="text-align:left;">CANT x PRECIO (Bs.)</th>
+                            <th style="text-align:right;">TOTAL (Bs.)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -201,9 +199,8 @@ async function verificarEImprimirTicket(nroFactura, ventaData) {
                 
                 <div class="line"></div>
                 
-                <!-- TOTALES GENERALES -->
-                <div class="text-right bold" style="font-size: 11px;">TOTAL USD: $${totalUSD.toFixed(2)}</div>
-                <div class="text-right bold" style="font-size: 12px;">TOTAL Bs.: ${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                <!-- TOTALES GENERALES EN BS -->
+                <div class="text-right bold" style="font-size: 13px;">TOTAL A PAGAR: Bs. ${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                 
                 <div class="line"></div>
                 <div class="text-center" style="margin-top: 6px;">${piePag}</div>
