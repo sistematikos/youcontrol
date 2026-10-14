@@ -2,7 +2,7 @@ import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.7.
 import { getFirestore, collection, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { db as dbPrincipal } from './firebase-config.js';
 
-// Mapa de configuraciones de proyectos independientes para los productos de cada cliente
+// Mapa de configuraciones de proyectos independientes SOLO para los productos y departamentos de cada cliente
 const CONFIGS_PROYECTOS = {
     "YC-20261012-TORACA": {
         projectId: "yc-toraca",
@@ -65,6 +65,7 @@ function iniciarCatalogo() {
         return;
     }
 
+    // Inicializar conexión independiente únicamente para los productos del cliente
     inicializarFirebaseProductos(USER_ID);
 
     function aplicarDatosEmpresa(data) {
@@ -73,6 +74,7 @@ function iniciarCatalogo() {
         const logoImg = document.getElementById('logo-empresa');
         const dirEl = document.getElementById('direccion-empresa');
 
+        // Nombre de la empresa desde empresas_config de la base central
         let nombreNegocio = data.nombre || data.razon_social || data.empresa || data.nombre_empresa;
         if (nombreNegocio && nombreEl) {
             nombreEl.innerText = String(nombreNegocio).toUpperCase();
@@ -81,7 +83,7 @@ function iniciarCatalogo() {
 
         let direccionNegocio = data.direccion || data.ubicacion || data.dir;
         if (dirEl) {
-            dirEl.innerText = direccionNegocio ? ("📍 " + direccionNegocio) : "📍 Barquisimeto, Lara";
+            dirEl.innerText = direccionNegocio ? ("📍 " + direccionNegocio) : "📍 Dirección no registrada";
         }
 
         let telLimpio = (data.telefono || data.tlf || data.whatsapp || "").toString().replace(/-/g, "").replace(/\s/g, "");
@@ -104,7 +106,7 @@ function iniciarCatalogo() {
         renderizarCatalogo(productosGlobales);
     }
 
-    // 1. LEER CABECERA DESDE LA COLECCIÓN CENTRAL 'empresas_config' EN LA DB PRINCIPAL
+    // 1. LEER LOS DATOS DE LA EMPRESA (NOMBRE, DIRECCIÓN, TELÉFONO, TASA) DIRECTAMENTE DE 'empresas_config' EN LA DB PRINCIPAL
     onSnapshot(doc(dbPrincipal, "empresas_config", USER_ID), (snapConfig) => {
         if (snapConfig.exists()) {
             const data = snapConfig.data();
@@ -112,15 +114,6 @@ function iniciarCatalogo() {
             if (data.tasa_bcv || data.tasa) {
                 procesarTasa(data.tasa_bcv || data.tasa);
             }
-        } else {
-            // Respaldo secundario en la colección 'usuarios' de la DB principal
-            onSnapshot(doc(dbPrincipal, "usuarios", USER_ID), (snapUser) => {
-                if (snapUser.exists()) {
-                    const dataUser = snapUser.data();
-                    aplicarDatosEmpresa(dataUser);
-                    if (dataUser.tasa_bcv) procesarTasa(dataUser.tasa_bcv);
-                }
-            });
         }
     });
 
