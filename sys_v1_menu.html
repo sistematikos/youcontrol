@@ -76,7 +76,7 @@
         /* CONTENEDOR GENERAL */
         .main-wrapper { max-width: 1200px; width: 92%; margin: 25px auto; flex-grow: 1; display: flex; flex-direction: column; gap: 25px; }
 
-        /* TARJETA DE DATOS DE LA EMPRESA (FUERA DEL BANNER) */
+        /* TARJETA DE DATOS DE LA EMPRESA FUERA DEL BANNER */
         .empresa-card {
             background: var(--card-bg);
             border-radius: 16px;
@@ -114,30 +114,58 @@
         }
         .banner-menu-container:hover .banner-menu-img { transform: scale(1.01); }
 
-        /* SECCIÓN DE BIENVENIDA / ACCESOS */
-        .welcome-box { 
+        /* SECCIÓN INFORMATIVA - IDEA 2 (COMERCIAL Y PERSUASIVA) */
+        .software-box { 
             background: var(--card-bg); 
-            padding: 30px; 
+            padding: 32px 35px; 
             border-radius: 16px; 
             box-shadow: 0 4px 12px rgba(0,0,0,0.04); 
             border: 1px solid var(--border-color); 
-            text-align: left;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 20px;
+            border-left: 5px solid #0EA5E9;
         }
-        .welcome-text h2 { margin: 0 0 6px 0; color: var(--primary-dark); font-size: 1.4rem; font-weight: 700; }
-        .welcome-text p { color: var(--text-muted); font-size: 0.9rem; margin: 0; }
-        .quick-actions { display: flex; gap: 10px; }
-        .btn-quick { background: #0EA5E9; color: white; padding: 10px 18px; border-radius: 10px; text-decoration: none; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; box-shadow: 0 4px 10px rgba(14, 165, 233, 0.25); }
-        .btn-quick:hover { background: #0284C7; transform: translateY(-2px); }
+        .software-box h2 { 
+            margin: 0 0 10px 0; 
+            color: var(--primary-dark); 
+            font-size: 1.35rem; 
+            font-weight: 700; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+        }
+        .software-box h2 i { color: #0EA5E9; }
+        .software-box p { 
+            color: var(--text-muted); 
+            font-size: 0.92rem; 
+            line-height: 1.6; 
+            margin: 0 0 20px 0; 
+        }
+        .software-features {
+            display: flex;
+            gap: 25px;
+            flex-wrap: wrap;
+            padding-top: 15px;
+            border-top: 1px dashed var(--border-color);
+        }
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
+        .feature-item i {
+            color: #0284C7;
+            background: #E0F2FE;
+            padding: 8px;
+            border-radius: 8px;
+        }
 
         @media (max-width: 768px) {
-            .nav-menu { display: none; /* Podrías agregar menú móvil si lo deseas luego */ }
+            .nav-menu { display: none; }
             .empresa-card { flex-direction: column; align-items: flex-start; }
-            .welcome-box { flex-direction: column; text-align: center; align-items: center; }
+            .software-box { padding: 20px; }
+            .software-features { gap: 15px; }
         }
     </style>
 
@@ -203,7 +231,7 @@
     <!-- CONTENEDOR PRINCIPAL -->
     <div class="main-wrapper">
 
-        <!-- TARJETA DE DATOS DE LA EMPRESA (FUERA DEL BANNER, LIMPIA Y PROFESIONAL) -->
+        <!-- TARJETA DE DATOS DE LA EMPRESA FUERA DEL BANNER -->
         <div class="empresa-card">
             <div class="empresa-info">
                 <h3 id="lblNombreEmpresa"><i class="fas fa-building"></i> Cargando empresa...</h3>
@@ -222,15 +250,17 @@
             <img src="img/youcontrol.png" alt="You Control" class="banner-menu-img">
         </div>
 
-        <!-- CAJA DE BIENVENIDA Y ACCESOS RÁPIDOS -->
-        <div class="welcome-box">
-            <div class="welcome-text">
-                <h2>Panel de Control Principal</h2>
-                <p>Selecciona una opción en la barra superior o utiliza los accesos rápidos para iniciar tus operaciones diarias.</p>
-            </div>
-            <div class="quick-actions">
-                <a href="sys_v1_vt.html" class="btn-quick"><i class="fas fa-cash-register"></i> Nueva Venta (POS)</a>
-                <a href="sys_v1_inv.html" class="btn-quick" style="background: #475569;"><i class="fas fa-boxes-stacked"></i> Ver Inventario</a>
+        <!-- ESCRITO OPCIÓN 2 (COMERCIAL Y PERSUASIVO) -->
+        <div class="software-box">
+            <h2><i class="fas fa-rocket"></i> La Solución Inteligente para la Gestión de tu Empresa</h2>
+            <p>
+                Transforma la manera en que administras tu negocio con tecnología ágil y confiable. <strong>YOU CONTROL</strong> está diseñado para simplificar tu facturación diaria, proteger tus datos y brindarte el control absoluto de tus finanzas en una sola interfaz intuitiva.
+            </p>
+            <div class="software-features">
+                <div class="feature-item"><i class="fas fa-file-invoice"></i> Facturación Simplificada</div>
+                <div class="feature-item"><i class="fas fa-vault"></i> Máxima Protección de Datos</div>
+                <div class="feature-item"><i class="fas fa-sliders"></i> Control Financiero Total</div>
+                <div class="feature-item"><i class="fas fa-wand-magic-sparkles"></i> Interfaz Intuitiva y Ágil</div>
             </div>
         </div>
 
