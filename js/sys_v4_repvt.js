@@ -3,14 +3,27 @@ import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/f
 
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 
+// Función para obtener la fecha local correcta en Venezuela (YYYY-MM-DD)
+function obtenerFechaLocalVenezuela() {
+    const d = new Date();
+    // Ajuste por zona horaria de Venezuela (UTC-4)
+    const localTime = d.getTime() - (4 * 60 * 60 * 1000);
+    const localDate = new Date(localTime);
+    return localDate.toISOString().split('T')[0];
+}
+
 window.cargarReporteVentas = async () => {
     const inputDesde = document.getElementById('filtro-desde');
     const inputHasta = document.getElementById('filtro-hasta');
     
-    // Si los inputs de fecha están vacíos, tomamos la fecha actual por defecto
-    const hoyStr = new Date().toISOString().split('T')[0];
-    const desde = inputDesde?.value || hoyStr;
-    let hasta = inputHasta?.value || desde;
+    const hoyStr = obtenerFechaLocalVenezuela();
+    
+    // Si los inputs están vacíos al cargar, les asignamos la fecha de hoy correcta en Venezuela
+    if (inputDesde && !inputDesde.value) inputDesde.value = hoyStr;
+    if (inputHasta && !inputHasta.value) inputHasta.value = hoyStr;
+
+    const desde = inputDesde ? inputDesde.value : hoyStr;
+    let hasta = inputHasta ? inputHasta.value : desde;
 
     try {
         const ventasRef = collection(db, "usuarios", USER_ID, "ventas");
@@ -21,36 +34,29 @@ window.cargarReporteVentas = async () => {
         snapshot.forEach(vDoc => {
             const data = vDoc.data();
             
-            // Si la venta tiene fecha (Timestamp de Firestore)
             if (data.fecha && typeof data.fecha.toDate === 'function') {
                 const d = data.fecha.toDate();
-                const yyyy = d.getFullYear();
-                const mm = String(d.getMonth() + 1).padStart(2, '0');
-                const dd = String(d.getDate()).padStart(2, '0');
+                // Ajustar también la fecha del documento a la hora local para comparar bien los días
+                const localTimeDoc = d.getTime() - (4 * 60 * 60 * 1000);
+                const dLocal = new Date(localTimeDoc);
+                const yyyy = dLocal.getUTCFullYear();
+                const mm = String(dLocal.getUTCMonth() + 1).padStart(2, '0');
+                const dd = String(dLocal.getUTCDate()).padStart(2, '0');
                 const fechaStr = `${yyyy}-${mm}-${dd}`;
 
-                // Validamos el rango de fechas de forma segura
+                // Filtrar según el rango de fechas elegido en los inputs
                 if (fechaStr >= desde && fechaStr <= hasta) {
                     ventasArray.push({
                         id: vDoc.id,
                         fechaDate: d,
-                        fechaStr: fechaStr,
+                        fechaStr: `${dd}/${mm}/${yyyy}, ${d.toLocaleTimeString()}`,
                         ...data
                     });
                 }
-            } else {
-                // FALLBACK: Si por alguna razón la fecha llegó como texto o está vacía recién creada, 
-                // la incluimos para que no desaparezca del reporte del día
-                ventasArray.push({
-                    id: vDoc.id,
-                    fechaDate: new Date(),
-                    fechaStr: hoyStr,
-                    ...data
-                });
             }
         });
 
-        // Ordenamos de más reciente a más antiguo
+        // Ordenar de más reciente a más antiguo
         ventasArray.sort((a, b) => b.fechaDate - a.fechaDate);
 
         let html = '';
@@ -67,7 +73,9 @@ window.cargarReporteVentas = async () => {
             ).join('');
 
             html += `<tr>
-                <td><strong>${v.nro_factura || v.id}</strong><br><small>${v.fechaStr}</small></td>
+                <td><input type="checkbox" class="sel-venta" value="${v.id}"></td>
+                <td>${v.fechaStr}</td>
+                <td><strong>${v.nro_factura || v.id}</strong></td>
                 <td>${nombreCliente}</td>
                 <td><ul style="margin:0; padding-left:15px;">${listaItems}</ul></td>
                 <td style="text-align:right;"><strong>$${(v.total_usd || 0).toFixed(2)}</strong></td>
@@ -76,7 +84,7 @@ window.cargarReporteVentas = async () => {
 
         const tbody = document.getElementById('tabla-reporte-ventas');
         if (tbody) {
-            tbody.innerHTML = html || '<tr><td colspan="4" style="text-align:center; padding:20px;">No hay ventas en este rango de fechas.</td></tr>';
+            tbody.innerHTML = html || '<tr><td colspan="6" style="text-align:center; padding:20px;">No hay ventas en este rango de fechas.</td></tr>';
         }
         
         if (document.getElementById('kpi-total-usd')) {
@@ -91,3 +99,28 @@ window.cargarReporteVentas = async () => {
         alert("Error al cargar el reporte: " + error.message);
     }
 };
+
+// Autoejecutar al cargar la página con la fecha de hoy en Venezuela
+document.addEventListener('DOMContentLoaded', () => {
+    const hoyStr = obtenerFechaLocalVenezuela();
+    const inputDesde = document.getElementById('filtro-desde');
+    const inputHasta = document.getElementById('filtro-hasta');
+    
+    if (inputDesde) inputDesde.value = hoyStr;
+    if (inputHasta) inputHasta.value = hoyStr;
+
+    window.cargarReporteVentas();
+
+    // Vincular botón de búsqueda si existe
+    const btnBuscar = document.getElementById('btn-buscar-ventas') || document.querySelector('button[onclick*="cargarReporteVentas"]') || document.querySelector('.btn-primary');
+    // Asegurar que el botón de buscar dispare la función al hacer clic
+    const botones = document.querySelectorAll('button');
+    botones.forEach(btn => {
+        if (btn.textContent.includes('Buscar Ventas')) {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                window.cargarReporteVentas();
+            });
+        }
+    });
+});
