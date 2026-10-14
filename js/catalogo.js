@@ -36,7 +36,7 @@ function iniciarCatalogo() {
         return;
     }
 
-    // Función auxiliar para pintar la info de la empresa (nombre, logo, teléfono)
+    // Función auxiliar para pintar la info de la empresa en el HTML (nombre, logo, dirección, teléfono)
     function aplicarDatosEmpresa(data) {
         const nombreEl = document.getElementById('nombre-empresa');
         const logoImg = document.getElementById('logo-empresa');
@@ -63,26 +63,37 @@ function iniciarCatalogo() {
         }
     }
 
-    // 1. Configuración de empresa y Tasa BCV unificadas desde el documento principal del usuario
-    onSnapshot(doc(db, "usuarios", USER_ID), (snapUser) => {
-        if (snapUser.exists()) {
-            const data = snapUser.data();
-            aplicarDatosEmpresa(data);
-            
-            if (data.tasa_bcv || data.tasa) {
-                procesarTasa(data.tasa_bcv || data.tasa);
-            }
-        }
-    });
-
     function procesarTasa(tasaRaw) {
+        if (!tasaRaw) return;
         tasaActual = parseFloat(String(tasaRaw).replace(',', '.')) || 1;
         const tasaEl = document.getElementById('tasa-cliente');
         if (tasaEl) tasaEl.innerText = tasaActual.toLocaleString('es-VE', { minimumFractionDigits: 2 });
         renderizarCatalogo(productosGlobales);
     }
 
-    // 2. Carga de Departamentos
+    // 1. Cargar datos de la empresa desde empresas_config (maestro / configuración global)
+    onSnapshot(doc(db, "empresas_config", USER_ID), (snapConfig) => {
+        if (snapConfig.exists()) {
+            const data = snapConfig.data();
+            aplicarDatosEmpresa(data);
+            if (data.tasa_bcv || data.tasa) {
+                procesarTasa(data.tasa_bcv || data.tasa);
+            }
+        }
+    });
+
+    // 2. Cargar datos desde el documento del usuario (nueva estructura operacional en Firestore)
+    onSnapshot(doc(db, "usuarios", USER_ID), (snapUser) => {
+        if (snapUser.exists()) {
+            const data = snapUser.data();
+            aplicarDatosEmpresa(data);
+            if (data.tasa_bcv) {
+                procesarTasa(data.tasa_bcv);
+            }
+        }
+    });
+
+    // 3. Carga de Departamentos
     onSnapshot(collection(db, "usuarios", USER_ID, "departamentos"), (snap) => {
         mapaNombresDepto = {};
         snap.forEach(d => {
@@ -92,14 +103,14 @@ function iniciarCatalogo() {
         renderizarCatalogo(productosGlobales);
     });
     
-    // 3. Carga de Productos
+    // 4. Carga de Productos
     onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
         productosGlobales = [];
         snapshot.forEach(d => productosGlobales.push({ id: String(d.id), ...d.data() }));
         renderizarCatalogo(productosGlobales);
     });
 
-    // 4. Buscador
+    // 5. Buscador
     const buscador = document.getElementById('buscador-prod');
     if (buscador) {
         buscador.addEventListener('input', (e) => {
@@ -108,7 +119,7 @@ function iniciarCatalogo() {
         });
     }
 
-    // 5. DELEGACIÓN DE EVENTOS PARA BOTONES DE CANTIDAD
+    // 6. DELEGACIÓN DE EVENTOS PARA BOTONES DE CANTIDAD
     const contenedor = document.getElementById('contenedor-catalogo');
     if (contenedor) {
         contenedor.addEventListener('click', (e) => {
