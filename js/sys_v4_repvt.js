@@ -16,14 +16,14 @@ window.cargarReporteVentas = async () => {
     const inputDesde = document.getElementById('filtro-desde');
     const inputHasta = document.getElementById('filtro-hasta');
     
-    const hoyStr = obtenerFechaLocalVenezuela();
-    
-    // Si los inputs están vacíos al cargar, les asignamos la fecha de hoy correcta en Venezuela
-    if (inputDesde && !inputDesde.value) inputDesde.value = hoyStr;
-    if (inputHasta && !inputHasta.value) inputHasta.value = hoyStr;
-
-    const desde = inputDesde ? inputDesde.value : hoyStr;
+    // Obtenemos estrictamente los valores escritos en los inputs de la interfaz
+    const desde = inputDesde ? inputDesde.value : "";
     let hasta = inputHasta ? inputHasta.value : desde;
+
+    if (!desde) {
+        alert("Por favor selecciona una fecha inicial.");
+        return;
+    }
 
     try {
         const ventasRef = collection(db, "usuarios", USER_ID, "ventas");
@@ -36,7 +36,7 @@ window.cargarReporteVentas = async () => {
             
             if (data.fecha && typeof data.fecha.toDate === 'function') {
                 const d = data.fecha.toDate();
-                // Ajustar también la fecha del documento a la hora local para comparar bien los días
+                // Ajuste de zona horaria de Venezuela (UTC-4) para sacar la fecha local YYYY-MM-DD exacta
                 const localTimeDoc = d.getTime() - (4 * 60 * 60 * 1000);
                 const dLocal = new Date(localTimeDoc);
                 const yyyy = dLocal.getUTCFullYear();
@@ -44,7 +44,7 @@ window.cargarReporteVentas = async () => {
                 const dd = String(dLocal.getUTCDate()).padStart(2, '0');
                 const fechaStr = `${yyyy}-${mm}-${dd}`;
 
-                // Filtrar según el rango de fechas elegido en los inputs
+                // FILTRADO ESTRICTO POR RANGO DE FECHAS SELECCIONADO EN PANTALLA
                 if (fechaStr >= desde && fechaStr <= hasta) {
                     ventasArray.push({
                         id: vDoc.id,
@@ -84,7 +84,7 @@ window.cargarReporteVentas = async () => {
 
         const tbody = document.getElementById('tabla-reporte-ventas');
         if (tbody) {
-            tbody.innerHTML = html || '<tr><td colspan="6" style="text-align:center; padding:20px;">No hay ventas en este rango de fechas.</td></tr>';
+            tbody.innerHTML = html || '<tr><td colspan="6" style="text-align:center; padding:20px;">No hay ventas registradas en este rango de fechas.</td></tr>';
         }
         
         if (document.getElementById('kpi-total-usd')) {
