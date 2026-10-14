@@ -1,11 +1,20 @@
-import { db } from './firebase-config.js';
-import { collection, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { db as dbDefault } from './firebase-config.js';
 
-// Variables globales
+// Mapa de configuraciones para proyectos independientes de Firebase
+const CONFIGS_PROYECTOS = {
+    "YC-20261012-TORACA": {
+        projectId: "yc-toraca",
+        authDomain: "yc-toraca.firebaseapp.com",
+        storageBucket: "yc-toraca.firebasestorage.app"
+    }
+};
+
+let db = dbDefault;
 let tasaActual = 1, carrito = {}, productosGlobales = [], USER_ID = "", mapaNombresDepto = {}, telefonoEmpresa = "";
 let deptoAbierto = null;
 
-// Función para extraer el ID exacto aun cuando contenga & sin codificar en la URL
 function obtenerEmpresaIDDeURL() {
     const query = window.location.search;
     if (!query) return null;
@@ -22,6 +31,32 @@ function obtenerEmpresaIDDeURL() {
     return null;
 }
 
+function inicializarFirebaseEmpresa(empresaID) {
+    // Si la empresa tiene un proyecto de Firebase dedicado
+    const projConfig = CONFIGS_PROYECTOS[empresaID] || (empresaID.includes("TORACA") ? CONFIGS_PROYECTOS["YC-20261012-TORACA"] : null);
+
+    if (projConfig) {
+        const fullConfig = {
+            apiKey: "AIzaSyAMkpj9tFps526mL6hO-ciePWrTdx_NK9Q", // Usa la API Key global autorizada
+            authDomain: projConfig.authDomain,
+            projectId: projConfig.projectId,
+            storageBucket: projConfig.storageBucket
+        };
+
+        const appName = "app_tenant_" + projConfig.projectId;
+        let tenantApp;
+        const appsExistentes = getApps();
+        const appEncontrada = appsExistentes.find(a => a.name === appName);
+
+        if (appEncontrada) {
+            tenantApp = appEncontrada;
+        } else {
+            tenantApp = initializeApp(fullConfig, appName);
+        }
+        db = getFirestore(tenantApp);
+    }
+}
+
 function iniciarCatalogo() {
     let idDeLaURL = obtenerEmpresaIDDeURL();
     
@@ -36,16 +71,15 @@ function iniciarCatalogo() {
         return;
     }
 
-    // Función auxiliar robusta para aplicar los datos o asignar un respaldo si la data nueva no los tiene planos
+    // Inicializar la conexión a la base de datos correcta según el cliente
+    inicializarFirebaseEmpresa(USER_ID);
+
     function aplicarDatosEmpresa(data) {
         const nombreEl = document.getElementById('nombre-empresa');
         const logoImg = document.getElementById('logo-empresa');
         const dirEl = document.getElementById('direccion-empresa');
 
-        // Buscar nombre en múltiples variantes posibles
-        let nombreNegocio = data ? (data.nombre || data.empresa || data.nombre_empresa || data.razon_social || data.titulo) : null;
-        
-        // Si en la data nueva no viene el nombre explícito, usamos el ID de la empresa de forma limpia
+        let nombreNegocio = data ? (data.nombre || data.empresa || data.nombre_empresa || data.razon_social) : null;
         if (!nombreNegocio) {
             nombreNegocio = USER_ID.replace(/-/g, ' ').toUpperCase();
         }
@@ -55,20 +89,17 @@ function iniciarCatalogo() {
             nombreEl.style.opacity = "1";
         }
 
-        // Buscar dirección o ubicación
-        let direccionNegocio = data ? (data.direccion || data.ubicacion || data.dir || data.direccion_empresa) : null;
+        let direccionNegocio = data ? (data.direccion || data.ubicacion || data.dir) : null;
         if (dirEl) {
-            dirEl.innerText = direccionNegocio ? ("📍 " + direccionNegocio) : "📍 Establecimiento Comercial Oficial";
+            dirEl.innerText = direccionNegocio ? ("📍 " + direccionNegocio) : "📍 Barquisimeto, Lara";
         }
 
-        // Teléfono de contacto
         let telLimpio = data ? (data.telefono || data.tlf || data.whatsapp || "").toString().replace(/-/g, "").replace(/\s/g, "") : "";
         if (telLimpio.startsWith("0")) {
             telLimpio = "58" + telLimpio.substring(1);
         }
         telefonoEmpresa = telLimpio;
 
-        // Logo de la empresa
         if (logoImg) {
             logoImg.src = `https://raw.githubusercontent.com/sistematikos/youcontrol/main/img/${encodeURIComponent(USER_ID)}.png?t=${new Date().getTime()}`;
             logoImg.style.display = 'block';
@@ -83,36 +114,20 @@ function iniciarCatalogo() {
         renderizarCatalogo(productosGlobales);
     }
 
-    // Bandera para evitar sobrescribir si ya cargó la config principal
-    let datosAplicados = false;
-
-    // 1. Escuchar el documento principal del usuario en Firestore
+    // 1. Escuchar datos del usuario en la base de datos seleccionada
     onSnapshot(doc(db, "usuarios", USER_ID), (snapUser) => {
         if (snapUser.exists()) {
             const data = snapUser.data();
             aplicarDatosEmpresa(data);
-            datosAplicados = true;
             if (data.tasa_bcv || data.tasa) {
                 procesarTasa(data.tasa_bcv || data.tasa);
             }
-        } else if (!datosAplicados) {
-            // Si no existe el doc de usuario, aplicamos valores por defecto basados en el ID
+        } else {
             aplicarDatosEmpresa(null);
         }
     });
 
-    // 2. Escuchar respaldos en la colección global 'empresas_config' (para proyectos viejos)
-    onSnapshot(doc(db, "empresas_config", USER_ID), (snapConfig) => {
-        if (snapConfig.exists()) {
-            const data = snapConfig.data();
-            aplicarDatosEmpresa(data);
-            if (data.tasa_bcv || data.tasa) {
-                procesarTasa(data.tasa_bcv || data.tasa);
-            }
-        }
-    });
-
-    // 3. Carga de Departamentos
+    // 2. Carga de Departamentos
     onSnapshot(collection(db, "usuarios", USER_ID, "departamentos"), (snap) => {
         mapaNombresDepto = {};
         snap.forEach(d => {
@@ -122,14 +137,14 @@ function iniciarCatalogo() {
         renderizarCatalogo(productosGlobales);
     });
     
-    // 4. Carga de Productos
+    // 3. Carga de Productos (CAR-01, CAR-02, CAR-03...)
     onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
         productosGlobales = [];
         snapshot.forEach(d => productosGlobales.push({ id: String(d.id), ...d.data() }));
         renderizarCatalogo(productosGlobales);
     });
 
-    // 5. Buscador
+    // 4. Buscador
     const buscador = document.getElementById('buscador-prod');
     if (buscador) {
         buscador.addEventListener('input', (e) => {
@@ -138,7 +153,7 @@ function iniciarCatalogo() {
         });
     }
 
-    // 6. DELEGACIÓN DE EVENTOS PARA BOTONES DE CANTIDAD
+    // 5. Botones de cantidad
     const contenedor = document.getElementById('contenedor-catalogo');
     if (contenedor) {
         contenedor.addEventListener('click', (e) => {
@@ -157,7 +172,6 @@ function iniciarCatalogo() {
     }
 }
 
-// Lógica segura de actualización del carrito
 function modificarCantidad(id, cambio, nombre, precio, stock) {
     const pID = String(id);
     const precioLimpio = parseFloat(precio) || 0;
@@ -255,11 +269,11 @@ function renderizarCatalogo(lista) {
                 const prodID = String(p.id);
 
                 return `
-                <div class="card-prod" style="border: 1px solid #E2E8F0; padding: 10px; border-radius: 8px;">
+                <div class="card-prod">
                     <h3 style="font-size:0.9rem; margin:0 0 5px 0;">${p.nombre || 'Producto'}</h3>
                     <div style="display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px;">
                         <span style="font-size: 0.85rem; color: #64748B;">$${precioNum.toFixed(2)} USD</span>
-                        <span style="font-weight:900; color:#10B981; font-size:1.1rem;">${(precioNum * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 })} Bs</span>
+                        <span style="font-weight:900; color:#006AFF; font-size:1.1rem;">${(precioNum * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 })} Bs</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <button class="btn-cant" data-id="${prodID}" data-cambio="-1" data-nombre="${encodeURIComponent(p.nombre || '')}" data-precio="${precioNum}" data-stock="${stockNum}">-</button>
@@ -272,7 +286,7 @@ function renderizarCatalogo(lista) {
         
         return `
         <div style="width: 100%; margin-top: 10px;">
-            <div onclick="window.toggleDepto('${cod}')" style="cursor:pointer; background: #F8FAFC; padding: 15px; border-radius: 8px; font-weight:900; color:#475569; border: 1px solid #E2E8F0; display:flex; justify-content:space-between; align-items:center;">
+            <div onclick="window.toggleDepto('${cod}')" style="cursor:pointer; background: #FFFFFF; padding: 15px; border-radius: 14px; font-weight:800; color:#0F172A; border: 1px solid #E2E8F0; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
                 ${nombreMostrado} <span>${esAbierto ? '▲' : '▼'}</span>
             </div>
             ${itemsHTML}
