@@ -222,7 +222,7 @@ window.procesarMovimientoLote = async function() {
             });
         }
 
-        // Guardar documento consolidado en mov_inventario con ID 00001
+        // Guardar documento consolidado en mov_inventario con ID correlativo
         const documentoLote = {
             correlativo: correlativoNum,
             nro_movimiento: nroMovimientoStr,
