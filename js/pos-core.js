@@ -107,7 +107,7 @@ async function verificarEImprimirTicket(nroFactura, ventaData) {
     }
 }
 
-// --- FUNCIÓN DE REGISTRO DE VENTA Y COBRO ---
+// --- FUNCIÓN DE REGISTRO DE VENTA Y COBRO (CON DESCUENTO DE INVENTARIO) ---
 async function registrarVenta() {
     if (!window.carrito || window.carrito.length === 0) {
         alert("El carrito está vacío. Agregue productos antes de cobrar.");
@@ -153,7 +153,19 @@ async function registrarVenta() {
             fecha: serverTimestamp()
         };
 
+        // 1. Guardar la venta en la base de datos
         await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
+
+        // 2. DESCONTAR DEL INVENTARIO CADA PRODUCTO VENDIDO
+        for (const item of window.carrito) {
+            if (item.id) {
+                const productoRef = doc(db, "usuarios", USER_ID, "productos", item.id);
+                // Usamos increment(-cantidad) para restar de forma segura en Firestore
+                await updateDoc(productoRef, {
+                    stock: increment(-item.cantidad)
+                });
+            }
+        }
 
         const modalPago = document.getElementById('modalPago');
         if (modalPago) modalPago.style.display = 'none';
@@ -173,7 +185,7 @@ async function registrarVenta() {
         await verificarEImprimirTicket(nroFactura, ventaData);
 
     } catch (e) {
-        console.error("Error al registrar la venta:", e);
+        console.error("Error al registrar la venta y actualizar inventario:", e);
         alert("Hubo un error al procesar la venta: " + e.message);
     } finally {
         if (btnConfirmar) {
