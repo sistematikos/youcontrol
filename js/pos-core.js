@@ -166,6 +166,24 @@ async function registrarVenta() {
             }
         }
 
+        // 3. REGISTRAR EN CUENTAS POR COBRAR SI LA VENTA TIENE CRÉDITO
+        if (pagoCredito > 0) {
+            const cxcRef = doc(db, "usuarios", USER_ID, "cuentas_por_cobrar", nroFactura);
+            await setDoc(cxcRef, {
+                nro_factura: nroFactura,
+                cliente_id: window.clienteSeleccionadoID || "general",
+                nombre_cliente: window.nombreClienteSeleccionado || "Cliente General",
+                monto_total_usd: totalUSD,
+                monto_credito_usd: pagoCredito,
+                monto_abonado_usd: 0,
+                saldo_pendiente_usd: pagoCredito,
+                abonado: 0,
+                pendiente: pagoCredito,
+                estado: "pendiente",
+                fecha: serverTimestamp()
+            });
+        }
+
         const modalPago = document.getElementById('modalPago');
         if (modalPago) modalPago.style.display = 'none';
 
@@ -184,7 +202,7 @@ async function registrarVenta() {
         await verificarEImprimirTicket(nroFactura, ventaData);
 
     } catch (e) {
-        console.error("Error al registrar la venta y actualizar inventario:", e);
+        console.error("Error al registrar la venta, inventario o CXC:", e);
         alert("Hubo un error al procesar la venta: " + e.message);
     } finally {
         if (btnConfirmar) {
