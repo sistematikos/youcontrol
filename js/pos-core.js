@@ -152,11 +152,9 @@ async function registrarVenta() {
             fecha: serverTimestamp()
         };
 
-        // 1. Guardar la venta usando el número de factura como ID exacto del documento en Firestore
         const ventaRef = doc(db, "usuarios", USER_ID, "ventas", nroFactura);
         await setDoc(ventaRef, ventaData);
 
-        // 2. DESCONTAR DEL INVENTARIO CADA PRODUCTO VENDIDO
         for (const item of window.carrito) {
             if (item.id) {
                 const productoRef = doc(db, "usuarios", USER_ID, "productos", item.id);
@@ -166,7 +164,6 @@ async function registrarVenta() {
             }
         }
 
-        // 3. REGISTRAR EN CUENTAS POR COBRAR SI LA VENTA TIENE CRÉDITO
         if (pagoCredito > 0) {
             const cxcRef = doc(db, "usuarios", USER_ID, "cuentas_por_cobrar", nroFactura);
             await setDoc(cxcRef, {
@@ -212,7 +209,6 @@ async function registrarVenta() {
     }
 }
 
-// EXPONER LA FUNCIÓN GLOBALMENTE
 window.registrarVenta = registrarVenta;
 
 window.abrirModalReimpresion = async () => {
@@ -245,14 +241,16 @@ async function cargarFacturasDelDia() {
         renderizarListaFacturas(ventasList);
 
         const inputBuscar = document.getElementById('input-buscar-factura');
-        inputBuscar.oninput = (e) => {
-            const texto = e.target.value.toLowerCase().trim();
-            const filtradas = ventasList.filter(v => 
-                (v.nro_factura || '').toLowerCase().includes(texto) || 
-                (v.nombre_cliente || '').toLowerCase().includes(texto)
-            );
-            renderizarListaFacturas(filtradas);
-        };
+        if (inputBuscar) {
+            inputBuscar.oninput = (e) => {
+                const texto = e.target.value.toLowerCase().trim();
+                const filtradas = ventasList.filter(v => 
+                    (v.nro_factura || '').toLowerCase().includes(texto) || 
+                    (v.nombre_cliente || '').toLowerCase().includes(texto)
+                );
+                renderizarListaFacturas(filtradas);
+            };
+        }
 
     } catch (err) {
         console.error("Error al cargar ventas:", err);
