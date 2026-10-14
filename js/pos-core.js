@@ -413,6 +413,68 @@ function initBuscadores() {
     });
 
     inputProd?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const texto = inputProd.value.trim();
+            if (!texto) return;
+
+            const divRes = document.getElementById('resultados-producto-pos');
+            const resultados = window.buscarProducto(texto);
+
+            const exacto = resultados.find(p => 
+                (p.id && p.id.toLowerCase() === texto.toLowerCase()) || 
+                (p.barras && p.barras.toLowerCase() === texto.toLowerCase())
+            );
+
+            if (exacto) {
+                window.seleccionarProducto(exacto.id);
+            } else if (resultados.length === 1) {
+                window.seleccionarProducto(resultados[0].id);
+            } else {
+                if (window.indiceProd >= 0 && divRes) {
+                    const items = divRes.querySelectorAll('.resultado-item');
+                    if (items[window.indiceProd]) {
+                        items[window.indiceProd].click();
+                        return;
+                    }
+                }
+                if (resultados.length > 0) {
+                    window.seleccionarProducto(resultados[0].id);
+                }
+            }
+            return;
+        }
+
+        window.indiceProd = window.manejarNavegacion(e, 'resultados-producto-pos', window.indiceProd);
+    });
+}
+
+    inputCliente?.addEventListener('keydown', (e) => {
+        window.indiceClie = window.manejarNavegacion(e, 'resultados-cliente-pos', window.indiceClie);
+    });
+
+    inputProd?.addEventListener('input', (e) => {
+        const texto = e.target.value.trim();
+        const divRes = document.getElementById('resultados-producto-pos');
+        if (!divRes) return;
+
+        window.indiceProd = -1;
+        if (texto === "") {
+            divRes.style.display = 'none';
+            return;
+        }
+
+        const resultados = window.buscarProducto(texto);
+        if (resultados.length > 0) {
+            divRes.style.display = 'block';
+            divRes.innerHTML = resultados.map(p => `<div class="resultado-item" style="padding: 10px; cursor: pointer;" onclick="window.seleccionarProducto('${p.id}')"><strong>${p.nombre}</strong> - $${p.precio || 0}</div>`).join('');
+        } else {
+            divRes.style.display = 'block';
+            divRes.innerHTML = `<div style="padding: 10px; color: #64748b;">Sin resultados</div>`;
+        }
+    });
+
+    inputProd?.addEventListener('keydown', (e) => {
         window.indiceProd = window.manejarNavegacion(e, 'resultados-producto-pos', window.indiceProd);
     });
 }
