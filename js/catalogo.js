@@ -36,32 +36,39 @@ function iniciarCatalogo() {
         return;
     }
 
-    // Función auxiliar para pintar la info de la empresa en el HTML
+    // Función auxiliar para evaluar múltiples nombres de propiedades posibles en Firestore
     function aplicarDatosEmpresa(data) {
+        if (!data) return;
+
         const nombreEl = document.getElementById('nombre-empresa');
         const logoImg = document.getElementById('logo-empresa');
         const dirEl = document.getElementById('direccion-empresa');
 
-        let telLimpio = (data.telefono || "").replace(/-/g, "").replace(/\s/g, "");
+        // 1. Detección exhaustiva del nombre del negocio
+        const nombreEmpresaEncontrado = data.nombre || data.empresa || data.nombre_empresa || data.razon_social || data.titulo;
+        if (nombreEmpresaEncontrado && nombreEl) {
+            nombreEl.innerText = nombreEmpresaEncontrado.toUpperCase();
+            nombreEl.style.opacity = "1";
+        }
+
+        // 2. Detección exhaustiva de la dirección
+        const direccionEncontrada = data.direccion || data.ubicacion || data.dir || data.direccion_empresa;
+        if (dirEl) {
+            if (direccionEncontrada) {
+                dirEl.innerText = "📍 " + direccionEncontrada;
+            } else {
+                dirEl.innerText = "📍 Dirección no registrada";
+            }
+        }
+
+        // 3. Teléfono de contacto
+        let telLimpio = (data.telefono || data.tlf || data.whatsapp || "").toString().replace(/-/g, "").replace(/\s/g, "");
         if (telLimpio.startsWith("0")) {
             telLimpio = "58" + telLimpio.substring(1);
         }
         telefonoEmpresa = telLimpio;
 
-        if (data.nombre && nombreEl) {
-            nombreEl.innerText = data.nombre.toUpperCase();
-            nombreEl.style.opacity = "1";
-        } else if (nombreEl && data.nombre_empresa) {
-            nombreEl.innerText = data.nombre_empresa.toUpperCase();
-            nombreEl.style.opacity = "1";
-        }
-
-        if (dirEl && (data.direccion || data.ubicacion)) {
-            dirEl.innerText = "📍 " + (data.direccion || data.ubicacion);
-        } else if (dirEl) {
-            dirEl.innerText = "📍 " + USER_ID; // Respaldo si no hay dirección escrita
-        }
-
+        // 4. Logo de la empresa
         if (logoImg) {
             logoImg.src = `https://raw.githubusercontent.com/sistematikos/youcontrol/main/img/${encodeURIComponent(USER_ID)}.png?t=${new Date().getTime()}`;
             logoImg.style.display = 'block';
@@ -76,7 +83,7 @@ function iniciarCatalogo() {
         renderizarCatalogo(productosGlobales);
     }
 
-    // 1. Cargar datos directamente desde el documento del usuario (Estructura de proyectos nuevos en Firebase)
+    // 1. Escuchar primero del documento de usuario (Estructura de proyectos nuevos en Firestore)
     onSnapshot(doc(db, "usuarios", USER_ID), (snapUser) => {
         if (snapUser.exists()) {
             const data = snapUser.data();
@@ -87,7 +94,18 @@ function iniciarCatalogo() {
         }
     });
 
-    // 2. Carga de Departamentos
+    // 2. Escuchar respaldos en la colección global 'empresas_config'
+    onSnapshot(doc(db, "empresas_config", USER_ID), (snapConfig) => {
+        if (snapConfig.exists()) {
+            const data = snapConfig.data();
+            aplicarDatosEmpresa(data);
+            if (data.tasa_bcv || data.tasa) {
+                procesarTasa(data.tasa_bcv || data.tasa);
+            }
+        }
+    });
+
+    // 3. Carga de Departamentos
     onSnapshot(collection(db, "usuarios", USER_ID, "departamentos"), (snap) => {
         mapaNombresDepto = {};
         snap.forEach(d => {
@@ -97,14 +115,14 @@ function iniciarCatalogo() {
         renderizarCatalogo(productosGlobales);
     });
     
-    // 3. Carga de Productos
+    // 4. Carga de Productos
     onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
         productosGlobales = [];
         snapshot.forEach(d => productosGlobales.push({ id: String(d.id), ...d.data() }));
         renderizarCatalogo(productosGlobales);
     });
 
-    // 4. Buscador
+    // 5. Buscador
     const buscador = document.getElementById('buscador-prod');
     if (buscador) {
         buscador.addEventListener('input', (e) => {
@@ -113,7 +131,7 @@ function iniciarCatalogo() {
         });
     }
 
-    // 5. DELEGACIÓN DE EVENTOS PARA BOTONES DE CANTIDAD
+    // 6. DELEGACIÓN DE EVENTOS PARA BOTONES DE CANTIDAD
     const contenedor = document.getElementById('contenedor-catalogo');
     if (contenedor) {
         contenedor.addEventListener('click', (e) => {
