@@ -10,7 +10,7 @@ function obtenerEmpresaIDDeURL() {
     const query = window.location.search;
     if (!query) return null;
 
-    const match = query.match(/[?&](empresa|u)=([^&]*.*)/);
+    const match = query.match(/[?&](empresa|u)=([^&]*)/);
     if (match && match[2]) {
         let rawId = match[2];
         try {
