@@ -122,11 +122,20 @@ async function registrarVenta() {
     try {
         const nroFactura = await obtenerSiguienteNumero(USER_ID);
 
-        const pagoPunto = parseFloat(document.getElementById('in-punto-bs')?.value) || 0;
-        const pagoMovil = parseFloat(document.getElementById('in-pagomovil-bs')?.value) || 0;
-        const pagoEfectivoBs = parseFloat(document.getElementById('in-efectivo-bs')?.value) || 0;
-        const pagoDivisas = parseFloat(document.getElementById('in-divisas-usd')?.value) || 0;
-        const pagoCredito = parseFloat(document.getElementById('in-credito-usd')?.value) || 0;
+        // Helper seguro para parsear montos (soporta puntos y comas decimales)
+        const obtenerMontoInput = (id) => {
+            const el = document.getElementById(id);
+            if (!el || !el.value) return 0;
+            const valLimpio = el.value.toString().replace(',', '.');
+            const num = parseFloat(valLimpio);
+            return isNaN(num) ? 0 : num;
+        };
+
+        const pagoPunto = obtenerMontoInput('in-punto-bs');
+        const pagoMovil = obtenerMontoInput('in-pagomovil-bs');
+        const pagoEfectivoBs = obtenerMontoInput('in-efectivo-bs');
+        const pagoDivisas = obtenerMontoInput('in-divisas-usd');
+        const pagoCredito = obtenerMontoInput('in-credito-usd');
 
         const totalUSD = window.totalVentaUSD || 0;
 
@@ -152,9 +161,11 @@ async function registrarVenta() {
             fecha: serverTimestamp()
         };
 
+        // 1. Guardar la venta usando el número de factura como ID exacto del documento en Firestore
         const ventaRef = doc(db, "usuarios", USER_ID, "ventas", nroFactura);
         await setDoc(ventaRef, ventaData);
 
+        // 2. DESCONTAR DEL INVENTARIO CADA PRODUCTO VENDIDO
         for (const item of window.carrito) {
             if (item.id) {
                 const productoRef = doc(db, "usuarios", USER_ID, "productos", item.id);
@@ -164,6 +175,7 @@ async function registrarVenta() {
             }
         }
 
+        // 3. REGISTRAR EN CUENTAS POR COBRAR SI LA VENTA TIENE CRÉDITO
         if (pagoCredito > 0) {
             const cxcRef = doc(db, "usuarios", USER_ID, "cuentas_por_cobrar", nroFactura);
             await setDoc(cxcRef, {
@@ -209,6 +221,7 @@ async function registrarVenta() {
     }
 }
 
+// EXPONER LA FUNCIÓN GLOBALMENTE
 window.registrarVenta = registrarVenta;
 
 window.abrirModalReimpresion = async () => {
