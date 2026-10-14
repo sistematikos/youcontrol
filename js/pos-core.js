@@ -4,7 +4,7 @@
  */
 
 import { db } from './firebase-config.js'; 
-import { collection, onSnapshot, addDoc, serverTimestamp, doc, getDoc, updateDoc, increment, runTransaction, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, onSnapshot, addDoc, setDoc, serverTimestamp, doc, getDoc, updateDoc, increment, runTransaction, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { ejecutarF4, ejecutarF5, ejecutarF6, abrirModalCobro } from './pos-core-teclas.js';
 import { imprimirTicketVenta } from './ticket-print.js';
 
@@ -99,7 +99,6 @@ window.agregarCarrito = (id) => {
 // --- FUNCIÓN DE IMPRESIÓN TÉRMICA DINÁMICA ---
 async function verificarEImprimirTicket(nroFactura, ventaData) {
     try {
-        // En vez de abrir una ventana PDF, llamamos al módulo unificado que detecta USB o Bluetooth automáticamente
         await imprimirTicketVenta(USER_ID, ventaData);
     } catch (e) {
         console.error("Error al intentar imprimir el ticket:", e);
@@ -107,7 +106,7 @@ async function verificarEImprimirTicket(nroFactura, ventaData) {
     }
 }
 
-// --- FUNCIÓN DE REGISTRO DE VENTA Y COBRO (CON DESCUENTO DE INVENTARIO Y ID DE FACTURA) ---
+// --- FUNCIÓN DE REGISTRO DE VENTA Y COBRO ---
 async function registrarVenta() {
     if (!window.carrito || window.carrito.length === 0) {
         alert("El carrito está vacío. Agregue productos antes de cobrar.");
@@ -161,7 +160,6 @@ async function registrarVenta() {
         for (const item of window.carrito) {
             if (item.id) {
                 const productoRef = doc(db, "usuarios", USER_ID, "productos", item.id);
-                // Usamos increment(-cantidad) para restar de forma segura en Firestore
                 await updateDoc(productoRef, {
                     stock: increment(-item.cantidad)
                 });
@@ -196,7 +194,7 @@ async function registrarVenta() {
     }
 }
 
-// EXPONER LA FUNCIÓN GLOBALMENTE PARA QUE EL BOTÓN HTML Y F9 LA RECONOZCAN
+// EXPONER LA FUNCIÓN GLOBALMENTE
 window.registrarVenta = registrarVenta;
 
 window.abrirModalReimpresion = async () => {
@@ -280,11 +278,8 @@ window.reimprimirFacturaSeleccionada = async (ventaId) => {
         }
 
         const ventaData = ventaSnap.data();
-        
-        // --- AQUÍ ESTABA EL ERROR: Llamamos al módulo inteligente unificado (USB / Bluetooth) ---
         await imprimirTicketVenta(USER_ID, ventaData);
         
-        // Cerrar modal al imprimir
         const modal = document.getElementById('modalBuscarFactura');
         if (modal) modal.style.display = 'none';
 
