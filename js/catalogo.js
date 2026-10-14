@@ -1,8 +1,8 @@
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, doc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { db as dbPrincipal } from './firebase-config.js';
 
-// Mapa de configuraciones de proyectos independientes para los productos de cada empresa
+// Mapa de configuraciones de proyectos independientes solo para los productos y departamentos de cada cliente
 const CONFIGS_PROYECTOS = {
     "YC-20261012-TORACA": {
         projectId: "yc-toraca",
@@ -65,28 +65,28 @@ function iniciarCatalogo() {
         return;
     }
 
-    // Inicializar conexión para la base de datos de productos del cliente
+    // Inicializar la conexión independiente únicamente para los productos del cliente
     inicializarFirebaseProductos(USER_ID);
 
     function aplicarDatosEmpresa(data) {
+        if (!data) return;
         const nombreEl = document.getElementById('nombre-empresa');
         const logoImg = document.getElementById('logo-empresa');
         const dirEl = document.getElementById('direccion-empresa');
 
-        // Extraer nombre directamente de la data principal de empresas_config
-        let nombreNegocio = data ? (data.nombre || data.razon_social || data.empresa) : null;
-        
-        if (nombreEl) {
-            nombreEl.innerText = (nombreNegocio || USER_ID).toUpperCase();
+        // Extraer el nombre de la empresa desde empresas_config de la base central
+        let nombreNegocio = data.nombre || data.razon_social || data.empresa || data.nombre_empresa;
+        if (nombreNegocio && nombreEl) {
+            nombreEl.innerText = String(nombreNegocio).toUpperCase();
             nombreEl.style.opacity = "1";
         }
 
-        let direccionNegocio = data ? (data.direccion || data.ubicacion || data.dir) : null;
-        if (dirEl) {
-            dirEl.innerText = direccionNegocio ? ("📍 " + direccionNegocio) : "📍 Barquisimeto, Lara";
+        let direccionNegocio = data.direccion || data.ubicacion || data.dir;
+        if (dirEl && direccionNegocio) {
+            dirEl.innerText = "📍 " + direccionNegocio;
         }
 
-        let telLimpio = data ? (data.telefono || data.tlf || data.whatsapp || "").toString().replace(/-/g, "").replace(/\s/g, "") : "";
+        let telLimpio = (data.telefono || data.tlf || data.whatsapp || "").toString().replace(/-/g, "").replace(/\s/g, "");
         if (telLimpio.startsWith("0")) {
             telLimpio = "58" + telLimpio.substring(1);
         }
@@ -106,7 +106,7 @@ function iniciarCatalogo() {
         renderizarCatalogo(productosGlobales);
     }
 
-    // 1. LEER DATOS DIRECTAMENTE DE empresas_config EN LA DATA PRINCIPAL
+    // 1. LEER LOS DATOS DE LA EMPRESA DESDE LA BASE DE DATOS PRINCIPAL (empresas_config)
     onSnapshot(doc(dbPrincipal, "empresas_config", USER_ID), (snapConfig) => {
         if (snapConfig.exists()) {
             const data = snapConfig.data();
@@ -114,19 +114,10 @@ function iniciarCatalogo() {
             if (data.tasa_bcv || data.tasa) {
                 procesarTasa(data.tasa_bcv || data.tasa);
             }
-        } else {
-            // Respaldo secundario por si el documento está en usuarios de la principal
-            onSnapshot(doc(dbPrincipal, "usuarios", USER_ID), (snapUser) => {
-                if (snapUser.exists()) {
-                    const dataUser = snapUser.data();
-                    aplicarDatosEmpresa(dataUser);
-                    if (dataUser.tasa_bcv) procesarTasa(dataUser.tasa_bcv);
-                }
-            });
         }
     });
 
-    // 2. LEER DEPARTAMENTOS DESDE LA DATA DE CADA EMPRESA REGISTRADA
+    // 2. LEER DEPARTAMENTOS DESDE LA BASE DE DATOS PROPIA DE CADA CLIENTE
     onSnapshot(collection(dbProductos, "usuarios", USER_ID, "departamentos"), (snap) => {
         mapaNombresDepto = {};
         snap.forEach(d => {
@@ -136,7 +127,7 @@ function iniciarCatalogo() {
         renderizarCatalogo(productosGlobales);
     });
     
-    // 3. LEER PRODUCTOS DESDE LA DATA DE CADA EMPRESA REGISTRADA
+    // 3. LEER PRODUCTOS DESDE LA BASE DE DATOS PROPIA DE CADA CLIENTE
     onSnapshot(collection(dbProductos, "usuarios", USER_ID, "productos"), (snapshot) => {
         productosGlobales = [];
         snapshot.forEach(d => {
