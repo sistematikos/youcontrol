@@ -4,21 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Catálogo Digital | You Control</title>
-    <!-- Importamos Google Fonts para una tipografía moderna y atractiva -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root { 
-            --bg-light: #F8FAFC; 
-            --text-main: #1E293B; 
-            --electric: #006AFF; 
+            --primary: #0F172A; 
+            --accent-blue: #2563EB;
+            --accent-orange: #EA580C;
             --emerald: #10B981; 
+            --bg-body: #F1F5F9; 
+            --card-bg: #FFFFFF;
+            --text-main: #0F172A; 
+            --text-muted: #64748B;
             --border: #E2E8F0; 
-            --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
         }
 
         body { 
             font-family: 'Poppins', sans-serif; 
-            background: var(--bg-light); 
+            background: var(--bg-body); 
             color: var(--text-main);
             margin: 0; 
             padding-bottom: 140px; 
@@ -31,17 +34,17 @@
             box-sizing: border-box; 
         }
 
-        /* --- CINTILLA SUPERIOR: SOFTWARE ADMINISTRATIVO YOU CONTROL --- */
+        /* --- CINTILLA SUPERIOR YOU CONTROL --- */
         .youcontrol-badge {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            color: white;
+            background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+            color: #F8FAFC;
             text-align: center;
             padding: 8px 15px;
             font-size: 0.75rem;
             font-weight: 700;
-            letter-spacing: 1.5px;
+            letter-spacing: 1.2px;
             text-transform: uppercase;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
         }
 
         .app-header { 
@@ -49,11 +52,10 @@
             position: sticky; 
             top: 0; 
             z-index: 100; 
-            background: rgba(248, 250, 252, 0.95);
-            backdrop-filter: blur(8px);
+            background: rgba(241, 245, 249, 0.95);
+            backdrop-filter: blur(10px);
         }
         
-        /* Layout Grid atractivo */
         .header-grid { 
             display: grid; 
             grid-template-columns: 100px 1fr 1fr; 
@@ -63,7 +65,7 @@
         
         .card-logo { 
             grid-row: 1 / 3; 
-            background: white; 
+            background: var(--card-bg); 
             border-radius: 14px; 
             border: 1px solid var(--border); 
             display: flex; 
@@ -76,21 +78,19 @@
         .logo-img { width: 100%; height: 100%; object-fit: contain; }
         
         .card-right { 
-            background: white; 
+            background: var(--card-bg); 
             border-radius: 14px; 
             border: 1px solid var(--border); 
             display: flex; 
             align-items: center; 
             justify-content: space-between; 
-            padding: 0 12px; 
-            font-weight: 800; 
-            font-size: 0.8rem; 
+            padding: 0 14px; 
             box-shadow: var(--shadow); 
         }
         
         #nombre-empresa { 
-            color: var(--text-main); 
-            font-size: 1rem; 
+            color: var(--primary); 
+            font-size: 0.95rem; 
             font-weight: 900; 
             text-transform: uppercase;
             overflow: hidden;
@@ -99,7 +99,7 @@
         }
 
         .btn-whatsapp-header {
-            background: #25D366; 
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); 
             color: white; 
             border: none; 
             border-radius: 50%; 
@@ -110,65 +110,64 @@
             display: flex; 
             align-items: center; 
             justify-content: center;
-            box-shadow: 0 4px 10px rgba(37, 211, 102, 0.3);
+            box-shadow: 0 4px 10px rgba(37, 211, 102, 0.35);
             transition: transform 0.2s;
         }
-        .btn-whatsapp-header:hover { transform: scale(1.05); }
+        .btn-whatsapp-header:hover { transform: scale(1.08); }
 
         .card-tasa {
-            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-            color: #1e40af;
-            border: 1px solid #bfdbfe;
+            background: linear-gradient(135deg, #1E40AF 0%, #2563EB 100%);
+            color: white;
             border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 800;
             font-size: 0.85rem;
-            box-shadow: var(--shadow);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
         }
         
-        /* Tarjeta para la dirección */
         .card-direccion { 
             grid-column: 2 / 4; 
-            background: white; 
+            background: var(--card-bg); 
             border-radius: 14px; 
             border: 1px solid var(--border); 
             display: flex; 
             align-items: center; 
-            padding: 10px 14px; 
-            font-size: 0.8rem; 
-            color: #64748B; 
+            padding: 8px 14px; 
+            font-size: 0.75rem; 
+            color: var(--text-muted); 
             font-weight: 600;
             box-shadow: var(--shadow);
         }
         
-        /* Buscador persuasivo y moderno */
         .search-container {
             grid-column: 1 / 4;
-            margin-top: 5px;
+            margin-top: 4px;
         }
         .search-bar { 
             width: 100%; 
-            padding: 12px 16px; 
-            border: 1px solid var(--border); 
+            padding: 12px 18px; 
+            border: 1px solid #CBD5E1; 
             border-radius: 14px; 
-            background: white; 
+            background: var(--card-bg); 
             box-sizing: border-box; 
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             font-family: 'Poppins', sans-serif;
             box-shadow: var(--shadow);
             outline: none;
-            transition: border-color 0.2s;
+            transition: all 0.2s;
         }
-        .search-bar:focus { border-color: var(--electric); }
+        .search-bar:focus { 
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
         
-        /* Catálogo de Productos */
         .grid-catalog { padding: 0 15px; }
 
-        /* Estilo de Tarjetas de Productos */
+        /* Tarjeta de Producto */
         .card-prod { 
-            background: white; 
+            background: var(--card-bg); 
             border-radius: 14px; 
             padding: 14px; 
             border: 1px solid var(--border); 
@@ -179,17 +178,17 @@
         .card-prod:hover { transform: translateY(-2px); }
 
         .btn-cant {
-            background: #f1f5f9;
-            border: 1px solid var(--border);
-            color: var(--text-main);
+            background: #F1F5F9;
+            border: 1px solid #CBD5E1;
+            color: var(--primary);
             width: 32px;
             height: 32px;
             border-radius: 8px;
-            font-weight: 700;
+            font-weight: 800;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.2s;
         }
-        .btn-cant:hover { background: #e2e8f0; }
+        .btn-cant:hover { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
 
         /* Footer Flotante del Carrito */
         #cart-footer { 
@@ -197,28 +196,28 @@
             bottom: 20px; 
             left: 50%; 
             transform: translateX(-50%); 
-            width: 90%; 
+            width: 92%; 
             max-width: 420px; 
-            background: white; 
-            padding: 15px 22px; 
+            background: var(--primary); 
+            color: white;
+            padding: 12px 20px; 
             border-radius: 20px; 
             display: none; 
             align-items: center; 
             justify-content: space-between; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.12); 
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.3); 
             z-index: 1000; 
-            border: 1px solid var(--border); 
+            border: 1px solid rgba(255,255,255,0.1); 
         }
 
-        .total-box span { font-size: 1.1rem; font-weight: 900; color: var(--electric); }
-        .total-box small { font-size: 0.75rem; color: #64748B; font-weight: 700; }
+        .total-box span { font-size: 1.15rem; font-weight: 900; color: #38BDF8; }
+        .total-box small { font-size: 0.8rem; color: #94A3B8; font-weight: 700; }
     </style>
 </head>
 <body>
 
-    <!-- CINTILLA INSTITUCIONAL -->
     <div class="youcontrol-badge">
-        🚀 Software Administrativo You Control &bull; Catálogo Digital Oficial
+        🚀 SOFTWARE ADMINISTRATIVO YOU CONTROL &bull; CATÁLOGO DIGITAL
     </div>
 
     <div class="page-wrapper">
@@ -229,23 +228,23 @@
                     <img id="logo-empresa" src="" class="logo-img" style="display:none;" onerror="this.style.display='none'">
                 </div>
                 
-                <!-- Nombre y Botón WhatsApp -->
+                <!-- Nombre y WhatsApp -->
                 <div class="card-right" style="grid-column: 2 / 3;">
                     <span id="nombre-empresa" style="opacity: 0; transition: opacity 0.5s ease;">CARGANDO...</span>
                     <button onclick="window.abrirWhatsApp()" class="btn-whatsapp-header" title="Contactar por WhatsApp">💬</button>
                 </div>
 
-                <!-- Tasa BCV -->
+                <!-- Tasa BCV Destacada -->
                 <div class="card-tasa">
-                    BCV: <span id="tasa-cliente" style="margin-left:5px;">0.00</span> Bs
+                    BCV: <span id="tasa-cliente" style="margin-left:6px;">0.00</span> Bs
                 </div>
                 
                 <!-- Dirección -->
-                <div class="card-direccion" id="direccion-empresa">📍 Cargando dirección del establecimiento...</div>
+                <div class="card-direccion" id="direccion-empresa">📍 Cargando dirección...</div>
                 
                 <!-- Buscador -->
                 <div class="search-container">
-                    <input type="text" id="buscador-prod" placeholder="🔍 ¿Qué producto estás buscando hoy?" class="search-bar">
+                    <input type="text" id="buscador-prod" placeholder="🔍 ¿Qué repuesto o producto buscas?" class="search-bar">
                 </div>
             </div>
         </header>
@@ -253,18 +252,17 @@
         <main id="contenedor-catalogo" class="grid-catalog"></main>
     </div>
 
-    <!-- Footer Flotante de Pedido -->
+    <!-- Footer de Compra Persuasivo -->
     <div id="cart-footer">
         <div class="total-box">
             $<span id="cart-total-usd">0.00</span><br>
             <small><span id="cart-total-bs">0.00</span> Bs</small>
         </div>
-        <button onclick="enviarPedido()" style="background:var(--emerald); color:white; border:none; padding:12px 24px; border-radius:14px; font-weight:800; font-size:0.95rem; cursor:pointer; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+        <button onclick="enviarPedido()" style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); color:white; border:none; padding:12px 22px; border-radius:14px; font-weight:800; font-size:0.9rem; cursor:pointer; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);">
             Enviar Pedido (<span id="cart-count">0</span>) 🛍️
         </button>
     </div>
     
-    <!-- Script principal del catálogo conectado -->
     <script type="module" src="js/catalogo.js"></script>
 </body>
 </html>
