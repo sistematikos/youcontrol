@@ -1,4 +1,4 @@
-import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { db as dbDefault } from './firebase-config.js';
 
@@ -32,27 +32,21 @@ function obtenerEmpresaIDDeURL() {
 }
 
 function inicializarFirebaseEmpresa(empresaID) {
-    // Si la empresa tiene un proyecto de Firebase dedicado
     const projConfig = CONFIGS_PROYECTOS[empresaID] || (empresaID.includes("TORACA") ? CONFIGS_PROYECTOS["YC-20261012-TORACA"] : null);
 
     if (projConfig) {
         const fullConfig = {
-            apiKey: "AIzaSyAMkpj9tFps526mL6hO-ciePWrTdx_NK9Q", // Usa la API Key global autorizada
+            apiKey: "AIzaSyAMkpj9tFps526mL6hO-ciePWrTdx_NK9Q",
             authDomain: projConfig.authDomain,
             projectId: projConfig.projectId,
             storageBucket: projConfig.storageBucket
         };
 
         const appName = "app_tenant_" + projConfig.projectId;
-        let tenantApp;
         const appsExistentes = getApps();
         const appEncontrada = appsExistentes.find(a => a.name === appName);
 
-        if (appEncontrada) {
-            tenantApp = appEncontrada;
-        } else {
-            tenantApp = initializeApp(fullConfig, appName);
-        }
+        const tenantApp = appEncontrada || initializeApp(fullConfig, appName);
         db = getFirestore(tenantApp);
     }
 }
@@ -71,7 +65,6 @@ function iniciarCatalogo() {
         return;
     }
 
-    // Inicializar la conexión a la base de datos correcta según el cliente
     inicializarFirebaseEmpresa(USER_ID);
 
     function aplicarDatosEmpresa(data) {
@@ -114,7 +107,7 @@ function iniciarCatalogo() {
         renderizarCatalogo(productosGlobales);
     }
 
-    // 1. Escuchar datos del usuario en la base de datos seleccionada
+    // 1. Escuchar datos del usuario
     onSnapshot(doc(db, "usuarios", USER_ID), (snapUser) => {
         if (snapUser.exists()) {
             const data = snapUser.data();
@@ -132,16 +125,30 @@ function iniciarCatalogo() {
         mapaNombresDepto = {};
         snap.forEach(d => {
             const data = d.data();
-            mapaNombresDepto[d.id] = data.nombre || data.descripcion; 
+            mapaNombresDepto[d.id] = data.nombre || data.descripcion || d.id; 
         });
         renderizarCatalogo(productosGlobales);
+    }, (error) => {
+        console.log("Aviso de departamentos:", error);
     });
     
-    // 3. Carga de Productos (CAR-01, CAR-02, CAR-03...)
+    // 3. Carga de Productos robusta
     onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
         productosGlobales = [];
-        snapshot.forEach(d => productosGlobales.push({ id: String(d.id), ...d.data() }));
+        snapshot.forEach(d => {
+            const prodData = d.data();
+            productosGlobales.push({ 
+                id: String(d.id), 
+                nombre: prodData.nombre || prodData.descripcion || "Producto sin nombre",
+                precio: prodData.precio || prodData.precio_usd || 0,
+                stock: prodData.stock !== undefined ? prodData.stock : 99,
+                departamento: prodData.departamento || prodData.depto || 'GENERAL',
+                ...prodData 
+            });
+        });
         renderizarCatalogo(productosGlobales);
+    }, (error) => {
+        console.error("Error al cargar productos:", error);
     });
 
     // 4. Buscador
@@ -247,7 +254,7 @@ function renderizarCatalogo(lista) {
     if (!contenedor) return;
 
     contenedor.style.display = "block";
-    const productosFiltrados = lista.filter(p => parseInt(p.stock || 0) > 0);
+    const productosFiltrados = lista; // Muestra todos sin requerir stock estrictamente positivo si no está definido
     
     const agrupados = productosFiltrados.reduce((acc, p) => {
         const cod = p.departamento || 'GENERAL';
@@ -265,19 +272,19 @@ function renderizarCatalogo(lista) {
             itemsHTML = `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px 0;">` +
             agrupados[cod].map(p => {
                 const precioNum = parseFloat(String(p.precio).replace(',', '.')) || 0;
-                const stockNum = parseInt(p.stock) || 0;
+                const stockNum = parseInt(p.stock) || 99;
                 const prodID = String(p.id);
 
                 return `
-                <div class="card-prod">
-                    <h3 style="font-size:0.9rem; margin:0 0 5px 0;">${p.nombre || 'Producto'}</h3>
+                <div class="card-prod" style="background:#FFF; border-radius:14px; padding:12px; border:1px solid #E2E8F0; border-left:4px solid #006AFF; box-shadow:0 4px 12px rgba(0,0,0,0.03);">
+                    <h3 style="font-size:0.85rem; margin:0 0 6px 0; color:#0F172A;">${p.nombre || 'Producto'}</h3>
                     <div style="display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px;">
-                        <span style="font-size: 0.85rem; color: #64748B;">$${precioNum.toFixed(2)} USD</span>
-                        <span style="font-weight:900; color:#006AFF; font-size:1.1rem;">${(precioNum * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 })} Bs</span>
+                        <span style="font-size: 0.8rem; color: #64748B;">$${precioNum.toFixed(2)} USD</span>
+                        <span style="font-weight:900; color:#006AFF; font-size:1.05rem;">${(precioNum * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 })} Bs</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <button class="btn-cant" data-id="${prodID}" data-cambio="-1" data-nombre="${encodeURIComponent(p.nombre || '')}" data-precio="${precioNum}" data-stock="${stockNum}">-</button>
-                        <span data-qty-id="${prodID}" style="font-weight: bold;">${carrito[prodID]?.cantidad || 0}</span>
+                        <span data-qty-id="${prodID}" style="font-weight: 800; font-size: 0.95rem;">${carrito[prodID]?.cantidad || 0}</span>
                         <button class="btn-cant" data-id="${prodID}" data-cambio="1" data-nombre="${encodeURIComponent(p.nombre || '')}" data-precio="${precioNum}" data-stock="${stockNum}">+</button>
                     </div>
                 </div>`;
@@ -286,8 +293,8 @@ function renderizarCatalogo(lista) {
         
         return `
         <div style="width: 100%; margin-top: 10px;">
-            <div onclick="window.toggleDepto('${cod}')" style="cursor:pointer; background: #FFFFFF; padding: 15px; border-radius: 14px; font-weight:800; color:#0F172A; border: 1px solid #E2E8F0; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
-                ${nombreMostrado} <span>${esAbierto ? '▲' : '▼'}</span>
+            <div onclick="window.toggleDepto('${cod}')" style="cursor:pointer; background: #FFFFFF; padding: 14px 16px; border-radius: 14px; font-weight:800; color:#0F172A; border: 1px solid #E2E8F0; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+                ${nombreMostrado} <span style="font-size:0.8rem; color:#64748B;">${esAbierto ? '▲' : '▼'}</span>
             </div>
             ${itemsHTML}
         </div>`;
