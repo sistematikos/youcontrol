@@ -114,43 +114,36 @@
         }
         .banner-menu-container:hover .banner-menu-img { transform: scale(1.01); }
 
-        /* SECCIÓN INFORMATIVA - IDEA 2 (COMERCIAL Y PERSUASIVA) */
+        /* SECCIÓN INFORMATIVA (CENTRADA) */
         .software-box { 
             background: var(--card-bg); 
             padding: 32px 35px; 
             border-radius: 16px; 
             box-shadow: 0 4px 12px rgba(0,0,0,0.04); 
             border: 1px solid var(--border-color); 
-            border-left: 5px solid #0EA5E9;
+            text-align: center;
+            border-top: 4px solid #0EA5E9;
         }
-        .software-box h2 { 
-            margin: 0 0 10px 0; 
-            color: var(--primary-dark); 
-            font-size: 1.35rem; 
-            font-weight: 700; 
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
-        }
-        .software-box h2 i { color: #0EA5E9; }
         .software-box p { 
-            color: var(--text-muted); 
-            font-size: 0.92rem; 
+            color: var(--text-dark); 
+            font-size: 0.98rem; 
             line-height: 1.6; 
-            margin: 0 0 20px 0; 
+            max-width: 900px;
+            margin: 0 auto 22px auto; 
         }
         .software-features {
             display: flex;
             gap: 25px;
             flex-wrap: wrap;
-            padding-top: 15px;
+            justify-content: center;
+            padding-top: 18px;
             border-top: 1px dashed var(--border-color);
         }
         .feature-item {
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 0.82rem;
+            font-size: 0.85rem;
             font-weight: 600;
             color: var(--primary-dark);
         }
@@ -250,11 +243,11 @@
             <img src="img/youcontrol.png" alt="You Control" class="banner-menu-img">
         </div>
 
-        <!-- ESCRITO OPCIÓN 2 (COMERCIAL Y PERSUASIVO) -->
+        <!-- ESCRITO DE PRESENTACIÓN DEL SOFTWARE (CENTRADO Y SIN TÍTULO) -->
         <div class="software-box">
-            <h2><i class="fas fa-rocket"></i> La Solución Inteligente para la Gestión de tu Empresa</h2>
             <p>
-                Transforma la manera en que administras tu negocio con tecnología ágil y confiable. <strong>YOU CONTROL</strong> está diseñado para simplificar tu facturación diaria, proteger tus datos y brindarte el control absoluto de tus finanzas en una sola interfaz intuitiva.
+                Transforma la manera en que administras tu negocio con tecnología ágil y confiable. 
+                <strong>YOU CONTROL</strong> está diseñado para simplificar tu facturación diaria, proteger tus datos y brindarte el control absoluto de tus finanzas en una sola interfaz intuitiva.
             </p>
             <div class="software-features">
                 <div class="feature-item"><i class="fas fa-file-invoice"></i> Facturación Simplificada</div>
