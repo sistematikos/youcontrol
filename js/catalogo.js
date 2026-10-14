@@ -36,39 +36,39 @@ function iniciarCatalogo() {
         return;
     }
 
-    // Función auxiliar para evaluar múltiples nombres de propiedades posibles en Firestore
+    // Función auxiliar robusta para aplicar los datos o asignar un respaldo si la data nueva no los tiene planos
     function aplicarDatosEmpresa(data) {
-        if (!data) return;
-
         const nombreEl = document.getElementById('nombre-empresa');
         const logoImg = document.getElementById('logo-empresa');
         const dirEl = document.getElementById('direccion-empresa');
 
-        // 1. Detección exhaustiva del nombre del negocio
-        const nombreEmpresaEncontrado = data.nombre || data.empresa || data.nombre_empresa || data.razon_social || data.titulo;
-        if (nombreEmpresaEncontrado && nombreEl) {
-            nombreEl.innerText = nombreEmpresaEncontrado.toUpperCase();
+        // Buscar nombre en múltiples variantes posibles
+        let nombreNegocio = data ? (data.nombre || data.empresa || data.nombre_empresa || data.razon_social || data.titulo) : null;
+        
+        // Si en la data nueva no viene el nombre explícito, usamos el ID de la empresa de forma limpia
+        if (!nombreNegocio) {
+            nombreNegocio = USER_ID.replace(/-/g, ' ').toUpperCase();
+        }
+
+        if (nombreEl) {
+            nombreEl.innerText = nombreNegocio;
             nombreEl.style.opacity = "1";
         }
 
-        // 2. Detección exhaustiva de la dirección
-        const direccionEncontrada = data.direccion || data.ubicacion || data.dir || data.direccion_empresa;
+        // Buscar dirección o ubicación
+        let direccionNegocio = data ? (data.direccion || data.ubicacion || data.dir || data.direccion_empresa) : null;
         if (dirEl) {
-            if (direccionEncontrada) {
-                dirEl.innerText = "📍 " + direccionEncontrada;
-            } else {
-                dirEl.innerText = "📍 Dirección no registrada";
-            }
+            dirEl.innerText = direccionNegocio ? ("📍 " + direccionNegocio) : "📍 Establecimiento Comercial Oficial";
         }
 
-        // 3. Teléfono de contacto
-        let telLimpio = (data.telefono || data.tlf || data.whatsapp || "").toString().replace(/-/g, "").replace(/\s/g, "");
+        // Teléfono de contacto
+        let telLimpio = data ? (data.telefono || data.tlf || data.whatsapp || "").toString().replace(/-/g, "").replace(/\s/g, "") : "";
         if (telLimpio.startsWith("0")) {
             telLimpio = "58" + telLimpio.substring(1);
         }
         telefonoEmpresa = telLimpio;
 
-        // 4. Logo de la empresa
+        // Logo de la empresa
         if (logoImg) {
             logoImg.src = `https://raw.githubusercontent.com/sistematikos/youcontrol/main/img/${encodeURIComponent(USER_ID)}.png?t=${new Date().getTime()}`;
             logoImg.style.display = 'block';
@@ -83,18 +83,25 @@ function iniciarCatalogo() {
         renderizarCatalogo(productosGlobales);
     }
 
-    // 1. Escuchar primero del documento de usuario (Estructura de proyectos nuevos en Firestore)
+    // Bandera para evitar sobrescribir si ya cargó la config principal
+    let datosAplicados = false;
+
+    // 1. Escuchar el documento principal del usuario en Firestore
     onSnapshot(doc(db, "usuarios", USER_ID), (snapUser) => {
         if (snapUser.exists()) {
             const data = snapUser.data();
             aplicarDatosEmpresa(data);
+            datosAplicados = true;
             if (data.tasa_bcv || data.tasa) {
                 procesarTasa(data.tasa_bcv || data.tasa);
             }
+        } else if (!datosAplicados) {
+            // Si no existe el doc de usuario, aplicamos valores por defecto basados en el ID
+            aplicarDatosEmpresa(null);
         }
     });
 
-    // 2. Escuchar respaldos en la colección global 'empresas_config'
+    // 2. Escuchar respaldos en la colección global 'empresas_config' (para proyectos viejos)
     onSnapshot(doc(db, "empresas_config", USER_ID), (snapConfig) => {
         if (snapConfig.exists()) {
             const data = snapConfig.data();
