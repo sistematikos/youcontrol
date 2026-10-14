@@ -30,13 +30,11 @@ async function cargarReporteMovimientos() {
             const m = docSnap.data();
             const tipoOp = m.tipo_operacion || 'ENTRADA';
 
-            // Filtrar si el usuario seleccionó un tipo específico
             if (filtroTipo !== 'TODOS' && tipoOp !== filtroTipo) {
                 return;
             }
 
-            // Guardamos el documento con su ID y fecha convertida para ordenar en JS
-            let fechaDate = new Date(0); // Fecha por defecto si no existe
+            let fechaDate = new Date(0);
             let fechaStr = "N/A";
             
             if (m.fecha && typeof m.fecha.toDate === 'function') {
@@ -46,17 +44,48 @@ async function cargarReporteMovimientos() {
                 fechaStr = m.fecha;
             }
 
-            movimientosArray.push({
-                id: docSnap.id,
-                fechaDate: fechaDate,
-                fechaStr: fechaStr,
-                tipoOp: tipoOp,
-                correlativoNum: Number(m.correlativo || 0),
-                ...m
-            });
+            const correlativoNum = Number(m.correlativo || 0);
+            const nroMovStr = m.nro_movimiento || docSnap.id;
+
+            // CASO A: El documento tiene un array de "items" (Lotes múltiples)
+            if (m.items && Array.isArray(m.items) && m.items.length > 0) {
+                m.items.forEach((item) => {
+                    movimientosArray.push({
+                        id: docSnap.id,
+                        nroMovStr: nroMovStr,
+                        fechaDate: fechaDate,
+                        fechaStr: fechaStr,
+                        tipoOp: tipoOp,
+                        correlativoNum: correlativoNum,
+                        sku: item.sku || item.producto_id || 'N/A',
+                        nombre_producto: item.nombre_producto || item.nombre || 'Sin nombre',
+                        cantidad: Number(item.cantidad || 0),
+                        stock_anterior: item.stock_anterior ?? 0,
+                        stock_nuevo: item.stock_nuevo ?? 0,
+                        concepto: m.concepto || 'Movimiento por lote'
+                    });
+                });
+            } else {
+                // CASO B: Formato individual o registros antiguos donde los datos están en la raíz
+                const cantidadIndividual = Number(m.cantidad || m.stock_cambio || 0);
+                movimientosArray.push({
+                    id: docSnap.id,
+                    nroMovStr: nroMovStr,
+                    fechaDate: fechaDate,
+                    fechaStr: fechaStr,
+                    tipoOp: tipoOp,
+                    correlativoNum: correlativoNum,
+                    sku: m.sku || m.producto_id || 'N/A',
+                    nombre_producto: m.nombre_producto || m.nombre || 'Sin nombre',
+                    cantidad: cantidadIndividual,
+                    stock_anterior: m.stock_anterior ?? 0,
+                    stock_nuevo: m.stock_nuevo ?? 0,
+                    concepto: m.concepto || 'Ajuste de inventario'
+                });
+            }
         });
 
-        // Ordenamos por correlativo descendente (o por fecha si prefieres) directamente en JS
+        // Ordenar por correlativo descendente
         movimientosArray.sort((a, b) => b.correlativoNum - a.correlativoNum);
 
         let totalMovimientos = 0;
@@ -72,11 +101,8 @@ async function cargarReporteMovimientos() {
 
         movimientosArray.forEach((m) => {
             totalMovimientos++;
-            totalUnidades += Number(m.cantidad || 0);
+            totalUnidades += m.cantidad;
 
-            const nroMovStr = m.nro_movimiento || m.id;
-
-            // Insignia visual según tipo de operación
             let badgeClass = "badge-entrada";
             let signoStock = "+";
             if (m.tipoOp === 'SALIDA') {
@@ -89,16 +115,16 @@ async function cargarReporteMovimientos() {
 
             html += `
                 <tr class="fila-mov">
-                    <td><strong>${nroMovStr}</strong></td>
+                    <td><strong>${m.nroMovStr}</strong></td>
                     <td>${m.fechaStr}</td>
                     <td><span class="badge-tipo ${badgeClass}">${m.tipoOp}</span></td>
                     <td>
-                        <strong>${m.sku || 'N/A'}</strong><br>
-                        <span style="font-size: 13px; color: #4b5563;">${m.nombre_producto || 'Sin nombre'}</span>
+                        <strong>${m.sku}</strong><br>
+                        <span style="font-size: 13px; color: #4b5563;">${m.nombre_producto}</span>
                     </td>
-                    <td>${m.concepto || 'Ajuste de inventario'}</td>
+                    <td>${m.concepto}</td>
                     <td class="text-center">
-                        <span style="font-size: 12px; color: #64748B;">(${m.stock_anterior || 0} ➔ ${m.stock_nuevo || 0})</span><br>
+                        <span style="font-size: 12px; color: #64748B;">(${m.stock_anterior} ➔ ${m.stock_nuevo})</span><br>
                         <strong style="font-size: 15px;">${signoStock}${m.cantidad}</strong>
                     </td>
                 </tr>
