@@ -200,6 +200,14 @@
         let facturaSeleccionadaId = null;
         let facturaSeleccionadaData = null;
 
+        // Función para obtener la fecha local correcta en Venezuela (YYYY-MM-DD)
+        function obtenerFechaLocalVenezuela() {
+            const d = new Date();
+            const localTime = d.getTime() - (4 * 60 * 60 * 1000);
+            const localDate = new Date(localTime);
+            return localDate.toISOString().split('T')[0];
+        }
+
         document.getElementById('btn-buscar').addEventListener('click', cargarReporteVentas);
 
         async function cargarReporteVentas() {
@@ -208,6 +216,17 @@
 
             if (!empresaId) {
                 alert("No se encontró la empresa activa en el sistema.");
+                return;
+            }
+
+            const inputDesde = document.getElementById('filtro-desde');
+            const inputHasta = document.getElementById('filtro-hasta');
+            
+            const desde = inputDesde ? inputDesde.value : "";
+            let hasta = inputHasta ? inputHasta.value : desde;
+
+            if (!desde) {
+                alert("Por favor selecciona una fecha inicial.");
                 return;
             }
 
@@ -221,32 +240,55 @@
                 let cantidadFacturas = 0;
                 tbody.innerHTML = "";
 
-                if (querySnapshot.empty) {
-                    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No se encontraron registros de ventas.</td></tr>`;
-                    document.getElementById('kpi-total-usd').innerText = "$ 0.00";
-                    document.getElementById('kpi-total-facturas').innerText = "0";
-                    return;
-                }
+                let ventasArray = [];
 
                 querySnapshot.forEach((docSnap) => {
                     const v = docSnap.data();
                     const id = docSnap.id;
 
-                    cantidadFacturas++;
-
-                    // Formateo de fecha
-                    let fechaStr = "N/A";
                     if (v.fecha && typeof v.fecha.toDate === 'function') {
-                        fechaStr = v.fecha.toDate().toLocaleString();
-                    } else if (v.fecha) {
-                        fechaStr = v.fecha;
+                        const d = v.fecha.toDate();
+                        // Ajuste zona horaria Venezuela (UTC-4) para extraer YYYY-MM-DD exacto
+                        const localTimeDoc = d.getTime() - (4 * 60 * 60 * 1000);
+                        const dLocal = new Date(localTimeDoc);
+                        const yyyy = dLocal.getUTCFullYear();
+                        const mm = String(dLocal.getUTCMonth() + 1).padStart(2, '0');
+                        const dd = String(dLocal.getUTCDate()).padStart(2, '0');
+                        const fechaDocStr = `${yyyy}-${mm}-${dd}`;
+
+                        // Filtrado estricto por rango seleccionado en pantalla
+                        if (fechaDocStr >= desde && fechaDocStr <= hasta) {
+                            ventasArray.push({
+                                id: id,
+                                data: v,
+                                fechaDate: d,
+                                fechaStr: d.toLocaleString()
+                            });
+                        }
                     }
+                });
+
+                // Ordenar de más reciente a más antiguo
+                ventasArray.sort((a, b) => b.fechaDate - a.fechaDate);
+
+                if (ventasArray.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No se encontraron registros de ventas en este rango.</td></tr>`;
+                    document.getElementById('kpi-total-usd').innerText = "$ 0.00";
+                    document.getElementById('kpi-total-facturas').innerText = "0";
+                    return;
+                }
+
+                ventasArray.forEach((item) => {
+                    const v = item.data;
+                    const id = item.id;
+                    const fechaStr = item.fechaStr;
+
+                    cantidadFacturas++;
 
                     const nroFacturaStr = v.nro_factura || v.nroFactura || id.slice(0,6);
                     const tr = document.createElement('tr');
                     tr.className = "fila-factura";
 
-                    // Verificamos si la factura está anulada
                     if (v.anulada === true) {
                         tr.classList.add('fila-anulada');
                         tr.innerHTML = `
@@ -364,9 +406,13 @@
         });
 
         window.addEventListener('DOMContentLoaded', () => {
-            const hoy = new Date().toISOString().split('T')[0];
-            document.getElementById('filtro-desde').value = hoy;
-            document.getElementById('filtro-hasta').value = hoy;
+            const hoy = obtenerFechaLocalVenezuela();
+            const inputDesde = document.getElementById('filtro-desde');
+            const inputHasta = document.getElementById('filtro-hasta');
+            
+            if (inputDesde && !inputDesde.value) inputDesde.value = hoy;
+            if (inputHasta && !inputHasta.value) inputHasta.value = hoy;
+            
             cargarReporteVentas();
         });
     </script>
