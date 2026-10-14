@@ -1,8 +1,8 @@
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { db as dbDefault } from './firebase-config.js';
+import { db as dbPrincipal } from './firebase-config.js';
 
-// Mapa de configuraciones para proyectos independientes de Firebase
+// Mapa de configuraciones de proyectos independientes para los productos de cada empresa
 const CONFIGS_PROYECTOS = {
     "YC-20261012-TORACA": {
         projectId: "yc-toraca",
@@ -11,7 +11,7 @@ const CONFIGS_PROYECTOS = {
     }
 };
 
-let db = dbDefault;
+let dbProductos = dbPrincipal;
 let tasaActual = 1, carrito = {}, productosGlobales = [], USER_ID = "", mapaNombresDepto = {}, telefonoEmpresa = "";
 let deptoAbierto = null;
 
@@ -31,7 +31,7 @@ function obtenerEmpresaIDDeURL() {
     return null;
 }
 
-function inicializarFirebaseEmpresa(empresaID) {
+function inicializarFirebaseProductos(empresaID) {
     const projConfig = CONFIGS_PROYECTOS[empresaID] || (empresaID.includes("TORACA") ? CONFIGS_PROYECTOS["YC-20261012-TORACA"] : null);
 
     if (projConfig) {
@@ -47,7 +47,7 @@ function inicializarFirebaseEmpresa(empresaID) {
         const appEncontrada = appsExistentes.find(a => a.name === appName);
 
         const tenantApp = appEncontrada || initializeApp(fullConfig, appName);
-        db = getFirestore(tenantApp);
+        dbProductos = getFirestore(tenantApp);
     }
 }
 
@@ -65,20 +65,22 @@ function iniciarCatalogo() {
         return;
     }
 
-    inicializarFirebaseEmpresa(USER_ID);
+    // Inicializar conexión para la base de datos de productos del cliente
+    inicializarFirebaseProductos(USER_ID);
 
     function aplicarDatosEmpresa(data) {
         const nombreEl = document.getElementById('nombre-empresa');
         const logoImg = document.getElementById('logo-empresa');
         const dirEl = document.getElementById('direccion-empresa');
 
-        let nombreNegocio = data ? (data.nombre || data.empresa || data.nombre_empresa || data.razon_social) : null;
+        // Nombre de la empresa desde empresas_config
+        let nombreNegocio = data ? (data.nombre || data.razon_social || data.empresa) : null;
         if (!nombreNegocio) {
             nombreNegocio = USER_ID.replace(/-/g, ' ').toUpperCase();
         }
 
         if (nombreEl) {
-            nombreEl.innerText = nombreNegocio;
+            nombreEl.innerText = nombreNegocio.toUpperCase();
             nombreEl.style.opacity = "1";
         }
 
@@ -107,33 +109,40 @@ function iniciarCatalogo() {
         renderizarCatalogo(productosGlobales);
     }
 
-    // 1. Escuchar datos del usuario
-    onSnapshot(doc(db, "usuarios", USER_ID), (snapUser) => {
-        if (snapUser.exists()) {
-            const data = snapUser.data();
+    // 1. LEER DATOS DE LA EMPRESA DESDE LA DATA PRINCIPAL: empresas_config (Base de datos youcontrol-1d60a)
+    onSnapshot(doc(dbPrincipal, "empresas_config", USER_ID), (snapConfig) => {
+        if (snapConfig.exists()) {
+            const data = snapConfig.data();
             aplicarDatosEmpresa(data);
             if (data.tasa_bcv || data.tasa) {
                 procesarTasa(data.tasa_bcv || data.tasa);
             }
         } else {
-            aplicarDatosEmpresa(null);
+            // Respaldo por si acaso en usuarios de la principal
+            onSnapshot(doc(dbPrincipal, "usuarios", USER_ID), (snapUser) => {
+                if (snapUser.exists()) {
+                    const dataUser = snapUser.data();
+                    aplicarDatosEmpresa(dataUser);
+                    if (dataUser.tasa_bcv) procesarTasa(dataUser.tasa_bcv);
+                } else {
+                    aplicarDatosEmpresa(null);
+                }
+            });
         }
     });
 
-    // 2. Carga de Departamentos
-    onSnapshot(collection(db, "usuarios", USER_ID, "departamentos"), (snap) => {
+    // 2. LEER DEPARTAMENTOS DESDE LA DATA DE CADA EMPRESA REGISTRADA
+    onSnapshot(collection(dbProductos, "usuarios", USER_ID, "departamentos"), (snap) => {
         mapaNombresDepto = {};
         snap.forEach(d => {
             const data = d.data();
             mapaNombresDepto[d.id] = data.nombre || data.descripcion || d.id; 
         });
         renderizarCatalogo(productosGlobales);
-    }, (error) => {
-        console.log("Aviso de departamentos:", error);
     });
     
-    // 3. Carga de Productos robusta
-    onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
+    // 3. LEER PRODUCTOS DESDE LA DATA DE CADA EMPRESA REGISTRADA
+    onSnapshot(collection(dbProductos, "usuarios", USER_ID, "productos"), (snapshot) => {
         productosGlobales = [];
         snapshot.forEach(d => {
             const prodData = d.data();
@@ -147,8 +156,6 @@ function iniciarCatalogo() {
             });
         });
         renderizarCatalogo(productosGlobales);
-    }, (error) => {
-        console.error("Error al cargar productos:", error);
     });
 
     // 4. Buscador
@@ -254,7 +261,7 @@ function renderizarCatalogo(lista) {
     if (!contenedor) return;
 
     contenedor.style.display = "block";
-    const productosFiltrados = lista; // Muestra todos sin requerir stock estrictamente positivo si no está definido
+    const productosFiltrados = lista; 
     
     const agrupados = productosFiltrados.reduce((acc, p) => {
         const cod = p.departamento || 'GENERAL';
