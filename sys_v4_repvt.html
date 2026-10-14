@@ -180,22 +180,12 @@
         </div>
     </div>
 
-    <!-- Script de Firebase y Lógica -->
+    <!-- Script de Firebase y Lógica Completa -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, runTransaction } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { db } from './firebase-config.js';
+        import { collection, getDocs, doc, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const firebaseConfig = {
-            apiKey: "TU_API_KEY",
-            authDomain: "youcontrol-1d60a.firebaseapp.com",
-            projectId: "youcontrol-1d60a",
-            storageBucket: "youcontrol-1d60a.appspot.com",
-            messagingSenderId: "812100760013",
-            appId: "1:812100760013:web:7574906aa285555faf5484"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 
         let facturaSeleccionadaId = null;
         let facturaSeleccionadaData = null;
@@ -208,13 +198,10 @@
             return localDate.toISOString().split('T')[0];
         }
 
-        document.getElementById('btn-buscar').addEventListener('click', cargarReporteVentas);
-
-        async function cargarReporteVentas() {
+        window.cargarReporteVentas = async () => {
             const tbody = document.getElementById('tabla-reporte-ventas');
-            const empresaId = localStorage.getItem('youcontrol_empresa_id');
 
-            if (!empresaId) {
+            if (!USER_ID) {
                 alert("No se encontró la empresa activa en el sistema.");
                 return;
             }
@@ -230,15 +217,17 @@
                 return;
             }
 
-            tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px;">Buscando documentos...</td></tr>`;
+            if (tbody) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px;">Buscando documentos...</td></tr>`;
+            }
 
             try {
-                const ventasRef = collection(db, "usuarios", empresaId, "ventas");
+                const ventasRef = collection(db, "usuarios", USER_ID, "ventas");
                 const querySnapshot = await getDocs(ventasRef);
 
                 let totalUSD = 0;
                 let cantidadFacturas = 0;
-                tbody.innerHTML = "";
+                if (tbody) tbody.innerHTML = "";
 
                 let ventasArray = [];
 
@@ -246,8 +235,19 @@
                     const v = docSnap.data();
                     const id = docSnap.id;
 
-                    if (v.fecha && typeof v.fecha.toDate === 'function') {
-                        const d = v.fecha.toDate();
+                    // Detección flexible de fecha (Timestamp, Date, o String)
+                    let fechaRaw = v.fecha || v.fecha_venta || v.createdAt || v.timestamp || null;
+                    let d = null;
+
+                    if (fechaRaw && typeof fechaRaw.toDate === 'function') {
+                        d = fechaRaw.toDate();
+                    } else if (fechaRaw instanceof Date) {
+                        d = fechaRaw;
+                    } else if (typeof fechaRaw === 'string') {
+                        d = new Date(fechaRaw);
+                    }
+
+                    if (d && !isNaN(d.getTime())) {
                         // Ajuste zona horaria Venezuela (UTC-4) para extraer YYYY-MM-DD exacto
                         const localTimeDoc = d.getTime() - (4 * 60 * 60 * 1000);
                         const dLocal = new Date(localTimeDoc);
@@ -272,9 +272,11 @@
                 ventasArray.sort((a, b) => b.fechaDate - a.fechaDate);
 
                 if (ventasArray.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No se encontraron registros de ventas en este rango.</td></tr>`;
-                    document.getElementById('kpi-total-usd').innerText = "$ 0.00";
-                    document.getElementById('kpi-total-facturas').innerText = "0";
+                    if (tbody) {
+                        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No se encontraron registros de ventas en este rango.</td></tr>`;
+                    }
+                    if (document.getElementById('kpi-total-usd')) document.getElementById('kpi-total-usd').innerText = "$ 0.00";
+                    if (document.getElementById('kpi-total-facturas')) document.getElementById('kpi-total-facturas').innerText = "0";
                     return;
                 }
 
@@ -285,7 +287,8 @@
 
                     cantidadFacturas++;
 
-                    const nroFacturaStr = v.nro_factura || v.nroFactura || id.slice(0,6);
+                    // Detección inteligente del número de factura (para estructuras viejas y nuevas con ID automático)
+                    const nroFacturaStr = v.nro_factura || v.nroFactura || v.correlativo || id;
                     const tr = document.createElement('tr');
                     tr.className = "fila-factura";
 
@@ -298,16 +301,16 @@
                             <td colspan="3" class="text-center font-bold text-red-600">*** FACTURA ANULADA ***</td>
                         `;
                     } else {
-                        const montoVenta = Number(v.total_usd || v.total || v.total_general || v.monto || 0);
+                        const montoVenta = Number(v.total_usd || v.monto_total_usd || v.total || v.total_general || v.monto || 0);
                         totalUSD += montoVenta;
 
                         let productosHTML = `<ul class="lista-productos">`;
-                        const listaProds = v.productos || v.items || v.cart || [];
+                        const listaProds = v.items || v.productos || v.cart || [];
                         if (Array.isArray(listaProds) && listaProds.length > 0) {
                             listaProds.forEach(p => {
-                                const nombreP = p.nombre || p.descripcion || p.titulo || 'Producto';
+                                const nombreP = p.nombre || p.nombre_producto || p.descripcion || 'Producto';
                                 const cantP = p.cantidad || p.qty || 1;
-                                const precioP = Number(p.precio || p.price || 0);
+                                const precioP = Number(p.precio || p.precio_usd || p.price || 0);
                                 productosHTML += `<li>${nombreP} (${cantP} x $${precioP.toFixed(2)})</li>`;
                             });
                         } else {
@@ -330,81 +333,100 @@
 
                             tr.classList.add('seleccionada');
                             const radio = tr.querySelector('.radio-factura');
-                            radio.checked = true;
+                            if (radio) radio.checked = true;
                             
                             facturaSeleccionadaId = id;
                             facturaSeleccionadaData = v;
                         });
                     }
 
-                    tbody.appendChild(tr);
+                    if (tbody) tbody.appendChild(tr);
                 });
 
-                document.getElementById('kpi-total-usd').innerText = `$ ${totalUSD.toFixed(2)}`;
-                document.getElementById('kpi-total-facturas').innerText = cantidadFacturas;
+                if (document.getElementById('kpi-total-usd')) {
+                    document.getElementById('kpi-total-usd').innerText = `$ ${totalUSD.toFixed(2)}`;
+                }
+                if (document.getElementById('kpi-total-facturas')) {
+                    document.getElementById('kpi-total-facturas').innerText = cantidadFacturas;
+                }
 
             } catch (error) {
                 console.error("Error cargando ventas: ", error);
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--danger); padding: 20px;">Error al conectar con la base de datos.</td></tr>`;
+                if (tbody) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--danger); padding: 20px;">Error al conectar con la base de datos.</td></tr>`;
+                }
             }
-        }
+        };
 
-        document.getElementById('btn-anular-seleccionada').addEventListener('click', async () => {
-            if (!facturaSeleccionadaId || !facturaSeleccionadaData) {
-                alert("Por favor selecciona una factura de la tabla para anular.");
-                return;
-            }
+        // Evento de anulación compatible con "productos" o "inventario"
+        const btnAnular = document.getElementById('btn-anular-seleccionada');
+        if (btnAnular) {
+            btnAnular.addEventListener('click', async () => {
+                if (!facturaSeleccionadaId || !facturaSeleccionadaData) {
+                    alert("Por favor selecciona una factura de la tabla para anular.");
+                    return;
+                }
 
-            if (!confirm(`¿Estás seguro de anular la factura ${facturaSeleccionadaData.nro_factura || facturaSeleccionadaId}? Esta acción devolverá los productos al inventario y marcará la factura como anulada.`)) {
-                return;
-            }
+                const nroFactura = facturaSeleccionadaData.nro_factura || facturaSeleccionadaData.nroFactura || facturaSeleccionadaId;
 
-            const empresaId = localStorage.getItem('youcontrol_empresa_id');
+                if (!confirm(`¿Estás seguro de anular la factura ${nroFactura}? Esta acción devolverá los productos al inventario y marcará la factura como anulada.`)) {
+                    return;
+                }
 
-            try {
-                await runTransaction(db, async (transaction) => {
-                    const listaProds = facturaSeleccionadaData.productos || facturaSeleccionadaData.items || [];
-                    if (Array.isArray(listaProds)) {
-                        for (let prod of listaProds) {
-                            const prodId = prod.id || prod.codigo || prod.sku;
-                            if (prodId) {
-                                const prodRef = doc(db, "usuarios", empresaId, "inventario", prodId);
-                                const prodDoc = await transaction.get(prodRef);
-                                
-                                if (prodDoc.exists()) {
-                                    const stockActual = Number(prodDoc.data().stock || prodDoc.data().existencia || 0);
-                                    const cantidadDevolver = Number(prod.cantidad || prod.qty || 1);
-                                    const nuevoStock = stockActual + cantidadDevolver;
-                                    
-                                    transaction.update(prodRef, { 
-                                        stock: nuevoStock,
-                                        existencia: nuevoStock 
-                                    });
+                try {
+                    await runTransaction(db, async (transaction) => {
+                        const listaProds = facturaSeleccionadaData.items || facturaSeleccionadaData.productos || [];
+                        if (Array.isArray(listaProds)) {
+                            for (let prod of listaProds) {
+                                const prodId = prod.id || prod.codigo || prod.sku;
+                                if (prodId) {
+                                    // Intenta buscar en "productos" (nuevo) y si no existe en "inventario" (viejo)
+                                    let prodRef = doc(db, "usuarios", USER_ID, "productos", prodId);
+                                    let prodDoc = await transaction.get(prodRef);
+
+                                    if (!prodDoc.exists()) {
+                                        prodRef = doc(db, "usuarios", USER_ID, "inventario", prodId);
+                                        prodDoc = await transaction.get(prodRef);
+                                    }
+
+                                    if (prodDoc.exists()) {
+                                        const stockActual = Number(prodDoc.data().stock || prodDoc.data().existencia || 0);
+                                        const cantidadDevolver = Number(prod.cantidad || prod.qty || 1);
+                                        const nuevoStock = stockActual + cantidadDevolver;
+                                        
+                                        transaction.update(prodRef, { 
+                                            stock: nuevoStock,
+                                            existencia: nuevoStock 
+                                        });
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    const ventaRef = doc(db, "usuarios", empresaId, "ventas", facturaSeleccionadaId);
-                    transaction.update(ventaRef, {
-                        anulada: true,
-                        total_usd: 0,
-                        total: 0,
-                        productos: []
+                        const ventaRef = doc(db, "usuarios", USER_ID, "ventas", facturaSeleccionadaId);
+                        transaction.update(ventaRef, {
+                            anulada: true,
+                            total_usd: 0,
+                            monto_total_usd: 0,
+                            total: 0,
+                            items: [],
+                            productos: []
+                        });
                     });
-                });
 
-                alert("Factura anulada con éxito, productos retornados al inventario y registro conservado.");
-                facturaSeleccionadaId = null;
-                facturaSeleccionadaData = null;
-                cargarReporteVentas();
+                    alert("Factura anulada con éxito, productos retornados al inventario y registro conservado.");
+                    facturaSeleccionadaId = null;
+                    facturaSeleccionadaData = null;
+                    window.cargarReporteVentas();
 
-            } catch (error) {
-                console.error("Error al anular la factura: ", error);
-                alert("Hubo un error al procesar la anulación en la base de datos.");
-            }
-        });
+                } catch (error) {
+                    console.error("Error al anular la factura: ", error);
+                    alert("Hubo un error al procesar la anulación en la base de datos.");
+                }
+            });
+        }
 
+        // Inicialización al cargar la página
         window.addEventListener('DOMContentLoaded', () => {
             const hoy = obtenerFechaLocalVenezuela();
             const inputDesde = document.getElementById('filtro-desde');
@@ -412,8 +434,16 @@
             
             if (inputDesde && !inputDesde.value) inputDesde.value = hoy;
             if (inputHasta && !inputHasta.value) inputHasta.value = hoy;
-            
-            cargarReporteVentas();
+
+            const btnBuscar = document.getElementById('btn-buscar');
+            if (btnBuscar) {
+                btnBuscar.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    window.cargarReporteVentas();
+                });
+            }
+
+            window.cargarReporteVentas();
         });
     </script>
 </body>
