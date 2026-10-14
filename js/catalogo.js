@@ -36,7 +36,7 @@ function iniciarCatalogo() {
         return;
     }
 
-    // Función auxiliar para pintar la info de la empresa en el HTML (nombre, logo, dirección, teléfono)
+    // Función auxiliar para pintar la info de la empresa en el HTML
     function aplicarDatosEmpresa(data) {
         const nombreEl = document.getElementById('nombre-empresa');
         const logoImg = document.getElementById('logo-empresa');
@@ -51,10 +51,15 @@ function iniciarCatalogo() {
         if (data.nombre && nombreEl) {
             nombreEl.innerText = data.nombre.toUpperCase();
             nombreEl.style.opacity = "1";
+        } else if (nombreEl && data.nombre_empresa) {
+            nombreEl.innerText = data.nombre_empresa.toUpperCase();
+            nombreEl.style.opacity = "1";
         }
 
-        if (dirEl && data.direccion) {
-            dirEl.innerText = "📍 " + data.direccion;
+        if (dirEl && (data.direccion || data.ubicacion)) {
+            dirEl.innerText = "📍 " + (data.direccion || data.ubicacion);
+        } else if (dirEl) {
+            dirEl.innerText = "📍 " + USER_ID; // Respaldo si no hay dirección escrita
         }
 
         if (logoImg) {
@@ -71,10 +76,10 @@ function iniciarCatalogo() {
         renderizarCatalogo(productosGlobales);
     }
 
-    // 1. Cargar datos de la empresa desde empresas_config (maestro / configuración global)
-    onSnapshot(doc(db, "empresas_config", USER_ID), (snapConfig) => {
-        if (snapConfig.exists()) {
-            const data = snapConfig.data();
+    // 1. Cargar datos directamente desde el documento del usuario (Estructura de proyectos nuevos en Firebase)
+    onSnapshot(doc(db, "usuarios", USER_ID), (snapUser) => {
+        if (snapUser.exists()) {
+            const data = snapUser.data();
             aplicarDatosEmpresa(data);
             if (data.tasa_bcv || data.tasa) {
                 procesarTasa(data.tasa_bcv || data.tasa);
@@ -82,18 +87,7 @@ function iniciarCatalogo() {
         }
     });
 
-    // 2. Cargar datos desde el documento del usuario (nueva estructura operacional en Firestore)
-    onSnapshot(doc(db, "usuarios", USER_ID), (snapUser) => {
-        if (snapUser.exists()) {
-            const data = snapUser.data();
-            aplicarDatosEmpresa(data);
-            if (data.tasa_bcv) {
-                procesarTasa(data.tasa_bcv);
-            }
-        }
-    });
-
-    // 3. Carga de Departamentos
+    // 2. Carga de Departamentos
     onSnapshot(collection(db, "usuarios", USER_ID, "departamentos"), (snap) => {
         mapaNombresDepto = {};
         snap.forEach(d => {
@@ -103,14 +97,14 @@ function iniciarCatalogo() {
         renderizarCatalogo(productosGlobales);
     });
     
-    // 4. Carga de Productos
+    // 3. Carga de Productos
     onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snapshot) => {
         productosGlobales = [];
         snapshot.forEach(d => productosGlobales.push({ id: String(d.id), ...d.data() }));
         renderizarCatalogo(productosGlobales);
     });
 
-    // 5. Buscador
+    // 4. Buscador
     const buscador = document.getElementById('buscador-prod');
     if (buscador) {
         buscador.addEventListener('input', (e) => {
@@ -119,7 +113,7 @@ function iniciarCatalogo() {
         });
     }
 
-    // 6. DELEGACIÓN DE EVENTOS PARA BOTONES DE CANTIDAD
+    // 5. DELEGACIÓN DE EVENTOS PARA BOTONES DE CANTIDAD
     const contenedor = document.getElementById('contenedor-catalogo');
     if (contenedor) {
         contenedor.addEventListener('click', (e) => {
