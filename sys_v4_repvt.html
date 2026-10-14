@@ -182,7 +182,8 @@
 
     <!-- Script de Firebase y Lógica Completa -->
     <script type="module">
-        import { db } from './firebase-config.js';
+        // RUTA CORREGIDA: Apuntando a la carpeta js/
+        import { db } from './js/firebase-config.js';
         import { collection, getDocs, doc, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const USER_ID = localStorage.getItem('youcontrol_empresa_id');
