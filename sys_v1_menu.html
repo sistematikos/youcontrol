@@ -8,7 +8,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
 
-    <title>YOU CONTROL | Sistema de Gestión</title>
+    <title>YOU CONTROL | Sistema de Gestión Empresarial</title>
     
     <link rel="manifest" href="manifest.json">
     <script>
@@ -26,23 +26,26 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
-            --text-dark: #1E293B;
+            --bg-gradient: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%);
+            --text-dark: #0F172A;
             --text-muted: #64748B;
             --accent-blue: #0284C7;
             --primary-dark: #002A54;
+            --card-bg: #FFFFFF;
+            --border-color: #E2E8F0;
         }
 
-        body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; color: var(--text-dark); }
 
         /* BARRA DE NAVEGACIÓN SUPERIOR CON MENÚS DESPLEGABLES */
-        .navbar-sistema { background: var(--primary-dark); width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
-        .nav-container { width: 92%; max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; height: 60px; }
-        .nav-logo { color: white; font-weight: 700; font-size: 1.1rem; text-decoration: none; display: flex; align-items: center; gap: 8px; }
+        .navbar-sistema { background: var(--primary-dark); width: 100%; box-shadow: 0 4px 20px rgba(0,0,0,0.15); position: sticky; top: 0; z-index: 1000; }
+        .nav-container { width: 92%; max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; height: 65px; }
+        .nav-logo { color: white; font-weight: 700; font-size: 1.2rem; text-decoration: none; display: flex; align-items: center; gap: 10px; letter-spacing: 0.5px; }
+        .nav-logo i { color: #38BDF8; }
         
-        .nav-menu { display: flex; list-style: none; margin: 0; padding: 0; gap: 5px; align-items: center; }
+        .nav-menu { display: flex; list-style: none; margin: 0; padding: 0; gap: 6px; align-items: center; }
         .nav-item { position: relative; padding-bottom: 10px; margin-bottom: -10px; }
-        .nav-link { color: #E2E8F0; text-decoration: none; padding: 8px 14px; font-size: 0.85rem; font-weight: 500; display: flex; align-items: center; gap: 6px; border-radius: 8px; transition: 0.2s; }
+        .nav-link { color: #CBD5E1; text-decoration: none; padding: 8px 14px; font-size: 0.85rem; font-weight: 500; display: flex; align-items: center; gap: 7px; border-radius: 8px; transition: all 0.2s ease; }
         .nav-link:hover, .nav-item:hover .nav-link { background: rgba(255,255,255,0.1); color: #ffffff; }
 
         /* DROPDOWN */
@@ -51,50 +54,91 @@
             top: 100%; 
             left: 0; 
             background: #ffffff; 
-            min-width: 200px; 
-            border-radius: 10px; 
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); 
+            min-width: 220px; 
+            border-radius: 12px; 
+            box-shadow: 0 15px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); 
             list-style: none; 
             padding: 8px 0; 
             margin: 0; 
             display: none; 
-            border: 1px solid #E2E8F0; 
+            border: 1px solid var(--border-color); 
+            animation: fadeIn 0.2s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         .nav-item:hover .dropdown-menu { display: block; }
-        .dropdown-item a { color: var(--text-dark); padding: 10px 16px; text-decoration: none; display: flex; align-items: center; gap: 10px; font-size: 0.8rem; font-weight: 500; transition: background 0.15s; }
-        .dropdown-item a:hover { background: #F1F5F9; color: var(--accent-blue); }
+        .dropdown-item a { color: var(--text-dark); padding: 10px 18px; text-decoration: none; display: flex; align-items: center; gap: 12px; font-size: 0.82rem; font-weight: 500; transition: background 0.15s, color 0.15s; }
+        .dropdown-item a i { color: var(--accent-blue); width: 16px; text-align: center; }
+        .dropdown-item a:hover { background: #F0F9FF; color: var(--accent-blue); }
 
-        /* BANNER */
+        /* CONTENEDOR GENERAL */
+        .main-wrapper { max-width: 1200px; width: 92%; margin: 25px auto; flex-grow: 1; display: flex; flex-direction: column; gap: 25px; }
+
+        /* TARJETA DE DATOS DE LA EMPRESA (FUERA DEL BANNER) */
+        .empresa-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+            border: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .empresa-info h3 { margin: 0 0 4px 0; font-size: 1.15rem; color: var(--primary-dark); font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .empresa-info h3 i { color: var(--accent-blue); font-size: 1rem; }
+        .empresa-meta { display: flex; gap: 20px; font-size: 0.85rem; color: var(--text-muted); flex-wrap: wrap; }
+        .empresa-meta span { display: flex; align-items: center; gap: 6px; }
+        .empresa-badge { background: #E0F2FE; color: #0369A1; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+
+        /* BANNER LIMPIO Y PROFESIONAL */
         .banner-menu-container { 
-            width: 92%; 
-            max-width: 1200px; 
-            margin: 25px auto 0px auto; 
+            width: 100%; 
             border-radius: 16px; 
             overflow: hidden; 
-            background: #002A54; 
-            position: relative; 
+            background: var(--primary-dark); 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            position: relative;
         }
         .banner-menu-img { 
             width: 100%; 
-            height: 350px; 
-            max-height: 350px; 
+            height: 320px; 
             object-fit: cover; 
             display: block; 
+            opacity: 0.95;
+            transition: transform 0.5s ease;
         }
-        .banner-empresa-overlay {
-            position: absolute; top: 25px; left: 25px; color: white;
-            font-size: 1rem; font-weight: 600; z-index: 10;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.6); pointer-events: none;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 10px 15px;
-            border-radius: 8px;
-        }
+        .banner-menu-container:hover .banner-menu-img { transform: scale(1.01); }
 
-        /* CONTENIDO PRINCIPAL */
-        .main-content { max-width: 1200px; width: 92%; margin: 30px auto; flex-grow: 1; text-align: center; }
-        .welcome-box { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; }
-        .welcome-box h2 { margin-top: 0; color: var(--text-dark); }
-        .welcome-box p { color: var(--text-muted); font-size: 0.9rem; }
+        /* SECCIÓN DE BIENVENIDA / ACCESOS */
+        .welcome-box { 
+            background: var(--card-bg); 
+            padding: 30px; 
+            border-radius: 16px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04); 
+            border: 1px solid var(--border-color); 
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .welcome-text h2 { margin: 0 0 6px 0; color: var(--primary-dark); font-size: 1.4rem; font-weight: 700; }
+        .welcome-text p { color: var(--text-muted); font-size: 0.9rem; margin: 0; }
+        .quick-actions { display: flex; gap: 10px; }
+        .btn-quick { background: #0EA5E9; color: white; padding: 10px 18px; border-radius: 10px; text-decoration: none; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; box-shadow: 0 4px 10px rgba(14, 165, 233, 0.25); }
+        .btn-quick:hover { background: #0284C7; transform: translateY(-2px); }
+
+        @media (max-width: 768px) {
+            .nav-menu { display: none; /* Podrías agregar menú móvil si lo deseas luego */ }
+            .empresa-card { flex-direction: column; align-items: flex-start; }
+            .welcome-box { flex-direction: column; text-align: center; align-items: center; }
+        }
     </style>
 
     <script>
@@ -109,7 +153,6 @@
         }
     })();
     </script>
-    
 </head>
 <body oncontextmenu="return false">
 
@@ -157,31 +200,55 @@
         </div>
     </nav>
 
-    <!-- BANNER DE LA EMPRESA -->
-    <div class="banner-menu-container">
-        <div class="banner-empresa-overlay" id="lblEmpresa">Cargando datos...</div>
-        <img src="img/youcontrol.png" alt="You Control" class="banner-menu-img">
+    <!-- CONTENEDOR PRINCIPAL -->
+    <div class="main-wrapper">
+
+        <!-- TARJETA DE DATOS DE LA EMPRESA (FUERA DEL BANNER, LIMPIA Y PROFESIONAL) -->
+        <div class="empresa-card">
+            <div class="empresa-info">
+                <h3 id="lblNombreEmpresa"><i class="fas fa-building"></i> Cargando empresa...</h3>
+                <div class="empresa-meta">
+                    <span id="lblRifEmpresa"><i class="fas fa-id-card text-sky-500"></i> RIF: Cargando...</span>
+                    <span id="lblDirEmpresa"><i class="fas fa-map-marker-alt text-sky-500"></i> Dirección: Cargando...</span>
+                </div>
+            </div>
+            <div>
+                <span class="empresa-badge"><i class="fas fa-circle text-emerald-500" style="font-size: 0.5rem;"></i> Sistema Activo</span>
+            </div>
+        </div>
+
+        <!-- BANNER CORPORATIVO LIMPIO -->
+        <div class="banner-menu-container">
+            <img src="img/youcontrol.png" alt="You Control" class="banner-menu-img">
+        </div>
+
+        <!-- CAJA DE BIENVENIDA Y ACCESOS RÁPIDOS -->
+        <div class="welcome-box">
+            <div class="welcome-text">
+                <h2>Panel de Control Principal</h2>
+                <p>Selecciona una opción en la barra superior o utiliza los accesos rápidos para iniciar tus operaciones diarias.</p>
+            </div>
+            <div class="quick-actions">
+                <a href="sys_v1_vt.html" class="btn-quick"><i class="fas fa-cash-register"></i> Nueva Venta (POS)</a>
+                <a href="sys_v1_inv.html" class="btn-quick" style="background: #475569;"><i class="fas fa-boxes-stacked"></i> Ver Inventario</a>
+            </div>
+        </div>
+
     </div>
 
-    <main class="main-content">
-        <div class="welcome-box">
-            <h2>Bienvenido al Sistema</h2>
-            <p>Utiliza la barra de navegación superior para acceder a los módulos de Inventario, Ventas, Compras y Reportes.</p>
-        </div>
-    </main>
-
-   <!-- LÓGICA DE FIREBASE CONSULTANDO LA MAESTRA PARA CONFIGURACIÓN -->
+    <!-- LÓGICA DE FIREBASE CONSULTANDO LA MAESTRA PARA CONFIGURACIÓN -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         async function cargarDatosEmpresa() {
             const empresaID = (localStorage.getItem('youcontrol_empresa_id') || '').trim();
-            const lblEmpresa = document.getElementById('lblEmpresa');
+            const lblNombre = document.getElementById('lblNombreEmpresa');
+            const lblRif = document.getElementById('lblRifEmpresa');
+            const lblDir = document.getElementById('lblDirEmpresa');
 
             if (!empresaID) {
-                lblEmpresa.innerText = "Sesión no iniciada. Redirigiendo a la página principal...";
-                console.warn("No se encontró 'youcontrol_empresa_id' en localStorage.");
+                lblNombre.innerHTML = `<i class="fas fa-triangle-exclamation text-amber-500"></i> Sesión no iniciada`;
                 setTimeout(() => {
                     window.location.href = "index.html";
                 }, 1500);
@@ -189,7 +256,6 @@
             }
 
             try {
-                // Conexión directa a la base de datos MAESTRA para leer la configuración de empresas_config
                 const defaultConfig = {
                     apiKey: "AIzaSyAMkpj9tFps526mL6hO-ciePWrTdx_NK9Q", 
                     authDomain: "youcontrol-1d60a.firebaseapp.com",
@@ -205,24 +271,19 @@
                 
                 if (docSnap.exists()) {
                     const d = docSnap.data();
-                    lblEmpresa.innerHTML = `
-                        <div style="font-size: 1.1rem; font-weight: bold;">${d.nombre || 'N/A'}</div>
-                        <div>RIF: ${d.rif || 'N/A'}</div>
-                        <div>${d.direccion || 'N/A'}</div>
-                    `;
+                    lblNombre.innerHTML = `<i class="fas fa-building"></i> ${d.nombre || 'N/A'}`;
+                    lblRif.innerHTML = `<i class="fas fa-id-card text-sky-500"></i> RIF: ${d.rif || 'N/A'}`;
+                    lblDir.innerHTML = `<i class="fas fa-map-marker-alt text-sky-500"></i> ${d.direccion || 'N/A'}`;
                 } else {
-                    lblEmpresa.innerText = "Empresa no encontrada. Redirigiendo...";
-                    console.error(`El ID de empresa '${empresaID}' no existe en la base de datos maestra.`);
-                    
+                    lblNombre.innerHTML = `<i class="fas fa-triangle-exclamation text-red-500"></i> Empresa no encontrada`;
                     localStorage.removeItem('youcontrol_empresa_id');
-                    
                     setTimeout(() => {
                         window.location.href = "index.html";
                     }, 2000);
                 }
             } catch (e) { 
                 console.error("Error consultando Firestore maestro:", e);
-                lblEmpresa.innerText = "Error de conexión con el servidor"; 
+                lblNombre.innerHTML = `<i class="fas fa-triangle-exclamation text-red-500"></i> Error de conexión con el servidor`; 
             }
         }
 
