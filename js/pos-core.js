@@ -107,7 +107,7 @@ async function verificarEImprimirTicket(nroFactura, ventaData) {
     }
 }
 
-// --- FUNCIÓN DE REGISTRO DE VENTA Y COBRO (CON DESCUENTO DE INVENTARIO) ---
+// --- FUNCIÓN DE REGISTRO DE VENTA Y COBRO (CON DESCUENTO DE INVENTARIO Y ID DE FACTURA) ---
 async function registrarVenta() {
     if (!window.carrito || window.carrito.length === 0) {
         alert("El carrito está vacío. Agregue productos antes de cobrar.");
@@ -153,8 +153,9 @@ async function registrarVenta() {
             fecha: serverTimestamp()
         };
 
-        // 1. Guardar la venta en la base de datos
-        await addDoc(collection(db, "usuarios", USER_ID, "ventas"), ventaData);
+        // 1. Guardar la venta usando el número de factura como ID exacto del documento en Firestore
+        const ventaRef = doc(db, "usuarios", USER_ID, "ventas", nroFactura);
+        await setDoc(ventaRef, ventaData);
 
         // 2. DESCONTAR DEL INVENTARIO CADA PRODUCTO VENDIDO
         for (const item of window.carrito) {
