@@ -44,11 +44,11 @@ function procesarYMostrarCuadre(fechaSeleccionada) {
         const p = data.pagos || {};
         const nombreCliente = data.nombre_cliente || "Anónimo";
         
-        // Acumular totales (incluyendo crédito)
+        // Acumular totales (leyendo correctamente pagomovil_bs)
         t.usd += parseFloat(p.divisas_usd || 0);
         t.efecBs += parseFloat(p.efectivo_bs || 0);
         t.punto += parseFloat(p.punto_bs || 0);
-        t.pmovil += parseFloat(p.pago_movil_bs || 0);
+        t.pmovil += parseFloat(p.pagomovil_bs || 0); // <-- Corrección aplicada aquí
         t.creditoUSD += parseFloat(p.credito_usd || 0);
         t.global += parseFloat(data.total_usd || 0);
 
@@ -71,12 +71,15 @@ function procesarYMostrarCuadre(fechaSeleccionada) {
             }
         }
 
+        // Suma total de Bs pagados en esta factura para mostrar en la tabla
+        const totalBsFactura = parseFloat(p.efectivo_bs || 0) + parseFloat(p.punto_bs || 0) + parseFloat(p.pagomovil_bs || 0);
+
         // Pintar fila en la tabla con la hora corregida
         tablaCuerpo.innerHTML += `<tr>
             <td><strong>${data.nro_factura || '---'}</strong><br><small>${horaFormateada}</small></td>
             <td>${nombreCliente}</td>
             <td>$ ${parseFloat(data.total_usd || 0).toFixed(2)}</td>
-            <td style="text-align:right;">Bs. ${(parseFloat(p.efectivo_bs||0) + parseFloat(p.punto_bs||0) + parseFloat(p.pago_movil_bs||0)).toFixed(2)}</td>
+            <td style="text-align:right;">Bs. ${totalBsFactura.toFixed(2)}</td>
         </tr>`;
     });
 
@@ -84,7 +87,7 @@ function procesarYMostrarCuadre(fechaSeleccionada) {
         tablaCuerpo.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#64748B;">No hay ventas registradas para la fecha ${fechaSeleccionada}</td></tr>`;
     }
 
-    // Actualizar UI de tarjetas y totales (incluyendo la tarjeta de crédito)
+    // Actualizar UI de tarjetas y totales
     if(document.getElementById('tot-dolar')) document.getElementById('tot-dolar').innerText = `$ ${t.usd.toFixed(2)}`;
     if(document.getElementById('tot-efec-bs')) document.getElementById('tot-efec-bs').innerText = `Bs. ${t.efecBs.toFixed(2)}`;
     if(document.getElementById('tot-punto')) document.getElementById('tot-punto').innerText = `Bs. ${t.punto.toFixed(2)}`;
