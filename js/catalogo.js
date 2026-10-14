@@ -1,7 +1,8 @@
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { db as dbPrincipal } from './firebase-config.js';
+import { getFirestore, collection, doc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { db as dbDefault } from './firebase-config.js';
 
+// Mapa de configuraciones de proyectos independientes SOLO para los productos y departamentos de cada cliente
 const CONFIGS_PROYECTOS = {
     "YC-20261012-TORACA": {
         projectId: "yc-toraca",
@@ -10,19 +11,21 @@ const CONFIGS_PROYECTOS = {
     }
 };
 
-let dbProductos = dbPrincipal;
+let dbProductos = dbDefault;
 let tasaActual = 1, carrito = {}, productosGlobales = [], USER_ID = "", mapaNombresDepto = {}, telefonoEmpresa = "";
 let deptoAbierto = null;
 
 function obtenerEmpresaIDDeURL() {
     const query = window.location.search;
     if (!query) return null;
+
     const match = query.match(/[?&](empresa|u)=([^&]*)/);
     if (match && match[2]) {
+        let rawId = match[2];
         try {
-            return decodeURIComponent(match[2].trim());
+            return decodeURIComponent(rawId.trim());
         } catch(e) {
-            return match[2].trim();
+            return rawId.trim();
         }
     }
     return null;
@@ -30,6 +33,7 @@ function obtenerEmpresaIDDeURL() {
 
 function inicializarFirebaseProductos(empresaID) {
     const projConfig = CONFIGS_PROYECTOS[empresaID] || (empresaID.includes("TORACA") ? CONFIGS_PROYECTOS["YC-20261012-TORACA"] : null);
+
     if (projConfig) {
         const fullConfig = {
             apiKey: "AIzaSyAMkpj9tFps526mL6hO-ciePWrTdx_NK9Q",
@@ -37,16 +41,19 @@ function inicializarFirebaseProductos(empresaID) {
             projectId: projConfig.projectId,
             storageBucket: projConfig.storageBucket
         };
+
         const appName = "app_tenant_" + projConfig.projectId;
         const appsExistentes = getApps();
         const appEncontrada = appsExistentes.find(a => a.name === appName);
+
         const tenantApp = appEncontrada || initializeApp(fullConfig, appName);
         dbProductos = getFirestore(tenantApp);
     }
 }
 
-function iniciarCatalogo() {
+async function iniciarCatalogo() {
     let idDeLaURL = obtenerEmpresaIDDeURL();
+    
     if (idDeLaURL) {
         localStorage.setItem('youcontrol_empresa_id', idDeLaURL);
     }
@@ -58,55 +65,66 @@ function iniciarCatalogo() {
         return;
     }
 
-    inicializarFirebaseProductos(USER_ID);
+    // 1. INICIALIZAR DATOS DE LA EMPRESA DESDE LA MAESTRA (Exactamente igual que tu menú)
+    try {
+        const defaultConfig = {
+            apiKey: "AIzaSyAMkpj9tFps526mL6hO-ciePWrTdx_NK9Q", 
+            authDomain: "youcontrol-1d60a.firebaseapp.com",
+            projectId: "youcontrol-1d60a",
+            storageBucket: "youcontrol-1d60a.firebasestorage.app",
+            messagingSenderId: "812100760013",
+            appId: "1:812100760013:web:7574906aa285555faf5484"
+        };
+        const masterApp = initializeApp(defaultConfig, "master_catalogo_app_" + Math.random());
+        const dbMaster = getFirestore(masterApp);
 
-    function aplicarDatosEmpresa(data) {
-        if (!data) return;
-        const nombreEl = document.getElementById('nombre-empresa');
-        const logoImg = document.getElementById('logo-empresa');
-        const dirEl = document.getElementById('direccion-empresa');
+        const docSnap = await getDoc(doc(dbMaster, "empresas_config", USER_ID));
+        
+        if (docSnap.exists()) {
+            const d = docSnap.data();
+            
+            // Pintar nombre de la empresa
+            const nombreEl = document.getElementById('nombre-empresa');
+            if (nombreEl) {
+                nombreEl.innerText = (d.nombre || 'EMPRESA').toUpperCase();
+                nombreEl.style.opacity = "1";
+            }
 
-        let nombreNegocio = data.nombre || data.razon_social || data.empresa || data.nombre_empresa;
-        if (nombreNegocio && nombreEl) {
-            nombreEl.innerText = String(nombreNegocio).toUpperCase();
-            nombreEl.style.opacity = "1";
-        }
+            // Pintar dirección
+            const dirEl = document.getElementById('direccion-empresa');
+            if (dirEl) {
+                dirEl.innerText = d.direccion ? ("📍 " + d.direccion) : "📍 Dirección no registrada";
+            }
 
-        let direccionNegocio = data.direccion || data.ubicacion || data.dir;
-        if (dirEl) {
-            dirEl.innerText = direccionNegocio ? ("📍 " + direccionNegocio) : "📍 Dirección no registrada";
-        }
+            // Procesar teléfono para WhatsApp
+            let telLimpio = (d.telefono || d.tlf || d.whatsapp || "").toString().replace(/-/g, "").replace(/\s/g, "");
+            if (telLimpio.startsWith("0")) {
+                telLimpio = "58" + telLimpio.substring(1);
+            }
+            telefonoEmpresa = telLimpio;
 
-        let telLimpio = (data.telefono || data.tlf || data.whatsapp || "").toString().replace(/-/g, "").replace(/\s/g, "");
-        if (telLimpio.startsWith("0")) {
-            telLimpio = "58" + telLimpio.substring(1);
-        }
-        telefonoEmpresa = telLimpio;
+            // Procesar Tasa BCV
+            if (d.tasa_bcv || d.tasa) {
+                tasaActual = parseFloat(String(d.tasa_bcv || d.tasa).replace(',', '.')) || 1;
+                const tasaEl = document.getElementById('tasa-cliente');
+                if (tasaEl) tasaEl.innerText = tasaActual.toLocaleString('es-VE', { minimumFractionDigits: 2 });
+            }
 
-        if (logoImg) {
-            logoImg.src = `https://raw.githubusercontent.com/sistematikos/youcontrol/main/img/${encodeURIComponent(USER_ID)}.png?t=${new Date().getTime()}`;
-            logoImg.style.display = 'block';
-        }
-    }
-
-    function procesarTasa(tasaRaw) {
-        if (!tasaRaw) return;
-        tasaActual = parseFloat(String(tasaRaw).replace(',', '.')) || 1;
-        const tasaEl = document.getElementById('tasa-cliente');
-        if (tasaEl) tasaEl.innerText = tasaActual.toLocaleString('es-VE', { minimumFractionDigits: 2 });
-        renderizarCatalogo(productosGlobales);
-    }
-
-    onSnapshot(doc(dbPrincipal, "empresas_config", USER_ID), (snapConfig) => {
-        if (snapConfig.exists()) {
-            const data = snapConfig.data();
-            aplicarDatosEmpresa(data);
-            if (data.tasa_bcv || data.tasa) {
-                procesarTasa(data.tasa_bcv || data.tasa);
+            // Logo
+            const logoImg = document.getElementById('logo-empresa');
+            if (logoImg) {
+                logoImg.src = `https://raw.githubusercontent.com/sistematikos/youcontrol/main/img/${encodeURIComponent(USER_ID)}.png?t=${new Date().getTime()}`;
+                logoImg.style.display = 'block';
             }
         }
-    });
+    } catch (e) {
+        console.error("Error cargando datos maestros de empresa:", e);
+    }
 
+    // 2. INICIALIZAR FIREBASE DE PRODUCTOS DEL CLIENTE
+    inicializarFirebaseProductos(USER_ID);
+
+    // Cargar Departamentos
     onSnapshot(collection(dbProductos, "usuarios", USER_ID, "departamentos"), (snap) => {
         mapaNombresDepto = {};
         snap.forEach(d => {
@@ -116,6 +134,7 @@ function iniciarCatalogo() {
         renderizarCatalogo(productosGlobales);
     });
     
+    // Cargar Productos
     onSnapshot(collection(dbProductos, "usuarios", USER_ID, "productos"), (snapshot) => {
         productosGlobales = [];
         snapshot.forEach(d => {
@@ -132,6 +151,7 @@ function iniciarCatalogo() {
         renderizarCatalogo(productosGlobales);
     });
 
+    // Buscador
     const buscador = document.getElementById('buscador-prod');
     if (buscador) {
         buscador.addEventListener('input', (e) => {
@@ -140,16 +160,20 @@ function iniciarCatalogo() {
         });
     }
 
+    // Botones de cantidad
     const contenedor = document.getElementById('contenedor-catalogo');
     if (contenedor) {
         contenedor.addEventListener('click', (e) => {
             const btn = e.target.closest('.btn-cant');
             if (!btn) return;
+
             const id = btn.getAttribute('data-id');
             const cambio = parseInt(btn.getAttribute('data-cambio'));
+            
             const nombre = decodeURIComponent(btn.getAttribute('data-nombre') || '');
             const precio = parseFloat(btn.getAttribute('data-precio'));
             const stock = parseInt(btn.getAttribute('data-stock'));
+
             modificarCantidad(id, cambio, nombre, precio, stock);
         });
     }
@@ -182,6 +206,7 @@ function modificarCantidad(id, cambio, nombre, precio, stock) {
     if (qtySpan) {
         qtySpan.innerText = carrito[pID] ? carrito[pID].cantidad : 0;
     }
+    
     actualizarFooter();
 }
 
@@ -215,6 +240,7 @@ window.enviarPedido = function() {
         mensaje += `• ${item.nombre} x${cant} ($${pUSD.toFixed(2)}) = $${totalItem.toFixed(2)}\n`;
     }
     mensaje += `\n*TOTAL:* $${totalUSD.toFixed(2)}\n*TOTAL (Bs):* ${(totalUSD * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 })} Bs`;
+    
     window.open(`https://wa.me/${telefonoEmpresa}?text=${encodeURIComponent(mensaje)}`, '_blank');
 };
 
@@ -226,8 +252,11 @@ window.toggleDepto = function(codDepto) {
 function renderizarCatalogo(lista) {
     const contenedor = document.getElementById('contenedor-catalogo');
     if (!contenedor) return;
+
     contenedor.style.display = "block";
-    const agrupados = lista.reduce((acc, p) => {
+    const productosFiltrados = lista; 
+    
+    const agrupados = productosFiltrados.reduce((acc, p) => {
         const cod = p.departamento || 'GENERAL';
         if (!acc[cod]) acc[cod] = [];
         acc[cod].push(p);
@@ -237,6 +266,7 @@ function renderizarCatalogo(lista) {
     contenedor.innerHTML = Object.keys(agrupados).sort().map((cod) => {
         const nombreMostrado = (mapaNombresDepto[cod] || cod).toUpperCase();
         const esAbierto = deptoAbierto === cod;
+        
         let itemsHTML = "";
         if (esAbierto) {
             itemsHTML = `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px 0;">` +
@@ -244,11 +274,12 @@ function renderizarCatalogo(lista) {
                 const precioNum = parseFloat(String(p.precio).replace(',', '.')) || 0;
                 const stockNum = parseInt(p.stock) || 99;
                 const prodID = String(p.id);
+
                 return `
                 <div class="card-prod" style="background:#FFF; border-radius:14px; padding:12px; border:1px solid #E2E8F0; border-left:4px solid #006AFF; box-shadow:0 4px 12px rgba(0,0,0,0.03);">
                     <h3 style="font-size:0.85rem; margin:0 0 6px 0; color:#0F172A;">${p.nombre || 'Producto'}</h3>
                     <div style="display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px;">
-                        <span style="font-size: 0.8rem; color: #64748B;">$${precioNum.toFixed(2)} USD</span>
+                        <span style="font-size: 0.80rem; color: #64748B;">$${precioNum.toFixed(2)} USD</span>
                         <span style="font-weight:900; color:#006AFF; font-size:1.05rem;">${(precioNum * tasaActual).toLocaleString('es-VE', { minimumFractionDigits: 2 })} Bs</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -259,6 +290,7 @@ function renderizarCatalogo(lista) {
                 </div>`;
             }).join('') + `</div>`;
         }
+        
         return `
         <div style="width: 100%; margin-top: 10px;">
             <div onclick="window.toggleDepto('${cod}')" style="cursor:pointer; background: #FFFFFF; padding: 14px 16px; border-radius: 14px; font-weight:800; color:#0F172A; border: 1px solid #E2E8F0; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
