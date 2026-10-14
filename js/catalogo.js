@@ -1,5 +1,5 @@
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, doc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { db as dbPrincipal } from './firebase-config.js';
 
 // Mapa de configuraciones de proyectos independientes para los productos de cada empresa
@@ -73,14 +73,11 @@ function iniciarCatalogo() {
         const logoImg = document.getElementById('logo-empresa');
         const dirEl = document.getElementById('direccion-empresa');
 
-        // Nombre de la empresa desde empresas_config
+        // Extraer nombre directamente de la data principal de empresas_config
         let nombreNegocio = data ? (data.nombre || data.razon_social || data.empresa) : null;
-        if (!nombreNegocio) {
-            nombreNegocio = USER_ID.replace(/-/g, ' ').toUpperCase();
-        }
-
+        
         if (nombreEl) {
-            nombreEl.innerText = nombreNegocio.toUpperCase();
+            nombreEl.innerText = (nombreNegocio || USER_ID).toUpperCase();
             nombreEl.style.opacity = "1";
         }
 
@@ -109,7 +106,7 @@ function iniciarCatalogo() {
         renderizarCatalogo(productosGlobales);
     }
 
-    // 1. LEER DATOS DE LA EMPRESA DESDE LA DATA PRINCIPAL: empresas_config (Base de datos youcontrol-1d60a)
+    // 1. LEER DATOS DIRECTAMENTE DE empresas_config EN LA DATA PRINCIPAL
     onSnapshot(doc(dbPrincipal, "empresas_config", USER_ID), (snapConfig) => {
         if (snapConfig.exists()) {
             const data = snapConfig.data();
@@ -118,14 +115,12 @@ function iniciarCatalogo() {
                 procesarTasa(data.tasa_bcv || data.tasa);
             }
         } else {
-            // Respaldo por si acaso en usuarios de la principal
+            // Respaldo secundario por si el documento está en usuarios de la principal
             onSnapshot(doc(dbPrincipal, "usuarios", USER_ID), (snapUser) => {
                 if (snapUser.exists()) {
                     const dataUser = snapUser.data();
                     aplicarDatosEmpresa(dataUser);
                     if (dataUser.tasa_bcv) procesarTasa(dataUser.tasa_bcv);
-                } else {
-                    aplicarDatosEmpresa(null);
                 }
             });
         }
