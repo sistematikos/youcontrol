@@ -2,180 +2,201 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Catálogo Digital | You Control</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root { 
-            --primary: #0F172A; 
-            --accent-blue: #2563EB;
-            --accent-orange: #EA580C;
-            --emerald: #10B981; 
-            --bg-body: #F1F5F9; 
+            --app-bg: #F8FAFC; 
             --card-bg: #FFFFFF;
+            --primary: #0F172A; 
+            --brand-blue: #006AFF;
+            --brand-blue-hover: #0056D2;
             --text-main: #0F172A; 
             --text-muted: #64748B;
             --border: #E2E8F0; 
-            --shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+            --shadow-app: 0 8px 20px rgba(15, 23, 42, 0.06);
+            --shadow-float: 0 12px 30px rgba(0, 106, 255, 0.25);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body { 
-            font-family: 'Poppins', sans-serif; 
-            background: var(--bg-body); 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: var(--app-bg); 
             color: var(--text-main);
             margin: 0; 
-            padding-bottom: 140px; 
+            padding-bottom: 150px; 
+            user-select: none;
         }
         
-        .page-wrapper { 
-            max-width: 800px; 
+        .app-wrapper { 
+            max-width: 600px; 
             margin: 0 auto; 
             width: 100%; 
-            box-sizing: border-box; 
         }
 
-        /* --- CINTILLA SUPERIOR YOU CONTROL --- */
-        .youcontrol-badge {
-            background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
-            color: #F8FAFC;
-            text-align: center;
-            padding: 8px 15px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            letter-spacing: 1.2px;
-            text-transform: uppercase;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-        }
-
+        /* --- APP HEADER TOP BAR --- */
         .app-header { 
-            padding: 15px; 
-            position: sticky; 
-            top: 0; 
-            z-index: 100; 
-            background: rgba(241, 245, 249, 0.95);
-            backdrop-filter: blur(10px);
+            background: var(--primary);
+            color: white;
+            padding: 14px 16px 20px 16px;
+            border-bottom-left-radius: 24px;
+            border-bottom-right-radius: 24px;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
-        
-        .header-grid { 
-            display: grid; 
-            grid-template-columns: 100px 1fr 1fr; 
-            grid-template-rows: auto auto auto; 
-            gap: 10px; 
+
+        /* Status Pill You Control */
+        .youcontrol-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #94A3B8;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            width: 100%;
         }
-        
+        .youcontrol-pill span { color: var(--brand-blue); }
+
+        /* Grid Superior Header */
+        .header-content {
+            display: grid;
+            grid-template-columns: 85px 1fr;
+            gap: 12px;
+            align-items: center;
+        }
+
         .card-logo { 
-            grid-row: 1 / 3; 
-            background: var(--card-bg); 
-            border-radius: 14px; 
-            border: 1px solid var(--border); 
+            width: 85px;
+            height: 85px;
+            background: white; 
+            border-radius: 18px; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
             overflow: hidden; 
-            padding: 4px; 
-            box-shadow: var(--shadow); 
+            padding: 5px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
         }
         .logo-img { width: 100%; height: 100%; object-fit: contain; }
-        
-        .card-right { 
-            background: var(--card-bg); 
-            border-radius: 14px; 
-            border: 1px solid var(--border); 
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between; 
-            padding: 0 14px; 
-            box-shadow: var(--shadow); 
+
+        .header-info {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
         }
-        
+
+        .biz-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
         #nombre-empresa { 
-            color: var(--primary); 
-            font-size: 0.95rem; 
-            font-weight: 900; 
+            color: #FFFFFF; 
+            font-size: 1rem; 
+            font-weight: 800; 
+            letter-spacing: -0.2px;
             text-transform: uppercase;
+            margin: 0;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
 
-        .btn-whatsapp-header {
-            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); 
-            color: white; 
-            border: none; 
-            border-radius: 50%; 
-            width: 36px; 
-            height: 36px; 
-            cursor: pointer; 
-            font-size: 16px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-            box-shadow: 0 4px 10px rgba(37, 211, 102, 0.35);
-            transition: transform 0.2s;
-        }
-        .btn-whatsapp-header:hover { transform: scale(1.08); }
-
-        .card-tasa {
-            background: linear-gradient(135deg, #1E40AF 0%, #2563EB 100%);
+        .btn-ws-app {
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             color: white;
-            border-radius: 14px;
+            border-radius: 12px;
+            width: 34px;
+            height: 34px;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+        .btn-ws-app:active { background: rgba(255, 255, 255, 0.25); }
+
+        .bcv-chip {
+            background: linear-gradient(135deg, var(--brand-blue) 0%, #0052CC 100%);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 10px;
+            font-size: 0.78rem;
             font-weight: 800;
-            font-size: 0.85rem;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            width: fit-content;
         }
-        
-        .card-direccion { 
-            grid-column: 2 / 4; 
-            background: var(--card-bg); 
-            border-radius: 14px; 
-            border: 1px solid var(--border); 
-            display: flex; 
-            align-items: center; 
-            padding: 8px 14px; 
-            font-size: 0.75rem; 
-            color: var(--text-muted); 
-            font-weight: 600;
-            box-shadow: var(--shadow);
+
+        .app-direccion { 
+            font-size: 0.72rem; 
+            color: #94A3B8; 
+            font-weight: 500;
+            margin-top: 2px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
-        
-        .search-container {
-            grid-column: 1 / 4;
-            margin-top: 4px;
+
+        /* Buscador App Style */
+        .search-box {
+            margin: 14px 16px 10px 16px;
         }
         .search-bar { 
             width: 100%; 
-            padding: 12px 18px; 
-            border: 1px solid #CBD5E1; 
-            border-radius: 14px; 
+            padding: 14px 18px; 
+            border: 1px solid var(--border); 
+            border-radius: 18px; 
             background: var(--card-bg); 
-            box-sizing: border-box; 
             font-size: 0.88rem;
-            font-family: 'Poppins', sans-serif;
-            box-shadow: var(--shadow);
+            font-family: inherit;
+            color: var(--text-main);
+            box-shadow: var(--shadow-app);
             outline: none;
             transition: all 0.2s;
         }
         .search-bar:focus { 
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+            border-color: var(--brand-blue);
+            box-shadow: 0 0 0 3px rgba(0, 106, 255, 0.12);
         }
-        
-        .grid-catalog { padding: 0 15px; }
 
-        /* Tarjeta de Producto */
+        /* --- CATÁLOGO --- */
+        .grid-catalog { padding: 0 16px; }
+
         .card-prod { 
             background: var(--card-bg); 
-            border-radius: 14px; 
+            border-radius: 18px; 
             padding: 14px; 
             border: 1px solid var(--border); 
-            border-left: 5px solid var(--emerald); 
-            box-shadow: var(--shadow);
-            transition: transform 0.2s;
+            border-left: 5px solid var(--brand-blue); 
+            box-shadow: var(--shadow-app);
+            transition: transform 0.15s ease;
         }
-        .card-prod:hover { transform: translateY(-2px); }
+        .card-prod:active { transform: scale(0.98); }
 
         .btn-cant {
             background: #F1F5F9;
@@ -183,83 +204,106 @@
             color: var(--primary);
             width: 32px;
             height: 32px;
-            border-radius: 8px;
+            border-radius: 10px;
             font-weight: 800;
+            font-size: 1rem;
             cursor: pointer;
-            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
         }
-        .btn-cant:hover { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
+        .btn-cant:active { background: var(--brand-blue); color: white; border-color: var(--brand-blue); }
 
-        /* Footer Flotante del Carrito */
+        /* --- BOTTOM DOCK / BOTTOM SHEET DE COMPRA --- */
         #cart-footer { 
             position: fixed; 
             bottom: 20px; 
             left: 50%; 
             transform: translateX(-50%); 
-            width: 92%; 
-            max-width: 420px; 
+            width: calc(100% - 32px); 
+            max-width: 560px; 
             background: var(--primary); 
             color: white;
-            padding: 12px 20px; 
-            border-radius: 20px; 
+            padding: 12px 18px; 
+            border-radius: 22px; 
             display: none; 
             align-items: center; 
             justify-content: space-between; 
-            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.3); 
+            box-shadow: 0 16px 35px rgba(15, 23, 42, 0.4); 
             z-index: 1000; 
-            border: 1px solid rgba(255,255,255,0.1); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
         }
 
-        .total-box span { font-size: 1.15rem; font-weight: 900; color: #38BDF8; }
-        .total-box small { font-size: 0.8rem; color: #94A3B8; font-weight: 700; }
+        .total-box span { font-size: 1.15rem; font-weight: 800; color: #60A5FA; }
+        .total-box small { font-size: 0.78rem; color: #94A3B8; font-weight: 600; }
+
+        .btn-checkout {
+            background: var(--brand-blue); 
+            color: white; 
+            border: none; 
+            padding: 12px 22px; 
+            border-radius: 14px; 
+            font-weight: 800; 
+            font-size: 0.88rem; 
+            cursor: pointer; 
+            box-shadow: var(--shadow-float);
+            transition: background 0.2s, transform 0.1s;
+        }
+        .btn-checkout:active { 
+            background: var(--brand-blue-hover); 
+            transform: scale(0.96); 
+        }
     </style>
 </head>
 <body>
 
-    <div class="youcontrol-badge">
-        🚀 SOFTWARE ADMINISTRATIVO YOU CONTROL &bull; CATÁLOGO DIGITAL
-    </div>
-
-    <div class="page-wrapper">
+    <div class="app-wrapper">
+        <!-- TOP APP BAR -->
         <header class="app-header">
-            <div class="header-grid">
-                <!-- Logo -->
+            <div class="youcontrol-pill">
+                ⚡ <span>YOU CONTROL</span> &bull; CATÁLOGO DIGITAL
+            </div>
+
+            <div class="header-content">
                 <div class="card-logo">
                     <img id="logo-empresa" src="" class="logo-img" style="display:none;" onerror="this.style.display='none'">
                 </div>
-                
-                <!-- Nombre y WhatsApp -->
-                <div class="card-right" style="grid-column: 2 / 3;">
-                    <span id="nombre-empresa" style="opacity: 0; transition: opacity 0.5s ease;">CARGANDO...</span>
-                    <button onclick="window.abrirWhatsApp()" class="btn-whatsapp-header" title="Contactar por WhatsApp">💬</button>
-                </div>
 
-                <!-- Tasa BCV Destacada -->
-                <div class="card-tasa">
-                    BCV: <span id="tasa-cliente" style="margin-left:6px;">0.00</span> Bs
-                </div>
-                
-                <!-- Dirección -->
-                <div class="card-direccion" id="direccion-empresa">📍 Cargando dirección...</div>
-                
-                <!-- Buscador -->
-                <div class="search-container">
-                    <input type="text" id="buscador-prod" placeholder="🔍 ¿Qué repuesto o producto buscas?" class="search-bar">
+                <div class="header-info">
+                    <div class="biz-title-row">
+                        <h1 id="nombre-empresa" style="opacity: 0; transition: opacity 0.5s ease;">CARGANDO...</h1>
+                        <button onclick="window.abrirWhatsApp()" class="btn-ws-app" title="Contactar">💬</button>
+                    </div>
+
+                    <div class="bcv-chip">
+                        BCV: <span id="tasa-cliente">0.00</span> Bs
+                    </div>
+
+                    <div class="app-direccion" id="direccion-empresa">
+                        📍 Cargando ubicación...
+                    </div>
                 </div>
             </div>
         </header>
 
+        <!-- BUSCADOR FLUIDO -->
+        <div class="search-box">
+            <input type="text" id="buscador-prod" placeholder="🔍 Buscar productos o repuestos..." class="search-bar">
+        </div>
+
+        <!-- CONTENEDOR CATÁLOGO -->
         <main id="contenedor-catalogo" class="grid-catalog"></main>
     </div>
 
-    <!-- Footer de Compra Persuasivo -->
+    <!-- BOTTOM SHEET APP FOOTER -->
     <div id="cart-footer">
         <div class="total-box">
             $<span id="cart-total-usd">0.00</span><br>
             <small><span id="cart-total-bs">0.00</span> Bs</small>
         </div>
-        <button onclick="enviarPedido()" style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); color:white; border:none; padding:12px 22px; border-radius:14px; font-weight:800; font-size:0.9rem; cursor:pointer; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);">
-            Enviar Pedido (<span id="cart-count">0</span>) 🛍️
+        <button onclick="enviarPedido()" class="btn-checkout">
+            Enviar Pedido (<span id="cart-count">0</span>) 📲
         </button>
     </div>
     
