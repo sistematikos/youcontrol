@@ -104,13 +104,14 @@
                 log(`⚠️ Documento principal usuarios/${empresaID} no encontrado, procesando subcolecciones...`);
             }
 
-            // 2. Copiar todas las subcolecciones (incluyendo cuentas por cobrar, movimientos, etc.)
+            // 2. Copiar todas las subcolecciones (incluyendo mov_inventario)
             const subcolecciones = [
                 "productos", 
                 "departamentos", 
                 "clientes", 
                 "cuentas_x_cobrar",
                 "cuentas_por_cobrar",
+                "mov_inventario",         // <--- ¡Esta era la clave en tu código!
                 "movimientos",
                 "movimientos_inventario",
                 "ventas",
@@ -121,7 +122,7 @@
                 "cajas",
                 "configuracion"
             ];
-
+            
             for (const subcol of subcolecciones) {
                 try {
                     const subcolRef = collection(dbOrigen, "usuarios", empresaID, subcol);
