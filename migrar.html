@@ -2,14 +2,14 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>YOU CONTROL - Migrador Dinámico de Tenants</title>
+    <title>YOU CONTROL - Migrador Libre</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 30px; background: #f8fafc; color: #0f172a; }
         .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); max-width: 650px; margin: auto; border: 1px solid #e2e8f0; }
         h2 { margin-top: 0; color: #002A54; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         label { font-weight: 600; font-size: 13px; color: #475569; display: block; margin-top: 10px; }
-        input, select, button { width: 100%; padding: 11px; margin-top: 6px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 14px; box-sizing: border-box; }
+        input, button { width: 100%; padding: 11px; margin-top: 6px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 14px; box-sizing: border-box; }
         button { background: #006AFF; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 20px; transition: background 0.2s; }
         button:hover { background: #0056b3; }
         #log { background: #0f172a; color: #38bdf8; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 12px; max-height: 220px; overflow-y: auto; white-space: pre-wrap; margin-top: 15px; }
@@ -18,30 +18,20 @@
 <body>
 
 <div class="card">
-    <h2>Migrador Flexible de Empresas</h2>
-    <p style="font-size: 13px; color: #64748b;">Selecciona el proyecto de origen, el proyecto de destino y el ID de la empresa a transferir.</p>
+    <h2>Migrador Libre de Empresas</h2>
+    <p style="font-size: 13px; color: #64748b;">Escribe manualmente el Project ID de origen y destino de Firebase.</p>
 
     <label>ID de la Empresa a Migrar:</label>
     <input type="text" id="empresaIdInput" placeholder="Ej: YC-20260919-F2">
 
     <div class="grid-2">
         <div>
-            <label>Proyecto Origen (Salida):</label>
-            <select id="selectOrigen">
-                <option value="youcontrol-1d60a">youcontrol-1d60a (Principal)</option>
-                <option value="yotellevo-a3ff3">yotellevo-a3ff3</option>
-                <option value="dataciar">dataciar</option>
-                <option value="yc-toraca">yc-toraca</option>
-            </select>
+            <label>Project ID Origen (Salida):</label>
+            <input type="text" id="inputOrigen" value="youcontrol-1d60a" placeholder="Ej: youcontrol-1d60a">
         </div>
         <div>
-            <label>Proyecto Destino (Llegada):</label>
-            <select id="selectDestino">
-                <option value="yotellevo-a3ff3">yotellevo-a3ff3</option>
-                <option value="youcontrol-1d60a">youcontrol-1d60a (Principal)</option>
-                <option value="dataciar">dataciar</option>
-                <option value="yc-toraca">yc-toraca</option>
-            </select>
+            <label>Project ID Destino (Llegada):</label>
+            <input type="text" id="inputDestino" placeholder="Ej: nuevo-proyecto-id">
         </div>
     </div>
 
@@ -52,7 +42,7 @@
 </div>
 
 <script type="module">
-    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, doc, getDoc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const API_KEY_COMUN = "AIzaSyAMkpj9tFps526mL6hO-ciePWrTdx_NK9Q";
@@ -78,11 +68,11 @@
 
     window.iniciarMigracion = async function() {
         const empresaID = document.getElementById('empresaIdInput').value.trim();
-        const projOrigen = document.getElementById('selectOrigen').value;
-        const projDestino = document.getElementById('selectDestino').value;
+        const projOrigen = document.getElementById('inputOrigen').value.trim();
+        const projDestino = document.getElementById('inputDestino').value.trim();
 
-        if (!empresaID) {
-            alert("Por favor ingresa el ID de la empresa.");
+        if (!empresaID || !projOrigen || !projDestino) {
+            alert("Por favor completa todos los campos.");
             return;
         }
 
