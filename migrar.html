@@ -2,50 +2,73 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>YOU CONTROL - Migrador de Empresas</title>
+    <title>YOU CONTROL - Migrador Dinámico de Tenants</title>
     <style>
-        body { font-family: Arial, sans-serif; padding: 30px; background: #f8fafc; color: #0f172a; }
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); max-width: 600px; margin: auto; }
-        input, button { width: 100%; padding: 12px; margin-top: 10px; margin-bottom: 20px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 14px; box-sizing: border-box; }
-        button { background: #0284c7; color: white; border: none; font-weight: bold; cursor: pointer; }
-        button:hover { background: #0369a1; }
-        #log { background: #0f172a; color: #38bdf8; padding: 15px; border-radius: 6px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 30px; background: #f8fafc; color: #0f172a; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); max-width: 650px; margin: auto; border: 1px solid #e2e8f0; }
+        h2 { margin-top: 0; color: #002A54; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        label { font-weight: 600; font-size: 13px; color: #475569; display: block; margin-top: 10px; }
+        input, select, button { width: 100%; padding: 11px; margin-top: 6px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 14px; box-sizing: border-box; }
+        button { background: #006AFF; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 20px; transition: background 0.2s; }
+        button:hover { background: #0056b3; }
+        #log { background: #0f172a; color: #38bdf8; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 12px; max-height: 220px; overflow-y: auto; white-space: pre-wrap; margin-top: 15px; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>Herramienta de Migración de Tenant</h2>
-    <p>Copia la data de una empresa desde la base central hacia su nuevo proyecto independiente.</p>
+    <h2>Migrador Flexible de Empresas</h2>
+    <p style="font-size: 13px; color: #64748b;">Selecciona el proyecto de origen, el proyecto de destino y el ID de la empresa a transferir.</p>
 
-    <label>ID de la Empresa (Ej: YC-20261012-TORACA):</label>
-    <input type="text" id="empresaIdInput" placeholder="Ingresa el ID exacto">
+    <label>ID de la Empresa a Migrar:</label>
+    <input type="text" id="empresaIdInput" placeholder="Ej: YC-20260919-F2">
 
-    <label>Nuevo Project ID de Firebase (Destino):</label>
-    <input type="text" id="nuevoProjectId" placeholder="Ej: yc-empresa-nueva">
+    <div class="grid-2">
+        <div>
+            <label>Proyecto Origen (Salida):</label>
+            <select id="selectOrigen">
+                <option value="youcontrol-1d60a">youcontrol-1d60a (Principal)</option>
+                <option value="yotellevo-a3ff3">yotellevo-a3ff3</option>
+                <option value="dataciar">dataciar</option>
+                <option value="yc-toraca">yc-toraca</option>
+            </select>
+        </div>
+        <div>
+            <label>Proyecto Destino (Llegada):</label>
+            <select id="selectDestino">
+                <option value="yotellevo-a3ff3">yotellevo-a3ff3</option>
+                <option value="youcontrol-1d60a">youcontrol-1d60a (Principal)</option>
+                <option value="dataciar">dataciar</option>
+                <option value="yc-toraca">yc-toraca</option>
+            </select>
+        </div>
+    </div>
 
-    <button onclickiniciarMigracion() id="btnMigrar">Iniciar Migración</button>
+    <button onclick="iniciarMigracion()" id="btnMigrar">Iniciar Transferencia</button>
 
     <h3>Consola de Estado:</h3>
-    <div id="log">Esperando acción...</div>
+    <div id="log">Listo para migrar...</div>
 </div>
 
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, doc, getDoc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // Configuración del Proyecto Principal (Origen)
-    const configPrincipal = {
-        apiKey: "AIzaSyAMkpj9tFps526mL6hO-ciePWrTdx_NK9Q",
-        authDomain: "youcontrol-1d60a.firebaseapp.com",
-        projectId: "youcontrol-1d60a",
-        storageBucket: "youcontrol-1d60a.firebasestorage.app",
-        messagingSenderId: "812100760013",
-        appId: "1:812100760013:web:7574906aa285555faf5484"
-    };
+    const API_KEY_COMUN = "AIzaSyAMkpj9tFps526mL6hO-ciePWrTdx_NK9Q";
 
-    const appPrincipal = initializeApp(configPrincipal, "origen_master");
-    const dbOrigen = getFirestore(appPrincipal);
+    function obtenerOCrearApp(projectId, alias) {
+        const fullConfig = {
+            apiKey: API_KEY_COMUN,
+            authDomain: `${projectId}.firebaseapp.com`,
+            projectId: projectId,
+            storageBucket: `${projectId}.firebasestorage.app`
+        };
+
+        const appName = `${alias}_${projectId}_${Math.random().toString(36).substring(2, 7)}`;
+        const app = initializeApp(fullConfig, appName);
+        return getFirestore(app);
+    }
 
     function log(msg) {
         const box = document.getElementById('log');
@@ -55,67 +78,67 @@
 
     window.iniciarMigracion = async function() {
         const empresaID = document.getElementById('empresaIdInput').value.trim();
-        const nuevoProjId = document.getElementById('nuevoProjectId').value.trim();
+        const projOrigen = document.getElementById('selectOrigen').value;
+        const projDestino = document.getElementById('selectDestino').value;
 
-        if (!empresaID || !nuevoProjId) {
-            alert("Por favor completa ambos campos.");
+        if (!empresaID) {
+            alert("Por favor ingresa el ID de la empresa.");
             return;
         }
 
-        document.getElementById('log').innerHTML = "Iniciando proceso...";
-        log(`Conectando con el proyecto destino: ${nuevoProjId}...`);
+        if (projOrigen === projDestino) {
+            alert("El proyecto de origen y destino no pueden ser el mismo.");
+            return;
+        }
+
+        const btn = document.getElementById('btnMigrar');
+        btn.disabled = true;
+        btn.innerText = "Transfiriendo...";
+
+        document.getElementById('log').innerHTML = "Iniciando transferencia...";
+        log(`Origen: [${projOrigen}]  --->  Destino: [${projDestino}]`);
 
         try {
-            // Inicializar dinámicamente el proyecto destino del cliente
-            const configDestino = {
-                apiKey: "AIzaSyAMkpj9tFps526mL6hO-ciePWrTdx_NK9Q",
-                authDomain: `${nuevoProjId}.firebaseapp.com`,
-                projectId: nuevoProjId,
-                storageBucket: `${nuevoProjId}.firebasestorage.app`
-            };
-            const appDestino = initializeApp(configDestino, "destino_" + nuevoProjId);
-            const dbDestino = getFirestore(appDestino);
+            const dbOrigen = obtenerOCrearApp(projOrigen, "origen");
+            const dbDestino = obtenerOCrearApp(projDestino, "destino");
 
-            // 1. Leer datos del usuario/empresa desde el origen
-            log(`Leyendo datos de la empresa ${empresaID} desde el origen...`);
+            // 1. Copiar documento principal de la empresa
+            log(`Leyendo datos principales de usuarios/${empresaID}...`);
             const userDocRef = doc(dbOrigen, "usuarios", empresaID);
             const userSnap = await getDoc(userDocRef);
 
-            if (!userSnap.exists()) {
-                log(`¡Error! No se encontró el documento en usuarios/${empresaID} en el origen.`);
-                return;
+            if (userSnap.exists()) {
+                await setDoc(doc(dbDestino, "usuarios", empresaID), userSnap.data());
+                log(`✔ Perfil de la empresa copiado con éxito.`);
+            } else {
+                log(`⚠️ Documento principal usuarios/${empresaID} no encontrado, procesando subcolecciones...`);
             }
 
-            const userData = userSnap.data();
-            log(`Datos principales encontrados. Escribiendo en el nuevo proyecto...`);
-
-            // 2. Guardar datos principales en el destino
-            await setDoc(doc(dbDestino, "usuarios", empresaID), userData);
-            log(`✔ Documento principal de usuario migrado con éxito.`);
-
-            // 3. Migrar subcolecciones clave (productos, departamentos, clientes)
+            // 2. Copiar subcolecciones (productos, departamentos, clientes)
             const subcolecciones = ["productos", "departamentos", "clientes"];
-            
+
             for (const subcol of subcolecciones) {
-                log(`Migrando subcolección: ${subcol}...`);
+                log(`Transfiriendo subcolección: ${subcol}...`);
                 const subcolRef = collection(dbOrigen, "usuarios", empresaID, subcol);
                 const subcolSnap = await getDocs(subcolRef);
 
                 let contador = 0;
                 for (const subDoc of subcolSnap.docs) {
-                    const subData = subDoc.data();
-                    await setDoc(doc(dbDestino, "usuarios", empresaID, subcol, subDoc.id), subData);
+                    await setDoc(doc(dbDestino, "usuarios", empresaID, subcol, subDoc.id), subDoc.data());
                     contador++;
                 }
                 log(`✔ Migrados ${contador} registros en ${subcol}.`);
             }
 
-            log(`🎉 ¡Migración de la empresa ${empresaID} completada con éxito!`);
-            alert("¡Migración finalizada correctamente!");
+            log(`\n🎉 ¡Transferencia completada con éxito de [${projOrigen}] a [${projDestino}]!`);
+            alert(`¡Migración de ${empresaID} completada exitosamente!`);
 
         } catch (err) {
             console.error(err);
-            log(`❌ Error crítico durante la migración: ${err.message}`);
+            log(`❌ Error durante el proceso: ${err.message}`);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Iniciar Transferencia";
         }
     };
 </script>
