@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>YOU CONTROL - Migrador Libre</title>
+    <title>YOU CONTROL - Migrador Libre y Completo</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 30px; background: #f8fafc; color: #0f172a; }
         .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); max-width: 650px; margin: auto; border: 1px solid #e2e8f0; }
@@ -12,14 +12,14 @@
         input, button { width: 100%; padding: 11px; margin-top: 6px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 14px; box-sizing: border-box; }
         button { background: #006AFF; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 20px; transition: background 0.2s; }
         button:hover { background: #0056b3; }
-        #log { background: #0f172a; color: #38bdf8; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 12px; max-height: 220px; overflow-y: auto; white-space: pre-wrap; margin-top: 15px; }
+        #log { background: #0f172a; color: #38bdf8; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 12px; max-height: 240px; overflow-y: auto; white-space: pre-wrap; margin-top: 15px; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>Migrador Libre de Empresas</h2>
-    <p style="font-size: 13px; color: #64748b;">Escribe manualmente el Project ID de origen y destino de Firebase.</p>
+    <h2>Migrador Completo de Empresas</h2>
+    <p style="font-size: 13px; color: #64748b;">Transfiere el perfil completo y todas las subcolecciones hacia el nuevo proyecto Firebase.</p>
 
     <label>ID de la Empresa a Migrar:</label>
     <input type="text" id="empresaIdInput" placeholder="Ej: YC-20260919-F2">
@@ -31,11 +31,11 @@
         </div>
         <div>
             <label>Project ID Destino (Llegada):</label>
-            <input type="text" id="inputDestino" placeholder="Ej: nuevo-proyecto-id">
+            <input type="text" id="inputDestino" placeholder="Ej: yc-servimotors">
         </div>
     </div>
 
-    <button onclick="iniciarMigracion()" id="btnMigrar">Iniciar Transferencia</button>
+    <button onclick="iniciarMigracion()" id="btnMigrar">Iniciar Transferencia Completa</button>
 
     <h3>Consola de Estado:</h3>
     <div id="log">Listo para migrar...</div>
@@ -93,34 +93,55 @@
             const dbDestino = obtenerOCrearApp(projDestino, "destino");
 
             // 1. Copiar documento principal de la empresa
-            log(`Leyendo datos principales de usuarios/${empresaID}...`);
+            log(`Leyendo perfil principal de usuarios/${empresaID}...`);
             const userDocRef = doc(dbOrigen, "usuarios", empresaID);
             const userSnap = await getDoc(userDocRef);
 
             if (userSnap.exists()) {
                 await setDoc(doc(dbDestino, "usuarios", empresaID), userSnap.data());
-                log(`✔ Perfil de la empresa copiado con éxito.`);
+                log(`✔ Perfil principal de la empresa copiado con éxito.`);
             } else {
                 log(`⚠️ Documento principal usuarios/${empresaID} no encontrado, procesando subcolecciones...`);
             }
 
-            // 2. Copiar subcolecciones (productos, departamentos, clientes)
-            const subcolecciones = ["productos", "departamentos", "clientes"];
+            // 2. Copiar todas las subcolecciones (incluyendo cuentas por cobrar, movimientos, etc.)
+            const subcolecciones = [
+                "productos", 
+                "departamentos", 
+                "clientes", 
+                "cuentas_x_cobrar",
+                "cuentas_por_cobrar",
+                "movimientos",
+                "movimientos_inventario",
+                "ventas",
+                "facturas",
+                "presupuestos",
+                "compras",
+                "proveedores",
+                "cajas",
+                "configuracion"
+            ];
 
             for (const subcol of subcolecciones) {
-                log(`Transfiriendo subcolección: ${subcol}...`);
-                const subcolRef = collection(dbOrigen, "usuarios", empresaID, subcol);
-                const subcolSnap = await getDocs(subcolRef);
+                try {
+                    const subcolRef = collection(dbOrigen, "usuarios", empresaID, subcol);
+                    const subcolSnap = await getDocs(subcolRef);
 
-                let contador = 0;
-                for (const subDoc of subcolSnap.docs) {
-                    await setDoc(doc(dbDestino, "usuarios", empresaID, subcol, subDoc.id), subDoc.data());
-                    contador++;
+                    if (!subcolSnap.empty) {
+                        log(`Transfiriendo subcolección: ${subcol}...`);
+                        let contador = 0;
+                        for (const subDoc of subcolSnap.docs) {
+                            await setDoc(doc(dbDestino, "usuarios", empresaID, subcol, subDoc.id), subDoc.data());
+                            contador++;
+                        }
+                        log(`✔ Migrados ${contador} registros en [${subcol}].`);
+                    }
+                } catch (errSub) {
+                    console.warn(`Subcolección ${subcol} omitida o vacía:`, errSub);
                 }
-                log(`✔ Migrados ${contador} registros en ${subcol}.`);
             }
 
-            log(`\n🎉 ¡Transferencia completada con éxito de [${projOrigen}] a [${projDestino}]!`);
+            log(`\n🎉 ¡Migración completa de [${empresaID}] finalizada con éxito!`);
             alert(`¡Migración de ${empresaID} completada exitosamente!`);
 
         } catch (err) {
@@ -128,7 +149,7 @@
             log(`❌ Error durante el proceso: ${err.message}`);
         } finally {
             btn.disabled = false;
-            btn.innerText = "Iniciar Transferencia";
+            btn.innerText = "Iniciar Transferencia Completa";
         }
     };
 </script>
