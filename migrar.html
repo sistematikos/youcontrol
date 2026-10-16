@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>YOU CONTROL - Migrador de Empresas</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 30px; background: #f8fafc; color: #0f172a; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); max-width: 600px; margin: auto; }
+        input, button { width: 100%; padding: 12px; margin-top: 10px; margin-bottom: 20px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 14px; box-sizing: border-box; }
+        button { background: #0284c7; color: white; border: none; font-weight: bold; cursor: pointer; }
+        button:hover { background: #0369a1; }
+        #log { background: #0f172a; color: #38bdf8; padding: 15px; border-radius: 6px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Herramienta de Migración de Tenant</h2>
+    <p>Copia la data de una empresa desde la base central hacia su nuevo proyecto independiente.</p>
+
+    <label>ID de la Empresa (Ej: YC-20261012-TORACA):</label>
+    <input type="text" id="empresaIdInput" placeholder="Ingresa el ID exacto">
+
+    <label>Nuevo Project ID de Firebase (Destino):</label>
+    <input type="text" id="nuevoProjectId" placeholder="Ej: yc-empresa-nueva">
+
+    <button onclickiniciarMigracion() id="btnMigrar">Iniciar Migración</button>
+
+    <h3>Consola de Estado:</h3>
+    <div id="log">Esperando acción...</div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // Configuración del Proyecto Principal (Origen)
+    const configPrincipal = {
+        apiKey: "AIzaSyAMkpj9tFps526mL6hO-ciePWrTdx_NK9Q",
+        authDomain: "youcontrol-1d60a.firebaseapp.com",
+        projectId: "youcontrol-1d60a",
+        storageBucket: "youcontrol-1d60a.firebasestorage.app",
+        messagingSenderId: "812100760013",
+        appId: "1:812100760013:web:7574906aa285555faf5484"
+    };
+
+    const appPrincipal = initializeApp(configPrincipal, "origen_master");
+    const dbOrigen = getFirestore(appPrincipal);
+
+    function log(msg) {
+        const box = document.getElementById('log');
+        box.innerHTML += `\n> ${msg}`;
+        box.scrollTop = box.scrollHeight;
+    }
+
+    window.iniciarMigracion = async function() {
+        const empresaID = document.getElementById('empresaIdInput').value.trim();
+        const nuevoProjId = document.getElementById('nuevoProjectId').value.trim();
+
+        if (!empresaID || !nuevoProjId) {
+            alert("Por favor completa ambos campos.");
+            return;
+        }
+
+        document.getElementById('log').innerHTML = "Iniciando proceso...";
+        log(`Conectando con el proyecto destino: ${nuevoProjId}...`);
+
+        try {
+            // Inicializar dinámicamente el proyecto destino del cliente
+            const configDestino = {
+                apiKey: "AIzaSyAMkpj9tFps526mL6hO-ciePWrTdx_NK9Q",
+                authDomain: `${nuevoProjId}.firebaseapp.com`,
+                projectId: nuevoProjId,
+                storageBucket: `${nuevoProjId}.firebasestorage.app`
+            };
+            const appDestino = initializeApp(configDestino, "destino_" + nuevoProjId);
+            const dbDestino = getFirestore(appDestino);
+
+            // 1. Leer datos del usuario/empresa desde el origen
+            log(`Leyendo datos de la empresa ${empresaID} desde el origen...`);
+            const userDocRef = doc(dbOrigen, "usuarios", empresaID);
+            const userSnap = await getDoc(userDocRef);
+
+            if (!userSnap.exists()) {
+                log(`¡Error! No se encontró el documento en usuarios/${empresaID} en el origen.`);
+                return;
+            }
+
+            const userData = userSnap.data();
+            log(`Datos principales encontrados. Escribiendo en el nuevo proyecto...`);
+
+            // 2. Guardar datos principales en el destino
+            await setDoc(doc(dbDestino, "usuarios", empresaID), userData);
+            log(`✔ Documento principal de usuario migrado con éxito.`);
+
+            // 3. Migrar subcolecciones clave (productos, departamentos, clientes)
+            const subcolecciones = ["productos", "departamentos", "clientes"];
+            
+            for (const subcol of subcolecciones) {
+                log(`Migrando subcolección: ${subcol}...`);
+                const subcolRef = collection(dbOrigen, "usuarios", empresaID, subcol);
+                const subcolSnap = await getDocs(subcolRef);
+
+                let contador = 0;
+                for (const subDoc of subcolSnap.docs) {
+                    const subData = subDoc.data();
+                    await setDoc(doc(dbDestino, "usuarios", empresaID, subcol, subDoc.id), subData);
+                    contador++;
+                }
+                log(`✔ Migrados ${contador} registros en ${subcol}.`);
+            }
+
+            log(`🎉 ¡Migración de la empresa ${empresaID} completada con éxito!`);
+            alert("¡Migración finalizada correctamente!");
+
+        } catch (err) {
+            console.error(err);
+            log(`❌ Error crítico durante la migración: ${err.message}`);
+        }
+    };
+</script>
+
+</body>
+</html>
