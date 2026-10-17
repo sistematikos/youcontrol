@@ -8,7 +8,6 @@ import {
     setDoc 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const ID_LICENCIA = localStorage.getItem('youcontrol_empresa_id');
 let proveedoresMaster = [];
 let indiceRes = -1;
 
@@ -38,6 +37,7 @@ window.prepararEdicion = (id) => {
 };
 
 window.eliminarProveedor = async (id) => {
+    const ID_LICENCIA = localStorage.getItem('youcontrol_empresa_id');
     if (confirm("¿Eliminar este proveedor?")) {
         try {
             await deleteDoc(doc(db, "usuarios", ID_LICENCIA, "proveedores", id));
@@ -62,6 +62,16 @@ window.limpiarFormulario = () => {
 
 // --- LÓGICA PRINCIPAL ---
 document.addEventListener('DOMContentLoaded', () => {
+    const ID_LICENCIA = localStorage.getItem('youcontrol_empresa_id');
+    console.log("🔍 ID_LICENCIA detectado:", ID_LICENCIA);
+
+    const tabla = document.getElementById('tabla-proveedores');
+
+    if (!ID_LICENCIA) {
+        if(tabla) tabla.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Error: No se encontró la empresa activa en el navegador.</td></tr>`;
+        return;
+    }
+
     const formProveedor = document.getElementById('form-proveedor');
     const inputCodigo = document.getElementById('prov-codigo');
     const listaResultados = document.getElementById('lista-resultados');
@@ -71,10 +81,13 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCancelar.addEventListener('click', window.limpiarFormulario);
     }
 
-    // 1. Carga de datos en tiempo real
+    // 1. Carga de datos en tiempo real con manejo de errores
+    console.log(`🔌 Conectando a Firestore en: usuarios/${ID_LICENCIA}/proveedores`);
+    
     onSnapshot(collection(db, "usuarios", ID_LICENCIA, "proveedores"), (snapshot) => {
+        console.log("📦 Documentos encontrados:", snapshot.docs.length);
         proveedoresMaster = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        const tabla = document.getElementById('tabla-proveedores');
+        
         if(tabla) {
             if (proveedoresMaster.length === 0) {
                 tabla.innerHTML = `<tr><td colspan="5" style="text-align:center;">No hay proveedores registrados.</td></tr>`;
@@ -92,6 +105,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     </tr>
                 `).join('');
             }
+        }
+    }, (error) => {
+        console.error("❌ Error al escuchar proveedores en Firestore:", error);
+        if(tabla) {
+            tabla.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Error de conexión: ${error.message}</td></tr>`;
         }
     });
 
@@ -157,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-   // 4. Guardar o Actualizar Proveedor
+    // 4. Guardar o Actualizar Proveedor
     if (formProveedor) {
         formProveedor.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -169,9 +187,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const telefonoInput = document.getElementById('prov-telefono').value.trim();
             const direccionInput = document.getElementById('prov-direccion').value.trim().toUpperCase();
 
-            // Validación de seguridad para evitar rutas vacías en Firestore
             if (!ID_LICENCIA) {
-                alert("❌ Error: No se encontró la licencia activa de la empresa. Inicie sesión nuevamente.");
+                alert("❌ Error: No se encontró la licencia activa de la empresa.");
                 return;
             }
 
@@ -181,7 +198,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             try {
-                // Usamos el código como ID único del documento en Firestore
                 const proveedorRef = doc(db, "usuarios", ID_LICENCIA, "proveedores", codigoInput);
                 
                 await setDoc(proveedorRef, {
@@ -202,3 +218,4 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+});
