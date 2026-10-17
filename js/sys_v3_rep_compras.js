@@ -3,8 +3,13 @@
  * Módulo de Reporte y Control de Compras (Depurado y Robusto)
  */
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, runTransaction } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+/**
+ * YOU CONTROL - SISTEMATIKOS
+ * Módulo de Reporte y Control de Compras (Corregido con Configuración Unificada)
+ */
+
+import { db } from './firebase-config.js';
+import { collection, getDocs, doc, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "TU_API_KEY",
