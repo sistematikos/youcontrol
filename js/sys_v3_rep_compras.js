@@ -1,6 +1,6 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * Módulo de Reporte y Control de Compras
+ * Módulo de Reporte y Control de Compras (Actualizado y Tolerante a Fechas)
  */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
@@ -61,7 +61,7 @@ async function cargarReporteCompras() {
             const id = docSnap.id;
 
             let fechaCompraObj = null;
-            let fechaStr = "N/A";
+            let fechaStr = "Fecha no registrada";
             let fechaYMD = "";
 
             if (c.fecha && typeof c.fecha.toDate === 'function') {
@@ -71,8 +71,11 @@ async function cargarReporteCompras() {
                 const month = String(fechaCompraObj.getMonth() + 1).padStart(2, '0');
                 const day = String(fechaCompraObj.getDate()).padStart(2, '0');
                 fechaYMD = `${year}-${month}-${day}`;
-            } else if (c.fecha) {
-                fechaCompraObj = new Date(c.fecha);
+            } else if (c.fecha && typeof c.fecha === 'string') {
+                fechaStr = c.fecha;
+                fechaYMD = c.fecha.substring(0, 10);
+            } else if (c.fecha && typeof c.fecha.seconds === 'number') {
+                fechaCompraObj = new Date(c.fecha.seconds * 1000);
                 fechaStr = fechaCompraObj.toLocaleString();
                 const year = fechaCompraObj.getFullYear();
                 const month = String(fechaCompraObj.getMonth() + 1).padStart(2, '0');
@@ -80,8 +83,11 @@ async function cargarReporteCompras() {
                 fechaYMD = `${year}-${month}-${day}`;
             }
 
-            if (inputDesde && fechaYMD < inputDesde) return;
-            if (inputHasta && fechaYMD > inputHasta) return;
+            // Aplicar filtro si existe fecha YMD válida
+            if (fechaYMD) {
+                if (inputDesde && fechaYMD < inputDesde) return;
+                if (inputHasta && fechaYMD > inputHasta) return;
+            }
 
             comprasFiltradas.push({ id, c, fechaStr });
         });
