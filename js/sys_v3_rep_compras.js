@@ -1,27 +1,10 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * Módulo de Reporte y Control de Compras (Depurado y Robusto)
- */
-
-/**
- * YOU CONTROL - SISTEMATIKOS
- * Módulo de Reporte y Control de Compras (Corregido con Configuración Unificada)
+ * Módulo de Reporte y Control de Compras (Configuración Unificada e Importación Correcta)
  */
 
 import { db } from './firebase-config.js';
 import { collection, getDocs, doc, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-const firebaseConfig = {
-    apiKey: "TU_API_KEY",
-    authDomain: "youcontrol-1d60a.firebaseapp.com",
-    projectId: "youcontrol-1d60a",
-    storageBucket: "youcontrol-1d60a.appspot.com",
-    messagingSenderId: "812100760013",
-    appId: "1:812100760013:web:7574906aa285555faf5484"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
 
 let compraSeleccionadaId = null;
 let compraSeleccionadaData = null;
@@ -97,11 +80,11 @@ async function cargarReporteCompras() {
 
             // Aplicar filtro de rango de fechas de forma segura
             if (fechaYMD && inputDesde && fechaYMD < inputDesde) {
-                console.log(`❌ Descada (Menor que Desde)`);
+                console.log(`❌ Descartada (Menor que Desde)`);
                 return;
             }
             if (fechaYMD && inputHasta && fechaYMD > inputHasta) {
-                console.log(`❌ Descada (Mayor que Hasta)`);
+                console.log(`❌ Descartada (Mayor que Hasta)`);
                 return;
             }
 
