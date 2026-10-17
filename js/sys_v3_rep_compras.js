@@ -1,28 +1,3 @@
-/**
- * YOU CONTROL - SISTEMATIKOS
- * Módulo de Reporte y Control de Compras Corregido con Filtro de Fechas
- */
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, runTransaction } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-
-const firebaseConfig = {
-    apiKey: "TU_API_KEY",
-    authDomain: "youcontrol-1d60a.firebaseapp.com",
-    projectId: "youcontrol-1d60a",
-    storageBucket: "youcontrol-1d60a.appspot.com",
-    messagingSenderId: "812100760013",
-    appId: "1:812100760013:web:7574906aa285555faf5484"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-let compraSeleccionadaId = null;
-let compraSeleccionadaData = null;
-
-document.getElementById('btn-buscar').addEventListener('click', cargarReporteCompras);
-
 async function cargarReporteCompras() {
     const tbody = document.getElementById('tabla-reporte-compras');
     const empresaId = localStorage.getItem('youcontrol_empresa_id');
@@ -32,12 +7,9 @@ async function cargarReporteCompras() {
         return;
     }
 
-    // Capturar los valores de los inputs de filtro de fecha (Formato YYYY-MM-DD)
+    // Capturar texto directo de los inputs (Formato YYYY-MM-DD)
     const inputDesde = document.getElementById('filtro-desde')?.value;
     const inputHasta = document.getElementById('filtro-hasta')?.value;
-
-    const fechaInicio = inputDesde ? new Date(inputDesde + 'T00:00:00') : null;
-    const fechaFin = inputHasta ? new Date(inputHasta + 'T23:59:59') : null;
 
     tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px;">Buscando registros de compras...</td></tr>`;
 
@@ -62,25 +34,32 @@ async function cargarReporteCompras() {
             const c = docSnap.data();
             const id = docSnap.id;
 
-            // Obtener fecha del documento Firestore
-            let fechaCompra = null;
+            let fechaCompraObj = null;
             let fechaStr = "N/A";
+            let fechaYMD = "";
 
             if (c.fecha && typeof c.fecha.toDate === 'function') {
-                fechaCompra = c.fecha.toDate();
-                fechaStr = fechaCompra.toLocaleString();
+                fechaCompraObj = c.fecha.toDate();
+                fechaStr = fechaCompraObj.toLocaleString();
+                // Extraer YYYY-MM-DD localmente evitando desfases de zona horaria
+                const year = fechaCompraObj.getFullYear();
+                const month = String(fechaCompraObj.getMonth() + 1).padStart(2, '0');
+                const day = String(fechaCompraObj.getDate()).padStart(2, '0');
+                fechaYMD = `${year}-${month}-${day}`;
             } else if (c.fecha) {
-                fechaCompra = new Date(c.fecha);
-                fechaStr = fechaCompra.toLocaleString();
+                fechaCompraObj = new Date(c.fecha);
+                fechaStr = fechaCompraObj.toLocaleString();
+                const year = fechaCompraObj.getFullYear();
+                const month = String(fechaCompraObj.getMonth() + 1).padStart(2, '0');
+                const day = String(fechaCompraObj.getDate()).padStart(2, '0');
+                fechaYMD = `${year}-${month}-${day}`;
             }
 
-            // Aplicar filtro de rango de fechas si están definidas
-            if (fechaCompra && !isNaN(fechaCompra)) {
-                if (fechaInicio && fechaCompra < fechaInicio) return;
-                if (fechaFin && fechaCompra > fechaFin) return;
-            }
+            // Filtrar estrictamente por cadena de texto YYYY-MM-DD
+            if (inputDesde && fechaYMD < inputDesde) return;
+            if (inputHasta && fechaYMD > inputHasta) return;
 
-            comprasFiltradas.push({ id, c, fechaStr, fechaCompra });
+            comprasFiltradas.push({ id, c, fechaStr });
         });
 
         if (comprasFiltradas.length === 0) {
@@ -156,72 +135,3 @@ async function cargarReporteCompras() {
         tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--danger); padding: 20px;">Error al conectar con la base de datos.</td></tr>`;
     }
 }
-
-document.getElementById('btn-anular-seleccionada').addEventListener('click', async () => {
-    if (!compraSeleccionadaId || !compraSeleccionadaData) {
-        alert("Por favor selecciona una compra de la tabla para anular.");
-        return;
-    }
-
-    const nroControlActual = compraSeleccionadaData.nro_control || compraSeleccionadaData.nro_compra || compraSeleccionadaId;
-
-    if (!confirm(`¿Estás seguro de anular la compra con Nro. Control ${nroControlActual}? Esta acción restará los artículos del inventario y marcará la compra como anulada.`)) {
-        return;
-    }
-
-    const empresaId = localStorage.getItem('youcontrol_empresa_id');
-
-    try {
-        await runTransaction(db, async (transaction) => {
-            const listaProds = compraSeleccionadaData.productos || compraSeleccionadaData.items || compraSeleccionadaData.articulos || [];
-            if (Array.isArray(listaProds)) {
-                for (let prod of listaProds) {
-                    const prodId = prod.id || prod.codigo || prod.sku;
-                    if (prodId) {
-                        const prodRef = doc(db, "usuarios", empresaId, "inventario", prodId);
-                        const prodDoc = await transaction.get(prodRef);
-                        
-                        if (prodDoc.exists()) {
-                            const stockActual = Number(prodDoc.data().stock || prodDoc.data().existencia || 0);
-                            const cantidadRestar = Number(prod.cantidad || prod.qty || 1);
-                            const nuevoStock = Math.max(0, stockActual - cantidadRestar);
-                            
-                            transaction.update(prodRef, { 
-                                stock: nuevoStock,
-                                existencia: nuevoStock 
-                            });
-                        }
-                    }
-                }
-            }
-
-            const compraRef = doc(db, "usuarios", empresaId, "compras", compraSeleccionadaId);
-            transaction.update(compraRef, {
-                anulada: true,
-                total_usd: 0,
-                total: 0,
-                productos: []
-            });
-        });
-
-        alert("Compra anulada con éxito, artículos restados del inventario y registro conservado.");
-        compraSeleccionadaId = null;
-        compraSeleccionadaData = null;
-        cargarReporteCompras();
-
-    } catch (error) {
-        console.error("Error al anular la compra: ", error);
-        alert("Hubo un error al procesar la anulación en la base de datos.");
-    }
-});
-
-window.addEventListener('DOMContentLoaded', () => {
-    const hoy = new Date().toISOString().split('T')[0];
-    const inputDesde = document.getElementById('filtro-desde');
-    const inputHasta = document.getElementById('filtro-hasta');
-
-    if (inputDesde) inputDesde.value = hoy;
-    if (inputHasta) inputHasta.value = hoy;
-
-    cargarReporteCompras();
-});
