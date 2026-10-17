@@ -1,6 +1,6 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * Módulo de Reporte y Control de Compras (Actualizado y Tolerante a Fechas)
+ * Módulo de Reporte y Control de Compras (Depurado y Robusto)
  */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
@@ -30,8 +30,10 @@ async function cargarReporteCompras() {
         return;
     }
 
-    const inputDesde = document.getElementById('filtro-desde')?.value;
-    const inputHasta = document.getElementById('filtro-hasta')?.value;
+    const inputDesde = document.getElementById('filtro-desde')?.value; // Formato YYYY-MM-DD
+    const inputHasta = document.getElementById('filtro-hasta')?.value; // Formato YYYY-MM-DD
+
+    console.log("🔍 Filtro Aplicado -> Desde:", inputDesde, "| Hasta:", inputHasta);
 
     if (tbody) {
         tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px;">Buscando registros de compras...</td></tr>`;
@@ -47,10 +49,8 @@ async function cargarReporteCompras() {
 
         if (querySnapshot.empty) {
             if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No se encontraron registros de compras.</td></tr>`;
-            const kpiTotal = document.getElementById('kpi-total-usd');
-            const kpiCant = document.getElementById('kpi-total-compras');
-            if (kpiTotal) kpiTotal.innerText = "$ 0.00";
-            if (kpiCant) kpiCant.innerText = "0";
+            document.getElementById('kpi-total-usd').innerText = "$ 0.00";
+            document.getElementById('kpi-total-compras').innerText = "0";
             return;
         }
 
@@ -60,33 +60,44 @@ async function cargarReporteCompras() {
             const c = docSnap.data();
             const id = docSnap.id;
 
-            let fechaCompraObj = null;
             let fechaStr = "Fecha no registrada";
             let fechaYMD = "";
 
-            if (c.fecha && typeof c.fecha.toDate === 'function') {
-                fechaCompraObj = c.fecha.toDate();
-                fechaStr = fechaCompraObj.toLocaleString();
-                const year = fechaCompraObj.getFullYear();
-                const month = String(fechaCompraObj.getMonth() + 1).padStart(2, '0');
-                const day = String(fechaCompraObj.getDate()).padStart(2, '0');
-                fechaYMD = `${year}-${month}-${day}`;
-            } else if (c.fecha && typeof c.fecha === 'string') {
-                fechaStr = c.fecha;
-                fechaYMD = c.fecha.substring(0, 10);
-            } else if (c.fecha && typeof c.fecha.seconds === 'number') {
-                fechaCompraObj = new Date(c.fecha.seconds * 1000);
-                fechaStr = fechaCompraObj.toLocaleString();
-                const year = fechaCompraObj.getFullYear();
-                const month = String(fechaCompraObj.getMonth() + 1).padStart(2, '0');
-                const day = String(fechaCompraObj.getDate()).padStart(2, '0');
-                fechaYMD = `${year}-${month}-${day}`;
+            try {
+                if (c.fecha) {
+                    let d = null;
+                    if (typeof c.fecha.toDate === 'function') {
+                        d = c.fecha.toDate();
+                    } else if (c.fecha instanceof Date) {
+                        d = c.fecha;
+                    } else if (typeof c.fecha === 'string') {
+                        d = new Date(c.fecha);
+                    } else if (typeof c.fecha.seconds === 'number') {
+                        d = new Date(c.fecha.seconds * 1000);
+                    }
+
+                    if (d && !isNaN(d.getTime())) {
+                        fechaStr = d.toLocaleString();
+                        const year = d.getFullYear();
+                        const month = String(d.getMonth() + 1).padStart(2, '0');
+                        const day = String(d.getDate()).padStart(2, '0');
+                        fechaYMD = `${year}-${month}-${day}`;
+                    }
+                }
+            } catch (err) {
+                console.error("Error al procesar fecha del documento:", id, err);
             }
 
-            // Aplicar filtro si existe fecha YMD válida
-            if (fechaYMD) {
-                if (inputDesde && fechaYMD < inputDesde) return;
-                if (inputHasta && fechaYMD > inputHasta) return;
+            console.log(`📦 ID: ${id} | Fecha YMD Extraída: ${fechaYMD} | Desde: ${inputDesde} | Hasta: ${inputHasta}`);
+
+            // Aplicar filtro de rango de fechas de forma segura
+            if (fechaYMD && inputDesde && fechaYMD < inputDesde) {
+                console.log(`❌ Descada (Menor que Desde)`);
+                return;
+            }
+            if (fechaYMD && inputHasta && fechaYMD > inputHasta) {
+                console.log(`❌ Descada (Mayor que Hasta)`);
+                return;
             }
 
             comprasFiltradas.push({ id, c, fechaStr });
@@ -94,10 +105,8 @@ async function cargarReporteCompras() {
 
         if (comprasFiltradas.length === 0) {
             if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No hay compras en el rango de fechas seleccionado.</td></tr>`;
-            const kpiTotal = document.getElementById('kpi-total-usd');
-            const kpiCant = document.getElementById('kpi-total-compras');
-            if (kpiTotal) kpiTotal.innerText = "$ 0.00";
-            if (kpiCant) kpiCant.innerText = "0";
+            document.getElementById('kpi-total-usd').innerText = "$ 0.00";
+            document.getElementById('kpi-total-compras').innerText = "0";
             return;
         }
 
@@ -159,10 +168,8 @@ async function cargarReporteCompras() {
             if (tbody) tbody.appendChild(tr);
         });
 
-        const kpiTotal = document.getElementById('kpi-total-usd');
-        const kpiCant = document.getElementById('kpi-total-compras');
-        if (kpiTotal) kpiTotal.innerText = `$ ${totalUSD.toFixed(2)}`;
-        if (kpiCant) kpiCant.innerText = cantidadCompras;
+        document.getElementById('kpi-total-usd').innerText = `$ ${totalUSD.toFixed(2)}`;
+        document.getElementById('kpi-total-compras').innerText = cantidadCompras;
 
     } catch (error) {
         console.error("Error cargando compras: ", error);
