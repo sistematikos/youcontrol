@@ -1,3 +1,8 @@
+/**
+ * YOU CONTROL - SISTEMATIKOS
+ * Módulo de Reporte y Control de Compras Corregido con Filtro de Fechas
+ */
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
 import { getFirestore, collection, getDocs, doc, runTransaction } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
@@ -27,6 +32,13 @@ async function cargarReporteCompras() {
         return;
     }
 
+    // Capturar los valores de los inputs de filtro de fecha (Formato YYYY-MM-DD)
+    const inputDesde = document.getElementById('filtro-desde')?.value;
+    const inputHasta = document.getElementById('filtro-hasta')?.value;
+
+    const fechaInicio = inputDesde ? new Date(inputDesde + 'T00:00:00') : null;
+    const fechaFin = inputHasta ? new Date(inputHasta + 'T23:59:59') : null;
+
     tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px;">Buscando registros de compras...</td></tr>`;
 
     try {
@@ -44,20 +56,43 @@ async function cargarReporteCompras() {
             return;
         }
 
+        let comprasFiltradas = [];
+
         querySnapshot.forEach((docSnap) => {
             const c = docSnap.data();
             const id = docSnap.id;
 
-            cantidadCompras++;
-
+            // Obtener fecha del documento Firestore
+            let fechaCompra = null;
             let fechaStr = "N/A";
+
             if (c.fecha && typeof c.fecha.toDate === 'function') {
-                fechaStr = c.fecha.toDate().toLocaleString();
+                fechaCompra = c.fecha.toDate();
+                fechaStr = fechaCompra.toLocaleString();
             } else if (c.fecha) {
-                fechaStr = c.fecha;
+                fechaCompra = new Date(c.fecha);
+                fechaStr = fechaCompra.toLocaleString();
             }
 
-            // LEER NRO DE CONTROL MANUAL (con respaldo si no existiera en registros viejos)
+            // Aplicar filtro de rango de fechas si están definidas
+            if (fechaCompra && !isNaN(fechaCompra)) {
+                if (fechaInicio && fechaCompra < fechaInicio) return;
+                if (fechaFin && fechaCompra > fechaFin) return;
+            }
+
+            comprasFiltradas.push({ id, c, fechaStr, fechaCompra });
+        });
+
+        if (comprasFiltradas.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No hay compras en el rango de fechas seleccionado.</td></tr>`;
+            document.getElementById('kpi-total-usd').innerText = "$ 0.00";
+            document.getElementById('kpi-total-compras').innerText = "0";
+            return;
+        }
+
+        comprasFiltradas.forEach(({ id, c, fechaStr }) => {
+            cantidadCompras++;
+
             const nroControlStr = c.nro_control || c.nroCompra || c.factura || id.slice(0, 6);
             const tr = document.createElement('tr');
             tr.className = "fila-compra";
@@ -182,7 +217,11 @@ document.getElementById('btn-anular-seleccionada').addEventListener('click', asy
 
 window.addEventListener('DOMContentLoaded', () => {
     const hoy = new Date().toISOString().split('T')[0];
-    document.getElementById('filtro-desde').value = hoy;
-    document.getElementById('filtro-hasta').value = hoy;
+    const inputDesde = document.getElementById('filtro-desde');
+    const inputHasta = document.getElementById('filtro-hasta');
+
+    if (inputDesde) inputDesde.value = hoy;
+    if (inputHasta) inputHasta.value = hoy;
+
     cargarReporteCompras();
 });
