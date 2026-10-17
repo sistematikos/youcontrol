@@ -61,7 +61,7 @@ window.limpiarFormulario = () => {
 
 // --- LÓGICA PRINCIPAL ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Obtenemos la licencia de forma segura cuando el DOM ya cargó
+    // Obtenemos la licencia de forma segura al cargar el DOM
     const ID_LICENCIA = localStorage.getItem('youcontrol_empresa_id');
     console.log("🔍 ID_LICENCIA detectado:", ID_LICENCIA);
 
@@ -175,6 +175,12 @@ document.addEventListener('DOMContentLoaded', () => {
         formProveedor.addEventListener('submit', async (e) => {
             e.preventDefault();
             const codigo = inputCodigo.value.trim().toUpperCase();
+            
+            if (!codigo) {
+                alert("⚠️ Debe ingresar un código para el proveedor.");
+                return;
+            }
+
             try {
                 await setDoc(doc(db, "usuarios", ID_LICENCIA, "proveedores", codigo), {
                     codigo,
@@ -187,8 +193,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 alert("✅ Operación exitosa");
                 window.limpiarFormulario();
-            } catch (e) { 
-                alert("Error: " + e.message); 
+            } catch (error) { 
+                console.error("Error al guardar proveedor:", error);
+                alert("❌ Error al guardar: " + error.message); 
             }
         });
     }
