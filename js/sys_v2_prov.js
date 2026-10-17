@@ -157,27 +157,48 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 4. Guardar
+   // 4. Guardar o Actualizar Proveedor
     if (formProveedor) {
         formProveedor.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const codigo = inputCodigo.value.trim().toUpperCase();
+            
+            const codigoInput = document.getElementById('prov-codigo').value.trim().toUpperCase();
+            const nombreInput = document.getElementById('prov-nombre').value.trim().toUpperCase();
+            const rifInput = document.getElementById('prov-rif').value.trim().toUpperCase();
+            const contactoInput = document.getElementById('prov-contacto')?.value.trim().toUpperCase() || '';
+            const telefonoInput = document.getElementById('prov-telefono').value.trim();
+            const direccionInput = document.getElementById('prov-direccion').value.trim().toUpperCase();
+
+            // Validación de seguridad para evitar rutas vacías en Firestore
+            if (!ID_LICENCIA) {
+                alert("❌ Error: No se encontró la licencia activa de la empresa. Inicie sesión nuevamente.");
+                return;
+            }
+
+            if (!codigoInput || !nombreInput) {
+                alert("⚠️ El código y el nombre del proveedor son obligatorios.");
+                return;
+            }
+
             try {
-                await setDoc(doc(db, "usuarios", ID_LICENCIA, "proveedores", codigo), {
-                    codigo,
-                    nombre: document.getElementById('prov-nombre').value.trim().toUpperCase(),
-                    rif: document.getElementById('prov-rif').value.trim().toUpperCase(),
-                    contacto: document.getElementById('prov-contacto')?.value.trim().toUpperCase() || '',
-                    telefono: document.getElementById('prov-telefono').value.trim(),
-                    direccion: document.getElementById('prov-direccion').value.trim().toUpperCase(),
+                // Usamos el código como ID único del documento en Firestore
+                const proveedorRef = doc(db, "usuarios", ID_LICENCIA, "proveedores", codigoInput);
+                
+                await setDoc(proveedorRef, {
+                    codigo: codigoInput,
+                    nombre: nombreInput,
+                    rif: rifInput,
+                    contacto: contactoInput,
+                    telefono: telefonoInput,
+                    direccion: direccionInput,
                     updatedAt: serverTimestamp()
                 }, { merge: true });
                 
-                alert("✅ Operación exitosa");
+                alert("✅ ¡Proveedor guardado con éxito!");
                 window.limpiarFormulario();
-            } catch (e) { 
-                alert("Error: " + e.message); 
+            } catch (error) { 
+                console.error("Error al guardar proveedor:", error);
+                alert("❌ Error al guardar en la base de datos: " + error.message); 
             }
         });
     }
-});
