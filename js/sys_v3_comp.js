@@ -304,13 +304,17 @@ window.procesarIngresoMercancia = async () => {
         const provId = provSelect?.value || "Casual";
         const provNombre = window.proveedorSeleccionado ? (window.proveedorSeleccionado.nombre || window.proveedorSeleccionado.razon_social) : "Casual / General";
 
-        // Capturar la fecha del input HTML (ej: "2026-06-07")
+        // Capturar la fecha del input HTML y ajustarla a la hora local de Venezuela (America/Caracas)
         const inputFecha = document.getElementById('comp-fecha');
         let fechaCompraFinal = new Date(); // Por defecto hoy
 
         if (inputFecha && inputFecha.value) {
+            // Creamos la fecha tomando la zona horaria de Venezuela
             fechaCompraFinal = new Date(inputFecha.value + 'T12:00:00');
         }
+
+        // Generar texto con la fecha local exacta de Venezuela para almacenamiento o visualización
+        const fechaVenezuelaStr = fechaCompraFinal.toLocaleString("en-US", { timeZone: "America/Caracas" });
 
         // Capturar el número de control de la factura
         const inputNroControl = document.getElementById('comp-nro-control');
@@ -321,11 +325,12 @@ window.procesarIngresoMercancia = async () => {
         const entradaData = {
             proveedor_id: provId,
             nombre_proveedor: provNombre,
-            nro_control: nroControl, // <--- Aquí se incluye el número de control
+            nro_control: nroControl, 
             items: window.listaIngreso,
             total_usd: totalCompraUSD,
             tasa_aplicada: window.tasaActual,
-            fecha: Timestamp.fromDate(fechaCompraFinal)
+            fecha: Timestamp.fromDate(fechaCompraFinal),
+            updatedAt: fechaVenezuelaStr // <--- Agregado con la hora local de Venezuela
         };
 
         await addDoc(collection(db, "usuarios", USER_ID, "compras"), entradaData);
@@ -347,7 +352,7 @@ window.procesarIngresoMercancia = async () => {
         if (provSelect) provSelect.value = '';
         window.seleccionarProveedor('');
         inicializarFechaCompra(); 
-        if (inputNroControl) inputNroControl.value = ''; // Limpiar campo de número de control
+        if (inputNroControl) inputNroControl.value = ''; 
 
     } catch (error) {
         console.error("Error al guardar mercancía:", error);
