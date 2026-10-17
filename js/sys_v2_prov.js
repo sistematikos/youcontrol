@@ -8,6 +8,7 @@ import {
     setDoc 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+const ID_LICENCIA = localStorage.getItem('youcontrol_empresa_id');
 let proveedoresMaster = [];
 let indiceRes = -1;
 
@@ -18,6 +19,7 @@ window.cargarDatosProveedor = (p) => {
     document.getElementById('prov-codigo').readOnly = true;
     document.getElementById('prov-nombre').value = p.nombre;
     document.getElementById('prov-rif').value = p.rif || '';
+    document.getElementById('prov-contacto').value = p.contacto || '';
     document.getElementById('prov-telefono').value = p.telefono || '';
     document.getElementById('prov-direccion').value = p.direccion || '';
     
@@ -36,7 +38,6 @@ window.prepararEdicion = (id) => {
 };
 
 window.eliminarProveedor = async (id) => {
-    const ID_LICENCIA = localStorage.getItem('youcontrol_empresa_id');
     if (confirm("¿Eliminar este proveedor?")) {
         try {
             await deleteDoc(doc(db, "usuarios", ID_LICENCIA, "proveedores", id));
@@ -61,7 +62,6 @@ window.limpiarFormulario = () => {
 
 // --- LÓGICA PRINCIPAL ---
 document.addEventListener('DOMContentLoaded', () => {
-    const ID_LICENCIA = localStorage.getItem('youcontrol_empresa_id');
     const formProveedor = document.getElementById('form-proveedor');
     const inputCodigo = document.getElementById('prov-codigo');
     const listaResultados = document.getElementById('lista-resultados');
@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCancelar.addEventListener('click', window.limpiarFormulario);
     }
 
-    // 1. Carga de datos en tiempo real (idéntica a clientes)
+    // 1. Carga de datos en tiempo real
     onSnapshot(collection(db, "usuarios", ID_LICENCIA, "proveedores"), (snapshot) => {
         proveedoresMaster = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         const tabla = document.getElementById('tabla-proveedores');
@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 4. Guardar (idéntico al de clientes)
+    // 4. Guardar
     if (formProveedor) {
         formProveedor.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -167,6 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     codigo,
                     nombre: document.getElementById('prov-nombre').value.trim().toUpperCase(),
                     rif: document.getElementById('prov-rif').value.trim().toUpperCase(),
+                    contacto: document.getElementById('prov-contacto')?.value.trim().toUpperCase() || '',
                     telefono: document.getElementById('prov-telefono').value.trim(),
                     direccion: document.getElementById('prov-direccion').value.trim().toUpperCase(),
                     updatedAt: serverTimestamp()
