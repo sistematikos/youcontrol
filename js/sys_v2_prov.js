@@ -8,7 +8,6 @@ import {
     setDoc 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const ID_LICENCIA = localStorage.getItem('youcontrol_empresa_id');
 let proveedoresMaster = [];
 let indiceRes = -1;
 
@@ -37,6 +36,7 @@ window.prepararEdicion = (id) => {
 };
 
 window.eliminarProveedor = async (id) => {
+    const ID_LICENCIA = localStorage.getItem('youcontrol_empresa_id');
     if (confirm("¿Eliminar este proveedor?")) {
         try {
             await deleteDoc(doc(db, "usuarios", ID_LICENCIA, "proveedores", id));
@@ -61,6 +61,17 @@ window.limpiarFormulario = () => {
 
 // --- LÓGICA PRINCIPAL ---
 document.addEventListener('DOMContentLoaded', () => {
+    // Obtenemos la licencia de forma segura cuando el DOM ya cargó
+    const ID_LICENCIA = localStorage.getItem('youcontrol_empresa_id');
+    console.log("🔍 ID_LICENCIA detectado:", ID_LICENCIA);
+
+    const tabla = document.getElementById('tabla-proveedores');
+
+    if (!ID_LICENCIA) {
+        if(tabla) tabla.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">No se encontró la empresa activa.</td></tr>`;
+        return;
+    }
+
     const formProveedor = document.getElementById('form-proveedor');
     const inputCodigo = document.getElementById('prov-codigo');
     const listaResultados = document.getElementById('lista-resultados');
@@ -72,8 +83,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 1. Carga de datos en tiempo real
     onSnapshot(collection(db, "usuarios", ID_LICENCIA, "proveedores"), (snapshot) => {
+        console.log("📦 Proveedores descargados:", snapshot.docs.length);
         proveedoresMaster = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        const tabla = document.getElementById('tabla-proveedores');
+        
         if(tabla) {
             if (proveedoresMaster.length === 0) {
                 tabla.innerHTML = `<tr><td colspan="5" style="text-align:center;">No hay proveedores registrados.</td></tr>`;
@@ -92,6 +104,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 `).join('');
             }
         }
+    }, (error) => {
+        console.error("Error cargando proveedores:", error);
     });
 
     // 2. Buscador Dinámico
