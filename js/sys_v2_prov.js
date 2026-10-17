@@ -61,17 +61,7 @@ window.limpiarFormulario = () => {
 
 // --- LÓGICA PRINCIPAL ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Obtenemos la licencia de forma segura al cargar el DOM
     const ID_LICENCIA = localStorage.getItem('youcontrol_empresa_id');
-    console.log("🔍 ID_LICENCIA detectado:", ID_LICENCIA);
-
-    const tabla = document.getElementById('tabla-proveedores');
-
-    if (!ID_LICENCIA) {
-        if(tabla) tabla.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">No se encontró la empresa activa.</td></tr>`;
-        return;
-    }
-
     const formProveedor = document.getElementById('form-proveedor');
     const inputCodigo = document.getElementById('prov-codigo');
     const listaResultados = document.getElementById('lista-resultados');
@@ -81,11 +71,10 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCancelar.addEventListener('click', window.limpiarFormulario);
     }
 
-    // 1. Carga de datos en tiempo real
+    // 1. Carga de datos en tiempo real (idéntica a clientes)
     onSnapshot(collection(db, "usuarios", ID_LICENCIA, "proveedores"), (snapshot) => {
-        console.log("📦 Proveedores descargados:", snapshot.docs.length);
         proveedoresMaster = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        
+        const tabla = document.getElementById('tabla-proveedores');
         if(tabla) {
             if (proveedoresMaster.length === 0) {
                 tabla.innerHTML = `<tr><td colspan="5" style="text-align:center;">No hay proveedores registrados.</td></tr>`;
@@ -104,8 +93,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 `).join('');
             }
         }
-    }, (error) => {
-        console.error("Error cargando proveedores:", error);
     });
 
     // 2. Buscador Dinámico
@@ -170,17 +157,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 4. Guardar
+    // 4. Guardar (idéntico al de clientes)
     if (formProveedor) {
         formProveedor.addEventListener('submit', async (e) => {
             e.preventDefault();
             const codigo = inputCodigo.value.trim().toUpperCase();
-            
-            if (!codigo) {
-                alert("⚠️ Debe ingresar un código para el proveedor.");
-                return;
-            }
-
             try {
                 await setDoc(doc(db, "usuarios", ID_LICENCIA, "proveedores", codigo), {
                     codigo,
@@ -193,9 +174,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 alert("✅ Operación exitosa");
                 window.limpiarFormulario();
-            } catch (error) { 
-                console.error("Error al guardar proveedor:", error);
-                alert("❌ Error al guardar: " + error.message); 
+            } catch (e) { 
+                alert("Error: " + e.message); 
             }
         });
     }
