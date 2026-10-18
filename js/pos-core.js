@@ -89,6 +89,7 @@ window.buscarCliente = (texto) => {
     return clientesMaster.filter(c => (c.id || '').toLowerCase().includes(criterio) || (c.nombre || '').toLowerCase().includes(criterio));
 };
 
+// --- AGREGAR AL CARRITO CON VALIDACIÓN DE STOCK DE COMBOS E INDIVIDUALES ---
 window.agregarCarrito = (id) => {
     const p = productosMaster.find(x => x.id === id);
     if (!p) return;
@@ -171,7 +172,8 @@ async function registrarVenta() {
                 id: i.id,
                 nombre: i.nombre,
                 cantidad: i.cantidad,
-                precio: i.precio || 0
+                precio: i.precio || 0,
+                es_combo: !!i.es_combo
             })),
             total_usd: totalUSD,
             tasa_aplicada: tasaActual,
@@ -189,13 +191,11 @@ async function registrarVenta() {
         const ventaRef = doc(db, "usuarios", USER_ID, "ventas", nroFactura);
         await setDoc(ventaRef, ventaData);
 
-        // 2. DESCONTAR DEL INVENTARIO CADA PRODUCTO VENDIDO
+        // 2. DESCONTAR DEL INVENTARIO CADA PRODUCTO VENDIDO (DIFERENCIANDO COMBOS DE PRODUCTOS SIMPLES)
         for (const item of window.carrito) {
             if (item.es_combo) {
-                // Descuento modularizado de los insumos del combo desde pos-core-compuestos.js
                 await descontarStockInsumosCombo(db, USER_ID, item);
             } else if (item.id) {
-                // Descuento normal de stock para producto individual
                 const productoRef = doc(db, "usuarios", USER_ID, "productos", item.id);
                 await updateDoc(productoRef, {
                     stock: increment(-item.cantidad)
@@ -441,7 +441,7 @@ function initBuscadores() {
             return;
         }
 
-       const resultados = window.buscarProducto(texto);
+        const resultados = window.buscarProducto(texto);
         if (resultados.length > 0) {
             divRes.style.display = 'block';
             divRes.innerHTML = resultados.map(p => {
@@ -452,6 +452,7 @@ function initBuscadores() {
             divRes.style.display = 'block';
             divRes.innerHTML = `<div style="padding: 10px; color: #64748b;">Sin resultados</div>`;
         }
+    });
 
     inputProd?.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
