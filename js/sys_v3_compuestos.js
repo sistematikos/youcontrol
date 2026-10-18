@@ -4,22 +4,53 @@
  */
 
 import { db } from './firebase-config.js';
-import { collection, onSnapshot, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, onSnapshot, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
 if (!USER_ID) window.location.href = "index.html";
 
 window.productosIndividuales = [];
+window.departamentosMaster = [];
 window.componentesCombo = [];
 
-// 1. Cargar productos individuales desde Firestore para el selector de componentes
+// 1. Cargar Departamentos para el selector
+function cargarDepartamentos() {
+    const depRef = collection(db, "usuarios", USER_ID, "departamentos");
+    onSnapshot(depRef, (snapshot) => {
+        window.departamentosMaster = [];
+        snapshot.forEach(docSnap => {
+            window.departamentosMaster.push({ id: docSnap.id, ...docSnap.data() });
+        });
+        poblarSelectDepartamentos();
+    });
+}
+
+function poblarSelectDepartamentos() {
+    const select = document.getElementById('combo-departamento');
+    if (!select) return;
+
+    if (window.departamentosMaster.length === 0) {
+        select.innerHTML = '<option value="GENERAL">GENERAL</option>';
+        return;
+    }
+
+    select.innerHTML = '<option value="">-- Seleccionar Departamento --</option>';
+    window.departamentosMaster.forEach(d => {
+        const option = document.createElement('option');
+        const nombreDep = d.nombre || d.id;
+        option.value = nombreDep;
+        option.textContent = nombreDep.toUpperCase();
+        select.appendChild(option);
+    });
+}
+
+// 2. Cargar productos individuales para el selector de componentes
 function cargarProductosIndividuales() {
     const productosRef = collection(db, "usuarios", USER_ID, "productos");
     onSnapshot(productosRef, (snapshot) => {
         window.productosIndividuales = [];
         snapshot.forEach(docSnap => {
             const prod = { id: docSnap.id, ...docSnap.data() };
-            // Filtrar solo productos individuales simples (no combos)
             if (!prod.es_combo) {
                 window.productosIndividuales.push(prod);
             }
@@ -40,7 +71,7 @@ function poblarSelectProductos() {
     });
 }
 
-// 2. Agregar componente a la lista temporal del combo
+// 3. Agregar componente a la lista temporal
 window.agregarComponente = () => {
     const select = document.getElementById('select-componente');
     const inputCant = document.getElementById('cant-componente');
@@ -56,7 +87,6 @@ window.agregarComponente = () => {
     const prodObj = window.productosIndividuales.find(p => p.id === prodId);
     if (!prodObj) return;
 
-    // Verificar si ya está agregado para acumular cantidad
     const existe = window.componentesCombo.find(c => c.producto_id === prodId);
     if (existe) {
         existe.cantidad += cantidad;
@@ -81,7 +111,7 @@ function renderizarTablaComponentes() {
     if (!tbody) return;
 
     if (window.componentesCombo.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #94A3B8; padding: 10px;">No hay productos agregados al combo.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #94A3B8; padding: 20px;">No hay productos agregados al combo actualmente.</td></tr>`;
         if (txtCostoTotal) txtCostoTotal.innerText = "$0.00";
         return;
     }
@@ -92,12 +122,12 @@ function renderizarTablaComponentes() {
         costoTotalCalculado += subtotalCosto;
         return `
             <tr>
-                <td><strong>${item.sku}</strong></td>
-                <td>${item.nombre}</td>
-                <td>${item.cantidad}</td>
-                <td>$${item.costo.toFixed(2)}</td>
-                <td style="text-align: center;">
-                    <button type="button" onclick="window.eliminarComponente(${index})" style="background: var(--rose); color: white; border: none; padding: 2px 6px; border-radius: 4px; cursor: pointer;">
+                <td class="p-3"><strong>${item.sku}</strong></td>
+                <td class="p-3">${item.nombre}</td>
+                <td class="p-3">${item.cantidad}</td>
+                <td class="p-3">$${item.costo.toFixed(2)}</td>
+                <td class="p-3 text-center">
+                    <button type="button" onclick="window.eliminarComponente(${index})" style="background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 6px; cursor: pointer;">
                         <i class="fas fa-trash"></i>
                     </button>
                 </td>
@@ -113,15 +143,17 @@ window.eliminarComponente = (index) => {
     renderizarTablaComponentes();
 };
 
-// 3. Guardar el Combo en Firestore
+// 4. Guardar Combo asociando el departamento elegido
 window.guardarCombo = async () => {
     const codigoInput = document.getElementById('combo-codigo');
     const nombreInput = document.getElementById('combo-nombre');
     const precioInput = document.getElementById('combo-precio');
+    const depInput = document.getElementById('combo-departamento');
 
     const codigo = codigoInput?.value.trim().toUpperCase();
     const nombre = nombreInput?.value.trim().toUpperCase();
     const precio = parseFloat(precioInput?.value) || 0;
+    const departamento = depInput?.value.trim() || "GENERAL";
 
     if (!codigo || !nombre || precio <= 0) {
         alert("⚠️ Ingresa un código, nombre y precio de venta válido.");
@@ -143,6 +175,7 @@ window.guardarCombo = async () => {
             nombre,
             precio,
             costo: costoTotalCombo,
+            departamento: departamento, // <-- Se guarda el departamento seleccionado
             tipo: "combo",
             es_combo: true,
             componentes: window.componentesCombo,
@@ -151,10 +184,10 @@ window.guardarCombo = async () => {
 
         alert("✅ ¡Producto Compuesto / Combo guardado con éxito!");
         
-        // Limpieza
         codigoInput.value = '';
         nombreInput.value = '';
         precioInput.value = '';
+        if (depInput) depInput.value = '';
         window.componentesCombo = [];
         renderizarTablaComponentes();
 
@@ -165,5 +198,6 @@ window.guardarCombo = async () => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+    cargarDepartamentos();
     cargarProductosIndividuales();
 });
