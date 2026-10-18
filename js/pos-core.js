@@ -7,6 +7,7 @@ import { db } from './firebase-config.js';
 import { collection, onSnapshot, addDoc, setDoc, serverTimestamp, doc, getDoc, updateDoc, increment, runTransaction, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { ejecutarF4, ejecutarF5, ejecutarF6, abrirModalCobro } from './pos-core-teclas.js';
 import { imprimirTicketVenta } from './ticket-print.js';
+import { validarStockCombo, descontarStockInsumosCombo } from './pos-core-compuestos.js';
 
 // --- VALIDACIÓN DE SESIÓN ---
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
