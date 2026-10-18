@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Encabezados para evitar caché de navegador -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <title>YOU CONTROL | Productos Compuestos (Combos)</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%);
+            --text-dark: #0F172A;
+            --text-muted: #64748B;
+            --accent-blue: #0284C7;
+            --primary-dark: #002A54;
+            --card-bg: #FFFFFF;
+            --border-color: #E2E8F0;
+        }
+
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; color: var(--text-dark); }
+
+        /* BARRA DE NAVEGACIÓN SUPERIOR */
+        .navbar-sistema { background: var(--primary-dark); width: 100%; box-shadow: 0 4px 20px rgba(0,0,0,0.15); position: sticky; top: 0; z-index: 1000; }
+        .nav-container { width: 92%; max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; height: 65px; }
+        .nav-logo { color: white; font-weight: 700; font-size: 1.2rem; text-decoration: none; display: flex; align-items: center; gap: 10px; letter-spacing: 0.5px; }
+        .nav-logo i { color: #38BDF8; }
+
+        /* CONTENEDOR GENERAL */
+        .main-wrapper { max-width: 1000px; width: 92%; margin: 25px auto; flex-grow: 1; display: flex; flex-direction: column; gap: 20px; }
+
+        .card-panel {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+            border: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body oncontextmenu="return false">
+
+    <!-- BARRA SUPERIOR -->
+    <nav class="navbar-sistema">
+        <div class="nav-container">
+            <a href="sys_v1_menu.html" class="nav-logo"><i class="fas fa-chart-pie"></i> YOU CONTROL</a>
+            <button onclick="window.location.href='sys_v1_menu.html'" style="background: rgba(255,255,255,0.1); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 500;">
+                <i class="fas fa-arrow-left mr-2"></i> Volver al Menú
+            </button>
+        </div>
+    </nav>
+
+    <!-- CONTENEDOR PRINCIPAL -->
+    <div class="main-wrapper">
+
+        <!-- ENCABEZADO DE MÓDULO -->
+        <div class="card-panel">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fas fa-boxes text-sky-600"></i> Módulo de Productos Compuestos (Combos y Kits)
+                    </h1>
+                    <p class="text-xs text-slate-500 mt-1">Crea paquetes promocionales agrupando insumos individuales sin duplicar inventario físico.</p>
+                </div>
+            </div>
+
+            <!-- FORMULARIO DATOS GENERALES DEL COMBO -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Código / SKU del Combo</label>
+                    <input type="text" id="combo-codigo" placeholder="Ej. COMBO-01" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-sky-500">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Nombre Descriptivo del Combo</label>
+                    <input type="text" id="combo-nombre" placeholder="Ej. Combo Mantenimiento Básico (Aceite + Filtro)" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-sky-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Precio de Venta ($ USD)</label>
+                    <input type="number" step="0.01" id="combo-precio" placeholder="0.00" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm font-bold text-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN DE COMPONENTES E INSUMOS -->
+        <div class="card-panel">
+            <h2 class="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
+                <i class="fas fa-list-check text-sky-600"></i> Insumos que Integran el Combo
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                <div class="md:col-span-2">
+                    <select id="select-componente" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sky-500">
+                        <option value="">-- Cargando productos individuales disponibles --</option>
+                    </select>
+                </div>
+                <div class="flex gap-2">
+                    <input type="number" id="cant-componente" value="1" min="1" class="w-24 border border-slate-300 rounded-lg p-2.5 text-sm text-center font-bold focus:outline-none focus:ring-2 focus:ring-sky-500">
+                    <button type="button" onclick="window.agregarComponente()" class="flex-1 bg-sky-600 text-white rounded-lg px-4 py-2.5 text-sm font-semibold hover:bg-sky-700 shadow-sm transition">
+                        <i class="fas fa-plus mr-1"></i> Agregar
+                    </button>
+                </div>
+            </div>
+
+            <!-- TABLA DE COMPONENTES SELECCIONADOS -->
+            <div class="overflow-x-auto border border-slate-200 rounded-lg">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 text-slate-600 text-xs uppercase border-b border-slate-200">
+                            <th class="p-3">SKU</th>
+                            <th class="p-3">Producto Individual</th>
+                            <th class="p-3">Cantidad</th>
+                            <th class="p-3">Costo Unit.</th>
+                            <th class="p-3 text-center">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-componentes-combo" class="text-sm divide-y divide-slate-100">
+                        <tr><td colspan="5" style="text-align: center; color: #94A3B8; padding: 20px;">No hay productos agregados al combo actualmente.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- RESUMEN Y BOTÓN DE GUARDADO -->
+            <div class="flex flex-col md:flex-row justify-between items-center mt-6 pt-4 border-t border-slate-200 gap-4">
+                <div>
+                    <span class="text-xs text-slate-500 block uppercase font-semibold">Costo Base Calculado de Insumos:</span>
+                    <strong id="costo-total-combo" class="text-xl text-slate-800">$0.00</strong>
+                </div>
+                <button type="button" onclick="window.guardarCombo()" class="w-full md:w-auto bg-emerald-600 text-white px-8 py-3 rounded-xl text-sm font-bold hover:bg-emerald-700 shadow-md transition flex items-center justify-center gap-2">
+                    <i class="fas fa-save"></i> Guardar Combo en Inventario
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- SCRIPT DEL MÓDULO -->
+    <script type="module" src="./js/sys_v3_compuestos.js"></script>
+</body>
+</html>
