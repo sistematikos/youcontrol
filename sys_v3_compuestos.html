@@ -92,16 +92,22 @@
             </div>
 
             <!-- FORMULARIO DE DATOS DEL COMBO -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-2">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Código / SKU del Combo</label>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Código / SKU</label>
                     <input type="text" id="combo-codigo" placeholder="Ej. COMBO-01" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-sky-500">
                 </div>
-                <div class="md:col-span-2">
+                <div class="md:col-span-3">
                     <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Nombre Descriptivo del Combo</label>
                     <input type="text" id="combo-nombre" placeholder="Ej. Combo Mantenimiento Básico (Aceite + Filtro)" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-sky-500">
                 </div>
-                <div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Departamento / Categoría</label>
+                    <select id="combo-departamento" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-sky-500">
+                        <option value="">-- Cargando departamentos --</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2">
                     <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Precio de Venta ($ USD)</label>
                     <input type="number" step="0.01" id="combo-precio" placeholder="0.00" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm font-bold text-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500">
                 </div>
