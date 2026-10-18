@@ -92,8 +92,31 @@ window.buscarCliente = (texto) => {
 window.agregarCarrito = (id) => {
     const p = productosMaster.find(x => x.id === id);
     if (!p) return;
-    const item = carrito.find(c => c.id === id);
-    if (item) item.cantidad++; else carrito.push({ ...p, cantidad: 1 });
+
+    const itemExistente = carrito.find(c => c.id === id);
+    const cantidadNueva = itemExistente ? itemExistente.cantidad + 1 : 1;
+
+    // VALIDACIÓN DE STOCK PARA COMBOS Y PRODUCTOS INDIVIDUALES
+    if (p.es_combo) {
+        const check = validarStockCombo(p, cantidadNueva, productosMaster);
+        if (!check.valido) {
+            alert("⚠️ " + check.mensaje);
+            return;
+        }
+    } else {
+        const stockActual = Number(p.stock || 0);
+        if (stockActual < cantidadNueva) {
+            alert(`⚠️ Stock insuficiente de "${p.nombre}". Stock disponible: ${stockActual}`);
+            return;
+        }
+    }
+
+    if (itemExistente) {
+        itemExistente.cantidad++;
+    } else {
+        carrito.push({ ...p, cantidad: 1 });
+    }
+
     window.actualizarCarritoUI();
 };
 
