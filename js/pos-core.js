@@ -441,15 +441,17 @@ function initBuscadores() {
             return;
         }
 
-        const resultados = window.buscarProducto(texto);
+       const resultados = window.buscarProducto(texto);
         if (resultados.length > 0) {
             divRes.style.display = 'block';
-            divRes.innerHTML = resultados.map(p => `<div class="resultado-item" style="padding: 10px; cursor: pointer;" onclick="window.seleccionarProducto('${p.id}')"><strong>${p.nombre}</strong> - $${p.precio || 0}</div>`).join('');
+            divRes.innerHTML = resultados.map(p => {
+                const tagCombo = p.es_combo ? `<span style="background:#0284c7; color:white; font-size:10px; padding:2px 5px; border-radius:4px; font-weight:bold; margin-right:5px;">COMBO</span>` : '';
+                return `<div class="resultado-item" style="padding: 10px; cursor: pointer;" onclick="window.seleccionarProducto('${p.id}')">${tagCombo}<strong>${p.nombre}</strong> - $${(p.precio || 0).toFixed(2)}</div>`;
+            }).join('');
         } else {
             divRes.style.display = 'block';
             divRes.innerHTML = `<div style="padding: 10px; color: #64748b;">Sin resultados</div>`;
         }
-    });
 
     inputProd?.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
