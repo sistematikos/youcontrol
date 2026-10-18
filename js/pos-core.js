@@ -191,7 +191,11 @@ async function registrarVenta() {
 
         // 2. DESCONTAR DEL INVENTARIO CADA PRODUCTO VENDIDO
         for (const item of window.carrito) {
-            if (item.id) {
+            if (item.es_combo) {
+                // Descuento modularizado de los insumos del combo desde pos-core-compuestos.js
+                await descontarStockInsumosCombo(db, USER_ID, item);
+            } else if (item.id) {
+                // Descuento normal de stock para producto individual
                 const productoRef = doc(db, "usuarios", USER_ID, "productos", item.id);
                 await updateDoc(productoRef, {
                     stock: increment(-item.cantidad)
