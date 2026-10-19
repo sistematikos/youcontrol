@@ -127,8 +127,9 @@
                     </select>
                 </div>
                 <div class="flex gap-2">
-                    <input type="number" id="cant-componente" value="1" min="1" class="w-24 border border-slate-300 rounded-lg p-2.5 text-sm text-center font-bold focus:outline-none focus:ring-2 focus:ring-sky-500">
-                    <button type="button" onclick="window.agregarComponente()" class="flex-1 bg-sky-600 text-white rounded-lg px-4 py-2.5 text-sm font-semibold hover:bg-sky-700 shadow-sm transition flex items-center justify-center gap-1">
+                    <!-- Modificado para admitir decimales como 0.5, 0.25, etc. -->
+                    <input type="number" id="cant-componente" value="1" min="0.0001" step="any" placeholder="Cant." class="w-28 border border-slate-300 rounded-lg p-2.5 text-sm text-center font-bold focus:outline-none focus:ring-2 focus:ring-sky-500">
+                    <button type="button" onclick="window.agregarComponente()" class="flex-1 bg-sky-600 text-white rounded-lg px-4 py-2.5 text-sm font-semibold hover:bg-sky-700 shadow-sm transition flex items-center justify-center gap-1 cursor-pointer">
                         <i class="fas fa-plus"></i> Agregar
                     </button>
                 </div>
@@ -152,15 +153,50 @@
                 </table>
             </div>
 
-            <!-- RESUMEN Y BOTÓN DE ACCIÓN -->
+            <!-- RESUMEN Y BOTONES DE ACCIÓN -->
             <div class="flex flex-col md:flex-row justify-between items-center mt-6 pt-4 border-t border-slate-200 gap-4">
                 <div>
                     <span class="text-xs text-slate-500 block uppercase font-semibold">Costo Base Calculado de Insumos:</span>
                     <strong id="costo-total-combo" class="text-xl text-slate-800">$0.00</strong>
                 </div>
-                <button type="button" onclick="window.guardarCombo()" class="w-full md:w-auto bg-emerald-600 text-white px-8 py-3 rounded-xl text-sm font-bold hover:bg-emerald-700 shadow-md transition flex items-center justify-center gap-2">
-                    <i class="fas fa-save"></i> Guardar Combo en Inventario
-                </button>
+                <div class="flex items-center gap-3 w-full md:w-auto">
+                    <button type="button" onclick="window.limpiarFormularioCombo()" class="bg-slate-100 text-slate-600 border border-slate-300 px-4 py-3 rounded-xl text-sm font-semibold hover:bg-slate-200 transition cursor-pointer">
+                        <i class="fas fa-broom mr-1"></i> Limpiar
+                    </button>
+                    <button type="button" onclick="window.guardarCombo()" class="flex-1 md:flex-none bg-emerald-600 text-white px-8 py-3 rounded-xl text-sm font-bold hover:bg-emerald-700 shadow-md transition flex items-center justify-center gap-2 cursor-pointer">
+                        <i class="fas fa-save"></i> Guardar Combo en Inventario
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- NUEVA SECCIÓN: CATÁLOGO Y VISUALIZACIÓN DE COMBOS CREADOS -->
+        <div class="card-panel">
+            <h2 class="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
+                <i class="fas fa-cubes text-sky-600"></i> Catálogo de Productos Compuestos Creados
+            </h2>
+            <p class="text-xs text-slate-500 mb-4">Listado de todos los combos registrados. Haz clic en el botón de edición para modificar un combo y sus insumos.</p>
+            
+            <div class="overflow-x-auto border border-slate-200 rounded-lg">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 text-slate-600 text-xs uppercase border-b border-slate-200">
+                            <th class="p-3">Código</th>
+                            <th class="p-3">Nombre Combo</th>
+                            <th class="p-3">Departamento</th>
+                            <th class="p-3">Insumos Integrantes</th>
+                            <th class="p-3">Precio Venta</th>
+                            <th class="p-3 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-combos-creados" class="text-xs divide-y divide-slate-100">
+                        <tr>
+                            <td colspan="6" class="text-center py-6 text-slate-400">
+                                <i class="fas fa-spinner fa-spin text-lg mr-2"></i> Cargando catálogo de combos...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 
