@@ -2,38 +2,180 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Encabezados para evitar caché de navegador -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
     <title>FICHA PRODUCTO | YOU CONTROL</title>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
-        :root { --bg: #F1F5F9; --emerald: #10B981; }
-        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding: 20px; }
-        
-        /* Cabecera */
-        .header-panel { 
-            background: #ffffff; padding: 0 20px; border-radius: 12px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #E2E8F0; 
-            display: flex; justify-content: space-between; align-items: center; 
-            max-width: 800px; margin: 0 auto 15px auto; height: 70px; 
+        :root { 
+            --primary-dark: #002A54;
+            --bg: #F8FAFC; 
+            --emerald: #10B981; 
+            --border: #E2E8F0;
+            --text-dark: #0F172A;
+            --text-muted: #64748B;
+            --sky: #0EA5E9;
         }
-        .btn-back { background: #F1F5F9; color: #1E293B; padding: 8px 15px; border-radius: 8px; text-decoration: none; font-size: 0.8rem; font-weight: 700; border: 1px solid #E2E8F0; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; transition: background 0.2s; }
-        .btn-back:hover { background: #E2E8F0; }
-        .logo-header { height: 50px; width: auto; }
+
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background: var(--bg); 
+            margin: 0; 
+            padding: 0; 
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        /* BARRA DE NAVEGACIÓN SUPERIOR OSCURA UNIFICADA */
+        .navbar-sistema { 
+            background: var(--primary-dark); 
+            width: 100%; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15); 
+            position: sticky; 
+            top: 0; 
+            z-index: 1000; 
+        }
+        .nav-container { 
+            width: 92%; 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            height: 65px; 
+        }
+        .nav-logo { 
+            color: #FFFFFF; 
+            font-weight: 700; 
+            font-size: 1.2rem; 
+            text-decoration: none; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            letter-spacing: 0.5px; 
+        }
+        .nav-logo i { color: #38BDF8; }
+
+        .btn-regresar {
+            background: rgba(255, 255, 255, 0.1);
+            color: #FFFFFF;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .btn-regresar:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #38BDF8;
+        }
+
+        /* CONTENEDOR PRINCIPAL */
+        .main-wrapper {
+            max-width: 800px;
+            width: 92%;
+            margin: 25px auto;
+            flex-grow: 1;
+        }
 
         /* Contenido */
-        .card { background: white; padding: 25px; border-radius: 12px; max-width: 800px; margin: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.05); position: relative; }
-        .grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        label { font-size: 0.8rem; font-weight: 600; color: #64748B; margin-bottom: 5px; display: block; }
-        input, select { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #E2E8F0; border-radius: 8px; box-sizing: border-box; }
+        .card { 
+            background: white; 
+            padding: 25px; 
+            border-radius: 16px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04); 
+            border: 1px solid var(--border);
+            position: relative; 
+        }
+
+        .grid-form { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 20px; 
+        }
+
+        label { 
+            font-size: 0.8rem; 
+            font-weight: 600; 
+            color: var(--text-muted); 
+            margin-bottom: 5px; 
+            display: block; 
+        }
+
+        input, select { 
+            width: 100%; 
+            padding: 10px 14px; 
+            margin-bottom: 15px; 
+            border: 1px solid var(--border); 
+            border-radius: 8px; 
+            box-sizing: border-box; 
+            font-family: inherit;
+            font-size: 0.88rem;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--sky);
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+        }
         
         /* Estilo para campos de solo lectura/deshabilitados */
-        input[readonly], input[disabled] { background-color: #F8FAFC; color: #64748B; cursor: not-allowed; }
+        input[readonly], input[disabled] { 
+            background-color: #F8FAFC; 
+            color: var(--text-muted); 
+            cursor: not-allowed; 
+        }
 
-        .btn-save { background: var(--emerald); color: white; padding: 15px; border: none; border-radius: 8px; width: 100%; font-weight: 800; cursor: pointer; }
+        .btn-save { 
+            background: var(--emerald); 
+            color: white; 
+            padding: 14px; 
+            border: none; 
+            border-radius: 8px; 
+            width: 100%; 
+            font-weight: 700; 
+            font-size: 0.9rem;
+            cursor: pointer; 
+            transition: background 0.2s ease;
+        }
+        .btn-save:hover {
+            background: #059669;
+        }
         
-        #lista-resultados { position: absolute; width: calc(100% - 50px); background: white; border: 1px solid #E2E8F0; border-radius: 0 0 8px 8px; z-index: 1000; display: none; max-height: 200px; overflow-y: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .item-res { padding: 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
-        .item-res:hover { background: #F1F5F9; }
+        #lista-resultados { 
+            position: absolute; 
+            width: calc(100% - 50px); 
+            background: white; 
+            border: 1px solid var(--border); 
+            border-radius: 0 0 8px 8px; 
+            z-index: 1000; 
+            display: none; 
+            max-height: 200px; 
+            overflow-y: auto; 
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); 
+        }
+        .item-res { padding: 12px; cursor: pointer; border-bottom: 1px solid #F1F5F9; font-size: 0.85rem; }
+        .item-res:hover { background: #F8FAFC; }
+
+        @media (max-width: 640px) {
+            .grid-form { grid-template-columns: 1fr; gap: 0; }
+        }
     </style>
 
     <!-- Script para limpiar caché al retornar -->
@@ -44,47 +186,57 @@
         }
     </script>
 </head>
-<body>
+<body oncontextmenu="return false">
 
-    <header class="header-panel">
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <a href="#" class="btn-back" onclick="irAlMenu(event)">
-                <i class="fas fa-arrow-left"></i> VOLVER
+    <!-- BARRA SUPERIOR OSCURA UNIFICADA -->
+    <nav class="navbar-sistema">
+        <div class="nav-container">
+            <a href="#" class="btn-regresar" onclick="irAlMenu(event)">
+                <i class="fas fa-arrow-left"></i> Regresar al Menú
             </a>
-            <h1 style="font-size: 1.2rem; margin: 0; font-weight: 700; color: #1E293B;">
-                PRODUCTOS TERMINADOS
-            </h1>
+            <a href="sys_v1_menu.html" class="nav-logo">
+                <i class="fas fa-chart-pie"></i> YOU CONTROL
+            </a>
         </div>
-        <img src="img/logo.png" class="logo-header" alt="Logo">
-    </header>
+    </nav>
 
-    <main class="card">
-        <h2><i class="fas fa-edit"></i> Ficha Técnica</h2>
-        <input type="text" id="buscador-prod" placeholder="Buscar por nombre o SKU..." autocomplete="off">
-        <div id="lista-resultados"></div>
+    <!-- CONTENEDOR PRINCIPAL -->
+    <main class="main-wrapper">
+        <div class="card">
+            <h2 style="font-size: 1.15rem; margin-top: 0; margin-bottom: 20px; color: var(--text-dark); display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-edit text-sky-600"></i> Ficha Técnica de Producto
+            </h2>
+            
+            <div style="position: relative;">
+                <input type="text" id="buscador-prod" placeholder="🔍 Buscar por nombre o SKU..." autocomplete="off">
+                <div id="lista-resultados"></div>
+            </div>
 
-        <div class="grid-form">
-            <section>
-                <label>SKU</label><input type="text" id="prod-sku">
-                <label>Nombre</label><input type="text" id="prod-nombre">
-                <label>Barras</label><input type="text" id="prod-barras">
-                <label>Departamento</label>
-                <select id="prod-depto"><option value="GENERAL">Cargando...</option></select>
-                <!-- CAMBIO AQUÍ: Se agrega el atributo readonly -->
-                <label>Stock</label><input type="number" id="prod-stock" readonly>
-            </section>
-            <section>
-                <label>Costo USD</label>
-                <input type="text" id="prod-costo" onkeydown="if(event.key==='Enter') window.procesarCalculoCosto(this)">
-                <label>% Ganancia</label>
-                <input type="text" id="prod-ganancia" onkeydown="if(event.key==='Enter') window.procesarCalculoGanancia(this)">
-                <label>Precio USD</label>
-                <input type="text" id="prod-precio" onkeydown="if(event.key==='Enter') window.procesarCalculoPrecioManual(this)">
-                <label>Precio Bs (Referencial)</label>
-                <input type="text" id="prod-precio-bs" disabled>
-            </section>
+            <div class="grid-form">
+                <section>
+                    <label>SKU</label><input type="text" id="prod-sku">
+                    <label>Nombre</label><input type="text" id="prod-nombre">
+                    <label>Barras</label><input type="text" id="prod-barras">
+                    <label>Departamento</label>
+                    <select id="prod-depto"><option value="GENERAL">Cargando...</option></select>
+                    <label>Stock</label><input type="number" id="prod-stock" readonly>
+                </section>
+                <section>
+                    <label>Costo USD</label>
+                    <input type="text" id="prod-costo" onkeydown="if(event.key==='Enter') window.procesarCalculoCosto(this)">
+                    <label>% Ganancia</label>
+                    <input type="text" id="prod-ganancia" onkeydown="if(event.key==='Enter') window.procesarCalculoGanancia(this)">
+                    <label>Precio USD</label>
+                    <input type="text" id="prod-precio" onkeydown="if(event.key==='Enter') window.procesarCalculoPrecioManual(this)">
+                    <label>Precio Bs (Referencial)</label>
+                    <input type="text" id="prod-precio-bs" disabled>
+                </section>
+            </div>
+            
+            <button class="btn-save" onclick="window.guardarProducto()">
+                <i class="fas fa-save mr-1"></i> GUARDAR PRODUCTO (F9)
+            </button>
         </div>
-        <button class="btn-save" onclick="window.guardarProducto()">GUARDAR PRODUCTO (F9)</button>
     </main>
 
     <script type="module" src="./js/sys_v3_ficha.js"></script>
