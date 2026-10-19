@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Encabezados para evitar caché de navegador -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
     <title>INVENTARIO | YOU CONTROL</title>
     
     <!-- FontAwesome & Google Fonts -->
@@ -10,76 +15,123 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
+        :root {
+            --primary-dark: #002A54;
+            --bg-body: #F8FAFC;
+            --text-dark: #0F172A;
+            --text-muted: #64748B;
+            --border-color: #E2E8F0;
+        }
+
         body { 
             font-family: 'Poppins', sans-serif; 
-            background: #F1F5F9; 
-            padding: 20px; 
-            color: #1E293B; 
+            background: var(--bg-body); 
+            padding: 0; 
             margin: 0; 
+            color: var(--text-dark); 
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
-        
-        /* Estilos de la Cabecera */
-        .header-panel { 
-            background: #ffffff; 
-            padding: 0 20px; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
-            border: 1px solid #E2E8F0; 
+
+        /* BARRA DE NAVEGACIÓN SUPERIOR OSCURA */
+        .navbar-sistema { 
+            background: var(--primary-dark); 
+            width: 100%; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15); 
+            position: sticky; 
+            top: 0; 
+            z-index: 1000; 
+        }
+        .nav-container { 
+            width: 92%; 
+            max-width: 1200px; 
+            margin: 0 auto; 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            margin-bottom: 15px; 
-            height: 70px; 
+            height: 65px; 
         }
-
-        .btn-back { 
-            background: #F1F5F9; 
-            color: #1E293B; 
-            padding: 8px 15px; 
-            border-radius: 8px; 
-            text-decoration: none; 
-            font-size: 0.8rem; 
+        .nav-logo { 
+            color: white; 
             font-weight: 700; 
-            border: 1px solid #E2E8F0; 
-            display: inline-flex; 
+            font-size: 1.2rem; 
+            text-decoration: none; 
+            display: flex; 
             align-items: center; 
-            gap: 5px; 
+            gap: 10px; 
+            letter-spacing: 0.5px; 
+        }
+        .nav-logo i { color: #38BDF8; }
+
+        .btn-regresar {
+            background: rgba(255, 255, 255, 0.1);
+            color: #FFFFFF;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: all 0.2s ease;
             cursor: pointer;
-            transition: background 0.2s ease;
+        }
+        .btn-regresar:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #38BDF8;
         }
 
-        .btn-back:hover { 
-            background: #E2E8F0; 
+        /* CONTENEDOR PRINCIPAL */
+        .main-wrapper { 
+            max-width: 1200px; 
+            width: 92%; 
+            margin: 25px auto; 
+            flex-grow: 1; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 20px; 
         }
 
-        .logo-header { 
-            height: 40px; 
-            width: auto; 
-            object-fit: contain; 
-        }
-
-        /* Contenido */
         .card { 
-            background: white; 
-            padding: 20px; 
-            border-radius: 12px; 
-            border: 1px solid #E2E8F0; 
-            margin-bottom: 20px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            background: #FFFFFF; 
+            padding: 25px; 
+            border-radius: 16px; 
+            border: 1px solid var(--border-color); 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        }
+
+        .page-title-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #F1F5F9;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
         }
 
         .controls { 
             display: flex; 
             gap: 15px; 
             margin-bottom: 20px; 
+            flex-wrap: wrap;
         }
 
         select, input { 
-            padding: 10px; 
-            border: 1px solid #E2E8F0; 
-            border-radius: 6px; 
+            padding: 10px 14px; 
+            border: 1px solid var(--border-color); 
+            border-radius: 8px; 
             font-family: inherit;
             font-size: 0.88rem;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        select:focus, input:focus {
+            border-color: #0284C7;
+            box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
         }
 
         input[type="text"] {
@@ -88,24 +140,30 @@
 
         .table-responsive {
             overflow-x: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
         }
 
         table { 
             width: 100%; 
             border-collapse: collapse; 
-            font-size: 0.9rem;
+            font-size: 0.88rem;
         }
 
         th { 
             text-align: left; 
-            padding: 12px; 
-            border-bottom: 2px solid #E2E8F0; 
+            padding: 12px 16px; 
+            background-color: #F8FAFC;
+            border-bottom: 2px solid var(--border-color); 
             color: #64748B; 
             font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
         }
 
         td { 
-            padding: 12px; 
+            padding: 12px 16px; 
             border-bottom: 1px solid #F1F5F9; 
         }
 
@@ -114,7 +172,7 @@
         }
     </style>
 
-    <!-- Script para evitar caché al regresar al menú principal -->
+    <!-- Script para refrescar al volver al menú principal -->
     <script>
         function volverAlMenu(e) {
             e.preventDefault();
@@ -122,22 +180,29 @@
         }
     </script>
 </head>
-<body>
+<body oncontextmenu="return false">
 
-    <!-- BARRA SUPERIOR UNIFICADA -->
-<nav class="navbar-sistema">
-    <div class="nav-container">
-        <a href="sys_v1_menu.html" class="btn-regresar">
-            <i class="fas fa-arrow-left"></i> Regresar al Menú
-        </a>
-        <a href="sys_v1_menu.html" class="nav-logo">
-            <i class="fas fa-chart-pie"></i> YOU CONTROL
-        </a>
-    </div>
-</nav>
+    <!-- BARRA SUPERIOR UNIFICADA CON ESTILO OSCURO -->
+    <nav class="navbar-sistema">
+        <div class="nav-container">
+            <a href="#" class="btn-regresar" onclick="volverAlMenu(event)">
+                <i class="fas fa-arrow-left"></i> Regresar al Menú
+            </a>
+            <a href="sys_v1_menu.html" class="nav-logo">
+                <i class="fas fa-chart-pie"></i> YOU CONTROL
+            </a>
+        </div>
+    </nav>
 
-    <main>
+    <!-- CONTENEDOR PRINCIPAL DE CONTENIDO -->
+    <main class="main-wrapper">
         <div class="card">
+            <div class="page-title-panel">
+                <h1 style="font-size: 1.25rem; margin: 0; font-weight: 700; color: #0F172A; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-boxes-stacked text-sky-600"></i> Catálogo General de Inventario
+                </h1>
+            </div>
+
             <div class="controls">
                 <select id="filtro-depto" onchange="window.filtrarPorDepto()">
                     <option value="TODOS">TODOS LOS DEPARTAMENTOS</option>
@@ -147,20 +212,20 @@
 
             <div class="table-responsive">
                 <table>
-                   <thead>
-                     <tr>
-                        <th>Código</th>
-                        <th>Nombre</th>
-                        <th>Depto</th>
-                        <th>Costo</th>
-                        <th>%</th>
-                        <th>Precio</th>
-                        <th>Stock</th>
-                     </tr>
-                   </thead>
-                   <tbody id="cuerpo-tabla">
-                       <!-- Filas generadas dinámicamente desde js/sys_v1_inv.js -->
-                   </tbody>
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Nombre</th>
+                            <th>Depto</th>
+                            <th>Costo</th>
+                            <th>%</th>
+                            <th>Precio</th>
+                            <th>Stock</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpo-tabla">
+                        <!-- Filas generadas dinámicamente desde js/sys_v1_inv.js -->
+                    </tbody>
                 </table>
             </div>
         </div>
