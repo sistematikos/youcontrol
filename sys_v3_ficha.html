@@ -21,6 +21,9 @@
             --text-dark: #0F172A;
             --text-muted: #64748B;
             --sky: #0EA5E9;
+            /* Azul eléctrico medio oscuro unificado */
+            --blue-electric: #1E40AF;
+            --blue-electric-hover: #1D4ED8;
         }
 
         body { 
@@ -141,9 +144,9 @@
             cursor: not-allowed; 
         }
 
-        /* BOTÓN DE GUARDAR CON EL AZUL OSCURO CORPORATIVO */
+        /* BOTÓN DE GUARDAR CON AZUL ELÉCTRICO MEDIO OSCURO */
         .btn-save { 
-            background: var(--primary-dark); 
+            background: var(--blue-electric); 
             color: white; 
             padding: 14px; 
             border: none; 
@@ -153,11 +156,11 @@
             font-size: 0.9rem;
             cursor: pointer; 
             transition: all 0.2s ease;
-            box-shadow: 0 4px 10px rgba(0, 42, 84, 0.2);
+            box-shadow: 0 4px 10px rgba(30, 64, 175, 0.25);
         }
         .btn-save:hover {
-            background: #003B75;
-            box-shadow: 0 6px 14px rgba(0, 42, 84, 0.3);
+            background: var(--blue-electric-hover);
+            box-shadow: 0 6px 14px rgba(30, 64, 175, 0.35);
         }
         
         #lista-resultados { 
