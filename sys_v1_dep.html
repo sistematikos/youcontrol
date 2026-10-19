@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Encabezados para evitar caché de navegador -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
     <title>GESTIÓN DEPARTAMENTOS | YOU CONTROL</title>
     
     <!-- FontAwesome & Google Fonts -->
@@ -17,6 +22,9 @@
             --emerald: #10B981; 
             --border: #E2E8F0; 
             --text-dark: #0F172A;
+            /* Azul eléctrico medio oscuro unificado */
+            --blue-electric: #1E40AF;
+            --blue-electric-hover: #1D4ED8;
         }
 
         body { 
@@ -129,8 +137,9 @@
             cursor: not-allowed; 
         }
 
+        /* BOTÓN DE GUARDAR DEPARTAMENTO EN AZUL ELÉCTRICO MEDIO OSCURO */
         .btn-save { 
-            background: var(--sky); 
+            background: var(--blue-electric); 
             color: white; 
             border: none; 
             padding: 12px; 
@@ -139,10 +148,12 @@
             font-weight: 700; 
             font-size: 0.88rem;
             cursor: pointer; 
-            transition: background 0.2s ease;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 10px rgba(30, 64, 175, 0.25);
         }
         .btn-save:hover {
-            background: #0284C7;
+            background: var(--blue-electric-hover);
+            box-shadow: 0 6px 14px rgba(30, 64, 175, 0.35);
         }
 
         .list-item { 
@@ -197,7 +208,9 @@
             </h2>
             <input type="text" id="cod-dep" placeholder="Código único (Ej: D01)">
             <input type="text" id="nombre-dep" placeholder="Nombre (Ej: Partes Eléctricas)">
-            <button class="btn-save" onclick="guardarDep()">GUARDAR DEPARTAMENTO</button>
+            <button class="btn-save" onclick="guardarDep()">
+                <i class="fas fa-save mr-1"></i> GUARDAR DEPARTAMENTO
+            </button>
         </section>
 
         <section class="card">
