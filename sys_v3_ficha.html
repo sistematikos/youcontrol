@@ -17,7 +17,6 @@
         :root { 
             --primary-dark: #002A54;
             --bg: #F8FAFC; 
-            --emerald: #10B981; 
             --border: #E2E8F0;
             --text-dark: #0F172A;
             --text-muted: #64748B;
@@ -142,8 +141,9 @@
             cursor: not-allowed; 
         }
 
+        /* BOTÓN DE GUARDAR CON EL AZUL OSCURO CORPORATIVO */
         .btn-save { 
-            background: var(--emerald); 
+            background: var(--primary-dark); 
             color: white; 
             padding: 14px; 
             border: none; 
@@ -152,10 +152,12 @@
             font-weight: 700; 
             font-size: 0.9rem;
             cursor: pointer; 
-            transition: background 0.2s ease;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0, 42, 84, 0.2);
         }
         .btn-save:hover {
-            background: #059669;
+            background: #003B75;
+            box-shadow: 0 6px 14px rgba(0, 42, 84, 0.3);
         }
         
         #lista-resultados { 
