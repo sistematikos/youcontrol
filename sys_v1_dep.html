@@ -4,35 +4,166 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GESTIÓN DEPARTAMENTOS | YOU CONTROL</title>
+    
+    <!-- FontAwesome & Google Fonts -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        :root { --bg: #F1F5F9; --sky: #0EA5E9; --emerald: #10B981; --border: #E2E8F0; }
-        body { font-family: 'Poppins', sans-serif; background: var(--bg); padding: 20px; color: #1E293B; margin: 0; }
-        .layout { max-width: 600px; margin: auto; }
-        
-        /* Estilos idénticos de la Cabecera */
-        .header { 
-            background: #ffffff; padding: 0 20px; border-radius: 12px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border); 
-            display: flex; justify-content: space-between; align-items: center; 
-            margin-bottom: 20px; height: 70px; 
+        :root { 
+            --primary-dark: #002A54;
+            --bg: #F8FAFC; 
+            --sky: #0EA5E9; 
+            --emerald: #10B981; 
+            --border: #E2E8F0; 
+            --text-dark: #0F172A;
         }
-        .btn-back { 
-            background: #F1F5F9; color: #1E293B; padding: 8px 15px; 
-            border-radius: 8px; text-decoration: none; font-size: 0.8rem; 
-            font-weight: 700; border: 1px solid var(--border); 
-            display: inline-flex; align-items: center; gap: 5px; cursor: pointer;
-        }
-        .btn-back:hover { background: #E2E8F0; }
-        .logo-header { height: 90%; width: auto; object-fit: contain; }
 
-        .card { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; }
-        input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; }
-        input:read-only { background-color: #F8FAFC; cursor: not-allowed; }
-        .btn-save { background: var(--sky); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: 700; cursor: pointer; }
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #F1F5F9; }
-        .badge { background: #E0F2FE; color: var(--sky); padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 0.8rem; }
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background: var(--bg); 
+            padding: 0; 
+            color: var(--text-dark); 
+            margin: 0; 
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* BARRA DE NAVEGACIÓN SUPERIOR OSCURA */
+        .navbar-sistema { 
+            background: var(--primary-dark); 
+            width: 100%; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15); 
+            position: sticky; 
+            top: 0; 
+            z-index: 1000; 
+        }
+        .nav-container { 
+            width: 92%; 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            height: 65px; 
+        }
+        .nav-logo { 
+            color: #FFFFFF; 
+            font-weight: 700; 
+            font-size: 1.2rem; 
+            text-decoration: none; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            letter-spacing: 0.5px; 
+        }
+        .nav-logo i { color: #38BDF8; }
+
+        .btn-regresar {
+            background: rgba(255, 255, 255, 0.1);
+            color: #FFFFFF;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .btn-regresar:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #38BDF8;
+        }
+
+        /* CONTENIDO PRINCIPAL */
+        .layout { 
+            max-width: 600px; 
+            width: 92%;
+            margin: 25px auto; 
+            flex-grow: 1;
+        }
+
+        .card { 
+            background: #FFFFFF; 
+            padding: 25px; 
+            border-radius: 16px; 
+            border: 1px solid var(--border); 
+            margin-bottom: 20px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        input { 
+            width: 100%; 
+            padding: 12px 14px; 
+            margin-bottom: 12px; 
+            border: 1px solid var(--border); 
+            border-radius: 8px; 
+            box-sizing: border-box; 
+            font-family: inherit;
+            font-size: 0.88rem;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+        input:focus {
+            border-color: var(--sky);
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+        }
+        input:read-only { 
+            background-color: #F8FAFC; 
+            cursor: not-allowed; 
+        }
+
+        .btn-save { 
+            background: var(--sky); 
+            color: white; 
+            border: none; 
+            padding: 12px; 
+            border-radius: 8px; 
+            width: 100%; 
+            font-weight: 700; 
+            font-size: 0.88rem;
+            cursor: pointer; 
+            transition: background 0.2s ease;
+        }
+        .btn-save:hover {
+            background: #0284C7;
+        }
+
+        .list-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 12px; 
+            border-bottom: 1px solid #F1F5F9; 
+        }
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .badge { 
+            background: #E0F2FE; 
+            color: var(--sky); 
+            padding: 4px 8px; 
+            border-radius: 6px; 
+            font-weight: 700; 
+            font-size: 0.8rem; 
+        }
     </style>
 
     <!-- Script para limpiar caché al regresar al menú principal -->
@@ -43,27 +174,39 @@
         }
     </script>
 </head>
-<body>
-    <main class="layout">
-        <header class="header">
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <a href="#" class="btn-back" onclick="volverAlMenu(event)">
-                    <i class="fas fa-arrow-left"></i> VOLVER
-                </a>
-                <h2 style="margin: 0; font-size: 1.2rem; font-weight: 700; color: #1E293B;">Configurar Departamentos</h2>
-            </div>
-            <img src="img/logo.png" class="logo-header" alt="Logo">
-        </header>
+<body oncontextmenu="return false">
 
+    <!-- BARRA SUPERIOR UNIFICADA CON ESTILO OSCURO -->
+    <nav class="navbar-sistema">
+        <div class="nav-container">
+            <a href="#" class="btn-regresar" onclick="volverAlMenu(event)">
+                <i class="fas fa-arrow-left"></i> Regresar al Menú
+            </a>
+            <a href="sys_v1_menu.html" class="nav-logo">
+                <i class="fas fa-chart-pie"></i> YOU CONTROL
+            </a>
+        </div>
+    </nav>
+
+    <!-- CONTENEDOR PRINCIPAL DE CONTENIDO -->
+    <main class="layout">
+        
         <section class="card">
+            <h2 class="card-title">
+                <i class="fas fa-folder-plus text-sky-600"></i> Configurar Departamentos
+            </h2>
             <input type="text" id="cod-dep" placeholder="Código único (Ej: D01)">
             <input type="text" id="nombre-dep" placeholder="Nombre (Ej: Partes Eléctricas)">
             <button class="btn-save" onclick="guardarDep()">GUARDAR DEPARTAMENTO</button>
         </section>
 
         <section class="card">
+            <h2 class="card-title">
+                <i class="fas fa-list text-sky-600"></i> Departamentos Registrados
+            </h2>
             <div id="contenedor-deps">Cargando departamentos...</div>
         </section>
+
     </main>
 
     <script type="module">
@@ -112,7 +255,7 @@
                     <div class="list-item">
                         <div>
                             <span class="badge">${dep.codigo}</span>
-                            <span style="margin-left:10px;">${dep.nombre}</span>
+                            <span style="margin-left:10px; font-weight: 500;">${dep.nombre}</span>
                         </div>
                         <div>
                             <i class="fas fa-edit" style="color:#0EA5E9; cursor:pointer; margin-right:15px;" 
