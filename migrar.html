@@ -43,7 +43,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, collection, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const API_KEY_COMUN = "AIzaSyAMkpj9tFps526mL6hO-ciePWrTdx_NK9Q";
 
@@ -92,7 +92,7 @@
             const dbOrigen = obtenerOCrearApp(projOrigen, "origen");
             const dbDestino = obtenerOCrearApp(projDestino, "destino");
 
-            // 1. Copiar documento principal de la empresa
+            // 1. Copiar documento principal de la empresa (o inicializarlo si es un contenedor virtual)
             log(`Leyendo perfil principal de usuarios/${empresaID}...`);
             const userDocRef = doc(dbOrigen, "usuarios", empresaID);
             const userSnap = await getDoc(userDocRef);
@@ -101,17 +101,22 @@
                 await setDoc(doc(dbDestino, "usuarios", empresaID), userSnap.data());
                 log(`✔ Perfil principal de la empresa copiado con éxito.`);
             } else {
-                log(`⚠️ Documento principal usuarios/${empresaID} no encontrado, procesando subcolecciones...`);
+                // Creamos un documento base para asegurar que la ruta principal exista en destino
+                await setDoc(doc(dbDestino, "usuarios", empresaID), { 
+                    id_empresa: empresaID, 
+                    migrado_at: new Date().toISOString() 
+                }, { merge: true });
+                log(`ℹ️ Documento raíz usuarios/${empresaID} inicializado en destino.`);
             }
 
-            // 2. Copiar todas las subcolecciones (incluyendo mov_inventario)
+            // 2. Copiar todas las subcolecciones de forma robusta
             const subcolecciones = [
                 "productos", 
                 "departamentos", 
                 "clientes", 
                 "cuentas_x_cobrar",
                 "cuentas_por_cobrar",
-                "mov_inventario",         // <--- ¡Esta era la clave en tu código!
+                "mov_inventario",
                 "movimientos",
                 "movimientos_inventario",
                 "ventas",
@@ -129,12 +134,32 @@
                     const subcolSnap = await getDocs(subcolRef);
 
                     if (!subcolSnap.empty) {
-                        log(`Transfiriendo subcolección: ${subcol}...`);
+                        log(`Transfiriendo subcolección: ${subcol} (${subcolSnap.size} registros)...`);
+                        
+                        // Usamos lotes (batch) de Firestore para mayor velocidad y estabilidad
+                        let batch = writeBatch(dbDestino);
                         let contador = 0;
+                        let operacionesEnBatch = 0;
+
                         for (const subDoc of subcolSnap.docs) {
-                            await setDoc(doc(dbDestino, "usuarios", empresaID, subcol, subDoc.id), subDoc.data());
+                            const destinoDocRef = doc(dbDestino, "usuarios", empresaID, subcol, subDoc.id);
+                            batch.set(destinoDocRef, subDoc.data());
+                            
+                            operacionesEnBatch++;
                             contador++;
+
+                            // Firestore permite un máximo de 500 operaciones por lote
+                            if (operacionesEnBatch >= 400) {
+                                await batch.commit();
+                                batch = writeBatch(dbDestino);
+                                operacionesEnBatch = 0;
+                            }
                         }
+
+                        if (operacionesEnBatch > 0) {
+                            await batch.commit();
+                        }
+
                         log(`✔ Migrados ${contador} registros en [${subcol}].`);
                     }
                 } catch (errSub) {
