@@ -62,7 +62,8 @@ function cargarProductosIndividuales() {
 
         snapshot.forEach(docSnap => {
             const prod = { id: docSnap.id, ...docSnap.data() };
-            if (prod.es_combo || prod.tipo === "combo") {
+            // Identificación robusta de combos o productos compuestos
+            if (prod.es_combo === true || prod.tipo === "combo" || Array.isArray(prod.componentes)) {
                 window.combosCreadosMaster.push(prod);
             } else {
                 window.productosIndividuales.push(prod);
@@ -95,7 +96,6 @@ window.agregarComponente = () => {
     const inputCant = document.getElementById('cant-componente');
     
     const prodId = select?.value;
-    // CAMBIO CLAVE: Usar parseFloat para admitir decimales como 0.5, 1.25, etc.
     const cantidad = parseFloat(inputCant?.value) || 0;
 
     if (!prodId || cantidad <= 0) {
@@ -162,7 +162,7 @@ window.eliminarComponente = (index) => {
     renderizarTablaComponentes();
 };
 
-// 4. Guardar / Editar Combo
+// 4. Guardar / Editar Combo con validación estricta
 window.guardarCombo = async () => {
     const codigoInput = document.getElementById('combo-codigo');
     const nombreInput = document.getElementById('combo-nombre');
@@ -172,15 +172,15 @@ window.guardarCombo = async () => {
     const codigo = codigoInput?.value.trim().toUpperCase();
     const nombre = nombreInput?.value.trim().toUpperCase();
     const precio = parseFloat(precioInput?.value) || 0;
-    const departamento = depInput?.value.trim() || "GENERAL";
+    const departamento = depInput?.value.trim().toUpperCase() || "GENERAL";
 
-    if (!codigo || !nombre || precio <= 0) {
-        alert("⚠️ Ingresa un código, nombre y precio de venta válido.");
+    if (!codigo || !nombre || isNaN(precio) || precio <= 0) {
+        alert("⚠️ Ingresa un código SKU, un nombre descriptivo y un precio de venta válido mayor a 0.");
         return;
     }
 
-    if (window.componentesCombo.length === 0) {
-        alert("⚠️ El combo debe incluir al menos un producto individual.");
+    if (!window.componentesCombo || window.componentesCombo.length === 0) {
+        alert("⚠️ El combo debe incluir al menos un producto componente.");
         return;
     }
 
@@ -188,25 +188,29 @@ window.guardarCombo = async () => {
         const fechaVenezuela = new Date().toLocaleString("en-US", { timeZone: "America/Caracas" });
         const costoTotalCombo = window.componentesCombo.reduce((sum, item) => sum + (item.cantidad * item.costo), 0);
 
-        await setDoc(doc(db, "usuarios", USER_ID, "productos", codigo), {
+        const datosCombo = {
             codigo,
             sku: codigo,
             nombre,
             precio,
-            costo: costoTotalCombo,
-            departamento: departamento,
+            costo: Number(costoTotalCombo.toFixed(4)),
+            departamento,
             tipo: "combo",
             es_combo: true,
             componentes: window.componentesCombo,
             updatedAt: fechaVenezuela
-        }, { merge: true });
+        };
+
+        console.log("Guardando combo en Firestore:", datosCombo);
+
+        await setDoc(doc(db, "usuarios", USER_ID, "productos", codigo), datosCombo, { merge: true });
 
         alert("✅ ¡Producto Compuesto / Combo guardado con éxito!");
         window.limpiarFormularioCombo();
 
     } catch (error) {
-        console.error("Error al guardar combo:", error);
-        alert("❌ Error al guardar en Firestore: " + error.message);
+        console.error("Error crítico al guardar combo en Firestore:", error);
+        alert("❌ Error al guardar en la base de datos: " + error.message);
     }
 };
 
@@ -237,13 +241,12 @@ window.cargarComboParaEditar = (codigoCombo) => {
 
     if (codigoInput) {
         codigoInput.value = combo.codigo || combo.id;
-        codigoInput.readOnly = true; // Bloqueado para mantener la clave
+        codigoInput.readOnly = true; // Bloqueado para mantener la clave primaria
     }
     if (nombreInput) nombreInput.value = combo.nombre || '';
     if (precioInput) precioInput.value = combo.precio || '';
     if (depInput) depInput.value = combo.departamento || '';
 
-    // Cargar los insumos integrantes
     window.componentesCombo = Array.isArray(combo.componentes) ? JSON.parse(JSON.stringify(combo.componentes)) : [];
     renderizarTablaComponentes();
 
@@ -287,7 +290,7 @@ function renderizarTablaCombosCreados() {
                 <td class="p-3 font-bold text-emerald-600">$${(c.precio || 0).toFixed(2)}</td>
                 <td class="p-3 text-center">
                     <div class="flex items-center justify-center gap-1.5">
-                        <button type="button" onclick="window.cargarComboParaEditar('${c.codigo || c.id}')" class="bg-amber-500 text-white p-1.5 rounded-lg text-xs hover:bg-amber-600 transition title="Editar Combo">
+                        <button type="button" onclick="window.cargarComboParaEditar('${c.codigo || c.id}')" class="bg-amber-500 text-white p-1.5 rounded-lg text-xs hover:bg-amber-600 transition" title="Editar Combo">
                             <i class="fas fa-edit"></i>
                         </button>
                         <button type="button" onclick="window.eliminarCombo('${c.codigo || c.id}')" class="bg-red-500 text-white p-1.5 rounded-lg text-xs hover:bg-red-600 transition" title="Eliminar Combo">
