@@ -77,19 +77,17 @@ window.guardarProducto = async function() {
     const sku = document.getElementById('prod-sku').value.trim();
     if (!sku) return alert("El SKU es obligatorio.");
     
-    // --- CORRECCIÓN APLICADA ---
-    // Evaluamos los valores antes de guardarlos para que el resultado (ej. 130)
-    // se guarde en la base de datos en lugar de la fórmula (ej. 100+30%)
     const costoFinal = evaluarCalculo(document.getElementById('prod-costo').value);
     const gananciaFinal = evaluarCalculo(document.getElementById('prod-ganancia').value);
     const precioFinal = evaluarCalculo(document.getElementById('prod-precio').value);
     const stockInput = document.getElementById('prod-stock').value;
+    const barrasInput = document.getElementById('prod-barras').value.trim(); // Capturamos el campo de barras
     
     try {
         await setDoc(doc(db, "usuarios", USER_ID, "productos", sku), {
             sku: sku,
             nombre: document.getElementById('prod-nombre').value,
-            barras: document.getElementById('prod-barras').value,
+            barras: barrasInput, // Guardamos correctamente el valor de barras
             costo: parseFloat(costoFinal || 0),
             ganancia: parseFloat(gananciaFinal || 0),
             precio: parseFloat(precioFinal || 0),
@@ -100,8 +98,6 @@ window.guardarProducto = async function() {
         alert("¡Producto guardado correctamente!");
         window.limpiarFormulario();
         
-        // --- AQUÍ ESTÁ EL CAMBIO ---
-        // Enviamos el cursor de vuelta al buscador para escanear el siguiente producto
         const buscador = document.getElementById('buscador-prod');
         if (buscador) {
             buscador.focus();
@@ -114,8 +110,8 @@ window.guardarProducto = async function() {
 };
 
 window.limpiarFormulario = () => {
-    // Añadido "prod-stock" al array de IDs
-    ["prod-sku", "prod-nombre", "prod-costo", "prod-ganancia", "prod-precio", "prod-precio-bs", "prod-stock", "buscador-prod"].forEach(id => {
+    // Añadido "prod-barras" al array de IDs para que se limpie correctamente
+    ["prod-sku", "prod-nombre", "prod-barras", "prod-costo", "prod-ganancia", "prod-precio", "prod-precio-bs", "prod-stock", "buscador-prod"].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = "";
     });
@@ -186,16 +182,15 @@ window.cargarProducto = (id) => {
     if (!p) return;
     document.getElementById('prod-sku').value = p.sku || "";
     document.getElementById('prod-nombre').value = p.nombre || "";
+    document.getElementById('prod-barras').value = p.barras || ""; // Cargamos el código de barras en el input correspondiente
     document.getElementById('prod-costo').value = p.costo || 0;
     document.getElementById('prod-ganancia').value = p.ganancia || 0;
     document.getElementById('prod-precio').value = p.precio || 0;
-    document.getElementById('prod-stock').value = p.stock !== undefined ? p.stock : ""; // Si no hay stock, deja vacío
+    document.getElementById('prod-stock').value = p.stock !== undefined ? p.stock : ""; 
     document.getElementById('prod-depto').value = p.departamento || "GENERAL";
     window.actualizarPrecioBs(p.precio || 0);
     document.getElementById('lista-resultados').style.display = 'none';
 };
-
-// Añade esto al final de tu archivo, justo antes de document.addEventListener('DOMContentLoaded', iniciarFicha);
 
 document.addEventListener('keydown', (e) => {
     if (e.key === 'F9') {
