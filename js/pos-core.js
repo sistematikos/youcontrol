@@ -8,6 +8,7 @@ import { collection, onSnapshot, addDoc, setDoc, serverTimestamp, doc, getDoc, u
 import { ejecutarF4, ejecutarF5, ejecutarF6, abrirModalCobro } from './pos-core-teclas.js';
 import { imprimirTicketVenta } from './ticket-print.js';
 import { validarStockCombo, descontarStockInsumosCombo } from './pos-core-compuestos.js';
+import { manejarEscaneoBalanza } from './pos-balanza.js';
 
 // --- VALIDACIÓN DE SESIÓN ---
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
