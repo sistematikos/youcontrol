@@ -1,5 +1,5 @@
 import { db } from './firebase-config.js';
-import { collection, onSnapshot, doc, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, onSnapshot, doc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // Obtener dinámicamente el ID de la empresa activa desde el navegador
 const USER_ID = localStorage.getItem('youcontrol_empresa_id');
@@ -15,6 +15,10 @@ const buscadorInv = document.getElementById('buscador-inv');
 
 const mapaDeptos = {};
 let tasaBCV = 1.00;
+
+// Almacenes de datos en memoria para combinar ambas fuentes
+let listaProductos = [];
+let listaCombos = [];
 
 // Helper para prevenir inyecciones de HTML / XSS
 const escapeHTML = (str) => {
@@ -55,6 +59,75 @@ if (buscadorInv) {
     buscadorInv.addEventListener('input', aplicarFiltros);
 }
 
+// --- RENDERIZAR TABLA COMBINADA (PRODUCTOS + COMBOS) ---
+function renderizarInventarioCompleto() {
+    cuerpoTabla.innerHTML = "";
+
+    const totalElementos = listaProductos.length + listaCombos.length;
+
+    if (totalElementos === 0) {
+        cuerpoTabla.innerHTML = `<tr data-no-data="true"><td colspan="7" style="text-align:center; color:#64748B;">No hay productos ni combos registrados.</td></tr>`;
+        return;
+    }
+
+    // 1. Renderizar Productos Regulares
+    listaProductos.forEach(d => {
+        const p = d.data();
+        const precioUSD = parseFloat(p.precio || 0);
+        const costoUSD = parseFloat(p.costo || 0);
+        const precioBs = (precioUSD * tasaBCV).toFixed(2);
+        const deptoId = p.departamento || '';
+        const nombreDeptoMostrado = mapaDeptos[deptoId] || 'GENERAL';
+        const codigoProd = p.sku || p.codigo || p.barras || 'S/C';
+
+        const tr = document.createElement('tr');
+        tr.dataset.deptoId = deptoId;
+        tr.dataset.precioUsd = precioUSD;
+        
+        tr.innerHTML = `
+            <td><b>${escapeHTML(codigoProd)}</b></td>
+            <td>${escapeHTML(p.nombre || p.descripcion || 'Sin nombre')}</td>
+            <td>${escapeHTML(nombreDeptoMostrado)}</td>
+            <td>$${costoUSD.toFixed(2)}</td>
+            <td style="color: #6366f1; font-weight: bold;">${parseFloat(p.ganancia || p.porcentaje || 0)}%</td>
+            <td class="col-precio">$${precioUSD.toFixed(2)} / <b class="val-bs">${precioBs} Bs</b></td>
+            <td style="font-weight: 600;">${parseInt(p.stock || 0, 10)}</td>
+        `;
+        cuerpoTabla.appendChild(tr);
+    });
+
+    // 2. Renderizar Combos / Productos Compuestos
+    listaCombos.forEach(d => {
+        const c = d.data();
+        const precioUSD = parseFloat(c.precio || c.precioVenta || 0);
+        const costoUSD = parseFloat(c.costo || c.costoTotal || 0);
+        const precioBs = (precioUSD * tasaBCV).toFixed(2);
+        const deptoId = c.departamento || '';
+        const nombreDeptoMostrado = mapaDeptos[deptoId] || 'COMBOS';
+        const codigoCombo = c.sku || c.codigo || 'COMBO';
+
+        const tr = document.createElement('tr');
+        tr.dataset.deptoId = deptoId;
+        tr.dataset.precioUsd = precioUSD;
+        
+        tr.innerHTML = `
+            <td><b>${escapeHTML(codigoCombo)}</b></td>
+            <td>
+                ${escapeHTML(c.nombre || c.descripcion || 'Combo sin nombre')} 
+                <span style="background: #e0edff; color: #0055ff; font-size: 9px; padding: 2px 6px; border-radius: 6px; font-weight: bold; margin-left: 5px;">COMBO</span>
+            </td>
+            <td>${escapeHTML(nombreDeptoMostrado)}</td>
+            <td>$${costoUSD.toFixed(2)}</td>
+            <td style="color: #6366f1; font-weight: bold;">-</td>
+            <td class="col-precio">$${precioUSD.toFixed(2)} / <b class="val-bs">${precioBs} Bs</b></td>
+            <td style="font-weight: 600;">${parseInt(c.stock || c.inventario || 0, 10)}</td>
+        `;
+        cuerpoTabla.appendChild(tr);
+    });
+
+    aplicarFiltros();
+}
+
 // --- INICIALIZACIÓN ---
 async function init() {
     try {
@@ -79,46 +152,21 @@ async function init() {
             });
         }
 
-        // 3. Cargar Productos en tiempo real
+        // 3. Escuchar Productos en tiempo real
         onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snap) => {
-            cuerpoTabla.innerHTML = "";
-            
-            if (snap.empty) {
-                cuerpoTabla.innerHTML = `<tr data-no-data="true"><td colspan="7" style="text-align:center; color:#64748B;">No hay productos registrados.</td></tr>`;
-                return;
-            }
-
-            snap.forEach(d => {
-                const p = d.data();
-                const precioUSD = parseFloat(p.precio || 0);
-                const costoUSD = parseFloat(p.costo || 0);
-                const precioBs = (precioUSD * tasaBCV).toFixed(2);
-                const deptoId = p.departamento || '';
-                const nombreDeptoMostrado = mapaDeptos[deptoId] || 'GENERAL';
-
-                // Obtener el código o SKU disponible
-                const codigoProd = p.sku || p.codigo || p.barras || 'S/C';
-
-                const tr = document.createElement('tr');
-                tr.dataset.deptoId = deptoId;
-                tr.dataset.precioUsd = precioUSD;
-                
-                // Renderizado completo de las 7 columnas
-                tr.innerHTML = `
-                    <td><b>${escapeHTML(codigoProd)}</b></td>
-                    <td>${escapeHTML(p.nombre || p.descripcion || 'Sin nombre')}</td>
-                    <td>${escapeHTML(nombreDeptoMostrado)}</td>
-                    <td>$${costoUSD.toFixed(2)}</td>
-                    <td style="color: #6366f1; font-weight: bold;">${parseFloat(p.ganancia || p.porcentaje || 0)}%</td>
-                    <td class="col-precio">$${precioUSD.toFixed(2)} / <b class="val-bs">${precioBs} Bs</b></td>
-                    <td style="font-weight: 600;">${parseInt(p.stock || 0, 10)}</td>
-                `;
-                cuerpoTabla.appendChild(tr);
-            });
-
-            aplicarFiltros();
+            listaProductos = snap.docs;
+            renderizarInventarioCompleto();
         }, (error) => {
             console.error("Error al escuchar productos:", error);
+        });
+
+        // 4. Escuchar Combos / Productos Compuestos en tiempo real
+        onSnapshot(collection(db, "usuarios", USER_ID, "combos"), (snap) => {
+            listaCombos = snap.docs;
+            renderizarInventarioCompleto();
+        }, (error) => {
+            // Si la colección 'combos' no existe aún, evitamos romper la app
+            console.warn("Aviso: No se pudo escuchar la colección 'combos' o está vacía.", error);
         });
 
     } catch (error) {
