@@ -14,7 +14,6 @@ const filtroDepto = document.getElementById('filtro-depto');
 const buscadorInv = document.getElementById('buscador-inv');
 
 const mapaDeptos = {}; // Relación ID -> Nombre
-const mapaDeptosPorNombre = {}; // Relación Nombre -> ID (para doble validación)
 let tasaBCV = 1.00;
 
 // Helper para prevenir inyecciones de HTML / XSS
@@ -40,12 +39,11 @@ function aplicarFiltros() {
         const deptoNombreFila = (tr.dataset.deptoNombre || "").trim().toLowerCase();
         const textoFila = tr.innerText.toLowerCase();
 
-        // Validar si coincide el departamento (por ID exacto o por nombre)
+        // Validar coincidencia de departamento de forma flexible (por ID o por Nombre exacto)
         let coincideDepto = false;
-        if (valorDeptoSeleccionado === "todos" || valorDeptoSeleccionado === "todos") {
+        if (valorDeptoSeleccionado === "todos" || valorDeptoSeleccionado === "todos los departamentos") {
             coincideDepto = true;
         } else {
-            // Comparamos tanto el ID como el nombre del departamento
             coincideDepto = (deptoIdFila === valorDeptoSeleccionado || deptoNombreFila === valorDeptoSeleccionado);
         }
 
@@ -76,7 +74,7 @@ async function init() {
             }
         });
 
-        // 2. Cargar Departamentos y poblar el select correctamente
+        // 2. Cargar Departamentos y poblar el select unificando valores y nombres
         const deptoSnap = await getDocs(collection(db, "usuarios", USER_ID, "departamentos"));
         
         if (filtroDepto) {
@@ -87,10 +85,11 @@ async function init() {
                 const idDepto = d.id;
 
                 mapaDeptos[idDepto] = nombre;
-                mapaDeptosPorNombre[nombre.trim().toLowerCase()] = idDepto;
+                // Guardamos también el nombre en minúsculas en el mapa para búsqueda inversa
+                mapaDeptos[nombre.trim().toLowerCase()] = nombre;
 
-                // Guardamos el ID en minúsculas en el value para estandarizar la comparación
-                filtroDepto.innerHTML += `<option value="${escapeHTML(idDepto.toLowerCase())}">${escapeHTML(nombre.toUpperCase())}</option>`;
+                // Usamos el nombre del departamento en minúsculas como value para que coincida con cómo se guarda en los productos/combos
+                filtroDepto.innerHTML += `<option value="${escapeHTML(nombre.trim().toLowerCase())}">${escapeHTML(nombre.toUpperCase())}</option>`;
             });
         }
 
@@ -109,21 +108,20 @@ async function init() {
                 const costoUSD = parseFloat(p.costo || p.costoTotal || 0);
                 const precioBs = (precioUSD * tasaBCV).toFixed(2);
                 
-                // Obtener el departamento guardado en el producto (puede ser ID o nombre)
-                const deptoGuardado = p.departamento || p.depto || '';
-                const nombreDeptoMostrado = mapaDeptos[deptoGuardado] || deptoGuardado || 'GENERAL';
+                // Obtener el departamento (puede venir como texto directo o ID)
+                let deptoGuardado = p.departamento || p.depto || '';
+                let nombreDeptoMostrado = mapaDeptos[deptoGuardado] || deptoGuardado || 'GENERAL';
 
-                // Detectar si es un combo (si tiene el arreglo de componentes o bandera)
-                const esCombo = (Array.isArray(p.componentes) && p.componentes.length > 0) || p.esCombo === true;
+                // Detectar si es un combo (por el campo es_combo == true o por tener componentes)
+                const esCombo = p.es_combo === true || (Array.isArray(p.componentes) && p.componentes.length > 0);
 
                 // Obtener el código o SKU disponible
                 const codigoProd = p.sku || p.codigo || p.barras || 'S/C';
                 const nombreProd = p.nombre || p.descripcion || 'Sin nombre';
 
                 const tr = document.createElement('tr');
-                // Guardamos tanto el ID como el nombre normalizado en los data-attributes para asegurar el filtrado
-                tr.dataset.deptoId = deptoGuardado.toLowerCase();
-                tr.dataset.deptoNombre = nombreDeptoMostrado.toLowerCase();
+                tr.dataset.deptoId = deptoGuardado.trim().toLowerCase();
+                tr.dataset.deptoNombre = nombreDeptoMostrado.trim().toLowerCase();
                 tr.dataset.precioUsd = precioUSD;
                 
                 // Renderizado de la fila con etiqueta distintiva si es combo
