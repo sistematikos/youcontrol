@@ -90,13 +90,14 @@ window.buscarCliente = (texto) => {
     return clientesMaster.filter(c => (c.id || '').toLowerCase().includes(criterio) || (c.nombre || '').toLowerCase().includes(criterio));
 };
 
-// --- AGREGAR AL CARRITO CON VALIDACIÓN DE STOCK DE COMBOS E INDIVIDUALES ---
-window.agregarCarrito = (id) => {
-    const p = productosMaster.find(x => x.id === id);
+// --- AGREGAR AL CARRITO ADMITIENDO CANTIDADES DECIMALES (PESOS / UNIDADES) ---
+window.agregarCarritoConCantidad = (id, cantidadDada = 1) => {
+    const p = productosMaster.find(x => x.id === id || x.barras === id);
     if (!p) return;
 
-    const itemExistente = carrito.find(c => c.id === id);
-    const cantidadNueva = itemExistente ? itemExistente.cantidad + 1 : 1;
+    const cantidadAsignada = parseFloat(cantidadDada) || 1;
+    const itemExistente = carrito.find(c => c.id === p.id);
+    const cantidadNueva = itemExistente ? itemExistente.cantidad + cantidadAsignada : cantidadAsignada;
 
     // VALIDACIÓN DE STOCK PARA COMBOS Y PRODUCTOS INDIVIDUALES
     if (p.es_combo) {
@@ -114,12 +115,16 @@ window.agregarCarrito = (id) => {
     }
 
     if (itemExistente) {
-        itemExistente.cantidad++;
+        itemExistente.cantidad += cantidadAsignada;
     } else {
-        carrito.push({ ...p, cantidad: 1 });
+        carrito.push({ ...p, cantidad: cantidadAsignada });
     }
 
     window.actualizarCarritoUI();
+};
+
+window.agregarCarrito = (id) => {
+    window.agregarCarritoConCantidad(id, 1);
 };
 
 // --- FUNCIÓN DE IMPRESIÓN TÉRMICA DINÁMICA ---
@@ -148,7 +153,6 @@ async function registrarVenta() {
     try {
         const nroFactura = await obtenerSiguienteNumero(USER_ID);
 
-        // Helper seguro para parsear montos (soporta puntos y comas decimales)
         const obtenerMontoInput = (id) => {
             const el = document.getElementById(id);
             if (!el || !el.value) return 0;
@@ -188,11 +192,9 @@ async function registrarVenta() {
             fecha: serverTimestamp()
         };
 
-        // 1. Guardar la venta usando el número de factura como ID exacto del documento en Firestore
         const ventaRef = doc(db, "usuarios", USER_ID, "ventas", nroFactura);
         await setDoc(ventaRef, ventaData);
 
-        // 2. DESCONTAR DEL INVENTARIO CADA PRODUCTO VENDIDO (DIFERENCIANDO COMBOS DE PRODUCTOS SIMPLES)
         for (const item of window.carrito) {
             if (item.es_combo) {
                 await descontarStockInsumosCombo(db, USER_ID, item);
@@ -204,7 +206,6 @@ async function registrarVenta() {
             }
         }
 
-        // 3. REGISTRAR EN CUENTAS POR COBRAR SI LA VENTA TIENE CRÉDITO
         if (pagoCredito > 0) {
             const cxcRef = doc(db, "usuarios", USER_ID, "cuentas_por_cobrar", nroFactura);
             await setDoc(cxcRef, {
@@ -250,7 +251,6 @@ async function registrarVenta() {
     }
 }
 
-// EXPONER LA FUNCIÓN GLOBALMENTE
 window.registrarVenta = registrarVenta;
 
 window.abrirModalReimpresion = async () => {
@@ -461,6 +461,17 @@ function initBuscadores() {
             const texto = inputProd.value.trim();
             if (!texto) return;
 
+            // 1. INTERCEPTOR DE CÓDIGO DE BALANZA INTELIGENTE
+            const fueBalanza = manejarEscaneoBalanza(texto, productosMaster, window.agregarCarritoConCantidad);
+            if (fueBalanza) {
+                inputProd.value = '';
+                inputProd.focus();
+                const divRes = document.getElementById('resultados-producto-pos');
+                if (divRes) divRes.style.display = 'none';
+                return;
+            }
+
+            // 2. BÚSQUEDA TRADICIONAL
             const divRes = document.getElementById('resultados-producto-pos');
             const resultados = window.buscarProducto(texto);
 
