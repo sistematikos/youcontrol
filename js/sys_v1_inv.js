@@ -13,8 +13,9 @@ const cuerpoTabla = document.getElementById('cuerpo-tabla');
 const filtroDepto = document.getElementById('filtro-depto');
 const buscadorInv = document.getElementById('buscador-inv');
 
-const mapaDeptos = {};
-let tasaBCV =.00;
+const mapaDeptos = {}; // Relación ID -> Nombre
+const mapaDeptosPorNombre = {}; // Relación Nombre -> ID (para doble validación)
+let tasaBCV = 1.00;
 
 // Helper para prevenir inyecciones de HTML / XSS
 const escapeHTML = (str) => {
@@ -29,16 +30,25 @@ const escapeHTML = (str) => {
 
 // --- FUNCIÓN UNIFICADA DE FILTRADO (Buscador + Departamento) ---
 function aplicarFiltros() {
-    const valorDepto = filtroDepto ? filtroDepto.value.trim().toLowerCase() : 'todos';
+    const valorDeptoSeleccionado = filtroDepto ? filtroDepto.value.trim().toLowerCase() : 'todos';
     const termBuscador = buscadorInv ? buscadorInv.value.trim().toLowerCase() : '';
 
     document.querySelectorAll('#cuerpo-tabla tr').forEach(tr => {
         if (tr.dataset.noData) return;
 
-        const deptoFila = (tr.dataset.deptoId || "").trim().toLowerCase();
+        const deptoIdFila = (tr.dataset.deptoId || "").trim().toLowerCase();
+        const deptoNombreFila = (tr.dataset.deptoNombre || "").trim().toLowerCase();
         const textoFila = tr.innerText.toLowerCase();
 
-        const coincideDepto = (valorDepto === "todos" || deptoFila === valorDepto);
+        // Validar si coincide el departamento (por ID exacto o por nombre)
+        let coincideDepto = false;
+        if (valorDeptoSeleccionado === "todos" || valorDeptoSeleccionado === "todos") {
+            coincideDepto = true;
+        } else {
+            // Comparamos tanto el ID como el nombre del departamento
+            coincideDepto = (deptoIdFila === valorDeptoSeleccionado || deptoNombreFila === valorDeptoSeleccionado);
+        }
+
         const coincideTexto = textoFila.includes(termBuscador);
 
         tr.style.display = (coincideDepto && coincideTexto) ? '' : 'none';
@@ -66,20 +76,25 @@ async function init() {
             }
         });
 
-        // 2. Cargar Departamentos
+        // 2. Cargar Departamentos y poblar el select correctamente
         const deptoSnap = await getDocs(collection(db, "usuarios", USER_ID, "departamentos"));
         
         if (filtroDepto) {
-            filtroDepto.innerHTML = `<option value="todos">TODOS LOS DEPARTAMENTOS</option>`;
+            filtroDepto.innerHTML = `<option value="TODOS">TODOS LOS DEPARTAMENTOS</option>`;
             deptoSnap.forEach(d => {
                 const dataDepto = d.data();
                 const nombre = dataDepto.nombre || dataDepto.descripcion || 'Sin nombre';
-                mapaDeptos[d.id] = nombre;
-                filtroDepto.innerHTML += `<option value="${escapeHTML(d.id)}">${escapeHTML(nombre.toUpperCase())}</option>`;
+                const idDepto = d.id;
+
+                mapaDeptos[idDepto] = nombre;
+                mapaDeptosPorNombre[nombre.trim().toLowerCase()] = idDepto;
+
+                // Guardamos el ID en minúsculas en el value para estandarizar la comparación
+                filtroDepto.innerHTML += `<option value="${escapeHTML(idDepto.toLowerCase())}">${escapeHTML(nombre.toUpperCase())}</option>`;
             });
         }
 
-        // 3. Cargar Productos y Combos (ambos están en la colección "productos") en tiempo real
+        // 3. Cargar Productos y Combos desde la colección "productos" en tiempo real
         onSnapshot(collection(db, "usuarios", USER_ID, "productos"), (snap) => {
             cuerpoTabla.innerHTML = "";
             
@@ -93,18 +108,22 @@ async function init() {
                 const precioUSD = parseFloat(p.precio || p.precioVenta || 0);
                 const costoUSD = parseFloat(p.costo || p.costoTotal || 0);
                 const precioBs = (precioUSD * tasaBCV).toFixed(2);
-                const deptoId = p.departamento || '';
-                const nombreDeptoMostrado = mapaDeptos[deptoId] || 'GENERAL';
+                
+                // Obtener el departamento guardado en el producto (puede ser ID o nombre)
+                const deptoGuardado = p.departamento || p.depto || '';
+                const nombreDeptoMostrado = mapaDeptos[deptoGuardado] || deptoGuardado || 'GENERAL';
 
-                // Detectar si es un combo (si tiene el arreglo de componentes)
-                const esCombo = Array.isArray(p.componentes) && p.componentes.length > 0;
+                // Detectar si es un combo (si tiene el arreglo de componentes o bandera)
+                const esCombo = (Array.isArray(p.componentes) && p.componentes.length > 0) || p.esCombo === true;
 
                 // Obtener el código o SKU disponible
                 const codigoProd = p.sku || p.codigo || p.barras || 'S/C';
                 const nombreProd = p.nombre || p.descripcion || 'Sin nombre';
 
                 const tr = document.createElement('tr');
-                tr.dataset.deptoId = deptoId;
+                // Guardamos tanto el ID como el nombre normalizado en los data-attributes para asegurar el filtrado
+                tr.dataset.deptoId = deptoGuardado.toLowerCase();
+                tr.dataset.deptoNombre = nombreDeptoMostrado.toLowerCase();
                 tr.dataset.precioUsd = precioUSD;
                 
                 // Renderizado de la fila con etiqueta distintiva si es combo
