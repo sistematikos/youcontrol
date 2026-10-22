@@ -6,17 +6,14 @@
 export function procesarCodigoBalanza(codigoBruto) {
     const texto = codigoBruto.trim();
     
-    // Depuración en consola para verificar qué lee la pistola
     console.log("🔍 Código leído por la pistola:", texto, "Longitud:", texto.length);
     
     // Validamos que sea un código de balanza de 13 dígitos
     if (texto.length === 13) {
-        // Extraemos los 5 dígitos del producto ubicados del índice 3 al 7 (posiciones 4 a 8 visuales)
-        const codigoProducto = texto.substring(3, 8); // Esto extraerá "02002" de tu ejemplo
-        
-        // Extraemos los dígitos del peso (desde el índice 8 hasta el 12)
-        const valorPesoGramos = parseInt(texto.substring(8, 13), 10); 
-        const pesoKg = valorPesoGramos / 1000; // Convierte a kilogramos (ej: 0.795 kg)
+        // Estructura: 3 dígitos prefijo (0-2) | 4 dígitos producto (3-6) | 5 dígitos peso (7-11) | 1 dígito control (12)
+        const codigoProducto = texto.substring(3, 7); // Extrae exactamente "2002"
+        const valorPesoGramos = parseInt(texto.substring(7, 12), 10); // Extrae "10795"
+        const pesoKg = valorPesoGramos / 1000; // Convierte a 10.795 kg
 
         console.log("✅ Producto extraído:", codigoProducto, "| Peso calculado:", pesoKg, "kg");
 
@@ -35,7 +32,7 @@ export function manejarEscaneoBalanza(texto, productosMaster, agregarCarritoConC
     const datosBalanza = procesarCodigoBalanza(texto);
     if (!datosBalanza.esBalanza) return false; 
 
-    // Busca el producto usando los 5 dígitos extraídos en ID, barras o SKU
+    // Busca el producto usando los 4 dígitos extraídos en ID, barras o SKU
     const productoBalanza = productosMaster.find(p => 
         (p.id && p.id.toLowerCase() === datosBalanza.codigoProd.toLowerCase()) || 
         (p.barras && p.barras.toLowerCase() === datosBalanza.codigoProd.toLowerCase()) ||
