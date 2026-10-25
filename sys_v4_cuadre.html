@@ -34,14 +34,28 @@
         .payment-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px; }
         .pay-card { background: #ffffff; border-radius: 14px; padding: 14px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02); display: flex; justify-content: space-between; align-items: center; }
         
-        /* Todos los métodos de pago estándar comparten el mismo borde unificado */
-        .card-pago-standard { border-left: 5px solid var(--primary-border); }
-        
-        /* El crédito mantiene su borde distintivo de alerta/ámbar */
-        .card-credito { border-left: 5px solid var(--amber); }
+        /* Estilo unificado para TODOS los inputs de pago estándar */
+        .gateway-grid .form-group input {
+            padding: 10px;
+            border: 1.5px solid #cbd5e1 !important; /* Borde gris unificado */
+            border-radius: 6px;
+            outline: none;
+            font-size: 14px;
+            font-weight: 600;
+            background-color: #ffffff;
+            transition: border-color 0.2s;
+        }
 
-        .pay-info .p-label { font-size: 0.65rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
-        .pay-info .p-val { font-size: 1.1rem; font-weight: 800; color: var(--text-dark); }
+        /* Color al hacer foco (clic o escritura) en cualquiera de ellos */
+        .gateway-grid .form-group input:focus {
+            border-color: var(--primary-color) !important;
+        }
+
+        /* EXCEPCIÓN: Únicamente el Crédito mantiene su color ámbar/naranja distintivo */
+        #in-credito-usd {
+            border-color: #f59e0b !important;
+            background-color: #fffbeb !important;
+        }
 
         /* TABLA */
         .table-panel { background: #ffffff; border-radius: 16px; padding: 18px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); border: 1px solid #E2E8F0; }
