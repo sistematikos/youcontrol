@@ -3,14 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YOU CONTROL | Reportes Gerenciales</title>
+    <!-- Encabezados para evitar caché de navegador -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <title>REPORTES GERENCIALES | YOU CONTROL</title>
+    
+    <!-- FontAwesome & Google Fonts -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
         :root {
-            --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
-            --text-dark: #1E293B;
+            --primary-dark: #002A54;
+            --bg-body: #F8FAFC;
+            --text-dark: #0F172A;
             --text-muted: #64748B;
+            --border-color: #E2E8F0;
             --emerald: #10B981;
             --indigo: #6366F1;
             --amber: #F59E0B;
@@ -18,47 +28,96 @@
             --rose: #F43F5E;
             --purple: #8B5CF6;
             --teal: #14B8A6;
-            --border: #E2E8F0;
         }
 
-        body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 20px 0; min-height: 100vh; color: var(--text-dark); }
-        .layout-width { width: 92%; max-width: 1200px; margin: 0 auto; box-sizing: border-box; }
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background: var(--bg-body); 
+            padding: 0; 
+            margin: 0; 
+            color: var(--text-dark); 
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
 
-        /* HEADER PANEL OSCURO CORPORATIVO */
-        .header-panel { 
-            background: #1E293B; 
-            padding: 0 30px; 
-            border-radius: 16px; 
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); 
+        /* BARRA DE NAVEGACIÓN SUPERIOR OSCURA */
+        .navbar-sistema { 
+            background: var(--primary-dark); 
+            width: 100%; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15); 
+            position: sticky; 
+            top: 0; 
+            z-index: 1000; 
+        }
+        .nav-container { 
+            width: 92%; 
+            max-width: 1200px; 
+            margin: 0 auto; 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            margin-bottom: 25px; 
-            height: 80px; 
-            box-sizing: border-box; 
+            height: 65px; 
         }
-        .header-left { display: flex; align-items: center; gap: 20px; }
-        
-        /* Botón Volver adaptado al banner oscuro */
-        .btn-back { 
-            background: rgba(255, 255, 255, 0.1); 
-            color: #ffffff; 
-            padding: 8px 16px; 
-            border-radius: 12px; 
-            text-decoration: none; 
-            font-size: 0.8rem; 
+        .nav-logo { 
+            color: white; 
             font-weight: 700; 
-            border: 1px solid rgba(255, 255, 255, 0.15); 
-            display: inline-flex; 
+            font-size: 1.2rem; 
+            text-decoration: none; 
+            display: flex; 
             align-items: center; 
-            gap: 8px; 
-            cursor: pointer; 
-            transition: background 0.2s;
+            gap: 10px; 
+            letter-spacing: 0.5px; 
         }
-        .btn-back:hover { background: rgba(255, 255, 255, 0.2); }
-        
-        .page-title { font-size: 1.4rem; font-weight: 700; margin: 0; color: #ffffff; }
-        .logo-header { height: 75%; width: auto; object-fit: contain; filter: brightness(0) invert(1); opacity: 0.9; }
+        .nav-logo i { color: #38BDF8; }
+
+        .btn-regresar {
+            background: rgba(255, 255, 255, 0.1);
+            color: #FFFFFF;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .btn-regresar:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #38BDF8;
+        }
+
+        /* CONTENEDOR PRINCIPAL */
+        .main-wrapper { 
+            max-width: 1200px; 
+            width: 92%; 
+            margin: 25px auto; 
+            flex-grow: 1; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 20px; 
+        }
+
+        .card { 
+            background: #FFFFFF; 
+            padding: 25px; 
+            border-radius: 16px; 
+            border: 1px solid var(--border-color); 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        }
+
+        .page-title-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #F1F5F9;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
 
         /* REJILLA DE REPORTES ORGANIZADA */
         .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
@@ -77,66 +136,79 @@
         }
     </script>
 </head>
-<body>
+<body oncontextmenu="return false">
 
-    <main class="layout-width">
-        <header class="header-panel">
-            <div class="header-left">
-                <a href="#" class="btn-back" onclick="volverAlMenu(event)"><i class="fas fa-arrow-left"></i> VOLVER</a>
-                <h1 class="page-title">Reportes Gerenciales</h1>
+    <!-- BARRA SUPERIOR UNIFICADA CON ESTILO OSCURO -->
+    <nav class="navbar-sistema">
+        <div class="nav-container">
+            <a href="#" class="btn-regresar" onclick="volverAlMenu(event)">
+                <i class="fas fa-arrow-left"></i> Regresar al Menú
+            </a>
+            <a href="sys_v1_menu.html" class="nav-logo">
+                <i class="fas fa-chart-pie"></i> YOU CONTROL
+            </a>
+        </div>
+    </nav>
+
+    <!-- CONTENEDOR PRINCIPAL DE CONTENIDO -->
+    <main class="main-wrapper">
+        <div class="card">
+            <div class="page-title-panel">
+                <h1 style="font-size: 1.25rem; margin: 0; font-weight: 700; color: #0F172A; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-chart-line" style="color: var(--sky);"></i> Reportes Gerenciales
+                </h1>
             </div>
-            <img src="img/logo.png" alt="Logo" class="logo-header">
-        </header>
 
-        <div class="menu-grid">
-            <!-- Cuadre de Caja -->
-            <a href="sys_v4_cuadre.html" class="menu-card" style="border-left: 5px solid var(--sky);">
-                <i class="fas fa-cash-register" style="color: var(--sky);"></i>
-                <span>Cuadre de Caja</span>
-                <p>Auditoría de ingresos por punto, efectivo y divisas.</p>
-            </a>
+            <div class="menu-grid">
+                <!-- Cuadre de Caja -->
+                <a href="sys_v4_cuadre.html" class="menu-card" style="border-left: 5px solid var(--sky);">
+                    <i class="fas fa-cash-register" style="color: var(--sky);"></i>
+                    <span>Cuadre de Caja</span>
+                    <p>Auditoría de ingresos por punto, efectivo y divisas.</p>
+                </a>
 
-            <!-- Reporte de Compras -->
-            <a href="sys_v3_rep_compras.html" class="menu-card" style="border-left: 5px solid var(--emerald);">
-                <i class="fas fa-shopping-cart" style="color: var(--emerald);"></i>
-                <span>Reporte de Compras</span>
-                <p>Histórico de facturas de mercancía e ingresos de mercancía.</p>
-            </a>
+                <!-- Reporte de Compras -->
+                <a href="sys_v3_rep_compras.html" class="menu-card" style="border-left: 5px solid var(--emerald);">
+                    <i class="fas fa-shopping-cart" style="color: var(--emerald);"></i>
+                    <span>Reporte de Compras</span>
+                    <p>Histórico de facturas de mercancía e ingresos de mercancía.</p>
+                </a>
 
-            <!-- NUEVO: Movimiento de Inventario -->
-            <a href="sys_v3_mov_inv.html" class="menu-card" style="border-left: 5px solid var(--teal);">
-                <i class="fas fa-exchange-alt" style="color: var(--teal);"></i>
-                <span>Movimiento de Inventario</span>
-                <p>Auditoría de entradas, salidas y ajustes manuales.</p>
-            </a>
+                <!-- Movimiento de Inventario -->
+                <a href="sys_v3_mov_inv.html" class="menu-card" style="border-left: 5px solid var(--teal);">
+                    <i class="fas fa-exchange-alt" style="color: var(--teal);"></i>
+                    <span>Movimiento de Inventario</span>
+                    <p>Auditoría de entradas, salidas y ajustes manuales.</p>
+                </a>
 
-            <!-- Reporte de Ventas -->
-            <a href="sys_v4_repvt.html" class="menu-card" style="border-left: 5px solid var(--rose);">
-                <i class="fas fa-chart-bar" style="color: var(--rose);"></i>
-                <span>Reporte de Ventas</span>
-                <p>Histórico detallado y análisis de transacciones.</p>
-            </a>
+                <!-- Reporte de Ventas -->
+                <a href="sys_v4_repvt.html" class="menu-card" style="border-left: 5px solid var(--rose);">
+                    <i class="fas fa-chart-bar" style="color: var(--rose);"></i>
+                    <span>Reporte de Ventas</span>
+                    <p>Histórico detallado y análisis de transacciones.</p>
+                </a>
 
-            <!-- Existencia -->
-            <a href="sys_v4_exist.html" class="menu-card" style="border-left: 5px solid var(--indigo);">
-                <i class="fas fa-warehouse" style="color: var(--indigo);"></i>
-                <span>Existencia</span>
-                <p>Stock valorizado y alertas de reposición.</p>
-            </a>
+                <!-- Existencia -->
+                <a href="sys_v4_exist.html" class="menu-card" style="border-left: 5px solid var(--indigo);">
+                    <i class="fas fa-warehouse" style="color: var(--indigo);"></i>
+                    <span>Existencia</span>
+                    <p>Stock valorizado y alertas de reposición.</p>
+                </a>
 
-            <!-- Info Productos -->
-            <a href="sys_v4_listpro.html" class="menu-card" style="border-left: 5px solid var(--purple);">
-                <i class="fas fa-boxes-stacked" style="color: var(--purple);"></i>
-                <span>Info Productos</span>
-                <p>Listado general y detalles técnicos de inventario.</p>
-            </a>
+                <!-- Info Productos -->
+                <a href="sys_v4_listpro.html" class="menu-card" style="border-left: 5px solid var(--purple);">
+                    <i class="fas fa-boxes-stacked" style="color: var(--purple);"></i>
+                    <span>Info Productos</span>
+                    <p>Listado general y detalles técnicos de inventario.</p>
+                </a>
 
-            <!-- Top Vendidos -->
-            <a href="#" class="menu-card" style="border-left: 5px solid var(--amber); cursor: default; opacity: 0.8;" onclick="event.preventDefault();">
-                <i class="fas fa-fire" style="color: var(--amber);"></i>
-                <span>Top Vendidos</span>
-                <p>Análisis de artículos con mayor rotación.</p>
-            </a>
+                <!-- Top Vendidos -->
+                <a href="#" class="menu-card" style="border-left: 5px solid var(--amber); cursor: default; opacity: 0.8;" onclick="event.preventDefault();">
+                    <i class="fas fa-fire" style="color: var(--amber);"></i>
+                    <span>Top Vendidos</span>
+                    <p>Análisis de artículos con mayor rotación.</p>
+                </a>
+            </div>
         </div>
     </main>
 
