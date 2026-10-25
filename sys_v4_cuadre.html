@@ -12,13 +12,9 @@
             --bg-gradient: linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%);
             --text-dark: #1E293B;
             --text-muted: #64748B;
+            --primary-border: #3b82f6; /* Color unificado para todos los pagos estándar (Azul) */
             --emerald: #10B981;
-            --sky: #0EA5E9;
-            --indigo: #6366F1;
-            --purple: #a855f7;
-            --amber: #f59e0b;
-            --zelle-color: #006aff;
-            --cashea-color: #10b981;
+            --amber: #f59e0b;         /* Color exclusivo para crédito (Ámbar/Naranja) */
         }
 
         body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 20px 0; min-height: 100vh; color: var(--text-dark); user-select: none; }
@@ -36,15 +32,14 @@
 
         /* CARDS */
         .payment-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px; }
-        .pay-card { background: #ffffff; border-radius: 14px; padding: 14px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02); border-left: 5px solid transparent; display: flex; justify-content: space-between; align-items: center; }
-        .card-efec-dolar { border-left-color: var(--emerald); }
-        .card-efec-bs { border-left-color: var(--sky); }
-        .card-punto { border-left-color: var(--indigo); }
-        .card-pago-movil { border-left-color: var(--purple); }
-        .card-zelle { border-left-color: var(--zelle-color); }
-        .card-cashea { border-left-color: var(--cashea-color); }
-        .card-credito { border-left-color: var(--amber); }
+        .pay-card { background: #ffffff; border-radius: 14px; padding: 14px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02); display: flex; justify-content: space-between; align-items: center; }
         
+        /* Todos los métodos de pago estándar comparten el mismo borde unificado */
+        .card-pago-standard { border-left: 5px solid var(--primary-border); }
+        
+        /* El crédito mantiene su borde distintivo de alerta/ámbar */
+        .card-credito { border-left: 5px solid var(--amber); }
+
         .pay-info .p-label { font-size: 0.65rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
         .pay-info .p-val { font-size: 1.1rem; font-weight: 800; color: var(--text-dark); }
 
@@ -71,22 +66,22 @@
         </div>
 
         <div class="payment-grid">
-            <div class="pay-card card-efec-dolar">
+            <div class="pay-card card-pago-standard">
                 <div class="pay-info"><span class="p-label">Efectivo USD</span><span class="p-val" id="tot-dolar">$ 0.00</span></div>
             </div>
-            <div class="pay-card card-efec-bs">
+            <div class="pay-card card-pago-standard">
                 <div class="pay-info"><span class="p-label">Efectivo Bs</span><span class="p-val" id="tot-efec-bs">Bs. 0,00</span></div>
             </div>
-            <div class="pay-card card-punto">
+            <div class="pay-card card-pago-standard">
                 <div class="pay-info"><span class="p-label">Punto Venta</span><span class="p-val" id="tot-punto">Bs. 0,00</span></div>
             </div>
-            <div class="pay-card card-pago-movil">
+            <div class="pay-card card-pago-standard">
                 <div class="pay-info"><span class="p-label">Pago Móvil</span><span class="p-val" id="tot-pmovil">Bs. 0,00</span></div>
             </div>
-            <div class="pay-card card-zelle">
+            <div class="pay-card card-pago-standard">
                 <div class="pay-info"><span class="p-label">Zelle USD</span><span class="p-val" id="tot-zelle">$ 0.00</span></div>
             </div>
-            <div class="pay-card card-cashea">
+            <div class="pay-card card-pago-standard">
                 <div class="pay-info"><span class="p-label">Cashea USD</span><span class="p-val" id="tot-cashea">$ 0.00</span></div>
             </div>
             <div class="pay-card card-credito">
