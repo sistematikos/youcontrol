@@ -33,7 +33,6 @@
             overflow: hidden;
         }
 
-        /* NAVBAR SUPERIOR */
         .navbar {
             background-color: var(--primary-color);
             color: white;
@@ -62,15 +61,10 @@
             cursor: pointer;
             font-weight: 600;
             font-size: 13px;
-            transition: background 0.2s;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
             gap: 5px;
-        }
-
-        .btn-menu-top:hover {
-            background: rgba(255, 255, 255, 0.3);
         }
 
         .shortcuts-container {
@@ -106,7 +100,6 @@
             font-weight: 800;
         }
 
-        /* CONTENIDO PRINCIPAL */
         .main-layout {
             flex: 1;
             display: flex;
@@ -116,7 +109,6 @@
             gap: 15px;
         }
 
-        /* PANEL SUPERIOR: BÚSQUEDA Y CLIENTES */
         .left-panel {
             display: flex;
             flex-direction: row;
@@ -189,7 +181,6 @@
             border-radius: 8px;
             font-size: 14px;
             outline: none;
-            transition: border-color 0.2s;
         }
 
         .buscador-wrapper input:focus, .input-with-action:focus-within {
@@ -216,7 +207,6 @@
             display: none;
         }
 
-        /* PANEL INFERIOR: CARRITO */
         .right-panel {
             flex: 1;
             background: white;
@@ -245,19 +235,9 @@
             border-radius: 6px;
             font-size: 13px;
             font-weight: 800;
-            letter-spacing: 0.5px;
-            box-shadow: 0 2px 4px rgba(0, 106, 255, 0.2);
             border: none;
         }
 
-        .factura-live-badge span {
-            color: #ffffff;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 14px;
-            margin-left: 3px;
-        }
-
-        /* LISTA DEL CARRITO - DISEÑO DE UNA SOLA LÍNEA COMPACTA */
         .cart-items-container {
             flex: 1;
             overflow-y: auto;
@@ -267,25 +247,6 @@
             gap: 6px;
         }
 
-        .cart-items-container .carrito-item, 
-        .cart-items-container > div {
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            background: #fdfdfd;
-            border: 1px solid var(--border-color);
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 13px;
-            gap: 15px;
-        }
-
-        .cart-items-container .carrito-item *, 
-        .cart-items-container > div * {
-            margin: 0 !important;
-        }
-
-        /* TOTALES DE VENTA Y BOTÓN DE PAGO */
         .cart-bottom-horizontal {
             display: flex;
             background: #f8fafc;
@@ -297,8 +258,6 @@
         .totals-section {
             padding: 15px 25px;
             text-align: right;
-            background: transparent;
-            border-top: none;
             display: flex;
             gap: 20px;
             align-items: center;
@@ -316,7 +275,6 @@
             font-size: 15px;
             color: var(--text-muted);
             font-weight: 600;
-            margin-top: 0;
         }
 
         .btn-pay-action {
@@ -329,16 +287,9 @@
             font-size: 16px;
             font-weight: 700;
             cursor: pointer;
-            transition: background 0.2s;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
-        .btn-pay-action:hover {
-            background: var(--primary-hover);
-        }
-
-        /* MODAL */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -391,13 +342,26 @@
             text-transform: uppercase;
         }
 
-        .form-group input {
+        /* ESTILOS UNIFICADOS PARA TODOS LOS INPUTS ESTÁNDAR DE PAGO */
+        .gateway-grid .form-group input {
             padding: 10px;
-            border: 1.5px solid var(--border-color);
+            border: 1.5px solid #cbd5e1 !important;
             border-radius: 6px;
             outline: none;
             font-size: 14px;
             font-weight: 600;
+            background-color: #ffffff;
+            transition: border-color 0.2s;
+        }
+
+        .gateway-grid .form-group input:focus {
+            border-color: var(--primary-color) !important;
+        }
+
+        /* EXCEPCIÓN: Únicamente el Crédito mantiene su color ámbar/naranja distintivo */
+        #in-credito-usd {
+            border-color: #f59e0b !important;
+            background-color: #fffbeb !important;
         }
     </style>
 
@@ -422,14 +386,12 @@
             <button class="btn-shortcut" onclick="window.ejecutarF5()">F5 PRECIO</button>
             <button class="btn-shortcut" onclick="window.ejecutarF6()">F6 ELIMINAR</button>
             <button class="btn-shortcut" onclick="window.abrirModalCobro()">F9 COBRAR</button>
-            <!-- Botón de Búsqueda y Reimpresión Rápida -->
             <button class="btn-shortcut" style="background:#0ea5e9; color:white;" onclick="window.abrirModalReimpresion()"><i class="fas fa-receipt"></i> Buscar / Reimprimir</button>
             <div class="tasa-bcv-badge">BCV: <span id="txt-tasa">0.00</span> Bs.</div>
         </div>
     </header>
 
     <main class="main-layout">
-        <!-- SECCIÓN SUPERIOR: BÚSQUEDA Y CLIENTES -->
         <section class="left-panel">
             <div class="search-box-container">
                 <div>
@@ -455,7 +417,6 @@
             <div class="grid-productos-view" id="grid-productos"></div>
         </section>
 
-        <!-- SECCIÓN INFERIOR: CARRITO -->
         <section class="right-panel">
             <div class="panel-section-header">
                 <div class="input-group-title" style="margin: 0;"><i class="fas fa-shopping-cart"></i> Artículos en Carro</div>
@@ -495,14 +456,15 @@
                     <div class="form-group"><label>Pago Móvil (Bs.)</label><input type="number" id="in-pagomovil-bs" value="0" step="any"></div>
                     <div class="form-group"><label>Efectivo (Bs.)</label><input type="number" id="in-efectivo-bs" value="0" step="any"></div>
                     <div class="form-group"><label>Divisas ($)</label><input type="number" id="in-divisas-usd" value="0" step="any"></div>
-                    <div class="form-group"><label style="color: #0284c7;">Zelle ($)</label><input type="number" id="in-zelle-usd" value="0" step="any" style="border-color: #0ea5e9;"></div>
-                    <div class="form-group"><label style="color: #10b981;">Cashea ($)</label><input type="number" id="in-cashea-usd" value="0" step="any" style="border-color: #10b981;"></div>
-                    <div class="form-group" style="grid-column: span 2;"><label style="color: #d97706;">Crédito ($)</label><input type="number" id="in-credito-usd" value="0" step="any" style="border-color: #f59e0b;"></div>
+                    <div class="form-group"><label>Zelle ($)</label><input type="number" id="in-zelle-usd" value="0" step="any"></div>
+                    <div class="form-group"><label>Cashea ($)</label><input type="number" id="in-cashea-usd" value="0" step="any"></div>
+                    <div class="form-group" style="grid-column: span 2;"><label style="color: #d97706;">Crédito ($)</label><input type="number" id="in-credito-usd" value="0" step="any"></div>
                 </div>
                 <button id="btn-confirmar-venta" class="btn-pay-action" style="margin-top: 25px; border-radius: 8px; width: 100%; min-height: unset; padding: 16px;" onclick="window.registrarVenta()">CONFIRMAR VENTA</button>            
             </div>
         </div>
     </div>
+
     <!-- MODAL DE BÚSQUEDA Y REIMPRESIÓN DE FACTURAS -->
     <div class="modal-overlay" id="modalBuscarFactura">
         <div class="modal-card" style="width: 550px;">
@@ -512,9 +474,7 @@
             </div>
             <div class="modal-body">
                 <input type="text" id="input-buscar-factura" placeholder="Filtrar por Nro de Factura o Nombre de Cliente..." style="width:100%; padding:11px; border:1.5px solid var(--border-color); border-radius:8px; font-size:14px; margin-bottom:15px; outline:none;">
-                <div id="lista-facturas-dia" style="max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
-                    <!-- Listado dinámico -->
-                </div>
+                <div id="lista-facturas-dia" style="max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;"></div>
             </div>
         </div>
     </div>
