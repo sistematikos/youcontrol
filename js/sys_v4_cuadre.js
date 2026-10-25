@@ -1,6 +1,6 @@
 /**
  * YOU CONTROL - SISTEMATIKOS
- * sys_v4_cuadre.js - Módulo de Cuadre de Caja con totales de crédito
+ * sys_v4_cuadre.js - Módulo de Cuadre de Caja con totales de crédito, zelle y cashea
  */
 
 import { db } from './firebase-config.js';
@@ -35,7 +35,8 @@ function extraerFechaLocal(campoFecha) {
 
 // Renderizar los datos según la fecha elegida
 function procesarYMostrarCuadre(fechaSeleccionada) {
-    let t = { usd: 0, efecBs: 0, punto: 0, pmovil: 0, creditoUSD: 0, global: 0 };
+    // Añadimos zelle y cashea al objeto de totales
+    let t = { usd: 0, efecBs: 0, punto: 0, pmovil: 0, zelleUSD: 0, casheaUSD: 0, creditoUSD: 0, global: 0 };
     tablaCuerpo.innerHTML = "";
 
     const ventasFiltradas = todasLasVentas.filter(v => v.fechaLocal === fechaSeleccionada);
@@ -44,15 +45,17 @@ function procesarYMostrarCuadre(fechaSeleccionada) {
         const p = data.pagos || {};
         const nombreCliente = data.nombre_cliente || "Anónimo";
         
-        // Acumular totales (leyendo correctamente pagomovil_bs)
+        // Acumular totales de cada moneda/método de pago
         t.usd += parseFloat(p.divisas_usd || 0);
         t.efecBs += parseFloat(p.efectivo_bs || 0);
         t.punto += parseFloat(p.punto_bs || 0);
-        t.pmovil += parseFloat(p.pagomovil_bs || 0); // <-- Corrección aplicada aquí
+        t.pmovil += parseFloat(p.pagomovil_bs || 0);
+        t.zelleUSD += parseFloat(p.zelle_usd || 0);     // <-- Acumulador Zelle
+        t.casheaUSD += parseFloat(p.cashea_usd || 0);   // <-- Acumulador Cashea
         t.creditoUSD += parseFloat(p.credito_usd || 0);
         t.global += parseFloat(data.total_usd || 0);
 
-        // Obtener la hora de forma segura (si data.hora no existe, la saca de la fecha)
+        // Obtener la hora de forma segura
         let horaFormateada = data.hora;
         if (!horaFormateada || horaFormateada === '--:--') {
             let dTemp;
@@ -74,7 +77,7 @@ function procesarYMostrarCuadre(fechaSeleccionada) {
         // Suma total de Bs pagados en esta factura para mostrar en la tabla
         const totalBsFactura = parseFloat(p.efectivo_bs || 0) + parseFloat(p.punto_bs || 0) + parseFloat(p.pagomovil_bs || 0);
 
-        // Pintar fila en la tabla con la hora corregida
+        // Pintar fila en la tabla
         tablaCuerpo.innerHTML += `<tr>
             <td><strong>${data.nro_factura || '---'}</strong><br><small>${horaFormateada}</small></td>
             <td>${nombreCliente}</td>
@@ -87,18 +90,19 @@ function procesarYMostrarCuadre(fechaSeleccionada) {
         tablaCuerpo.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#64748B;">No hay ventas registradas para la fecha ${fechaSeleccionada}</td></tr>`;
     }
 
-    // Actualizar UI de tarjetas y totales
+    // Actualizar UI de tarjetas y totales (incluyendo Zelle y Cashea si existen los elementos en el HTML)
     if(document.getElementById('tot-dolar')) document.getElementById('tot-dolar').innerText = `$ ${t.usd.toFixed(2)}`;
     if(document.getElementById('tot-efec-bs')) document.getElementById('tot-efec-bs').innerText = `Bs. ${t.efecBs.toFixed(2)}`;
     if(document.getElementById('tot-punto')) document.getElementById('tot-punto').innerText = `Bs. ${t.punto.toFixed(2)}`;
     if(document.getElementById('tot-pmovil')) document.getElementById('tot-pmovil').innerText = `Bs. ${t.pmovil.toFixed(2)}`;
+    if(document.getElementById('tot-zelle')) document.getElementById('tot-zelle').innerText = `$ ${t.zelleUSD.toFixed(2)}`;       // ID sugerido para la tarjeta HTML de Zelle
+    if(document.getElementById('tot-cashea')) document.getElementById('tot-cashea').innerText = `$ ${t.casheaUSD.toFixed(2)}`;     // ID sugerido para la tarjeta HTML de Cashea
     if(document.getElementById('tot-credito')) document.getElementById('tot-credito').innerText = `$ ${t.creditoUSD.toFixed(2)}`;
     if(document.getElementById('tot-venta-dia')) document.getElementById('tot-venta-dia').innerText = `Venta Total: $ ${t.global.toFixed(2)}`;
 }
 
 // Inicialización y escucha en tiempo real única
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Establecer fecha actual local en el input
     const hoy = new Date();
     const yyyy = hoy.getFullYear();
     const mm = String(hoy.getMonth() + 1).padStart(2, '0');
@@ -111,7 +115,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const colRef = collection(db, "usuarios", USER_ID, "ventas");
 
-    // 2. Escuchar la base de datos una sola vez
     onSnapshot(colRef, (snapshot) => {
         todasLasVentas = [];
         snapshot.forEach(doc => {
@@ -120,12 +123,10 @@ document.addEventListener('DOMContentLoaded', () => {
             todasLasVentas.push({ id: doc.id, fechaLocal, ...data });
         });
 
-        // Procesar con la fecha actual del input
         const fechaActiva = inputFecha ? inputFecha.value : fechaHoyStr;
         procesarYMostrarCuadre(fechaActiva);
     });
 
-    // 3. Evento al cambiar la fecha en el selector
     if (inputFecha) {
         inputFecha.addEventListener('change', (e) => {
             procesarYMostrarCuadre(e.target.value);
