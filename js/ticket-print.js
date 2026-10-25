@@ -116,8 +116,7 @@ function imprimirPorUSB(ventaData, configTicket) {
             </style>
         </head>
         <body>
-            <div class="centro negrita" style="font-size: 11px;">SISTEMA YOU CONTROL</div>
-            <div class="centro negrita" style="font-size: 13px; margin-top: 3px;">${(configTicket.nombre_negocio || 'YOU CONTROL').toUpperCase()}</div>
+            <div class="centro negrita" style="font-size: 13px; margin-top: 3px;">${(configTicket.nombre_negocio || 'NEGOCIO').toUpperCase()}</div>
             ${configTicket.telefono ? `<div class="centro">Tel: ${configTicket.telefono}</div>` : ''}
             ${configTicket.direccion ? `<div class="centro" style="font-size: 9px; margin-top: 2px;">${configTicket.direccion}</div>` : ''}
             
@@ -146,8 +145,6 @@ function imprimirPorUSB(ventaData, configTicket) {
             <div class="centro" style="margin: 4px 0;">--------------------------------</div>
             
             <div class="centro" style="margin-top: 6px;">${configTicket.pie_pagina || '¡Gracias por su compra!'}</div>
-            <div class="centro" style="margin: 6px 0;">&nbsp;</div>
-            <div class="centro negrita" style="font-size: 10px;">SISTEMA YOU CONTROL</div>
             <div style="margin-bottom: 15px;">&nbsp;</div>
         </body>
         </html>
@@ -212,10 +209,9 @@ export async function imprimirPorBluetooth(ventaData = null, configTicket = null
         comandos.push(27, 64); 
         comandos.push(27, 97, 1); 
 
-        // Encabezado alineado al centro
-        comandos.push(...encoder.encode("SISTEMA YOU CONTROL\n"));
+        // Encabezado alineado al centro (Sin mención de Sistema)
         comandos.push(27, 33, 8); // Texto negrita/mediano
-        comandos.push(...encoder.encode(`${(configTicket?.nombre_negocio || 'YOU CONTROL').toUpperCase()}\n`));
+        comandos.push(...encoder.encode(`${(configTicket?.nombre_negocio || 'NEGOCIO').toUpperCase()}\n`));
         comandos.push(27, 33, 0); // Apagar negrita
 
         if (configTicket?.telefono) comandos.push(...encoder.encode(`Tel: ${configTicket.telefono}\n`));
@@ -228,7 +224,7 @@ export async function imprimirPorBluetooth(ventaData = null, configTicket = null
         comandos.push(...encoder.encode(`FECHA: ${fechaStr}\n`));
         comandos.push(...encoder.encode("--------------------------------\n"));
 
-        // Alineación izquierda para los productos (idéntico al formato USB)
+        // Alineación izquierda para los productos
         comandos.push(27, 97, 0);
 
         const tasa = ventaData.tasa_aplicada || 1;
@@ -256,7 +252,7 @@ export async function imprimirPorBluetooth(ventaData = null, configTicket = null
             });
         }
 
-        // Línea divisoria y total centrados/derecha
+        // Línea divisoria y total centrados
         comandos.push(27, 97, 1);
         comandos.push(...encoder.encode("--------------------------------\n"));
 
@@ -266,8 +262,7 @@ export async function imprimirPorBluetooth(ventaData = null, configTicket = null
         comandos.push(27, 33, 0);
 
         comandos.push(...encoder.encode("--------------------------------\n"));
-        comandos.push(...encoder.encode(`${configTicket?.pie_pagina || '¡Gracias por su compra!'}\n\n`));
-        comandos.push(...encoder.encode("SISTEMA YOU CONTROL\n\n\n")); 
+        comandos.push(...encoder.encode(`${configTicket?.pie_pagina || '¡Gracias por su compra!'}\n\n\n`));
 
         const byteArray = new Uint8Array(comandos);
         const chunkSize = 512;
