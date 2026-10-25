@@ -17,6 +17,8 @@
             --indigo: #6366F1;
             --purple: #a855f7;
             --amber: #f59e0b;
+            --zelle-color: #006aff;
+            --cashea-color: #10b981;
         }
 
         body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 20px 0; min-height: 100vh; color: var(--text-dark); user-select: none; }
@@ -33,15 +35,18 @@
         .date-selector input { border: none; font-family: 'Poppins', sans-serif; font-weight: 600; color: var(--text-dark); outline: none; cursor: pointer; }
 
         /* CARDS */
-        .payment-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .payment-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px; }
         .pay-card { background: #ffffff; border-radius: 14px; padding: 14px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02); border-left: 5px solid transparent; display: flex; justify-content: space-between; align-items: center; }
         .card-efec-dolar { border-left-color: var(--emerald); }
         .card-efec-bs { border-left-color: var(--sky); }
         .card-punto { border-left-color: var(--indigo); }
         .card-pago-movil { border-left-color: var(--purple); }
+        .card-zelle { border-left-color: var(--zelle-color); }
+        .card-cashea { border-left-color: var(--cashea-color); }
         .card-credito { border-left-color: var(--amber); }
+        
         .pay-info .p-label { font-size: 0.65rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
-        .pay-info .p-val { font-size: 1.2rem; font-weight: 800; color: var(--text-dark); }
+        .pay-info .p-val { font-size: 1.1rem; font-weight: 800; color: var(--text-dark); }
 
         /* TABLA */
         .table-panel { background: #ffffff; border-radius: 16px; padding: 18px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); border: 1px solid #E2E8F0; }
@@ -77,6 +82,12 @@
             </div>
             <div class="pay-card card-pago-movil">
                 <div class="pay-info"><span class="p-label">Pago Móvil</span><span class="p-val" id="tot-pmovil">Bs. 0,00</span></div>
+            </div>
+            <div class="pay-card card-zelle">
+                <div class="pay-info"><span class="p-label">Zelle USD</span><span class="p-val" id="tot-zelle">$ 0.00</span></div>
+            </div>
+            <div class="pay-card card-cashea">
+                <div class="pay-info"><span class="p-label">Cashea USD</span><span class="p-val" id="tot-cashea">$ 0.00</span></div>
             </div>
             <div class="pay-card card-credito">
                 <div class="pay-info"><span class="p-label">Crédito USD</span><span class="p-val" id="tot-credito">$ 0.00</span></div>
