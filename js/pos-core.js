@@ -166,6 +166,8 @@ async function registrarVenta() {
         const pagoEfectivoBs = obtenerMontoInput('in-efectivo-bs');
         const pagoDivisas = obtenerMontoInput('in-divisas-usd');
         const pagoCredito = obtenerMontoInput('in-credito-usd');
+        const pagoZelle = obtenerMontoInput('in-zelle-usd');
+        const pagoCashea = obtenerMontoInput('in-cashea-usd');
 
         const totalUSD = window.totalVentaUSD || 0;
 
@@ -187,7 +189,9 @@ async function registrarVenta() {
                 pagomovil_bs: pagoMovil,
                 efectivo_bs: pagoEfectivoBs,
                 divisas_usd: pagoDivisas,
-                credito_usd: pagoCredito
+                credito_usd: pagoCredito,
+                zelle_usd: pagoZelle,
+                cashea_usd: pagoCashea
             },
             fecha: serverTimestamp()
         };
@@ -231,7 +235,7 @@ async function registrarVenta() {
             window.actualizarCarritoUI();
         }
 
-        ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd', 'in-credito-usd'].forEach(id => {
+        ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd', 'in-credito-usd', 'in-zelle-usd', 'in-cashea-usd'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = 0;
         });
@@ -507,6 +511,8 @@ function initLogicaPagos() {
     const camposBs = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs'];
     const inputDivisas = document.getElementById('in-divisas-usd');
     const inputCredito = document.getElementById('in-credito-usd');
+    const inputZelle = document.getElementById('in-zelle-usd');
+    const inputCashea = document.getElementById('in-cashea-usd');
 
     camposBs.forEach(id => {
         document.getElementById(id)?.addEventListener('click', () => {
@@ -515,32 +521,65 @@ function initLogicaPagos() {
             
             const valorDivisasBs = (parseFloat(inputDivisas?.value) || 0) * tasaActual;
             const valorCreditoBs = (parseFloat(inputCredito?.value) || 0) * tasaActual;
+            const valorZelleBs = (parseFloat(inputZelle?.value) || 0) * tasaActual;
+            const valorCasheaBs = (parseFloat(inputCashea?.value) || 0) * tasaActual;
             
             const sumOtrosBs = camposBs.filter(c => c !== id).reduce((acc, cId) => acc + (parseFloat(document.getElementById(cId)?.value) || 0), 0);
             
-            const pendiente = totalBs - sumOtrosBs - valorDivisasBs - valorCreditoBs;
+            const pendiente = totalBs - sumOtrosBs - valorDivisasBs - valorCreditoBs - valorZelleBs - valorCasheaBs;
             el.value = (pendiente > 0 ? pendiente : 0).toFixed(2);
         });
     });
 
     inputDivisas?.addEventListener('click', () => {
-        const totalBs = (window.totalVentaUSD || 0) * tasaActual;
-        const valorCreditoBs = (parseFloat(inputCredito?.value) || 0) * tasaActual;
+        const totalUSD = window.totalVentaUSD || 0;
         const sumBs = camposBs.reduce((acc, cId) => acc + (parseFloat(document.getElementById(cId)?.value) || 0), 0);
+        const sumCredito = parseFloat(inputCredito?.value) || 0;
+        const sumZelle = parseFloat(inputZelle?.value) || 0;
+        const sumCashea = parseFloat(inputCashea?.value) || 0;
         
-        const pendienteBs = totalBs - sumBs - valorCreditoBs;
-        inputDivisas.value = (pendienteBs / tasaActual > 0 ? (pendienteBs / tasaActual) : 0).toFixed(2);
+        const pagadoOtrosUSD = sumCredito + sumZelle + sumCashea + (sumBs / tasaActual);
+        const pendienteUSD = totalUSD - pagadoOtrosUSD;
+        inputDivisas.value = (pendienteUSD > 0 ? pendienteUSD : 0).toFixed(2);
     });
 
     inputCredito?.addEventListener('click', () => {
         const totalUSD = window.totalVentaUSD || 0;
         const sumBs = camposBs.reduce((acc, cId) => acc + (parseFloat(document.getElementById(cId)?.value) || 0), 0);
-        const sumDivisasUSD = parseFloat(inputDivisas?.value) || 0;
+        const sumDivisas = parseFloat(inputDivisas?.value) || 0;
+        const sumZelle = parseFloat(inputZelle?.value) || 0;
+        const sumCashea = parseFloat(inputCashea?.value) || 0;
         
-        const pagadoOtryUSD = sumDivisasUSD + (sumBs / tasaActual);
-        const pendienteUSD = totalUSD - pagadoOtryUSD;
+        const pagadoOtrosUSD = sumDivisas + sumZelle + sumCashea + (sumBs / tasaActual);
+        const pendienteUSD = totalUSD - pagadoOtrosUSD;
 
         inputCredito.value = (pendienteUSD > 0 ? pendienteUSD : 0).toFixed(2);
+    });
+
+    inputZelle?.addEventListener('click', () => {
+        const totalUSD = window.totalVentaUSD || 0;
+        const sumBs = camposBs.reduce((acc, cId) => acc + (parseFloat(document.getElementById(cId)?.value) || 0), 0);
+        const sumDivisas = parseFloat(inputDivisas?.value) || 0;
+        const sumCredito = parseFloat(inputCredito?.value) || 0;
+        const sumCashea = parseFloat(inputCashea?.value) || 0;
+        
+        const pagadoOtrosUSD = sumDivisas + sumCredito + sumCashea + (sumBs / tasaActual);
+        const pendienteUSD = totalUSD - pagadoOtrosUSD;
+
+        inputZelle.value = (pendienteUSD > 0 ? pendienteUSD : 0).toFixed(2);
+    });
+
+    inputCashea?.addEventListener('click', () => {
+        const totalUSD = window.totalVentaUSD || 0;
+        const sumBs = camposBs.reduce((acc, cId) => acc + (parseFloat(document.getElementById(cId)?.value) || 0), 0);
+        const sumDivisas = parseFloat(inputDivisas?.value) || 0;
+        const sumCredito = parseFloat(inputCredito?.value) || 0;
+        const sumZelle = parseFloat(inputZelle?.value) || 0;
+        
+        const pagadoOtrosUSD = sumDivisas + sumCredito + sumZelle + (sumBs / tasaActual);
+        const pendienteUSD = totalUSD - pagadoOtrosUSD;
+
+        inputCashea.value = (pendienteUSD > 0 ? pendienteUSD : 0).toFixed(2);
     });
 }
 
@@ -592,7 +631,7 @@ document.addEventListener('keydown', (event) => {
 }, true);
 
 document.addEventListener('input', (e) => {
-    const camposPago = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd', 'in-credito-usd'];
+    const camposPago = ['in-punto-bs', 'in-pagomovil-bs', 'in-efectivo-bs', 'in-divisas-usd', 'in-credito-usd', 'in-zelle-usd', 'in-cashea-usd'];
     if (camposPago.includes(e.target.id)) {
         const btn = document.getElementById('btn-confirmar-venta');
         if (btn) btn.disabled = false;
