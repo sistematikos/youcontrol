@@ -26,6 +26,7 @@ window.totalVentaUSD = 0;
 window.formatoFactura = "ticket";
 window.indiceProd = -1;
 window.indiceClie = -1;
+window.itemCarritoSeleccionadoIndex = -1;
 
 window.ejecutarF4 = ejecutarF4;
 window.ejecutarF5 = ejecutarF5;
@@ -116,8 +117,11 @@ window.agregarCarritoConCantidad = (id, cantidadDada = 1) => {
 
     if (itemExistente) {
         itemExistente.cantidad += cantidadAsignada;
+        // Selecciona automáticamente el ítem recién incrementado
+        window.itemCarritoSeleccionadoIndex = carrito.findIndex(c => c.id === p.id);
     } else {
         carrito.push({ ...p, cantidad: cantidadAsignada });
+        window.itemCarritoSeleccionadoIndex = carrito.length - 1;
     }
 
     window.actualizarCarritoUI();
@@ -231,6 +235,7 @@ async function registrarVenta() {
         if (modalPago) modalPago.style.display = 'none';
 
         window.carrito = [];
+        window.itemCarritoSeleccionadoIndex = -1;
         if (typeof window.actualizarCarritoUI === 'function') {
             window.actualizarCarritoUI();
         }
@@ -412,6 +417,7 @@ window.ponerEnEspera = () => {
 
     // Limpiar carrito actual tras aparcar
     window.carrito = [];
+    window.itemCarritoSeleccionadoIndex = -1;
     window.clienteSeleccionadoID = null;
     window.nombreClienteSeleccionado = null;
     
@@ -479,6 +485,7 @@ window.cargarFacturaEspera = (index) => {
 
     // Restaurar datos al POS
     window.carrito = seleccionada.items;
+    window.itemCarritoSeleccionadoIndex = window.carrito.length > 0 ? 0 : -1;
     window.clienteSeleccionadoID = seleccionada.cliente_id;
     window.nombreClienteSeleccionado = seleccionada.nombre_cliente;
 
@@ -710,33 +717,65 @@ window.actualizarCarritoUI = () => {
     const contenedor = document.getElementById('lista-carrito');
     if (!contenedor) return;
 
-    contenedor.innerHTML = carrito.map(item => {
-        const precioUnitUSD = item.precio || 0;
-        const subtotalUSD = item.cantidad * precioUnitUSD;
-        const subtotalBs = subtotalUSD * tasaActual;
+    if (carrito.length === 0) {
+        window.itemCarritoSeleccionadoIndex = -1;
+        contenedor.innerHTML = `<div style="text-align:center; padding:20px; color:#64748b; font-size:13px;">El carrito está vacío</div>`;
+    } else {
+        if (window.itemCarritoSeleccionadoIndex < 0 || window.itemCarritoSeleccionadoIndex >= carrito.length) {
+            window.itemCarritoSeleccionadoIndex = carrito.length - 1;
+        }
 
-        return `
-            <div style="display: flex; justify-content: space-between; align-items: center; background: #fdfdfd; border: 1px solid #e2e8f0; padding: 8px 12px; border-radius: 6px; font-size: 13px; gap: 15px; margin-bottom: 6px;">
-                <div style="display: flex; align-items: center; gap: 10px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1;">
-                    <span style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 11px;">${item.cantidad}x</span>
-                    <strong style="color: #1e293b; overflow: hidden; text-overflow: ellipsis;" title="${item.nombre}">${item.nombre}</strong>
-                </div>
-                <div style="display: flex; align-items: center; gap: 15px; white-space: nowrap;">
-                    <span style="color: #64748b; font-size: 12px;">($${precioUnitUSD.toFixed(2)} c/u)</span>
-                    <div style="text-align: right; display: flex; flex-direction: column; line-height: 1.2;">
-                        <strong style="color: #006aff; font-size: 13px;">$ ${subtotalUSD.toFixed(2)}</strong>
-                        <small style="color: #64748b; font-size: 11px; font-weight: 600;">${subtotalBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})} Bs.</small>
+        contenedor.innerHTML = carrito.map((item, index) => {
+            const precioUnitUSD = item.precio || 0;
+            const subtotalUSD = item.cantidad * precioUnitUSD;
+            const subtotalBs = subtotalUSD * tasaActual;
+            const esSeleccionado = index === window.itemCarritoSeleccionadoIndex;
+
+            return `
+                <div onclick="window.seleccionarItemCarrito(${index})" 
+                     style="display: flex; justify-content: space-between; align-items: center; 
+                            background: ${esSeleccionado ? '#eff6ff' : '#fdfdfd'}; 
+                            border: 2px solid ${esSeleccionado ? '#006aff' : '#e2e8f0'}; 
+                            padding: 8px 12px; border-radius: 6px; font-size: 13px; gap: 15px; margin-bottom: 6px; cursor: pointer; transition: all 0.15s ease;">
+                    <div style="display: flex; align-items: center; gap: 10px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1;">
+                        <span style="background: ${esSeleccionado ? '#006aff' : '#e2e8f0'}; color: ${esSeleccionado ? 'white' : '#1e293b'}; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 11px;">${item.cantidad}x</span>
+                        <strong style="color: #1e293b; overflow: hidden; text-overflow: ellipsis;" title="${item.nombre}">${item.nombre}</strong>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 15px; white-space: nowrap;">
+                        <span style="color: #64748b; font-size: 12px;">($${precioUnitUSD.toFixed(2)} c/u)</span>
+                        <div style="text-align: right; display: flex; flex-direction: column; line-height: 1.2;">
+                            <strong style="color: #006aff; font-size: 13px;">$ ${subtotalUSD.toFixed(2)}</strong>
+                            <small style="color: #64748b; font-size: 11px; font-weight: 600;">${subtotalBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})} Bs.</small>
+                        </div>
+                        <button onclick="event.stopPropagation(); window.eliminarItemCarrito(${index});" style="background: transparent; border: none; color: #ef4444; cursor: pointer; padding: 4px;" title="Eliminar este ítem">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
                     </div>
                 </div>
-            </div>
-        `;
-    }).join('');
+            `;
+        }).join('');
+    }
 
     const totalUSD = carrito.reduce((sum, item) => sum + (item.cantidad * (item.precio || 0)), 0);
     window.totalVentaUSD = totalUSD;
     if(document.getElementById('total-usd')) document.getElementById('total-usd').innerText = `$ ${totalUSD.toFixed(2)}`;
     const totalBs = totalUSD * tasaActual;
     if(document.getElementById('total-bs')) document.getElementById('total-bs').innerText = `${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2})} Bs.`;
+};
+
+window.seleccionarItemCarrito = (index) => {
+    window.itemCarritoSeleccionadoIndex = index;
+    window.actualizarCarritoUI();
+};
+
+window.eliminarItemCarrito = (index) => {
+    if (index >= 0 && index < window.carrito.length) {
+        window.carrito.splice(index, 1);
+        if (window.itemCarritoSeleccionadoIndex >= window.carrito.length) {
+            window.itemCarritoSeleccionadoIndex = window.carrito.length - 1;
+        }
+        window.actualizarCarritoUI();
+    }
 };
 
 document.addEventListener('keydown', (event) => {
