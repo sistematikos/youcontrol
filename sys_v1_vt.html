@@ -372,7 +372,7 @@
         }
     </script>
 </head>
-<body>
+<body oncontextmenu="return false">
 
     <header class="navbar">
         <div class="navbar-brand">
@@ -385,6 +385,11 @@
             <button class="btn-shortcut" onclick="window.ejecutarF4()">F4 CANTIDAD</button>
             <button class="btn-shortcut" onclick="window.ejecutarF5()">F5 PRECIO</button>
             <button class="btn-shortcut" onclick="window.ejecutarF6()">F6 ELIMINAR</button>
+            
+            <!-- NUEVOS BOTONES FACTURAS EN ESPERA -->
+            <button class="btn-shortcut" style="background:#f59e0b; color:white;" onclick="window.ponerEnEspera()"><i class="fas fa-pause-circle"></i> En Espera</button>
+            <button class="btn-shortcut" style="background:#10b981; color:white;" onclick="window.abrirModalEspera()"><i class="fas fa-play-circle"></i> Cargar Espera</button>
+
             <button class="btn-shortcut" onclick="window.abrirModalCobro()">F9 COBRAR</button>
             <button class="btn-shortcut" style="background:#0ea5e9; color:white;" onclick="window.abrirModalReimpresion()"><i class="fas fa-receipt"></i> Buscar / Reimprimir</button>
             <div class="tasa-bcv-badge">BCV: <span id="txt-tasa">0.00</span> Bs.</div>
@@ -475,6 +480,19 @@
             <div class="modal-body">
                 <input type="text" id="input-buscar-factura" placeholder="Filtrar por Nro de Factura o Nombre de Cliente..." style="width:100%; padding:11px; border:1.5px solid var(--border-color); border-radius:8px; font-size:14px; margin-bottom:15px; outline:none;">
                 <div id="lista-facturas-dia" style="max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE FACTURAS EN ESPERA -->
+    <div class="modal-overlay" id="modalFacturasEspera">
+        <div class="modal-card" style="width: 500px;">
+            <div class="modal-header">
+                <span style="font-weight: 700; font-size: 15px;"><i class="fas fa-clock"></i> Facturas en Espera (Aparcadas)</span>
+                <i class="fas fa-times" style="cursor: pointer;" onclick="document.getElementById('modalFacturasEspera').style.display='none'"></i>
+            </div>
+            <div class="modal-body">
+                <div id="lista-espera-container" style="max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;"></div>
             </div>
         </div>
     </div>
