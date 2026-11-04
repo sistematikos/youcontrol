@@ -387,6 +387,129 @@ window.manejarNavegacion = (e, contenedorId, indiceVar) => {
     return indiceVar;
 };
 
+// --- FUNCIONES DE FACTURAS EN ESPERA (APARCAR Y CARGAR) ---
+
+window.ponerEnEspera = () => {
+    if (!window.carrito || window.carrito.length === 0) {
+        alert("⚠️ El carrito está vacío. No se puede poner en espera.");
+        return;
+    }
+
+    const nota = prompt("Ingrese una referencia o nombre para identificar esta espera (Opcional):") || "Cliente General";
+    
+    const facturaEspera = {
+        id: 'ESP-' + Date.now().toString().slice(-6),
+        referencia: nota,
+        cliente_id: window.clienteSeleccionadoID || "general",
+        nombre_cliente: window.nombreClienteSeleccionado || "Cliente General",
+        items: [...window.carrito],
+        fecha: new Date().toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })
+    };
+
+    let esperasGuardadas = JSON.parse(localStorage.getItem(`youcontrol_esperas_${USER_ID}`) || "[]");
+    esperasGuardadas.push(facturaEspera);
+    localStorage.setItem(`youcontrol_esperas_${USER_ID}`, JSON.stringify(esperasGuardadas));
+
+    // Limpiar carrito actual tras aparcar
+    window.carrito = [];
+    window.clienteSeleccionadoID = null;
+    window.nombreClienteSeleccionado = null;
+    
+    const inputCliente = document.getElementById('buscar-cliente-pos');
+    if (inputCliente) inputCliente.value = '';
+
+    if (typeof window.actualizarCarritoUI === 'function') {
+        window.actualizarCarritoUI();
+    }
+
+    alert(`✅ Factura guardada en espera bajo la referencia: "${nota}"`);
+};
+
+window.abrirModalEspera = () => {
+    const modal = document.getElementById('modalFacturasEspera');
+    if (modal) modal.style.display = 'flex';
+    renderizarListaEspera();
+};
+
+function renderizarListaEspera() {
+    const contenedor = document.getElementById('lista-espera-container');
+    if (!contenedor) return;
+
+    let esperasGuardadas = JSON.parse(localStorage.getItem(`youcontrol_esperas_${USER_ID}`) || "[]");
+
+    if (esperasGuardadas.length === 0) {
+        contenedor.innerHTML = `<div style="text-align:center; padding:20px; color:#64748b;">No hay facturas en espera actualmente.</div>`;
+        return;
+    }
+
+    contenedor.innerHTML = esperasGuardadas.map((esp, index) => {
+        const totalItems = esp.items.reduce((acc, i) => acc + i.cantidad, 0);
+        const totalUSD = esp.items.reduce((acc, i) => acc + (i.cantidad * (i.precio || 0)), 0);
+
+        return `
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid #e2e8f0; padding:10px 14px; border-radius:8px; font-size:13px;">
+                <div>
+                    <strong style="color:#006aff;">${esp.referencia}</strong> (${esp.nombre_cliente})
+                    <div style="font-size:11px; color:#64748b;">Hora: ${esp.fecha} | Artículos: ${totalItems} | Total: $${totalUSD.toFixed(2)}</div>
+                </div>
+                <div style="display:flex; gap:6px;">
+                    <button onclick="window.cargarFacturaEspera(${index})" style="background:#10b981; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:600; font-size:12px;">
+                        <i class="fas fa-upload"></i> Cargar
+                    </button>
+                    <button onclick="window.eliminarFacturaEspera(${index})" style="background:#ef4444; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-weight:600; font-size:12px;">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+window.cargarFacturaEspera = (index) => {
+    let esperasGuardadas = JSON.parse(localStorage.getItem(`youcontrol_esperas_${USER_ID}`) || "[]");
+    const seleccionada = esperasGuardadas[index];
+
+    if (!seleccionada) return;
+
+    if (window.carrito && window.carrito.length > 0) {
+        if (!confirm("⚠️ Ya tienes productos en el carrito actual. ¿Deseas reemplazarlos con la factura en espera?")) {
+            return;
+        }
+    }
+
+    // Restaurar datos al POS
+    window.carrito = seleccionada.items;
+    window.clienteSeleccionadoID = seleccionada.cliente_id;
+    window.nombreClienteSeleccionado = seleccionada.nombre_cliente;
+
+    const inputCliente = document.getElementById('buscar-cliente-pos');
+    if (inputCliente) inputCliente.value = seleccionada.nombre_cliente;
+
+    // Remover de la lista de espera local
+    esperasGuardadas.splice(index, 1);
+    localStorage.setItem(`youcontrol_esperas_${USER_ID}`, JSON.stringify(esperasGuardadas));
+
+    // Cerrar modal y actualizar interfaz
+    const modal = document.getElementById('modalFacturasEspera');
+    if (modal) modal.style.display = 'none';
+
+    if (typeof window.actualizarCarritoUI === 'function') {
+        window.actualizarCarritoUI();
+    }
+
+    alert(`✅ Factura "${seleccionada.referencia}" cargada exitosamente al carrito.`);
+};
+
+window.eliminarFacturaEspera = (index) => {
+    if (!confirm("¿Estás seguro de eliminar esta factura en espera? Se perderán los artículos.")) return;
+    
+    let esperasGuardadas = JSON.parse(localStorage.getItem(`youcontrol_esperas_${USER_ID}`) || "[]");
+    esperasGuardadas.splice(index, 1);
+    localStorage.setItem(`youcontrol_esperas_${USER_ID}`, JSON.stringify(esperasGuardadas));
+    
+    renderizarListaEspera();
+};
+
 // --- INICIALIZACIÓN FINAL ---
 document.addEventListener('DOMContentLoaded', async () => {
     await cargarConfiguracionGlobal();
