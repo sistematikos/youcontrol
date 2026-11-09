@@ -1,3 +1,4 @@
+// sis_v4_listpro.js
 import { db } from './firebase-config.js';
 import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -15,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const txtTotAlertas = document.getElementById('tot-alertas');
 
     let arrayProductosGlobal = [];
+    let productosFiltradosGlobal = []; // Guardamos los filtrados para exportarlos tal cual se ven en pantalla
 
     function inicializarExistencia() {
         if (!USER_ID) {
@@ -48,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const filtro = inputBusqueda.value.toLowerCase().trim();
         tablaExistencia.innerHTML = "";
 
-        const productosFiltrados = arrayProductosGlobal.filter(p => 
+        productosFiltradosGlobal = arrayProductosGlobal.filter(p => 
             p.nombre.toLowerCase().includes(filtro) || p.codigo.toLowerCase().includes(filtro)
         );
 
@@ -56,10 +58,10 @@ document.addEventListener('DOMContentLoaded', () => {
         let filtroPvp = 0;
         let filtroAlertas = 0;
 
-        if (productosFiltrados.length === 0) {
+        if (productosFiltradosGlobal.length === 0) {
             tablaExistencia.innerHTML = `<tr><td colspan="7" class="text-center" style="padding:20px;">No se encontraron productos.</td></tr>`;
         } else {
-            productosFiltrados.forEach(p => {
+            productosFiltradosGlobal.forEach(p => {
                 const totalInversionItem = p.stock * p.costo;
                 filtroCosto += totalInversionItem;
                 filtroPvp += (p.stock * p.pvp);
@@ -85,6 +87,38 @@ document.addEventListener('DOMContentLoaded', () => {
         txtTotGanancia.innerText = `$ ${(filtroPvp - filtroCosto).toFixed(2)}`;
         txtTotAlertas.innerText = filtroAlertas;
     }
+
+    // --- FUNCIÓN PARA EXPORTAR A EXCEL ---
+    window.exportarExcel = () => {
+        if (!productosFiltradosGlobal || productosFiltradosGlobal.length === 0) {
+            alert("No hay productos para exportar.");
+            return;
+        }
+
+        // Mapeamos los datos limpios para el reporte en Excel
+        const datosExcel = productosFiltradosGlobal.map(p => {
+            const estado = p.stock <= 0 ? "Agotado" : p.stock <= p.stock_min ? "Stock Bajo" : "Disponible";
+            return {
+                "Código / SKU": p.codigo,
+                "Descripción del Producto": p.nombre,
+                "Stock Actual": p.stock,
+                "Costo Unitario ($)": p.costo,
+                "Precio Venta ($)": p.pvp,
+                "Inversión Total ($)": p.stock * p.costo,
+                "Estado de Stock": estado
+            };
+        });
+
+        // Crear una hoja de trabajo (worksheet)
+        const worksheet = XLSX.utils.json_to_sheet(datosExcel);
+
+        // Crear un libro de trabajo (workbook) y añadir la hoja
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Inventario");
+
+        // Generar archivo y descargar automáticamente
+        XLSX.writeFile(workbook, "Reporte_Inventario.xlsx");
+    };
 
     inputBusqueda.addEventListener('input', procesarYFiltrarInventario);
     inicializarExistencia();
