@@ -33,6 +33,7 @@
             --primary-dark: #002A54;
             --card-bg: #FFFFFF;
             --border-color: #E2E8F0;
+            --emerald: #10B981;
         }
 
         body { font-family: 'Poppins', sans-serif; background: var(--bg-gradient); margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; color: var(--text-dark); }
@@ -107,6 +108,88 @@
         .empresa-meta span { display: flex; align-items: center; gap: 6px; }
         .empresa-badge { background: #E0F2FE; color: #0369A1; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
 
+        /* TARJETA DE CATÁLOGO DIGITAL PARA COPIAR LINK */
+        .catalogo-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+            border: 1px solid var(--border-color);
+            border-left: 5px solid var(--accent-blue);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .catalogo-info h4 {
+            margin: 0 0 4px 0;
+            font-size: 1rem;
+            color: var(--primary-dark);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .catalogo-info h4 i { color: var(--accent-blue); }
+        .catalogo-info p {
+            margin: 0;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .catalogo-link-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 280px;
+            max-width: 550px;
+        }
+        .catalogo-input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: #F8FAFC;
+            font-size: 0.82rem;
+            color: var(--text-dark);
+            font-family: monospace;
+            outline: none;
+        }
+        .btn-copiar-link {
+            background: var(--primary-dark);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            font-family: 'Poppins', sans-serif;
+        }
+        .btn-copiar-link:hover { background: var(--accent-blue); }
+        .btn-copiar-link.copiado { background: var(--emerald); }
+        .btn-abrir-link {
+            background: #F1F5F9;
+            color: var(--primary-dark);
+            border: 1px solid var(--border-color);
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .btn-abrir-link:hover { background: #E2E8F0; color: var(--accent-blue); }
+
         /* BANNER LIMPIO Y PROFESIONAL */
         .banner-menu-container { 
             width: 100%; 
@@ -133,14 +216,14 @@
             border-radius: 16px; 
             box-shadow: 0 4px 12px rgba(0,0,0,0.04); 
             border: 1px solid var(--border-color); 
-            text-align: center;
+            text-align: center; 
             border-top: 4px solid #0EA5E9;
         }
         .software-box p { 
             color: var(--text-dark); 
             font-size: 0.98rem; 
             line-height: 1.6; 
-            max-width: 900px;
+            max-width: 900px; 
             margin: 0 auto 22px auto; 
         }
         .software-features {
@@ -201,7 +284,8 @@
             .dropdown-menu a:hover { background: rgba(255,255,255,0.1); color: #38BDF8; }
             .nav-item.open .dropdown-menu { display: block; }
 
-            .empresa-card { flex-direction: column; align-items: flex-start; }
+            .empresa-card, .catalogo-card { flex-direction: column; align-items: stretch; }
+            .catalogo-link-box { max-width: 100%; }
             .software-box { padding: 20px; }
             .software-features { gap: 15px; }
         }
@@ -287,6 +371,23 @@
             </div>
         </div>
 
+        <!-- TARJETA DE ENLACE DEL CATÁLOGO DIGITAL -->
+        <div class="catalogo-card">
+            <div class="catalogo-info">
+                <h4><i class="fas fa-store"></i> Catálogo Digital</h4>
+                <p>Comparte este enlace directo con tus clientes para pedidos online por WhatsApp.</p>
+            </div>
+            <div class="catalogo-link-box">
+                <input type="text" id="inputLinkCatalogo" class="catalogo-input" readonly value="Generando enlace del catálogo...">
+                <button type="button" id="btnCopiarCatalogo" class="btn-copiar-link">
+                    <i class="fas fa-copy"></i> Copiar
+                </button>
+                <a href="#" id="btnAbrirCatalogoCard" target="_blank" class="btn-abrir-link" title="Abrir Catálogo">
+                    <i class="fas fa-external-link-alt"></i>
+                </a>
+            </div>
+        </div>
+
         <!-- BANNER CORPORATIVO LIMPIO -->
         <div class="banner-menu-container">
             <img src="img/youcontrol.png" alt="You Control" class="banner-menu-img">
@@ -307,7 +408,7 @@
 
     </div>
 
-    <!-- LÓGICA DE FIREBASE Y MENÚ MÓVIL INTERactivo -->
+    <!-- LÓGICA DE FIREBASE Y MENÚ MÓVIL INTERACTIVO -->
     <script>
         // Funcionalidad para abrir/cerrar menú hamburguesa y submenús en dispositivos móviles
         const menuToggleBtn = document.getElementById('menuToggleBtn');
@@ -331,6 +432,45 @@
                 });
             }
         });
+
+        // Generar el link completo del catálogo del usuario y configurar el botón copiar
+        function inicializarLinkCatalogo() {
+            const empresaID = (localStorage.getItem('youcontrol_empresa_id') || '').trim();
+            const inputLink = document.getElementById('inputLinkCatalogo');
+            const btnCopiar = document.getElementById('btnCopiarCatalogo');
+            const btnAbrir = document.getElementById('btnAbrirCatalogoCard');
+
+            if (empresaID) {
+                const urlBase = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+                const urlCatalogo = `${urlBase}node_v2_505.html?empresa=${empresaID}`;
+                
+                inputLink.value = urlCatalogo;
+                btnAbrir.href = urlCatalogo;
+
+                btnCopiar.addEventListener('click', async () => {
+                    try {
+                        await navigator.clipboard.writeText(urlCatalogo);
+                    } catch (err) {
+                        inputLink.select();
+                        document.execCommand('copy');
+                    }
+
+                    btnCopiar.innerHTML = '<i class="fas fa-check"></i> ¡Copiado!';
+                    btnCopiar.classList.add('copiado');
+                    setTimeout(() => {
+                        btnCopiar.innerHTML = '<i class="fas fa-copy"></i> Copiar';
+                        btnCopiar.classList.remove('copiado');
+                    }, 2200);
+                });
+            } else {
+                inputLink.value = "Inicia sesión para obtener el enlace";
+                btnCopiar.disabled = true;
+                btnAbrir.style.pointerEvents = "none";
+                btnAbrir.style.opacity = "0.5";
+            }
+        }
+
+        inicializarLinkCatalogo();
     </script>
 
     <script type="module">
