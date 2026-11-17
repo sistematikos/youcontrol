@@ -9,6 +9,21 @@ import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-
 let bluetoothDeviceCache = null;
 let bluetoothServerCache = null;
 
+// Limpia acentos y espacios duros (\u00A0) que bloquean impresoras térmicas ESC/POS
+function limpiarTextoTermico(texto) {
+    return String(texto || '')
+        .replace(/\u00A0/g, ' ')
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^\x20-\x7E\n]/g, "");
+}
+
+function formatearMonto(valor) {
+    return Number(valor || 0)
+        .toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        .replace(/\u00A0/g, ' ');
+}
+
 export async function imprimirTicketVenta(userId, ventaData) {
     try {
         const userDocRef = doc(db, "usuarios", userId);
@@ -58,14 +73,14 @@ export async function imprimirTicketVenta(userId, ventaData) {
 function imprimirPorUSB(ventaData, configTicket) {
     const anchoMM = configTicket.ancho_mm || "80";
     const fechaFormateada = ventaData.fecha?.toDate ? ventaData.fecha.toDate().toLocaleString('es-VE') : new Date().toLocaleString('es-VE');
-    const tasa = ventaData.tasa_aplicada || 1;
+    const tasa = Number(ventaData.tasa_aplicada || 1);
     let htmlItems = '';
-    let totalUSD = ventaData.total_usd || 0;
+    let totalUSD = Number(ventaData.total_usd || 0);
 
     if (ventaData.items && Array.isArray(ventaData.items)) {
         ventaData.items.forEach(item => {
-            const cant = item.cantidad || 1;
-            const precioUSD = item.precio || 0;
+            const cant = Number(item.cantidad || 1);
+            const precioUSD = Number(item.precio || 0);
             const precioBs = precioUSD * tasa;
             const subtotalBs = cant * precioBs;
             htmlItems += `
@@ -171,7 +186,8 @@ export async function imprimirPorBluetooth(ventaData = null, configTicket = null
                 optionalServices: [
                     '000018f0-0000-1000-8000-00805f9b34fb', 
                     'e7810a71-73ae-499d-8c15-faa9aef0c3f2', 
-                    '49535343-fe7d-4ae5-8fa9-9fafd205e455'
+                    '49535343-fe7d-4ae5-8fa9-9fafd205e455',
+                    '0000ff00-0000-1000-8000-00805f9b34fb'
                 ]
             });
             bluetoothServerCache = await bluetoothDeviceCache.gatt.connect();
@@ -180,7 +196,8 @@ export async function imprimirPorBluetooth(ventaData = null, configTicket = null
         const serviceUuids = [
             '000018f0-0000-1000-8000-00805f9b34fb', 
             'e7810a71-73ae-499d-8c15-faa9aef0c3f2', 
-            '49535343-fe7d-4ae5-8fa9-9fafd205e455'
+            '49535343-fe7d-4ae5-8fa9-9fafd205e455',
+            '0000ff00-0000-1000-8000-00805f9b34fb'
         ];
         let targetCharacteristic = null;
 
@@ -197,78 +214,116 @@ export async function imprimirPorBluetooth(ventaData = null, configTicket = null
             throw new Error("No se encontró la característica de escritura ESC/POS en esta impresora.");
         }
 
-        if (!ventaData) {
-            alert("¡Impresora Bluetooth conectada y vinculada exitosamente!");
-            return;
+        // Si se llama desde el botón de prueba en Configuración (sin ventaData), imprime ticket de prueba con productos
+        const esPrueba = !ventaData;
+        if (esPrueba) {
+            ventaData = {
+                nro_factura: "PRUEBA-001",
+                nombre_cliente: "CLIENTE DE PRUEBA",
+                tasa_aplicada: 50.00,
+                total_usd: 15.00,
+                items: [
+                    { nombre: "Producto de Prueba 1", cantidad: 2, precio: 5.00 },
+                    { nombre: "Producto de Prueba 2", cantidad: 1, precio: 5.00 }
+                ]
+            };
+            configTicket = configTicket || {
+                nombre_negocio: document.getElementById('txt-nombre-negocio')?.value || "YOU CONTROL",
+                telefono: document.getElementById('txt-telefono-negocio')?.value || "",
+                direccion: document.getElementById('txt-direccion-negocio')?.value || "",
+                ancho_mm: document.getElementById('sel-ancho-papel')?.value || "58",
+                pie_pagina: document.getElementById('txt-pie-pagina')?.value || "¡Prueba exitosa!"
+            };
         }
 
+        const anchoCols = (configTicket?.ancho_mm === "80") ? 48 : 32;
+        const separador = "-".repeat(anchoCols) + "\n";
         const encoder = new TextEncoder();
         let comandos = [];
+
+        const agregarTexto = (str) => {
+            comandos.push(...encoder.encode(limpiarTextoTermico(str)));
+        };
 
         // Inicializar impresora y centrar
         comandos.push(27, 64); 
         comandos.push(27, 97, 1); 
 
-        // Encabezado alineado al centro (Sin mención de Sistema)
-        comandos.push(27, 33, 8); // Texto negrita/mediano
-        comandos.push(...encoder.encode(`${(configTicket?.nombre_negocio || 'NEGOCIO').toUpperCase()}\n`));
-        comandos.push(27, 33, 0); // Apagar negrita
+        // Encabezado
+        comandos.push(27, 69, 1); // Negrita ON
+        agregarTexto(`${(configTicket?.nombre_negocio || 'NEGOCIO').toUpperCase()}\n`);
+        comandos.push(27, 69, 0); // Negrita OFF
 
-        if (configTicket?.telefono) comandos.push(...encoder.encode(`Tel: ${configTicket.telefono}\n`));
-        if (configTicket?.direccion) comandos.push(...encoder.encode(`${configTicket.direccion}\n`));
+        if (configTicket?.telefono) agregarTexto(`Tel: ${configTicket.telefono}\n`);
+        if (configTicket?.direccion) agregarTexto(`${configTicket.direccion}\n`);
 
-        comandos.push(...encoder.encode("--------------------------------\n"));
-        comandos.push(...encoder.encode(`FACTURA NRO: ${ventaData.nro_factura}\n`));
-        comandos.push(...encoder.encode(`CLIENTE: ${ventaData.nombre_cliente || 'Anónimo'}\n`));
+        agregarTexto(separador);
+        agregarTexto(`FACTURA NRO: ${ventaData.nro_factura || 'S/N'}\n`);
+        agregarTexto(`CLIENTE: ${ventaData.nombre_cliente || 'Anonimo'}\n`);
         const fechaStr = ventaData.fecha?.toDate ? ventaData.fecha.toDate().toLocaleString('es-VE') : new Date().toLocaleString('es-VE');
-        comandos.push(...encoder.encode(`FECHA: ${fechaStr}\n`));
-        comandos.push(...encoder.encode("--------------------------------\n"));
+        agregarTexto(`FECHA: ${fechaStr}\n`);
+        agregarTexto(separador);
 
-        // Alineación izquierda para los productos
+        // Alineación izquierda para productos
         comandos.push(27, 97, 0);
 
-        const tasa = ventaData.tasa_aplicada || 1;
-        let totalUSD = ventaData.total_usd || 0;
+        const tasa = Number(ventaData.tasa_aplicada || 1);
+        let totalUSD = Number(ventaData.total_usd || 0);
+        let sumaCalculadaBs = 0;
 
-        if (ventaData.items && Array.isArray(ventaData.items)) {
-            ventaData.items.forEach(item => {
-                const cant = item.cantidad || 1;
-                const precioUSD = item.precio || 0;
+        // Soporte tanto para ventaData.items como ventaData.productos o ventaData.carrito
+        const listaItems = ventaData.items || ventaData.productos || ventaData.carrito || [];
+
+        if (Array.isArray(listaItems) && listaItems.length > 0) {
+            listaItems.forEach(item => {
+                const cant = Number(item.cantidad || item.cant || 1);
+                const precioUSD = Number(item.precio || item.precio_usd || 0);
                 const precioBs = precioUSD * tasa;
                 const subtotalBs = cant * precioBs;
+                sumaCalculadaBs += subtotalBs;
 
-                // Nombre del producto en negrita
-                comandos.push(27, 33, 8);
-                comandos.push(...encoder.encode(`${item.nombre || 'Producto'}\n`));
-                comandos.push(27, 33, 0);
+                comandos.push(27, 69, 1); // Negrita ON
+                agregarTexto(`${item.nombre || item.descripcion || 'Producto'}\n`);
+                comandos.push(27, 69, 0); // Negrita OFF
 
-                // Detalle de cantidad x precio y subtotal alineado
-                const detallePrecio = `${cant} x Bs. ${precioBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-                const subtotalStr = `Bs. ${subtotalBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-                const espacios = Math.max(1, 32 - detallePrecio.length - subtotalStr.length);
-                const lineaItem = detallePrecio + " ".repeat(espacios) + subtotalStr + "\n";
-                
-                comandos.push(...encoder.encode(lineaItem));
+                const detallePrecio = `${cant} x Bs.${formatearMonto(precioBs)}`;
+                const subtotalStr = `Bs.${formatearMonto(subtotalBs)}`;
+                const espacios = Math.max(1, anchoCols - detallePrecio.length - subtotalStr.length);
+                agregarTexto(detallePrecio + " ".repeat(espacios) + subtotalStr + "\n");
             });
+        } else {
+            agregarTexto("Sin detalle de productos\n");
         }
 
         // Línea divisoria y total centrados
         comandos.push(27, 97, 1);
-        comandos.push(...encoder.encode("--------------------------------\n"));
+        agregarTexto(separador);
 
-        const totalBs = totalUSD * tasa;
-        comandos.push(27, 33, 16); // Doble alto/ancho para el total
-        comandos.push(...encoder.encode(`TOTAL A PAGAR:\nBs. ${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}\n`));
-        comandos.push(27, 33, 0);
+        const totalBs = totalUSD > 0 ? (totalUSD * tasa) : sumaCalculadaBs;
+        comandos.push(27, 69, 1); // Negrita ON
+        comandos.push(29, 33, 17); // Doble ancho y doble alto
+        agregarTexto(`TOTAL: Bs.${formatearMonto(totalBs)}\n`);
+        comandos.push(29, 33, 0); // Tamaño normal
+        comandos.push(27, 69, 0); // Negrita OFF
 
-        comandos.push(...encoder.encode("--------------------------------\n"));
-        comandos.push(...encoder.encode(`${configTicket?.pie_pagina || '¡Gracias por su compra!'}\n\n\n`));
+        agregarTexto(separador);
+        agregarTexto(`${configTicket?.pie_pagina || 'Gracias por su compra!'}\n\n\n\n`);
 
+        // Envío en bloques pequeños (64 bytes) con pausa para evitar desbordamiento del buffer Bluetooth
         const byteArray = new Uint8Array(comandos);
-        const chunkSize = 512;
+        const chunkSize = 64; 
         for (let i = 0; i < byteArray.length; i += chunkSize) {
             const chunk = byteArray.slice(i, i + chunkSize);
-            await targetCharacteristic.writeValue(chunk);
+            if (targetCharacteristic.properties.writeWithoutResponse) {
+                await targetCharacteristic.writeValueWithoutResponse(chunk);
+            } else {
+                await targetCharacteristic.writeValue(chunk);
+            }
+            await new Promise(resolve => setTimeout(resolve, 35));
+        }
+
+        if (esPrueba) {
+            alert("¡Impresora Bluetooth vinculada y ticket de prueba impreso!");
         }
 
     } catch (err) {
