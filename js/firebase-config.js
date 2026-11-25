@@ -1,5 +1,12 @@
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { 
+    getFirestore, 
+    initializeFirestore, 
+    persistentLocalCache, 
+    persistentMultipleTabManager, 
+    doc, 
+    getDoc 
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // Configuración por defecto (Proyecto Principal / Maestro)
 const defaultConfig = {
@@ -14,12 +21,23 @@ const defaultConfig = {
 const empresaID = (localStorage.getItem('youcontrol_empresa_id') || '').trim();
 let activeConfig = defaultConfig;
 
-// Función para inicializar app segura
+// Función para inicializar app segura CON PERSISTENCIA OFFLINE (IndexedDB)
 function obtenerDbPersonalizada(configParaUsar, identificadorApp) {
     const existingApps = getApps();
     let app = existingApps.find(a => a.name === identificadorApp);
+    
     if (!app) {
         app = initializeApp(configParaUsar, identificadorApp);
+        try {
+            return initializeFirestore(app, {
+                localCache: persistentLocalCache({
+                    tabManager: persistentMultipleTabManager()
+                })
+            });
+        } catch (err) {
+            console.warn("Persistencia offline ya inicializada o no soportada, usando instancia estándar:", err);
+            return getFirestore(app);
+        }
     }
     return getFirestore(app);
 }
@@ -32,13 +50,14 @@ if (empresaID) {
     let tenantConfigStr = localStorage.getItem(cacheKey);
 
     if (tenantConfigStr) {
-        // 1. Si ya está en caché local, la usamos de inmediato
+        // 1. Si ya está en caché local, la usamos de inmediato (funciona con y sin internet)
         try {
             activeConfig = JSON.parse(tenantConfigStr);
             console.log("🔌 Usando configuración independiente desde caché para:", empresaID);
             db = obtenerDbPersonalizada(activeConfig, `app_${empresaID}`);
         } catch (e) {
             console.error("Error leyendo caché tenant:", e);
+            db = obtenerDbPersonalizada(defaultConfig, `app_${empresaID}`);
         }
     } else {
         // 2. Si NO está en caché, inicializamos temporalmente el proyecto principal para consultarla en la nube
@@ -50,12 +69,12 @@ if (empresaID) {
             const docSnap = await getDoc(doc(mainDb, "empresas_config", empresaID));
             if (docSnap.exists() && docSnap.data().firebaseConfig) {
                 activeConfig = docSnap.data().firebaseConfig;
-                // Guardamos en caché local para que las próximas cargas sean instantáneas
+                // Guardamos en caché local para que las próximas cargas sean instantáneas y funcionen offline
                 localStorage.setItem(cacheKey, JSON.stringify(activeConfig));
                 console.log("☁️ Configuración independiente descargada de la nube y guardada en caché para:", empresaID);
             }
         } catch (e) {
-            console.error("Error consultando configuración en la nube:", e);
+            console.error("Error consultando configuración en la nube (posible modo sin conexión):", e);
         }
         
         db = obtenerDbPersonalizada(activeConfig, empresaID ? `app_${empresaID}` : '[DEFAULT]');
